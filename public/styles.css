@@ -1,0 +1,257 @@
+@font-face {
+    font-family: 'Formula1 Display';
+    src: url('/fonts/F1-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Formula1 TV';
+    src: url('/fonts/Formula1TV-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+.overlay-container {
+    position: relative;
+    width: 500px;
+    height: 500px;
+    background: transparent; /* For OBS transparency */
+}
+
+.background-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    transform: translate(0px, 24px);
+    opacity: 0.7; /* Set to 70% opacity */
+}
+
+.gauge-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+    transform: translate(0px, -23px);
+    opacity: 0.7; /* Set to 70% opacity */
+}
+
+.throttle-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 3; /* Consolidated with brake and speed */
+    opacity: 0; /* Hide for now */
+}
+
+.brake-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 3; /* Consolidated with throttle and speed */
+    opacity: 0; /* Hide for now */
+}
+
+.speed-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 3; /* Consolidated with throttle and brake */
+    opacity: 0; /* Hide for now */
+}
+
+#throttle-gauge {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 4; /* Consolidated with brake and speed gauges */
+    width: 100%; /* For alignment */
+    height: 100%; /* For alignment */
+}
+
+#brake-gauge {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 4; /* Consolidated with throttle and speed gauges */
+    width: 100%; /* For alignment */
+    height: 100%; /* For alignment */
+}
+
+#speed-gauge {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 4; /* Consolidated with throttle and brake gauges */
+    width: 100%; /* For alignment */
+    height: 100%; /* For alignment */
+}
+
+.kmh-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 5; /* Above gauges, for speed values */
+    opacity: 1; /* Visible by default */
+}
+
+.text-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 5; /* Above gauges, for throttle and brake text */
+    opacity: 1; /* Visible by default */
+}
+
+.speed-value-layer {
+    position: absolute;
+    top: 135px;
+    left: 140px;
+    width: 220px;
+    height: 95px;
+    z-index: 6; /* Above kmh and text layers */
+    font-family: 'Formula1 Display'; /* Updated to custom font */
+    font-size: 90px;
+    color: white; /* Default color, adjust if needed */
+    display: flex;
+    justify-content: center; /* Horizontal centering */
+    align-items: center; /* Vertical centering */
+    text-align: center; /* Ensure text is centered */
+    line-height: 95px; /* Match height for vertical centering */
+}
+
+.speed-units-layer {
+    position: absolute;
+    top: 230px;
+    left: 200px;
+    width: 100px;
+    height: 35px;
+    z-index: 6; /* Above kmh and text layers */
+    font-family: 'Formula1 Display'; /* Using specified font */
+    font-size: 25px;
+    font-weight: bold; /* Added bold style */
+    color: white; /* Default color, adjust if needed */
+    display: flex;
+    justify-content: center; /* Horizontal centering */
+    align-items: center; /* Vertical centering */
+    text-align: center; /* Ensure text is centered */
+    line-height: 35px; /* Match height for vertical centering */
+}
+
+.rpm-value-layer {
+    position: absolute;
+    top: 275px;
+    left: 140px;
+    width: 220px;
+    height: 50px;
+    z-index: 6; /* Above kmh and text layers */
+    font-family: 'Formula1 Display'; /* Using specified font */
+    font-size: 48px;
+    color: white; /* Default color, adjust if needed */
+    display: flex;
+    justify-content: center; /* Horizontal centering */
+    align-items: center; /* Vertical centering */
+    text-align: center; /* Ensure text is centered */
+    line-height: 50px; /* Match height for vertical centering */
+}
+
+.rpm-label-layer {
+    position: absolute;
+    top: 325px;
+    left: 200px;
+    width: 100px;
+    height: 35px;
+    z-index: 6; /* Above kmh and text layers */
+    font-family: 'Formula1 Display'; /* Using specified font */
+    font-size: 25px;
+    font-weight: bold; /* Added bold style */
+    color: white; /* Default color, adjust if needed */
+    display: flex;
+    justify-content: center; /* Horizontal centering */
+    align-items: center; /* Vertical centering */
+    text-align: center; /* Ensure text is centered */
+    line-height: 35px; /* Match height for vertical centering */
+}
+
+.gear-label-layer {
+    position: absolute;
+    top: 443px;
+    left: 185px;
+    width: 80px;
+    height: 35px;
+    z-index: 6; /* Above kmh and text layers */
+    font-family: 'Formula1 TV'; /* Using specified font */
+    font-size: 23px;
+    color: white; /* Default color, adjust if needed */
+    display: flex;
+    align-items: center; /* Vertical centering */
+    justify-content: flex-end; /* Horizontal right alignment */
+    text-align: right; /* Ensure text is right-aligned */
+    line-height: 35px; /* Match height for vertical centering */
+}
+
+.gear-value-layer {
+    position: absolute;
+    top: 420px;
+    left: 265px;
+    width: 55px;
+    height: 75px;
+    z-index: 6; /* Above kmh and text layers */
+    font-family: 'Formula1 Display'; /* Using specified font */
+    font-size: 50px;
+    color: white; /* Default color, adjust if needed */
+    display: flex;
+    justify-content: center; /* Horizontal centering */
+    align-items: center; /* Vertical centering */
+    text-align: center; /* Ensure text is centered */
+    line-height: 75px; /* Match height for vertical centering */
+}
+
+.drs-layer {
+    position: absolute;
+    top: 376px;
+    left: 211px;
+    width: 78px;
+    height: 45.3px;
+    z-index: 5; /* Above gauges, below text layers */
+}
+
+.drs-label-layer {
+    position: absolute;
+    top: 382px;
+    left: 214px;
+    width: 72px;
+    height: 29px;
+    z-index: 6; /* Above drs-layer, aligned with other text layers */
+    font-family: 'Formula1 Display';
+    font-size: 25px;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    line-height: 29px;
+}
+
+.debug-text {
+    color: white;
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    margin-top: 10px;
+    text-align: center;
+}

@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>F1 New Speedometer Overlay</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+</head>
+<body>
+    <div class="overlay-container">
+        <img src="/images/speedometer/F1TV_BG.png" alt="Background Layer" class="background-layer">
+        <img src="/images/speedometer/F1TV_ValueBG.png" alt="Gauge Layer" class="gauge-layer">
+        <img src="/images/speedometer/Throttle_1.png" alt="Throttle Layer" class="throttle-layer">
+        <img src="/images/speedometer/Brake_1.png" alt="Brake Layer" class="brake-layer">
+        <img src="/images/speedometer/Speed_1.png" alt="Speed Layer" class="speed-layer">
+        <img src="/images/speedometer/KMH.png" alt="KMH Layer" class="kmh-layer">
+        <img src="/images/speedometer/Text.png" alt="Text Layer" class="text-layer">
+        <canvas id="throttle-gauge" width="500" height="500"></canvas>
+        <canvas id="brake-gauge" width="500" height="500"></canvas>
+        <canvas id="speed-gauge" width="500" height="500"></canvas>
+        <div id="speed-value" class="speed-value-layer">0</div>
+        <div id="speed-units" class="speed-units-layer">KMH</div>
+        <div id="rpm-value" class="rpm-value-layer">0</div>
+        <div id="rpm-label" class="rpm-label-layer">RPM</div>
+        <div id="gear-label" class="gear-label-layer">GEAR</div>
+        <div id="gear-value" class="gear-value-layer">N</div>
+        <img src="/images/speedometer/drs.png" alt="DRS Layer" class="drs-layer">
+        <div id="drs-label" class="drs-label-layer">DRS</div>
+    </div>
+    <div id="debug-text" class="debug-text"></div>
+    <script>
+        const socket = io();
+        const throttleCanvas = document.getElementById('throttle-gauge');
+        const throttleCtx = throttleCanvas.getContext('2d');
+        const brakeCanvas = document.getElementById('brake-gauge');
+        const brakeCtx = brakeCanvas.getContext('2d');
+        const speedCanvas = document.getElementById('speed-gauge');
+        const speedCtx = speedCanvas.getContext('2d');
+        let throttleAngle = 0; // Start at 0 throttle (-237°)
+        let brakeAngle = 0; // Start at 0 brake (57°)
+        let speedAngle = 0; // Start at 0 speed (-237°)
+        const drsLabel = document.getElementById('drs-label');
+        const drsImage = document.querySelector('.drs-layer');
+        const gearValue = document.getElementById('gear-value');
+        const rpmValue = document.getElementById('rpm-value');
+        const speedValue = document.getElementById('speed-value');
+        const kmhLayer = document.querySelector('.kmh-layer');
+        const speedUnits = document.getElementById('speed-units');
+        let isMph = false; // Default to false until Session packet is received
+
+        function drawThrottleSweep(angle) {
+            if (!throttleCtx) {
+                console.error('Throttle canvas context not available');
+                return;
+            }
+            throttleCtx.clearRect(0, 0, 500, 500);
+            throttleCtx.save();
+
+            // Apply the clip to include the full swept area
+            throttleCtx.beginPath();
+            const startAngle = -237 * Math.PI / 180; // Updated start angle
+            const endAngle = startAngle + (angle * ((-46 - (-237)) * Math.PI / 180)); // Scale to -46°
+            throttleCtx.moveTo(250, 250); // Start from center
+            throttleCtx.arc(250, 250, 250, startAngle, endAngle, false); // Clockwise sweep
+            throttleCtx.clip();
+            throttleCtx.drawImage(document.querySelector('.throttle-layer'), 0, 0, 500, 500); // Scaled image
+            throttleCtx.restore();
+        }
+
+        function drawBrakeSweep(angle) {
+            if (!brakeCtx) {
+                console.error('Brake canvas context not available');
+                return;
+            }
+            brakeCtx.clearRect(0, 0, 500, 500);
+            brakeCtx.save();
+
+            // Apply the clip to include the full swept area
+            brakeCtx.beginPath();
+            const startAngle = 57 * Math.PI / 180; // Updated start angle
+            const endAngle = startAngle + (angle * ((-43 - 57) * Math.PI / 180)); // Scale to -43°, anti-clockwise
+            brakeCtx.moveTo(250, 250); // Start from center
+            brakeCtx.arc(250, 250, 250, startAngle, endAngle, true); // Anti-clockwise sweep
+            brakeCtx.clip();
+            brakeCtx.drawImage(document.querySelector('.brake-layer'), 0, 0, 500, 500); // Scaled image
+            brakeCtx.restore();
+        }
+
+        function drawSpeedSweep(angle) {
+            if (!speedCtx) {
+                console.error('Speed canvas context not available');
+                return;
+            }
+            speedCtx.clearRect(0, 0, 500, 500);
+            speedCtx.save();
+
+            // Apply the clip to include the full swept area
+            const startAngle = -237 * Math.PI / 180; // Updated start angle
+            const maxAngle = 57 * Math.PI / 180; // Maximum angle
+            const endAngle = startAngle + (Math.min(angle, 1.0) * (maxAngle - startAngle)); // Cap at 1.0 (360 km/h)
+            speedCtx.beginPath();
+            speedCtx.moveTo(250, 250); // Start from center
+            speedCtx.arc(250, 250, 250, startAngle, endAngle, false); // Clockwise sweep
+            speedCtx.clip();
+            speedCtx.drawImage(document.querySelector('.speed-layer'), 0, 0, 500, 500); // Scaled image
+            speedCtx.restore();
+        }
+
+        socket.on('f1_data', (data) => {
+            if (data.m_header.m_packetId === 1) { // Session Packet
+                const playerIndex = data.m_header.m_playerCarIndex;
+                const speedUnitsLeadPlayer = data.m_speedUnitsLeadPlayer || 0;
+                isMph = speedUnitsLeadPlayer === 0;
+                kmhLayer.src = isMph ? '/images/speedometer/MPH.png' : '/images/speedometer/KMH.png';
+                speedUnits.textContent = isMph ? 'MPH' : 'KMH';
+            } else if (data.m_header.m_packetId === 6) { // Car Telemetry
+                const playerIndex = data.m_header.m_playerCarIndex;
+                const throttle = data.m_carTelemetryData[playerIndex].m_throttle; // 0.0 to 1.0
+                const brake = data.m_carTelemetryData[playerIndex].m_brake; // 0.0 to 1.0
+                const speed = data.m_carTelemetryData[playerIndex].m_speed; // 0 to 65535 km/h
+                const gear = data.m_carTelemetryData[playerIndex].m_gear; // -1 to 8
+                const rpm = data.m_carTelemetryData[playerIndex].m_engineRPM; // Engine RPM value
+
+                // Update gear value
+                if (gear === -1) {
+                    gearValue.textContent = 'R';
+                } else if (gear === 0) {
+                    gearValue.textContent = 'N';
+                } else if (gear >= 1 && gear <= 8) {
+                    gearValue.textContent = gear;
+                }
+
+                // Update RPM value
+                if (rpm !== undefined) {
+                    rpmValue.textContent = rpm;
+                }
+
+                // Update speed value with unit conversion
+                if (speed !== undefined) {
+                    const displaySpeed = isMph ? Math.round(speed * 0.621371) : speed;
+                    speedValue.textContent = displaySpeed;
+                }
+
+                const targetThrottleAngle = throttle; // 0 to 1 scales the 191° range
+                const targetBrakeAngle = brake; // 0 to 1 scales the 100° range
+                const targetSpeedAngle = Math.min(speed / 360, 1.0); // Cap at 360 km/h for gauge only
+                anime({
+                    targets: { angle: throttleAngle },
+                    angle: targetThrottleAngle,
+                    duration: 100, // ~16ms for 60Hz
+                    easing: 'linear',
+                    update: (anim) => {
+                        throttleAngle = anim.animations[0].currentValue;
+                        drawThrottleSweep(throttleAngle);
+                    }
+                });
+                anime({
+                    targets: { angle: brakeAngle },
+                    angle: targetBrakeAngle,
+                    duration: 100, // ~16ms for 60Hz
+                    easing: 'linear',
+                    update: (anim) => {
+                        brakeAngle = anim.animations[0].currentValue;
+                        drawBrakeSweep(brakeAngle);
+                    }
+                });
+                anime({
+                    targets: { angle: speedAngle },
+                    angle: targetSpeedAngle,
+                    duration: 100, // ~16ms for 60Hz
+                    easing: 'linear',
+                    update: (anim) => {
+                        speedAngle = anim.animations[0].currentValue;
+                        drawSpeedSweep(speedAngle);
+                    }
+                });
+            }
+        });
+
+        // DRS State Management
+        let drsState = { m_drs: null, m_drsAllowed: null, m_drsActivationDistance: null };
+
+        socket.on('f1_data', (data) => {
+            const playerIndex = data.m_header?.m_playerCarIndex || 0;
+            const drsImage = document.querySelector('.drs-layer');
+
+            if (data.m_header?.m_packetId === 6) { // Car Telemetry
+                const telemetryData = data.m_carTelemetryData?.[playerIndex];
+                if (telemetryData && telemetryData.hasOwnProperty('m_drs')) {
+                    drsState.m_drs = telemetryData.m_drs;
+                    // Change image to drs1.png if m_drs is 1
+                    if (drsState.m_drs === 1) {
+                        drsImage.src = '/images/speedometer/drs1.png';
+                    } else if (drsState.m_drs !== 1 && drsState.m_drsAllowed !== 1) {
+                        drsImage.src = '/images/speedometer/drs.png'; // Default if neither condition
+                    }
+                    // Adjust DRS text shadow when m_drs is 1
+                    if (drsState.m_drs === 1) {
+                        drsLabel.style.textShadow = '3px 1px 0px black';
+                    } else {
+                        drsLabel.style.textShadow = '0px 0px 0px black';
+                    }
+                }
+            } else if (data.m_header?.m_packetId === 7) { // Car Status
+                const statusData = data.m_carStatusData?.[playerIndex];
+                if (statusData) {
+                    drsState.m_drsAllowed = statusData.m_drsAllowed || null;
+                    drsState.m_drsActivationDistance = statusData.m_drsActivationDistance || null;
+                    // Change image to drs2.png if m_drsAllowed is 1
+                    if (drsState.m_drsAllowed === 1) {
+                        drsImage.src = '/images/speedometer/drs2.png';
+                    } else if (drsState.m_drsAllowed !== 1 && drsState.m_drs !== 1) {
+                        drsImage.src = '/images/speedometer/drs.png'; // Default if neither condition
+                    }
+                }
+            }
+
+            // Update DRS text color, default to gray unless any value is non-zero
+            const drs = drsState.m_drs === null ? 0 : drsState.m_drs;
+            const drsAllowed = drsState.m_drsAllowed === null ? 0 : drsState.m_drsAllowed;
+            const drsActivationDistance = drsState.m_drsActivationDistance === null ? 0 : drsState.m_drsActivationDistance;
+            if (drs === 0 && drsAllowed === 0 && drsActivationDistance === 0) {
+                drsLabel.style.color = 'gray';
+            } else {
+                drsLabel.style.color = 'white';
+            }
+        });
+
+        // Initial draw and DRS default color
+        drawThrottleSweep(throttleAngle);
+        drawBrakeSweep(brakeAngle);
+        drawSpeedSweep(speedAngle);
+        drsLabel.style.color = 'gray'; // Set default DRS text color to gray
+        kmhLayer.src = '/images/speedometer/KMH.png'; // Default to KMH
+        speedUnits.textContent = 'KMH'; // Default to KMH
+    </script>
+</body>
+</html>
