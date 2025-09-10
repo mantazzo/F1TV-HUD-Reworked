@@ -1,0 +1,17 @@
+{
+  "name": "f1tv-hud-reworked",
+  "version": "0.1.0",
+  "description": "F1TV HUD mod for latest Codemasters games, reworked and improved",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [],
+  "author": "Mantazzo",
+  "license": "ISC",
+  "dependencies": {
+    "@deltazeroproduction/f1-udp-parser": "^1.2.1",
+    "express": "^5.1.0",
+    "socket.io": "^4.8.1"
+  }
+}
