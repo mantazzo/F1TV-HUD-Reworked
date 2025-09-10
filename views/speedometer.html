@@ -27,7 +27,6 @@
         <img src="/images/speedometer/drs.png" alt="DRS Layer" class="drs-layer">
         <div id="drs-label" class="drs-label-layer">DRS</div>
     </div>
-    <div id="debug-text" class="debug-text"></div>
     <script>
         const socket = io();
         const throttleCanvas = document.getElementById('throttle-gauge');
@@ -47,6 +46,26 @@
         const kmhLayer = document.querySelector('.kmh-layer');
         const speedUnits = document.getElementById('speed-units');
         let isMph = false; // Default to false until Session packet is received
+
+        // Initialize DRS blink animation once
+        const drsBlinkAnimation = anime({
+            targets: drsImage,
+            opacity: [1, 0, 1], // From 100% to 0% to 100%
+            duration: 950, // Total cycle time (0.5s per transition approximated)
+            easing: 'easeInOutQuad', // Smooth transition
+            loop: true, // Continuous blink while drs2 is active
+            autoplay: false // Start paused
+        });
+
+        function playDrsBlink() {
+            drsBlinkAnimation.play();
+        }
+
+        function pauseAndResetDrsBlink() {
+            drsBlinkAnimation.pause();
+            drsBlinkAnimation.restart(); // Reset the animation cycle
+            drsImage.style.opacity = '1'; // Reset opacity to 100%
+        }
 
         function drawThrottleSweep(angle) {
             if (!throttleCtx) {
@@ -191,8 +210,10 @@
                     // Change image to drs1.png if m_drs is 1
                     if (drsState.m_drs === 1) {
                         drsImage.src = '/images/speedometer/drs1.png';
+                        pauseAndResetDrsBlink(); // Reset opacity and pause animation
                     } else if (drsState.m_drs !== 1 && drsState.m_drsAllowed !== 1) {
                         drsImage.src = '/images/speedometer/drs.png'; // Default if neither condition
+                        pauseAndResetDrsBlink(); // Reset opacity and pause animation
                     }
                     // Adjust DRS text shadow when m_drs is 1
                     if (drsState.m_drs === 1) {
@@ -209,8 +230,10 @@
                     // Change image to drs2.png if m_drsAllowed is 1
                     if (drsState.m_drsAllowed === 1) {
                         drsImage.src = '/images/speedometer/drs2.png';
+                        playDrsBlink(); // Play blink when switching to drs2
                     } else if (drsState.m_drsAllowed !== 1 && drsState.m_drs !== 1) {
                         drsImage.src = '/images/speedometer/drs.png'; // Default if neither condition
+                        pauseAndResetDrsBlink(); // Reset opacity and pause animation
                     }
                 }
             }

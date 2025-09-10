@@ -25,19 +25,19 @@ This project is worked on with Windows systems in mind - it may work correctly o
    Run `npm install` in the Terminal. This will download the required packages.
 
 6. **Start the server.**  
-   Run `node index.js` and wait for a message confirming the server is running (e.g., "Overlays at http://localhost:3000/speedometer").
+   Run `node index.js`. Enter a port when prompted and press `Enter`. By default, if you don't enter anything, it will use port 20777 (as described in parentheses). Wait for a message confirming the server is running (e.g., "Overlays at http://localhost:3000/speedometer").
 
 7. **Access the overlays.**  
    Open a browser and go to `http://localhost:3000` to see the default page, or `http://localhost:3000/speedometer` for the speedometer. Use these in tools like OBS to enhance your streams or recordings.
 
 ## Configuration
-- Ensure telemetry is enabled in F1 25 and set to port 20778 (currently fixed, with plans to make it configurable in the future).
+- Ensure telemetry is enabled in F1 25 and set to port you entered in the Terminal.
 - If the overlay doesn’t work, check the Terminal for error messages or verify telemetry settings.
 
 ## Future Improvements
 - Adding pictures and more detailed setup guides.
 - Making the port configurable at launch.
-- Setting up the rest of the overlays (Timer, Leaderboard, Driver Info, etc.)
+- Setting up the rest of the overlays (Timer, Leaderboard, Driver Info, etc).
 
 ## License & Contributions
 [Placeholder: Add license (e.g., MIT) and contribution guidelines later.]
