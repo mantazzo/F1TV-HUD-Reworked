@@ -57,7 +57,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
 // Routes
-app.get('/speedometer-new', (req, res) => res.sendFile(path.join(__dirname, 'views', 'speedometer-new.html')));
+app.get('/speedometer-new', (req, res) => res.sendFile(path.join(__dirname, 'views', 'speedometer.html')));
 app.get('/', (req, res) => res.redirect('/speedometer-new'));
 
-server.listen(3000, () => console.log('Overlays at http://localhost:3000/speedometer-new'));
+server.listen(3000, () => console.log('Overlays at http://localhost:3000/speedometer'));
