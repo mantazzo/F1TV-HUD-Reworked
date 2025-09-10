@@ -10,7 +10,7 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 
-// Define prompt schema with custom message
+// Prompt for port
 prompt.start();
 const promptSchema = {
     properties: {
@@ -60,6 +60,11 @@ prompt.get(promptSchema, (err, result) => {
         io.emit('f1_data', convertBigInt(data));
     });
 
+    // Listen for Lap Data packets (ID 2)
+    client.on(PACKETS.lapData, (data) => {
+        io.emit('f1_data', convertBigInt(data));
+    });
+
     // Error handling
     client.on('error', (err) => {
         console.error('UDP Client Error:', err);
@@ -80,6 +85,7 @@ prompt.get(promptSchema, (err, result) => {
 
     // Routes
     app.get('/speedometer', (req, res) => res.sendFile(path.join(__dirname, 'views', 'speedometer.html')));
+    app.get('/lap-timer', (req, res) => res.sendFile(path.join(__dirname, 'views', 'lap-timer.html')));
     app.get('/', (req, res) => res.redirect('/speedometer'));
 
     server.listen(3000, () => console.log('Overlays at http://localhost:3000/speedometer'));

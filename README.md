@@ -1,7 +1,7 @@
 # F1TV-HUD-Reworked
 F1TV HUD mod for latest Codemasters games, reworked and improved
 
-Originally created by MISS1LE, reworked for F1 25 by Mantazzo
+Originally created by MISS1LE, reworked for F1 25 by Mantazzo 
 Reworked with the help of AI (Grok)
 
 This project is worked on with Windows systems in mind - it may work correctly on Linux as well, but, since F1 25 is only available on Windows systems, the primary setup is for Windows.

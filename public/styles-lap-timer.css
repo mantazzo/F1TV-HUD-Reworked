@@ -1,0 +1,63 @@
+@font-face {
+    font-family: "F1TV-2022-Position";
+    src: url('/fonts/F1TV-2022-Position.ttf') format('truetype');
+}
+
+@font-face {
+    font-family: "F1TV-2022-ObliqueBold";
+    src: url('/fonts/F1TV-2022-ObliqueBold.ttf') format('truetype');
+}
+
+@font-face {
+    font-family: "F1TV-2022";
+    src: url('/fonts/F1TV-2022-Regular.ttf') format('truetype');
+}
+
+.overlay-container {
+    position: relative;
+    width: 480px;
+    height: 320px; /* 50 (driver info) + 270 (lap timer) */
+}
+
+#driver-info-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 0; /* Above background (now drawn), below text */
+}
+
+#lap-timer-canvas {
+    position: absolute;
+    top: 50px;
+    left: 0;
+    z-index: -1; /* Behind driver-info-canvas and text */
+}
+
+.lap-time-layer {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 40px;
+    color: #ffffff;
+    text-shadow: 2px 2px 4px #000000;
+}
+
+.last-lap-time-layer, .best-lap-time-layer {
+    position: absolute;
+    font-size: 20px;
+    color: #ffffff;
+    text-shadow: 1px 1px 2px #000000;
+}
+
+.last-lap-time-layer {
+    top: 60%;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.best-lap-time-layer {
+    top: 70%;
+    left: 50%;
+    transform: translateX(-50%);
+}
