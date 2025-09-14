@@ -1,46 +1,183 @@
-@font-face {
-    font-family: "F1TV-2022-Position";
-    src: url('/fonts/F1TV-2022-Position.ttf') format('truetype');
-}
-
-@font-face {
-    font-family: "F1TV-2022-ObliqueBold";
-    src: url('/fonts/F1TV-2022-ObliqueBold.ttf') format('truetype');
-}
-
-@font-face {
-    font-family: "F1TV-2022";
-    src: url('/fonts/F1TV-2022-Regular.ttf') format('truetype');
-}
+/* Move fonts to fonts.css, so no @font-face here */
 
 .overlay-container {
     position: relative;
     width: 480px;
-    height: 320px; /* 50 (driver info) + 270 (lap timer) */
+    height: 270px; /* Updated from 320px to 270px */
+    background-image: url('/images/lap-timer/PlayerIndicator.png'), url('/images/lap-timer/PlayerIndicator.png'), url('/images/lap-timer/Gradient.png');
+    background-repeat: no-repeat, no-repeat, no-repeat;
+    background-position: -1px 89px, 311px 89px, -5px 140px; /* Shifted to top: 90px (89px for alignment) */
+    background-size: 318px 52px, 318px 52px, 485px 15px;
+}
+
+.overlay-container:before {
+    content: '';
+    position: absolute;
+    top: 90px; /* Moved from 0 to 90px */
+    left: 0;
+    width: 480px;
+    height: 50px;
+    background-color: rgba(230, 230, 230, 0.6); /* 60% opacity */
+    border: 2px solid #E6E6E6FF; /* Full opacity border */
+    z-index: 0; /* Below divs */
+}
+
+#timer-background {
+    position: absolute;
+    top: 138px; /* Original position from :after */
+    left: 0px;
+    width: 480px;
+    height: 78px;
+    background-color: #12141AFF; /* Dark grayish-blue, no border */
+    z-index: 0; /* Below divs, same level as other backgrounds */
+}
+
+#sectors-background {
+    position: absolute;
+    top: 216px;
+    left: 0px;
+    width: 480px;
+    height: 38px;
+    background-color: #12141AFF; /* Dark grayish-blue, no border */
+    z-index: 0; /* Below divs, same level as other backgrounds */
+}
+
+#separator {
+    position: absolute;
+    top: 140px;
+    left: 0px;
+    width: 240px;
+    height: 74px;
+    background-color: transparent;
+    border-right: 1px solid gray; /* 1px gray right border */
+    z-index: 0; /* Below divs, same level as other backgrounds */
+}
+
+#sector-line {
+    position: absolute;
+    top: 245.5px;
+    left: 0px;
+    width: 480px;
+    height: 3px;
+    background-color: #8C8C8CFF; /* Medium gray with full opacity */
+    border: none; /* No borders */
+    z-index: 0; /* Below divs, same level as other backgrounds */
 }
 
 #driver-info-canvas {
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 0; /* Above background (now drawn), below text */
+    display: none; /* Hide canvas, replaced by divs */
 }
 
 #lap-timer-canvas {
-    position: absolute;
-    top: 50px;
-    left: 0;
-    z-index: -1; /* Behind driver-info-canvas and text */
+    display: none; /* Hide canvas for now, can revisit if needed */
 }
 
 .lap-time-layer {
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 40px;
+    top: 147px;
+    left: 65px;
+    width: 190px;
+    height: 60px;
+    font-family: "F1TV-2022-NameCondensed-BoldOblique";
+    font-size: 44px;
+    font-weight: bold;
     color: #ffffff;
+    text-align: left;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
     text-shadow: 2px 2px 4px #000000;
+    z-index: 2; /* Above rectangle */
+}
+
+.lap-time-comparison-layer {
+    position: absolute;
+    top: 150px;
+    left: 240px;
+    width: 240px;
+    height: 35px;
+    font-family: "F1TV-2022-NameCondensed-BoldOblique";
+    font-size: 29px;
+    font-weight: normal;
+    color: #ffffff;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-shadow: 2px 2px 4px #000000;
+    z-index: 2; /* Above rectangle */
+}
+
+.lap-time-comparison-name-layer {
+    position: absolute;
+    top: 183px;
+    left: 240px;
+    width: 240px;
+    height: 25px;
+    font-family: "Formula1 TV-Italic";
+    font-size: 18px;
+    font-weight: bold;
+    color: gray;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-shadow: 2px 2px 4px #000000;
+    z-index: 2; /* Above rectangle */
+}
+
+.sector1-text-layer {
+    position: absolute;
+    top: 217px;
+    left: 0px;
+    width: 160px;
+    height: 25px;
+    font-family: "F1TVnumbers";
+    font-size: 16px;
+    font-weight: bold;
+    color: gray;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-shadow: 2px 2px 4px #000000;
+    z-index: 2; /* Above rectangle */
+}
+
+.sector2-text-layer {
+    position: absolute;
+    top: 217px;
+    left: 160px;
+    width: 160px;
+    height: 25px;
+    font-family: "F1TVnumbers";
+    font-size: 16px;
+    font-weight: bold;
+    color: gray;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-shadow: 2px 2px 4px #000000;
+    z-index: 2; /* Above rectangle */
+}
+
+.sector3-text-layer {
+    position: absolute;
+    top: 217px;
+    left: 320px;
+    width: 160px;
+    height: 25px;
+    font-family: "F1TVnumbers";
+    font-size: 16px;
+    font-weight: bold;
+    color: gray;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-shadow: 2px 2px 4px #000000;
+    z-index: 2; /* Above rectangle */
 }
 
 .last-lap-time-layer, .best-lap-time-layer {
@@ -48,6 +185,8 @@
     font-size: 20px;
     color: #ffffff;
     text-shadow: 1px 1px 2px #000000;
+    z-index: 2; /* Above rectangle */
+    opacity: 0; /* Hidden by setting opacity to 0 */
 }
 
 .last-lap-time-layer {
@@ -60,4 +199,67 @@
     top: 70%;
     left: 50%;
     transform: translateX(-50%);
+}
+
+/* New styles for driver info */
+.position-layer {
+    position: absolute;
+    top: 90px; /* Moved to 90px */
+    left: 0;
+    width: 48px;
+    height: 50px;
+    font-family: "F1TV-2022-Position";
+    font-size: 26px;
+    color: #000000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    z-index: 2; /* Above rectangle */
+}
+
+.team-logo-layer {
+    position: absolute;
+    top: 85px; /* Moved to 90px - 5px */
+    left: 47.5px;
+    width: 65px;
+    height: 60px;
+    background-color: #081425FF; /* Dark blue background */
+    background-image: url('/images/team-logos/Red_Bull_Racing.png');
+    background-size: cover;
+    background-position: center;
+    z-index: 2; /* Above rectangle */
+}
+
+.driver-name-layer {
+    position: absolute;
+    top: 90px; /* Moved to 90px */
+    left: 120px;
+    width: 320px;
+    height: 50px;
+    font-family: "F1TV-2022-ObliqueBold";
+    font-size: 32px;
+    color: #000000;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    text-align: left;
+    z-index: 2; /* Above rectangle */
+}
+
+.tyre-compound-layer {
+    position: absolute;
+    top: 90px; /* Moved to 90px */
+    left: 425px;
+    width: 57px;
+    height: 52px;
+    background-color: #00000AFF;
+    font-family: "F1TV-2022";
+    font-size: 24px;
+    color: #FF0000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    z-index: 2; /* Above rectangle */
 }

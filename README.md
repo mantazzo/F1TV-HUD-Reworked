@@ -2,7 +2,8 @@
 F1TV HUD mod for latest Codemasters games, reworked and improved
 
 Originally created by MISS1LE, reworked for F1 25 by Mantazzo 
-Reworked with the help of AI (Grok)
+
+Mod is being reworked with the help of AI (Grok)
 
 This project is worked on with Windows systems in mind - it may work correctly on Linux as well, but, since F1 25 is only available on Windows systems, the primary setup is for Windows.
 
@@ -10,7 +11,7 @@ This project is worked on with Windows systems in mind - it may work correctly o
 
 1. **Install Node.js on Windows.**  
    I recommend using tools like [Nodist](https://github.com/nodists/nodist) or [NVM for Windows](https://github.com/coreybutler/nvm-windows) for easier version management.  
-   I currently used the latest LTS version (v22.19.0 at the time of writing), but most recent versions should work.
+   I currently used the latest LTS version (v22.19.0 at the time of writing) when setting up, but most recent versions should work.
 
 2. **Clone the repository or download the latest version.**  
    You can clone with `git clone https://github.com/mantazzo/F1TV-HUD-Reworked.git` or download the ZIP file [here](https://github.com/mantazzo/F1TV-HUD-Reworked/archive/refs/heads/main.zip).

@@ -1,0 +1,69 @@
+/* Formula1 Display fonts*/
+@font-face {
+    font-family: 'Formula1 Display';
+    src: url('/fonts/Formula1-Regular.woff2') format('woff2'),
+         url('/fonts/Formula1-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Formula1 Display';
+    src: url('/fonts/Formula1-Bold.woff2') format('woff2'),
+         url('/fonts/Formula1-Bold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+}
+
+/* Formula1 TV fonts*/
+@font-face {
+    font-family: 'Formula1 TV';
+    src: url('/fonts/Formula1TV-Regular.woff2') format('woff2'),
+         url('/fonts/Formula1TV-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Formula1 TV-Italic';
+    src: url('/fonts/Formula1TV-Italic.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/*F1TV-2022 fonts */
+@font-face {
+    font-family: "F1TV-2022-Position";
+    src: url('/fonts/F1TV-2022-Position.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: "F1TV-2022-ObliqueBold";
+    src: url('/fonts/F1TV-2022-ObliqueBold.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: "F1TV-2022";
+    src: url('/fonts/F1TV-2022-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: "F1TV-2022-NameCondensed-BoldOblique";
+    src: url('/fonts/F1TV-2022-NameCondensed-BoldOblique.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* Other fonts */
+@font-face {
+    font-family: "F1TVnumbers";
+    src: url('/fonts/F1TVnumbers.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}

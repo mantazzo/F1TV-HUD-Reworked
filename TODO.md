@@ -5,10 +5,12 @@
 - Speedometer
     - Fully animated and responsive
     - Includes an automatic MPH toggle
+    - ..might still require some tiny tweaks for the design
 
 ## Currently Working On
 
 - Lap Timer
+    - Basic Design done, working on small tidbits and "animating"
 
 ## Not started
 

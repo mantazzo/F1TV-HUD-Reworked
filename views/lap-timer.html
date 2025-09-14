@@ -2,106 +2,95 @@
 <html>
 <head>
     <title>F1 Lap Timer Overlay</title>
+    <link rel="stylesheet" href="/fonts.css">
     <link rel="stylesheet" href="/styles-lap-timer.css">
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
 </head>
 <body>
     <div class="overlay-container">
-        <canvas id="driver-info-canvas" width="480" height="50"></canvas>
-        <canvas id="lap-timer-canvas" width="480" height="270"></canvas>
-        <div id="lap-time" class="lap-time-layer">00:00.000</div>
+        <div class="position-layer">1</div>
+        <div class="team-logo-layer"></div>
+        <div class="driver-name-layer">VERSTAPPEN</div>
+        <div class="tyre-compound-layer">S</div>
+        <div id="timer-background"></div>
+        <div id="sectors-background"></div>
+        <div id="separator"></div>
+        <div id="lap-time" class="lap-time-layer">1:34.4</div>
         <div id="last-lap-time" class="last-lap-time-layer">Last: --:--.---</div>
         <div id="best-lap-time" class="best-lap-time-layer">Best: --:--.---</div>
+        <div id="lap-time-comparison" class="lap-time-comparison-layer">1:39.432</div>
+        <div id="lap-time-comparison-name" class="lap-time-comparison-name-layer">MAX VERSTAPPEN</div>
+        <div id="sector-line"></div>
+        <div id="sector1-text" class="sector1-text-layer">S1</div>
+        <div id="sector2-text" class="sector2-text-layer">S2</div>
+        <div id="sector3-text" class="sector3-text-layer">S3</div>
     </div>
     <script>
         const socket = io();
         const lapTimeElement = document.getElementById('lap-time');
         const lastLapTimeElement = document.getElementById('last-lap-time');
         const bestLapTimeElement = document.getElementById('best-lap-time');
-        const lapTimerCanvas = document.getElementById('lap-timer-canvas');
-        const lapTimerCtx = lapTimerCanvas.getContext('2d');
-        const driverInfoCanvas = document.getElementById('driver-info-canvas');
-        const driverInfoCtx = driverInfoCanvas.getContext('2d');
+        const lapTimeComparisonElement = document.getElementById('lap-time-comparison');
+        const lapTimeComparisonNameElement = document.getElementById('lap-time-comparison-name');
+        const sector1TextElement = document.getElementById('sector1-text');
+        const sector2TextElement = document.getElementById('sector2-text');
+        const sector3TextElement = document.getElementById('sector3-text');
+        const positionElement = document.querySelector('.position-layer');
+        const driverNameElement = document.querySelector('.driver-name-layer');
+        const tyreCompoundElement = document.querySelector('.tyre-compound-layer');
 
-        let currentLapTime = '00:00.000';
+        let currentLapTime = '1:34.4';
         let lastLapTime = '--:--.---';
         let bestLapTime = '--:--.---';
+        let lapTimeComparison = '1:39.432';
+        let lapTimeComparisonName = 'MAX VERSTAPPEN';
+        let position = '1';
+        let driverName = 'VERSTAPPEN';
+        let tyreCompound = 'S';
 
         function formatTime(milliseconds) {
-            const minutes = Math.floor(milliseconds / 60000);
-            const seconds = Math.floor((milliseconds % 60000) / 1000);
-            const ms = milliseconds % 1000;
-            return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(ms).padStart(3, '0')}`;
-        }
-
-        function drawBackground() {
-            const img = new Image();
-            img.src = '/images/lap-timer/PlayerIndicator.png';
-            const teamLogo = new Image();
-            teamLogo.src = '/images/team-logos/Red_Bull_Racing.png';
-            img.onload = teamLogo.onload = () => {
-                // Image 1: -1px Top, -1px Left, 318px Width, 52px Height
-                driverInfoCtx.drawImage(img, -1, -1, 318, 52);
-                // Image 2: -1px Top, 311px Left, 318px Width, 52px Height
-                driverInfoCtx.drawImage(img, 311, -1, 318, 52);
-                // Draw rectangle around the canvas with 60% opacity
-                driverInfoCtx.beginPath();
-                driverInfoCtx.rect(0, 0, 480, 50);
-                driverInfoCtx.lineWidth = 2;
-                driverInfoCtx.strokeStyle = '#E6E6E6FF';
-                driverInfoCtx.fillStyle = 'rgba(230, 230, 230, 0.6)';
-                driverInfoCtx.fill();
-                driverInfoCtx.stroke();
-                // Draw Position text
-                driverInfoCtx.font = '26px F1TV-2022-Position';
-                driverInfoCtx.fillStyle = '#000000'; // Black text for contrast
-                driverInfoCtx.textAlign = 'center';
-                driverInfoCtx.textBaseline = 'middle';
-                const positionText = "1";
-                const textX = 24; // Center of 48px width (48 / 2)
-                const textY = 25; // Middle of 50px height (50 / 2)
-                driverInfoCtx.fillText(positionText, textX, textY);
-                // Draw Team Logo
-                driverInfoCtx.drawImage(teamLogo, 47.5, -5, 65, 60);
-                // Draw Driver Name text
-                driverInfoCtx.font = '32px F1TV-2022-ObliqueBold';
-                driverInfoCtx.fillStyle = '#000000'; // Black text for contrast
-                driverInfoCtx.textAlign = 'left';
-                driverInfoCtx.textBaseline = 'middle';
-                const driverNameText = "VERSTAPPEN";
-                const nameTextX = 120; // Left-aligned at 120px
-                const nameTextY = 25; // Centered vertically in 50px height (50 / 2)
-                driverInfoCtx.fillText(driverNameText, nameTextX, nameTextY);
-                // Draw Tyre Compound text
-                driverInfoCtx.font = '24px F1TV-2022';
-                driverInfoCtx.fillStyle = '#FF0000'; // Red text
-                driverInfoCtx.textAlign = 'center';
-                driverInfoCtx.textBaseline = 'middle';
-                const tyreCompoundText = "S";
-                const tyreTextX = 453.5; // Center of 57px width (425 + 57 / 2)
-                const tyreTextY = 26; // Middle of 52px height (52 / 2), adjusted for canvas height
-                // Draw background rectangle for Tyre Compound
-                driverInfoCtx.fillStyle = '#00000AFF'; // Background color with 68% opacity (AF = 175/255)
-                driverInfoCtx.fillRect(425, 0, 57, 52);
-                driverInfoCtx.fillStyle = '#FF0000'; // Reset to red for text
-                driverInfoCtx.fillText(tyreCompoundText, tyreTextX, tyreTextY);
-            };
+            if (milliseconds < 10000) {
+                const seconds = Math.floor(milliseconds / 1000);
+                const ms = Math.floor(milliseconds % 1000 / 100); // One digit for milliseconds
+                return `${seconds}.${ms}`;
+            } else if (milliseconds < 60000) {
+                const seconds = Math.floor(milliseconds / 1000);
+                const ms = Math.floor(milliseconds % 1000 / 100); // One digit for milliseconds
+                return `${String(seconds).padStart(2, '0')}.${ms}`;
+            } else {
+                const minutes = Math.floor(milliseconds / 60000);
+                const seconds = Math.floor((milliseconds % 60000) / 1000);
+                const ms = Math.floor(milliseconds % 1000 / 100); // One digit for milliseconds
+                return `${minutes}:${String(seconds).padStart(2, '0')}.${ms}`;
+            }
         }
 
         function updateLapDisplay() {
             lapTimeElement.textContent = currentLapTime;
             lastLapTimeElement.textContent = `Last: ${lastLapTime}`;
             bestLapTimeElement.textContent = `Best: ${bestLapTime}`;
-            // Clear and redraw canvases
-            if (lapTimerCtx) {
-                lapTimerCtx.clearRect(0, 0, 480, 270);
-                // Add future drawing logic here
-            }
-            if (driverInfoCtx) {
-                driverInfoCtx.clearRect(0, 0, 480, 50);
-                drawBackground(); // Draw background images, rectangle, text, logo, driver name, and tyre compound
-                // Add future drawing logic here
+            lapTimeComparisonElement.textContent = lapTimeComparison;
+            lapTimeComparisonNameElement.textContent = lapTimeComparisonName;
+            sector1TextElement.textContent = 'S1';
+            sector2TextElement.textContent = 'S2';
+            sector3TextElement.textContent = 'S3';
+            positionElement.textContent = position;
+            driverNameElement.textContent = driverName;
+            tyreCompoundElement.textContent = tyreCompound;
+
+            // Adjust lap time position based on time
+            if (currentLapTime.includes(':')) {
+                const [minutes] = currentLapTime.split(':').map(Number);
+                if (minutes >= 1) {
+                    lapTimeElement.style.left = '38px'; // 60 seconds and over
+                } else {
+                    lapTimeElement.style.left = '90px'; // Default position for < 60 seconds
+                }
+            } else if (parseInt(currentLapTime) < 10) {
+                lapTimeElement.style.left = '115px'; // Less than 10 seconds
+            } else {
+                lapTimeElement.style.left = '90px'; // Default position for 10-59 seconds
             }
         }
 
@@ -129,13 +118,20 @@
                         bestLapTime = formatTime(bestLapTimeMS);
                     }
 
+                    // Placeholder for dynamic data
+                    position = lapData.m_carPosition || '1'; // Example, adjust based on data
+                    driverName = 'VERSTAPPEN'; // Replace with dynamic data later
+                    tyreCompound = 'S'; // Replace with dynamic data later
+                    // Placeholder for lap time comparison, name, and sector data
+                    // Sector data will need integration later
+
                     updateLapDisplay();
 
-                    // Flash effect on new lap (e.g., when last lap time updates)
+                    // Flash effect on new lap
                     if (lastLapTime !== '--:--.---') {
                         anime({
                             targets: lapTimeElement,
-                            color: ['#ffffff', '#00ff00', '#ffffff'], // White to red to white
+                            color: ['#ffffff', '#00ff00', '#ffffff'],
                             duration: 500,
                             easing: 'easeInOutQuad'
                         });
