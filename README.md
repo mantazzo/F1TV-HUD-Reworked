@@ -41,6 +41,7 @@ This project is worked on with Windows systems in mind - it may work correctly o
 - Setting up the rest of the overlays (Timer, Leaderboard, Driver Info, etc).
 
 ## License & Contributions
-[Placeholder: Add license (e.g., MIT) and contribution guidelines later.]
+This project is licensed under GNU GPLv3. Check the LICENSE for more info.
+Assets used are licensed under a Custom license, check out ASSETS_LICENSE.md for further information.
 
 *(This README may be updated with visuals and additional details over time.)*
