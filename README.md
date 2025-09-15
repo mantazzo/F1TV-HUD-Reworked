@@ -37,7 +37,7 @@ This project is worked on with Windows systems in mind - it may work correctly o
 
 ## Future Improvements
 - Adding pictures and more detailed setup guides.
-- Making the port configurable at launch.
+- Making the port configurable at launch (or launch through a webpage, perhaps).
 - Setting up the rest of the overlays (Timer, Leaderboard, Driver Info, etc).
 
 ## License & Contributions
