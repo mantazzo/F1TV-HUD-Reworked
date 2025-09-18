@@ -70,6 +70,16 @@ prompt.get(promptSchema, (err, result) => {
         io.emit('f1_data', convertBigInt(data));
     });
 
+    // Listen for Session History packets (ID 11)
+    client.on(PACKETS.sessionHistory, (data) => {
+        io.emit('f1_data', convertBigInt(data));
+    });
+
+    //Listen for Participants packets (ID 4)
+    client.on(PACKETS.participants, (data) => {
+        io.emit('f1_data', convertBigInt(data));
+    });
+
     // Error handling
     client.on('error', (err) => {
         console.error('UDP Client Error:', err);

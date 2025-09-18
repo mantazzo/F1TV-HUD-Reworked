@@ -49,6 +49,12 @@
         let driverName = 'VERSTAPPEN';
         let tyreCompound = 'S';
         let sessionType = 0; // Default to unknown session
+        let leaderCarIdx = -1; // Track the leader's car index
+        let targetCarIdx = -1; // Track the target car index for comparison (leader or pos 10/15/16)
+        let numActiveCars = 20; // Default to 20 cars, updated from Participants packet
+        let currentLapNum = 0; // Track current lap number
+        let playerCarIdx = -1; // Track player car index
+        let participantNames = {}; // Store participant names by index
 
         function formatTime(milliseconds) {
             if (milliseconds < 10000) {
@@ -76,7 +82,7 @@
                 const minutes = Math.floor(milliseconds / 60000);
                 const seconds = Math.floor((milliseconds % 60000) / 1000);
                 const ms = milliseconds % 1000;
-                return `${minutes}:${seconds < 10 ? seconds : String(seconds).padStart(2, '0')}.${String(ms).padStart(3, '0')}`;
+                return `${minutes}:${String(seconds).padStart(2, '0')}.${String(ms).padStart(3, '0')}`;
             }
         }
 
@@ -126,15 +132,13 @@
                         lastLapTime = formatTime(lastLapTimeMS);
                     }
 
-                    // Best lap time (assuming m_bestLapTimeInMS is available)
-                    const bestLapTimeMS = lapData.m_bestLapTimeInMS || 0;
-                    if (bestLapTimeMS > 0 && (bestLapTimeMS < (lapData.m_lastLapTimeInMS || Infinity))) {
-                        bestLapTime = formatTime(bestLapTimeMS);
-                    }
+                    // Player's position and current lap number
+                    position = lapData.m_carPosition || '1'; // Update player's position
+                    currentLapNum = lapData.m_currentLapNum || 0; // Update current lap number
+                    playerCarIdx = playerIndex; // Update player car index
+                    driverName = participantNames[playerCarIdx] || 'UNKNOWN'; // Update driver name
 
                     // Placeholder for dynamic data
-                    position = lapData.m_carPosition || '1'; // Example, adjust based on data
-                    driverName = 'VERSTAPPEN'; // Replace with dynamic data later
                     tyreCompound = 'S'; // Replace with dynamic data later
 
                     updateLapDisplay();
@@ -148,9 +152,51 @@
                             easing: 'easeInOutQuad'
                         });
                     }
+
+                    // Update leader's car index
+                    for (let i = 0; i < data.m_lapData.length; i++) {
+                        if (data.m_lapData[i].m_carPosition === 1) {
+                            leaderCarIdx = i;
+                            break;
+                        }
+                    }
+
+                    // Determine target car index based on session type and player's position
+                    targetCarIdx = leaderCarIdx; // Default to leader
+                    if ([5, 10].includes(sessionType)) { // Qualifying 1 and Sprint Shootout 1
+                        const threshold = numActiveCars === 20 ? 15 : 16;
+                        if (position > threshold) {
+                            for (let i = 0; i < data.m_lapData.length; i++) {
+                                if (data.m_lapData[i].m_carPosition === threshold) {
+                                    targetCarIdx = i;
+                                    break;
+                                }
+                            }
+                        }
+                    } else if ([6, 11].includes(sessionType)) { // Qualifying 2 and Sprint Shootout 2
+                        if (position > 10) {
+                            for (let i = 0; i < data.m_lapData.length; i++) {
+                                if (data.m_lapData[i].m_carPosition === 10) {
+                                    targetCarIdx = i;
+                                    break;
+                                }
+                            }
+                        }
+                    } else if ([15, 16, 17].includes(sessionType)) { // Race 1-3
+                        targetCarIdx = playerCarIdx; // Use player's car index for personal best
+                    }
                 }
             } else if (data.m_header.m_packetId === 1) { // Session Data Packet
-                sessionType = data.m_sessionType; // Update session type from Packet ID 1
+                sessionType = data.m_sessionType; // Update session type
+            } else if (data.m_header.m_packetId === 4) { // Participants Packet
+                numActiveCars = data.m_participants.length; // Update number of active cars
+                participantNames = {};
+                for (let i = 0; i < numActiveCars && i < data.m_participants.length; i++) {
+                    const participant = data.m_participants[i];
+                    const index = participant.m_participantIndex !== undefined ? participant.m_participantIndex : i;
+                    participantNames[index] = participant.m_name.toUpperCase();
+                }
+                updateLapDisplay(); // Update display after populating participantNames
             } else if (data.m_header.m_packetId === 14) { // Time Trial Packet
                 const playerIndex = data.m_header.m_playerCarIndex;
                 const timeTrialData = data;
@@ -169,12 +215,47 @@
                             lapTimeComparisonElement.style.display = 'none';
                             lapTimeComparisonNameElement.style.display = 'none';
                         }
-                    } else {
-                        lapTimeComparison = '1:39.432'; // Placeholder text
-                        lapTimeComparisonName = 'MAX VERSTAPPEN'; // Placeholder text
-                        lapTimeComparisonElement.style.display = 'flex';
-                        lapTimeComparisonNameElement.style.display = 'flex';
-                        updateLapDisplay();
+                    }
+                }
+            } else if (data.m_header.m_packetId === 11) { // Session History Packet
+                if ([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17].includes(sessionType)) { // Practice 1-4, Qualifying 1-3, Short Qualifying 1-2, Sprint Shootout 1-3, One-Shot Qualifying, One-Shot Sprint Shootout, Race 1-3
+                    if (data.m_carIdx === targetCarIdx && targetCarIdx !== -1) {
+                        const historyData = data.m_lapHistoryData;
+                        const bestLapNum = data.m_bestLapTimeLapNum;
+                        if (historyData && bestLapNum > 0 && bestLapNum <= historyData.length) {
+                            const bestLapTime = historyData[bestLapNum - 1].m_lapTimeInMS; // -1 because lapNum is 1-based
+                            if (bestLapTime > 0) {
+                                lapTimeComparison = formatComparisonTime(bestLapTime);
+                                if ([15, 16, 17, 18].includes(sessionType)) {
+                                    lapTimeComparisonName = (targetCarIdx === leaderCarIdx) ? 'LEADER' : 
+                                        ([5, 10].includes(sessionType) ? `POS ${numActiveCars === 20 ? 15 : 16}` : 'POS 10');
+                                    if ([15, 16, 17].includes(sessionType)) {
+                                        lapTimeComparisonName = 'PERSONAL BEST';
+                                    }
+                                } else {
+                                    lapTimeComparisonName = participantNames[targetCarIdx] || 'UNKNOWN';
+                                }
+                                if ([15, 16, 17].includes(sessionType)) {
+                                    if (currentLapNum < 3) {
+                                        lapTimeComparisonElement.style.display = 'none';
+                                        lapTimeComparisonNameElement.style.display = 'none';
+                                    } else {
+                                        lapTimeComparisonElement.style.display = 'flex';
+                                        lapTimeComparisonNameElement.style.display = 'flex';
+                                    }
+                                } else {
+                                    lapTimeComparisonElement.style.display = 'flex';
+                                    lapTimeComparisonNameElement.style.display = 'flex';
+                                }
+                            } else {
+                                lapTimeComparisonElement.style.display = 'none';
+                                lapTimeComparisonNameElement.style.display = 'none';
+                            }
+                        } else {
+                            lapTimeComparisonElement.style.display = 'none';
+                            lapTimeComparisonNameElement.style.display = 'none';
+                        }
+                        updateLapDisplay(); // Update display after processing history data
                     }
                 }
             }
