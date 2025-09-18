@@ -75,7 +75,7 @@
 .lap-time-layer {
     position: absolute;
     top: 147px;
-    left: 65px;
+    left: 65px; /* Default position, will be overridden dynamically */
     width: 190px;
     height: 60px;
     font-family: "F1TV-2022-NameCondensed-BoldOblique";
@@ -262,4 +262,20 @@
     align-items: center;
     text-align: center;
     z-index: 2; /* Above rectangle */
+}
+
+.debug-text {
+    position: absolute;
+    top: 280px;
+    left: 0;
+    width: 480px;
+    font-family: monospace;
+    font-size: 12px;
+    color: #ffffff;
+    background-color: rgba(0, 0, 0, 0.8);
+    padding: 5px;
+    word-wrap: break-word;
+    display: none;
+    opacity: 0;
+    z-index: 3;
 }

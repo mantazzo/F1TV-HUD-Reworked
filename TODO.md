@@ -12,6 +12,10 @@
 - Lap Timer
     - Basic Design done, working on small tidbits and "animating"
 
+## Next Planned Overlay
+
+- Pit Timer (should be easiest to add, I hope)
+
 ## Not started
 
 In no particular order:

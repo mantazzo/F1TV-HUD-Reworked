@@ -25,6 +25,8 @@ This project is worked on with Windows systems in mind - it may work correctly o
 5. **Install dependencies.**  
    Run `npm install` in the Terminal. This will download the required packages.
 
+   *NOTE:* At the moment, the parser has some issues with Time Trial packets. I have included a patch to fix that for the time being. After installing the dependencies, run `npx patch-package` to deploy the fix from the "patches" folder.
+
 6. **Start the server.**  
    Run `node index.js`. Enter a port when prompted and press `Enter`. By default, if you don't enter anything, it will use port 20777 (as described in parentheses). Wait for a message confirming the server is running (e.g., "Overlays at http://localhost:3000/speedometer").
 
@@ -37,11 +39,12 @@ This project is worked on with Windows systems in mind - it may work correctly o
 
 ## Future Improvements
 - Adding pictures and more detailed setup guides.
-- Making the port configurable at launch (or launch through a webpage, perhaps).
+- Easier port configuration (if possible).
 - Setting up the rest of the overlays (Timer, Leaderboard, Driver Info, etc).
 
 ## License & Contributions
-This project is licensed under GNU GPLv3. Check the LICENSE for more info.
-Assets used are licensed under a Custom license, check out ASSETS_LICENSE.md for further information.
+This project is licensed under GNU GPLv3. Check the [LICENSE](https://github.com/mantazzo/F1TV-HUD-Reworked/blob/main/LICENSE) for more info.
+
+Assets used are licensed under a Custom license, check out [ASSETS_LICENSE.md](https://github.com/mantazzo/F1TV-HUD-Reworked/blob/main/ASSETS_LICENSE.md) for further information.
 
 *(This README may be updated with visuals and additional details over time.)*

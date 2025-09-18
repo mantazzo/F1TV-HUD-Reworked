@@ -1,0 +1,44 @@
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketTimeTrialDataParser.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketTimeTrialDataParser.js
+index 5ed7827..88c2d60 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketTimeTrialDataParser.js
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketTimeTrialDataParser.js
+@@ -12,13 +12,13 @@ class PacketTimeTrialDataParser extends F1Parser_1.F1Parser {
+             type: new PacketHeaderParser_1.PacketHeaderParser(packetFormat),
+         });
+         this.nest('m_playerSessionBestDataSet', {
+-            type: new TimeTrialDataSetParser_1.TimeTrialDataSetParser(),
++            type: new TimeTrialDataSetParser_1.TimeTrialDataSetParser(packetFormat),
+         });
+         this.nest('m_personalBestDataSet', {
+-            type: new TimeTrialDataSetParser_1.TimeTrialDataSetParser(),
++            type: new TimeTrialDataSetParser_1.TimeTrialDataSetParser(packetFormat),
+         });
+         this.nest('m_rivalDataSet', {
+-            type: new TimeTrialDataSetParser_1.TimeTrialDataSetParser(),
++            type: new TimeTrialDataSetParser_1.TimeTrialDataSetParser(packetFormat),
+         });
+         this.data = this.fromBuffer(buffer);
+     }
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/TimeTrialDataSetParser.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/TimeTrialDataSetParser.js
+index dcfa10d..926ab3b 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/TimeTrialDataSetParser.js
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/TimeTrialDataSetParser.js
+@@ -3,12 +3,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
+ exports.TimeTrialDataSetParser = void 0;
+ const F1Parser_1 = require("../F1Parser");
+ class TimeTrialDataSetParser extends F1Parser_1.F1Parser {
+-    constructor() {
++    constructor(packetFormat) {
+         super();
+         this.endianess('little')
+             .uint8('m_carIdx')
+-            .uint8('m_teamId')
+-            .uint32('m_sector1TimeInMS')
++            .uint8('m_teamId');
++        if (packetFormat === 2025) {
++            this.uint32('m_lapTimeInMS');
++        }
++        this.uint32('m_sector1TimeInMS')
+             .uint32('m_sector2TimeInMS')
+             .uint32('m_sector3TimeInMS')
+             .uint8('m_tractionControl')

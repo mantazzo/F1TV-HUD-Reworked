@@ -55,13 +55,18 @@ prompt.get(promptSchema, (err, result) => {
         io.emit('f1_data', convertBigInt(data));
     });
 
-    // Listen for Car Status packets (ID 7) for DRS data
+    // Listen for Car Status packets (ID 7)
     client.on(PACKETS.carStatus, (data) => {
         io.emit('f1_data', convertBigInt(data));
     });
 
     // Listen for Lap Data packets (ID 2)
     client.on(PACKETS.lapData, (data) => {
+        io.emit('f1_data', convertBigInt(data));
+    });
+
+    // Listen for Time Trial packets (ID 14)
+    client.on(PACKETS.timeTrial, (data) => {
         io.emit('f1_data', convertBigInt(data));
     });
 
