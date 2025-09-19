@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "Platform_Name",
+    "RaceNumber": 1,
+    "DisplayName": "Display Name",
+    "Abbreviation": "DNA"
+  },
+  {
+    "Name": "MSchumacher",
+    "RaceNumber": 47,
+    "Team": "Haas",
+    "DisplayName": "Mick Schumacher",
+    "Abbreviation": "MSC"
+  }
+]
