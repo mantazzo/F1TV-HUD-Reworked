@@ -33,6 +33,7 @@
         const bestLapTimeElement = document.getElementById('best-lap-time');
         const lapTimeComparisonElement = document.getElementById('lap-time-comparison');
         const lapTimeComparisonNameElement = document.getElementById('lap-time-comparison-name');
+        const separatorElement = document.getElementById('separator');
         const sector1TextElement = document.getElementById('sector1-text');
         const sector2TextElement = document.getElementById('sector2-text');
         const sector3TextElement = document.getElementById('sector3-text');
@@ -42,26 +43,26 @@
         const teamLogoElement = document.querySelector('.team-logo-layer');
 
         let currentLapTime = '1:34.4';
-        let lastLapTime = '--:--.-';
+        let lastLapTime = '1:36.426';
         let bestLapTime = '--:--.-';
         let lapTimeComparison = '1:39.432';
         let lapTimeComparisonName = 'MAX VERSTAPPEN';
         let position = '1';
         let driverName = 'VERSTAPPEN';
         let tyreCompound = 'S';
-        let sessionType = 0; // Default to unknown session
-        let formulaType = 0; // Default to F1 modern (0), 2 for F2
-        let leaderCarIdx = -1; // Track the leader's car index
-        let targetCarIdx = -1; // Track the target car index for comparison (leader or pos 10/15/16)
-        let numActiveCars = 20; // Default to 20 cars, updated from Participants packet
-        let currentLapNum = 0; // Track current lap number
-        let playerCarIdx = -1; // Track player car index
-        let participantNames = {}; // Store participant names by index
-        let teamNames = {}; // Store team ID to name mapping
-        let customDrivers = []; // Store all custom driver data
-        let aiDrivers = {}; // Store AI driver data by m_driverId
+        let sessionType = 0;
+        let formulaType = 0;
+        let leaderCarIdx = -1;
+        let targetCarIdx = -1;
+        let numActiveCars = 20;
+        let currentLapNum = 0;
+        let playerCarIdx = -1;
+        let participantNames = {};
+        let teamNames = {};
+        let customDrivers = [];
+        let aiDrivers = {};
+        let prevLastLapTimeMS = -1;
 
-        // Load JSON files based on formulaType
         async function loadJsonFiles() {
             try {
                 const promises = [
@@ -82,18 +83,16 @@
                 }
             } catch (error) {
                 console.error('Error loading JSON files:', error);
-                customDrivers = []; // Ensure customDrivers is an empty array on failure
+                customDrivers = [];
             }
         }
 
-        // Get abbreviation from DisplayName (first three letters of last word)
         function getAbbreviation(displayName) {
             const words = displayName.split(' ');
             const lastWord = words[words.length - 1];
             return lastWord.slice(0, 3).toUpperCase();
         }
 
-        // Match custom driver data for human players (m_driverId == 255)
         function matchCustomDriver(participant) {
             const raceNumber = participant.m_raceNumber;
             const name = participant.m_name;
@@ -101,24 +100,19 @@
             const team = teamNames[teamId] ? teamNames[teamId].ShortName : `Team_${teamId}`;
 
             for (let driver of customDrivers) {
-                // Priority 1: Match by Name
                 if (driver.Name && driver.Name.toUpperCase() === name.toUpperCase()) {
                     return { displayName: driver.DisplayName, abbreviation: driver.Abbreviation || getAbbreviation(driver.DisplayName) };
                 }
-                // Priority 2: Match by RaceNumber and Team
                 if (driver.RaceNumber && driver.Team && driver.RaceNumber === raceNumber && driver.Team === team) {
                     return { displayName: driver.DisplayName, abbreviation: driver.Abbreviation || getAbbreviation(driver.DisplayName) };
                 }
-                // Priority 3: Match by RaceNumber
                 if (driver.RaceNumber && driver.RaceNumber === raceNumber) {
                     return { displayName: driver.DisplayName, abbreviation: driver.Abbreviation || getAbbreviation(driver.DisplayName) };
                 }
             }
-            // Fallback: Team + Number
             return { displayName: `${team} #${raceNumber}`, abbreviation: getAbbreviation(`${team} #${raceNumber}`) };
         }
 
-        // Function to get name part after first word
         function getLastName(displayName) {
             const words = displayName.split(' ');
             return words.length > 1 ? words.slice(1).join(' ') : displayName;
@@ -156,7 +150,7 @@
 
         function updateLapDisplay() {
             lapTimeElement.textContent = currentLapTime;
-            lastLapTimeElement.textContent = `Last: ${lastLapTime}`;
+            lastLapTimeElement.textContent = lastLapTime;
             bestLapTimeElement.textContent = `Best: ${bestLapTime}`;
             lapTimeComparisonElement.textContent = lapTimeComparison;
             lapTimeComparisonNameElement.textContent = lapTimeComparisonName.toUpperCase();
@@ -185,18 +179,17 @@
             const teamData = teamNames[teamId] || { Logo: 'red_bull_racing.png' };
             const logoPath = `/images/team-logos/${teamData.Logo}`;
             teamLogoElement.style.backgroundImage = `url(${logoPath})`;
-            // Fallback to red_bull_racing.png if logo fails to load
             const img = new Image();
             img.onerror = () => teamLogoElement.style.backgroundImage = `url(/images/team-logos/red_bull_racing.png)`;
             img.src = logoPath;
         }
 
         socket.on('f1_data', (data) => {
-            if (data.m_header.m_packetId === 1) { // Session Data Packet
+            if (data.m_header.m_packetId === 1) {
                 sessionType = data.m_sessionType;
                 formulaType = data.m_formula;
                 if (!customDrivers.length) loadJsonFiles();
-            } else if (data.m_header.m_packetId === 2) { // Lap Data Packet
+            } else if (data.m_header.m_packetId === 2) {
                 const playerIndex = data.m_header.m_playerCarIndex;
                 const lapData = data.m_lapData[playerIndex];
 
@@ -205,58 +198,67 @@
                     if (newLapTime > 0) currentLapTime = formatTime(newLapTime);
 
                     const lastLapTimeMS = lapData.m_lastLapTimeInMS;
-                    if (lastLapTimeMS > 0) lastLapTime = formatTime(lastLapTimeMS);
+                    if (lastLapTimeMS > 0) {
+                        lastLapTime = formatComparisonTime(lastLapTimeMS);
+                        const newCurrentLapNum = lapData.m_currentLapNum || 0;
+                        if ((lastLapTimeMS !== prevLastLapTimeMS || newCurrentLapNum !== currentLapNum) && newLapTime > 2000) {
+                            // Update variables before animation
+                            prevLastLapTimeMS = lastLapTimeMS;
+                            currentLapNum = newCurrentLapNum;
+                            // Reset states
+                            lastLapTimeElement.style.top = `${parseInt(getComputedStyle(lastLapTimeElement).top) || 57}px`;
+                            lastLapTimeElement.style.opacity = '0';
+                            [lapTimeComparisonElement, lapTimeComparisonNameElement, separatorElement, lapTimeElement].forEach(el => {
+                                el.style.top = `${parseInt(getComputedStyle(el).top) || 0}px`;
+                                el.style.opacity = '1';
+                            });
+                            // Animate lastLapTime down by 80px
+                            anime.timeline({
+                                easing: 'easeInOutQuad'
+                            })
+                            .add({
+                                targets: lastLapTimeElement,
+                                top: function(el) { return (parseInt(getComputedStyle(el).top) || 57) + 80 + 'px'; },
+                                opacity: 1,
+                                duration: 333
+                            });
+                            // Animate four elements up by 100px with fading opacity
+                            anime({
+                                targets: [lapTimeComparisonElement, lapTimeComparisonNameElement, separatorElement, lapTimeElement],
+                                top: function(el) { return (parseInt(getComputedStyle(el).top) || 0) - 100 + 'px'; },
+                                opacity: 0,
+                                duration: 333,
+                                easing: 'easeInOutQuad'
+                            });
+                            // Reverse animations after 5667ms
+                            setTimeout(() => {
+                                anime({
+                                    targets: lastLapTimeElement,
+                                    top: function(el) { return (parseInt(getComputedStyle(el).top) || 137) - 80 + 'px'; },
+                                    opacity: 0,
+                                    duration: 333,
+                                    easing: 'easeInOutQuad'
+                                });
+                                anime({
+                                    targets: [lapTimeComparisonElement, lapTimeComparisonNameElement, separatorElement, lapTimeElement],
+                                    top: function(el) { return (parseInt(getComputedStyle(el).top) || -100) + 100 + 'px'; },
+                                    opacity: 1,
+                                    duration: 333,
+                                    easing: 'easeInOutQuad'
+                                });
+                            }, 5667); // 6-second total cycle
+                        }
+                    }
 
                     position = lapData.m_carPosition || '1';
-                    currentLapNum = lapData.m_currentLapNum || 0;
                     playerCarIdx = playerIndex;
-                    driverName = getLastName(participantNames[playerCarIdx] || 'UNKNOWN'); // Apply last name logic
+                    driverName = getLastName(participantNames[playerCarIdx] || 'UNKNOWN');
 
                     tyreCompound = 'S';
 
                     updateLapDisplay();
-
-                    if (lastLapTime !== '--:--.-') {
-                        anime({
-                            targets: lapTimeElement,
-                            color: ['#ffffff', '#00ff00', '#ffffff'],
-                            duration: 500,
-                            easing: 'easeInOutQuad'
-                        });
-                    }
-
-                    for (let i = 0; i < data.m_lapData.length; i++) {
-                        if (data.m_lapData[i].m_carPosition === 1) {
-                            leaderCarIdx = i;
-                            break;
-                        }
-                    }
-
-                    targetCarIdx = leaderCarIdx;
-                    if ([5, 10].includes(sessionType)) {
-                        const threshold = numActiveCars === 20 ? 15 : 16;
-                        if (position > threshold) {
-                            for (let i = 0; i < data.m_lapData.length; i++) {
-                                if (data.m_lapData[i].m_carPosition === threshold) {
-                                    targetCarIdx = i;
-                                    break;
-                                }
-                            }
-                        }
-                    } else if ([6, 11].includes(sessionType)) {
-                        if (position > 10) {
-                            for (let i = 0; i < data.m_lapData.length; i++) {
-                                if (data.m_lapData[i].m_carPosition === 10) {
-                                    targetCarIdx = i;
-                                    break;
-                                }
-                            }
-                        }
-                    } else if ([15, 16, 17].includes(sessionType)) {
-                        targetCarIdx = playerCarIdx;
-                    }
                 }
-            } else if (data.m_header.m_packetId === 4) { // Participants Packet
+            } else if (data.m_header.m_packetId === 4) {
                 numActiveCars = data.m_participants.length;
                 participantNames = {};
                 for (let i = 0; i < numActiveCars && i < data.m_participants.length; i++) {
@@ -264,19 +266,16 @@
                     const index = participant.m_participantIndex !== undefined ? participant.m_participantIndex : i;
                     const driverId = participant.m_driverId;
                     if (driverId === 255) {
-                        // Human player - use custom driver matching
                         const customMatch = matchCustomDriver(participant);
-                        participantNames[index] = getLastName(customMatch.displayName); // Apply last name logic
+                        participantNames[index] = getLastName(customMatch.displayName);
                     } else {
-                        // AI driver - use DefaultAIDrivers.json
                         const aiDriver = aiDrivers[driverId];
-                        participantNames[index] = getLastName(aiDriver ? aiDriver.DisplayName : 'UNKNOWN_AI'); // Apply last name logic
+                        participantNames[index] = getLastName(aiDriver ? aiDriver.DisplayName : 'UNKNOWN_AI');
                     }
-                    // Update team logo for the current player
                     if (i === playerCarIdx) updateTeamLogo(participant.m_teamId);
                 }
                 updateLapDisplay();
-            } else if (data.m_header.m_packetId === 14) { // Time Trial Packet
+            } else if (data.m_header.m_packetId === 14) {
                 const playerIndex = data.m_header.m_playerCarIndex;
                 const timeTrialData = data;
 
@@ -284,7 +283,7 @@
                     const personalBestTime = timeTrialData.m_personalBestDataSet.m_lapTimeInMS;
                     if (personalBestTime != null && personalBestTime > 0) {
                         lapTimeComparison = formatComparisonTime(personalBestTime);
-                        lapTimeComparisonName = getLastName('PERSONAL BEST'); // Apply last name logic
+                        lapTimeComparisonName = getLastName('PERSONAL BEST');
                         lapTimeComparisonElement.style.display = 'flex';
                         lapTimeComparisonNameElement.style.display = 'flex';
                         updateLapDisplay();
@@ -293,7 +292,7 @@
                         lapTimeComparisonNameElement.style.display = 'none';
                     }
                 }
-            } else if (data.m_header.m_packetId === 11) { // Session History Packet
+            } else if (data.m_header.m_packetId === 11) {
                 if ([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17].includes(sessionType)) {
                     if (data.m_carIdx === targetCarIdx && targetCarIdx !== -1) {
                         const historyData = data.m_lapHistoryData;
@@ -337,7 +336,6 @@
             }
         });
 
-        // Initial display
         updateLapDisplay();
         loadJsonFiles();
     </script>

@@ -50,7 +50,7 @@
     height: 74px;
     background-color: transparent;
     border-right: 1px solid gray; /* 1px gray right border */
-    z-index: 0; /* Below divs, same level as other backgrounds */
+    z-index: 1; /* Below divs, same level as other backgrounds */
 }
 
 #sector-line {
@@ -62,14 +62,6 @@
     background-color: #8C8C8CFF; /* Medium gray with full opacity */
     border: none; /* No borders */
     z-index: 0; /* Below divs, same level as other backgrounds */
-}
-
-#driver-info-canvas {
-    display: none; /* Hide canvas, replaced by divs */
-}
-
-#lap-timer-canvas {
-    display: none; /* Hide canvas for now, can revisit if needed */
 }
 
 .lap-time-layer {
@@ -180,19 +172,21 @@
     z-index: 2; /* Above rectangle */
 }
 
-.last-lap-time-layer, .best-lap-time-layer {
-    position: absolute;
-    font-size: 20px;
-    color: #ffffff;
-    text-shadow: 1px 1px 2px #000000;
-    z-index: 2; /* Above rectangle */
-    opacity: 0; /* Hidden by setting opacity to 0 */
-}
-
 .last-lap-time-layer {
-    top: 60%;
-    left: 50%;
-    transform: translateX(-50%);
+    position: absolute;
+    top: 57px;
+    left: 0px;
+    width: 480px;
+    height: 80px;
+    font-family: "F1TV-2022-NameCondensed-BoldOblique";
+    font-size: 44px;
+    color: #ffffff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    z-index: 3; /* Above other elements */
+    opacity: 0; /* Initially hidden */
 }
 
 .best-lap-time-layer {
