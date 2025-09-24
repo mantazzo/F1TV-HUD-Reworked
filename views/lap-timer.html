@@ -160,6 +160,30 @@
             positionElement.textContent = position;
             driverNameElement.textContent = driverName.toUpperCase();
             tyreCompoundElement.textContent = tyreCompound;
+            // Apply color based on tyre compound
+            switch (tyreCompound) {
+                case 'S':
+                    tyreCompoundElement.style.color = '#FF0000'; // Soft
+                    break;
+                case 'M':
+                    tyreCompoundElement.style.color = '#FFFF00'; // Medium
+                    break;
+                case 'H':
+                    tyreCompoundElement.style.color = '#FFFFFF'; // Hard
+                    break;
+                case 'I':
+                    tyreCompoundElement.style.color = '#00FF00'; // Intermediate
+                    break;
+                case 'W':
+                    tyreCompoundElement.style.color = '#018dd2'; // Wet
+                    break;
+                case 'SS':
+                    tyreCompoundElement.style.color = '#800080'; // Supersoft
+                    break;
+                default:
+                    tyreCompoundElement.textContent = '?';
+                    tyreCompoundElement.style.color = '#808080'; // Unknown
+            }
 
             if (currentLapTime.includes(':')) {
                 const [minutes] = currentLapTime.split(':').map(Number);
@@ -254,9 +278,47 @@
                     playerCarIdx = playerIndex;
                     driverName = getLastName(participantNames[playerCarIdx] || 'UNKNOWN');
 
-                    tyreCompound = 'S';
-
                     updateLapDisplay();
+
+                    if (lastLapTime !== '--:--.-') {
+                        anime({
+                            targets: lapTimeElement,
+                            color: ['#ffffff', '#00ff00', '#ffffff'],
+                            duration: 500,
+                            easing: 'easeInOutQuad'
+                        });
+                    }
+
+                    for (let i = 0; i < data.m_lapData.length; i++) {
+                        if (data.m_lapData[i].m_carPosition === 1) {
+                            leaderCarIdx = i;
+                            break;
+                        }
+                    }
+
+                    targetCarIdx = leaderCarIdx;
+                    if ([5, 10].includes(sessionType)) {
+                        const threshold = numActiveCars === 20 ? 15 : 16;
+                        if (position > threshold) {
+                            for (let i = 0; i < data.m_lapData.length; i++) {
+                                if (data.m_lapData[i].m_carPosition === threshold) {
+                                    targetCarIdx = i;
+                                    break;
+                                }
+                            }
+                        }
+                    } else if ([6, 11].includes(sessionType)) {
+                        if (position > 10) {
+                            for (let i = 0; i < data.m_lapData.length; i++) {
+                                if (data.m_lapData[i].m_carPosition === 10) {
+                                    targetCarIdx = i;
+                                    break;
+                                }
+                            }
+                        }
+                    } else if ([15, 16, 17].includes(sessionType)) {
+                        targetCarIdx = playerCarIdx;
+                    }
                 }
             } else if (data.m_header.m_packetId === 4) {
                 numActiveCars = data.m_participants.length;
@@ -275,6 +337,47 @@
                     if (i === playerCarIdx) updateTeamLogo(participant.m_teamId);
                 }
                 updateLapDisplay();
+            } else if (data.m_header.m_packetId === 7) {
+                const playerIndex = data.m_header.m_playerCarIndex;
+                const carStatus = data.m_carStatusData[playerIndex];
+                if (carStatus) {
+                    const visualTyreCompound = carStatus.m_visualTyreCompound;
+                    switch (visualTyreCompound) {
+                        case 16: // F1 Soft
+                            tyreCompound = 'S';
+                            break;
+                        case 17: // F1 Medium
+                            tyreCompound = 'M';
+                            break;
+                        case 18: // F1 Hard
+                            tyreCompound = 'H';
+                            break;
+                        case 7: // F1 Intermediate
+                            tyreCompound = 'I';
+                            break;
+                        case 8: // F1 Wet
+                            tyreCompound = 'W';
+                            break;
+                        case 19: // F2 Supersoft
+                            tyreCompound = 'SS';
+                            break;
+                        case 20: // F2 Soft
+                            tyreCompound = 'S';
+                            break;
+                        case 21: // F2 Medium
+                            tyreCompound = 'M';
+                            break;
+                        case 22: // F2 Hard
+                            tyreCompound = 'H';
+                            break;
+                        case 15: // F2 Wet
+                            tyreCompound = 'W';
+                            break;
+                        default:
+                            tyreCompound = '?';
+                    }
+                    updateLapDisplay();
+                }
             } else if (data.m_header.m_packetId === 14) {
                 const playerIndex = data.m_header.m_playerCarIndex;
                 const timeTrialData = data;
