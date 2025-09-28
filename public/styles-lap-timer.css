@@ -258,6 +258,58 @@
     z-index: 2; /* Above rectangle */
 }
 
+.sector-display-layer#sector1-delta {
+    position: absolute;
+    top: 148px;
+    left: -5px;
+    width: 245px;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 44px;
+    font-weight: bold;
+    font-family: "F1TV-2022-NameCondensed-BoldOblique";
+    color: #ffffff;
+    z-index: 3; /* Above other elements */
+    opacity: 0; /* Initially hidden */
+}
+
+.sector-display-layer#sector2-delta {
+    position: absolute;
+    top: 148px;
+    left: -5px;
+    width: 245px;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 44px;
+    font-weight: bold;
+    font-family: "F1TV-2022-NameCondensed-BoldOblique";
+    color: #ffffff;
+    z-index: 3; /* Above other elements */
+    opacity: 0; /* Initially hidden */
+}
+
+.sector-display-layer#last-lap-delta {
+    position: absolute;
+    top: 148px;
+    left: -5px;
+    width: 245px;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 44px;
+    font-weight: bold;
+    font-family: "F1TV-2022-NameCondensed-BoldOblique";
+    color: #ffffff;
+    z-index: 3; /* Above other elements */
+    opacity: 0; /* Initially hidden */
+}
+
+
 .debug-text {
     position: absolute;
     top: 280px;

@@ -13,6 +13,9 @@
         <div class="team-logo-layer"></div>
         <div class="driver-name-layer">VERSTAPPEN</div>
         <div class="tyre-compound-layer">S</div>
+        <div id="sector1-delta" class="sector-display-layer">27.8</div>
+        <div id="sector2-delta" class="sector-display-layer">1:02.6</div>
+        <div id="last-lap-delta" class="sector-display-layer">--:--.-</div>
         <div id="timer-background"></div>
         <div id="sectors-background"></div>
         <div id="separator"></div>
@@ -41,6 +44,9 @@
         const driverNameElement = document.querySelector('.driver-name-layer');
         const tyreCompoundElement = document.querySelector('.tyre-compound-layer');
         const teamLogoElement = document.querySelector('.team-logo-layer');
+        const sector1DeltaElement = document.getElementById('sector1-delta');
+        const sector2DeltaElement = document.getElementById('sector2-delta');
+        const lastLapDeltaElement = document.getElementById('last-lap-delta');
 
         let currentLapTime = '1:34.4';
         let lastLapTime = '1:36.426';
@@ -62,6 +68,12 @@
         let customDrivers = [];
         let aiDrivers = {};
         let prevLastLapTimeMS = -1;
+        let refSector1TimeMS = -1;
+        let refSector2TimeMS = -1;
+        let refLastLapTimeMS = -1;
+        let prevSector1TimeMS = -1;
+        let prevSector2TimeMS = -1;
+        let canUpdateReference = true; // Flag to control reference updates
 
         async function loadJsonFiles() {
             try {
@@ -136,7 +148,7 @@
         }
 
         function formatComparisonTime(milliseconds) {
-            if (milliseconds < 10000) {
+            if (milliseconds < 60000) {
                 const seconds = Math.floor(milliseconds / 1000);
                 const ms = milliseconds % 1000;
                 return `${seconds}.${String(ms).padStart(3, '0')}`;
@@ -146,6 +158,14 @@
                 const ms = milliseconds % 1000;
                 return `${minutes}:${String(seconds).padStart(2, '0')}.${String(ms).padStart(3, '0')}`;
             }
+        }
+
+        function calculateSectorTime(minutesPart, msPart) {
+            return minutesPart * 60000 + msPart;
+        }
+
+        function calculateCombinedSectorTime(s1MinutesPart, s1MsPart, s2MinutesPart, s2MsPart) {
+            return calculateSectorTime(s1MinutesPart, s1MsPart) + calculateSectorTime(s2MinutesPart, s2MsPart);
         }
 
         function updateLapDisplay() {
@@ -226,17 +246,14 @@
                         lastLapTime = formatComparisonTime(lastLapTimeMS);
                         const newCurrentLapNum = lapData.m_currentLapNum || 0;
                         if ((lastLapTimeMS !== prevLastLapTimeMS || newCurrentLapNum !== currentLapNum) && newLapTime > 2000) {
-                            // Update variables before animation
                             prevLastLapTimeMS = lastLapTimeMS;
                             currentLapNum = newCurrentLapNum;
-                            // Reset states
                             lastLapTimeElement.style.top = `${parseInt(getComputedStyle(lastLapTimeElement).top) || 57}px`;
                             lastLapTimeElement.style.opacity = '0';
                             [lapTimeComparisonElement, lapTimeComparisonNameElement, separatorElement, lapTimeElement].forEach(el => {
                                 el.style.top = `${parseInt(getComputedStyle(el).top) || 0}px`;
                                 el.style.opacity = '1';
                             });
-                            // Animate lastLapTime down by 80px
                             anime.timeline({
                                 easing: 'easeInOutQuad'
                             })
@@ -246,7 +263,6 @@
                                 opacity: 1,
                                 duration: 333
                             });
-                            // Animate four elements up by 100px with fading opacity
                             anime({
                                 targets: [lapTimeComparisonElement, lapTimeComparisonNameElement, separatorElement, lapTimeElement],
                                 top: function(el) { return (parseInt(getComputedStyle(el).top) || 0) - 100 + 'px'; },
@@ -254,7 +270,6 @@
                                 duration: 333,
                                 easing: 'easeInOutQuad'
                             });
-                            // Reverse animations after 5667ms
                             setTimeout(() => {
                                 anime({
                                     targets: lastLapTimeElement,
@@ -270,7 +285,29 @@
                                     duration: 333,
                                     easing: 'easeInOutQuad'
                                 });
-                            }, 5667); // 6-second total cycle
+                            }, 5667);
+                        }
+
+                        // Last Lap Delta logic with flag to prevent updates
+                        if ((lastLapTimeMS !== prevLastLapTimeMS || newCurrentLapNum !== currentLapNum) && newCurrentLapNum > 1) {
+                            lapTimeElement.style.opacity = '0';
+                            lastLapDeltaElement.style.opacity = '1';
+                            canUpdateReference = false; // Lock reference updates
+                            const delta = lastLapTimeMS - refLastLapTimeMS;
+                            if (sessionType === 18 && refLastLapTimeMS > 0) {
+                                lastLapDeltaElement.textContent = `${delta >= 0 ? '+' : '-'}${formatComparisonTime(Math.abs(delta))}`;
+                                lastLapDeltaElement.style.color = delta >= 0 ? '#FDD30A' : 'lime';
+                            } else if ([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17].includes(sessionType) && refLastLapTimeMS > 0) {
+                                lastLapDeltaElement.textContent = `${delta >= 0 ? '+' : '-'}${formatComparisonTime(Math.abs(delta))}`;
+                                lastLapDeltaElement.style.color = delta >= 0 ? '#FDD30A' : 'lime';
+                            } else {
+                                lastLapDeltaElement.textContent = formatComparisonTime(lastLapTimeMS);
+                                lastLapDeltaElement.style.color = '#ffffff';
+                            }
+                            setTimeout(() => {
+                                lastLapDeltaElement.style.opacity = '0';
+                                canUpdateReference = true; // Re-enable updates after 2 seconds
+                            }, 2000);
                         }
                     }
 
@@ -278,24 +315,13 @@
                     playerCarIdx = playerIndex;
                     driverName = getLastName(participantNames[playerCarIdx] || 'UNKNOWN');
 
-                    updateLapDisplay();
-
-                    if (lastLapTime !== '--:--.-') {
-                        anime({
-                            targets: lapTimeElement,
-                            color: ['#ffffff', '#00ff00', '#ffffff'],
-                            duration: 500,
-                            easing: 'easeInOutQuad'
-                        });
-                    }
-
+                    // Restore missing targetCarIdx logic
                     for (let i = 0; i < data.m_lapData.length; i++) {
                         if (data.m_lapData[i].m_carPosition === 1) {
                             leaderCarIdx = i;
                             break;
                         }
                     }
-
                     targetCarIdx = leaderCarIdx;
                     if ([5, 10].includes(sessionType)) {
                         const threshold = numActiveCars === 20 ? 15 : 16;
@@ -319,6 +345,66 @@
                     } else if ([15, 16, 17].includes(sessionType)) {
                         targetCarIdx = playerCarIdx;
                     }
+
+                    if (lastLapTime !== '--:--.-') {
+                        anime({
+                            targets: lapTimeElement,
+                            color: ['#ffffff', '#00ff00', '#ffffff'],
+                            duration: 500,
+                            easing: 'easeInOutQuad'
+                        });
+                    }
+
+                    // Sector 1 delta logic with display mechanics
+                    const sector1TimeMS = calculateSectorTime(lapData.m_sector1TimeMinutesPart, lapData.m_sector1TimeMSPart);
+                    if (sector1TimeMS > 0 && sector1TimeMS !== prevSector1TimeMS) {
+                        prevSector1TimeMS = sector1TimeMS;
+                        lapTimeElement.style.opacity = '0';
+                        sector1DeltaElement.style.opacity = '1';
+                        if (sessionType === 18 && refSector1TimeMS > 0) {
+                            const delta = sector1TimeMS - refSector1TimeMS;
+                            sector1DeltaElement.textContent = `${delta >= 0 ? '+' : '-'}${formatComparisonTime(Math.abs(delta))}`;
+                            sector1DeltaElement.style.color = delta >= 0 ? '#FDD30A' : 'lime';
+                        } else if ([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17].includes(sessionType) && refSector1TimeMS > 0) {
+                            const delta = sector1TimeMS - refSector1TimeMS;
+                            sector1DeltaElement.textContent = `${delta >= 0 ? '+' : '-'}${formatComparisonTime(Math.abs(delta))}`;
+                            sector1DeltaElement.style.color = delta >= 0 ? '#FDD30A' : 'lime';
+                        } else {
+                            sector1DeltaElement.textContent = formatComparisonTime(sector1TimeMS);
+                            sector1DeltaElement.style.color = '#ffffff';
+                        }
+                        setTimeout(() => {
+                            sector1DeltaElement.style.opacity = '0';
+                            lapTimeElement.style.opacity = '1';
+                        }, 4000);
+                    }
+
+                    // Sector 2 delta logic with display mechanics
+                    const sector2TimeMS = calculateSectorTime(lapData.m_sector2TimeMinutesPart, lapData.m_sector2TimeMSPart);
+                    const combinedTimeMS = calculateCombinedSectorTime(lapData.m_sector1TimeMinutesPart, lapData.m_sector1TimeMSPart, lapData.m_sector2TimeMinutesPart, lapData.m_sector2TimeMSPart);
+                    if (sector2TimeMS > 0 && combinedTimeMS !== prevSector2TimeMS) {
+                        prevSector2TimeMS = combinedTimeMS;
+                        lapTimeElement.style.opacity = '0';
+                        sector2DeltaElement.style.opacity = '1';
+                        if (sessionType === 18 && refSector2TimeMS > 0) {
+                            const delta = combinedTimeMS - refSector2TimeMS;
+                            sector2DeltaElement.textContent = `${delta >= 0 ? '+' : '-'}${formatComparisonTime(Math.abs(delta))}`;
+                            sector2DeltaElement.style.color = delta >= 0 ? '#FDD30A' : 'lime';
+                        } else if ([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17].includes(sessionType) && refSector2TimeMS > 0) {
+                            const delta = combinedTimeMS - refSector2TimeMS;
+                            sector2DeltaElement.textContent = `${delta >= 0 ? '+' : '-'}${formatComparisonTime(Math.abs(delta))}`;
+                            sector2DeltaElement.style.color = delta >= 0 ? '#FDD30A' : 'lime';
+                        } else {
+                            sector2DeltaElement.textContent = formatComparisonTime(combinedTimeMS);
+                            sector2DeltaElement.style.color = '#ffffff';
+                        }
+                        setTimeout(() => {
+                            sector2DeltaElement.style.opacity = '0';
+                            lapTimeElement.style.opacity = '1';
+                        }, 4000);
+                    }
+
+                    updateLapDisplay();
                 }
             } else if (data.m_header.m_packetId === 4) {
                 numActiveCars = data.m_participants.length;
@@ -389,49 +475,65 @@
                         lapTimeComparisonName = getLastName('PERSONAL BEST');
                         lapTimeComparisonElement.style.display = 'flex';
                         lapTimeComparisonNameElement.style.display = 'flex';
+                        refSector1TimeMS = timeTrialData.m_personalBestDataSet.m_sector1TimeInMS || -1;
+                        refSector2TimeMS = calculateCombinedSectorTime(
+                            timeTrialData.m_personalBestDataSet.m_sector1TimeMinutesPart,
+                            timeTrialData.m_personalBestDataSet.m_sector1TimeMSPart,
+                            timeTrialData.m_personalBestDataSet.m_sector2TimeMinutesPart,
+                            timeTrialData.m_personalBestDataSet.m_sector2TimeMSPart
+                        ) || -1;
+                        refLastLapTimeMS = personalBestTime || -1;
                         updateLapDisplay();
                     } else {
                         lapTimeComparisonElement.style.display = 'none';
                         lapTimeComparisonNameElement.style.display = 'none';
+                        refSector1TimeMS = -1;
+                        refSector2TimeMS = -1;
+                        refLastLapTimeMS = -1;
                     }
                 }
             } else if (data.m_header.m_packetId === 11) {
-                if ([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17].includes(sessionType)) {
+                if (canUpdateReference && [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17].includes(sessionType)) {
                     if (data.m_carIdx === targetCarIdx && targetCarIdx !== -1) {
                         const historyData = data.m_lapHistoryData;
                         const bestLapNum = data.m_bestLapTimeLapNum;
                         if (historyData && bestLapNum > 0 && bestLapNum <= historyData.length) {
-                            const bestLapTime = historyData[bestLapNum - 1].m_lapTimeInMS;
-                            if (bestLapTime > 0) {
-                                lapTimeComparison = formatComparisonTime(bestLapTime);
-                                if ([15, 16, 17, 18].includes(sessionType)) {
-                                    lapTimeComparisonName = getLastName((targetCarIdx === leaderCarIdx) ? 'LEADER' :
-                                        ([5, 10].includes(sessionType) ? `POS ${numActiveCars === 20 ? 15 : 16}` : 'POS 10'));
-                                    if ([15, 16, 17].includes(sessionType)) {
-                                        lapTimeComparisonName = getLastName('PERSONAL BEST');
-                                    }
-                                } else {
-                                    lapTimeComparisonName = getLastName(participantNames[targetCarIdx] || 'UNKNOWN');
-                                }
+                            lapTimeComparison = formatComparisonTime(historyData[bestLapNum - 1].m_lapTimeInMS);
+                            if ([15, 16, 17, 18].includes(sessionType)) {
+                                lapTimeComparisonName = getLastName((targetCarIdx === leaderCarIdx) ? 'LEADER' :
+                                    ([5, 10].includes(sessionType) ? `POS ${numActiveCars === 20 ? 15 : 16}` : 'POS 10'));
                                 if ([15, 16, 17].includes(sessionType)) {
-                                    if (currentLapNum < 3) {
-                                        lapTimeComparisonElement.style.display = 'none';
-                                        lapTimeComparisonNameElement.style.display = 'none';
-                                    } else {
-                                        lapTimeComparisonElement.style.display = 'flex';
-                                        lapTimeComparisonNameElement.style.display = 'flex';
-                                    }
+                                    lapTimeComparisonName = getLastName('PERSONAL BEST');
+                                }
+                            } else {
+                                lapTimeComparisonName = getLastName(participantNames[targetCarIdx] || 'UNKNOWN');
+                            }
+                            if ([15, 16, 17].includes(sessionType)) {
+                                if (currentLapNum < 3) {
+                                    lapTimeComparisonElement.style.display = 'none';
+                                    lapTimeComparisonNameElement.style.display = 'none';
                                 } else {
                                     lapTimeComparisonElement.style.display = 'flex';
                                     lapTimeComparisonNameElement.style.display = 'flex';
                                 }
                             } else {
-                                lapTimeComparisonElement.style.display = 'none';
-                                lapTimeComparisonNameElement.style.display = 'none';
+                                lapTimeComparisonElement.style.display = 'flex';
+                                lapTimeComparisonNameElement.style.display = 'flex';
                             }
+                            refSector1TimeMS = calculateSectorTime(historyData[bestLapNum - 1].m_sector1TimeMinutesPart, historyData[bestLapNum - 1].m_sector1TimeMSPart);
+                            refSector2TimeMS = calculateCombinedSectorTime(
+                                historyData[bestLapNum - 1].m_sector1TimeMinutesPart,
+                                historyData[bestLapNum - 1].m_sector1TimeMSPart,
+                                historyData[bestLapNum - 1].m_sector2TimeMinutesPart,
+                                historyData[bestLapNum - 1].m_sector2TimeMSPart
+                            );
+                            refLastLapTimeMS = historyData[bestLapNum - 1].m_lapTimeInMS;
                         } else {
                             lapTimeComparisonElement.style.display = 'none';
                             lapTimeComparisonNameElement.style.display = 'none';
+                            refSector1TimeMS = -1;
+                            refSector2TimeMS = -1;
+                            refLastLapTimeMS = -1;
                         }
                         updateLapDisplay();
                     }
