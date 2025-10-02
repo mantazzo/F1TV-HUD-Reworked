@@ -13,6 +13,7 @@
         <div class="team-logo-layer"></div>
         <div class="driver-name-layer">VERSTAPPEN</div>
         <div class="tyre-compound-layer">S</div>
+        <div id="knockout-indicator" class="knockout-indicator-layer"></div>
         <div id="sector1-delta" class="sector-display-layer">27.8</div>
         <div id="sector2-delta" class="sector-display-layer">1:02.6</div>
         <div id="last-lap-delta" class="sector-display-layer">--:--.-</div>
@@ -27,12 +28,13 @@
         <div id="sector1-text" class="sector1-text-layer">S1</div>
         <div id="sector2-text" class="sector2-text-layer">S2</div>
         <div id="sector3-text" class="sector3-text-layer">S3</div>
+        <div id="position-gained-indicator" class="position-gained-indicator"></div>
+        <div id="position-lost-indicator" class="position-lost-indicator"></div>
     </div>
     <script>
         const socket = io();
         const lapTimeElement = document.getElementById('lap-time');
         const lastLapTimeElement = document.getElementById('last-lap-time');
-        const bestLapTimeElement = document.getElementById('best-lap-time');
         const lapTimeComparisonElement = document.getElementById('lap-time-comparison');
         const lapTimeComparisonNameElement = document.getElementById('lap-time-comparison-name');
         const separatorElement = document.getElementById('separator');
@@ -46,15 +48,18 @@
         const sector1DeltaElement = document.getElementById('sector1-delta');
         const sector2DeltaElement = document.getElementById('sector2-delta');
         const lastLapDeltaElement = document.getElementById('last-lap-delta');
+        const knockoutIndicator = document.getElementById('knockout-indicator');
+        const positionGainedIndicator = document.getElementById('position-gained-indicator');
+        const positionLostIndicator = document.getElementById('position-lost-indicator');
 
         let currentLapTime = '1:34.4';
         let lastLapTime = '1:36.426';
-        let bestLapTime = '--:--.-';
         let lapTimeComparison = '1:39.432';
         let lapTimeComparisonName = 'MAX VERSTAPPEN';
-        let transitionValue = '1:39.432'; // New variable for transition display
-        let isTransitioning = false; // Flag to track transition state
+        let transitionValue = '1:39.432';
+        let isTransitioning = false;
         let position = '1';
+        let prevPosition = '1';
         let driverName = 'VERSTAPPEN';
         let tyreCompound = 'S';
         let sessionType = 0;
@@ -174,8 +179,7 @@
         function updateLapDisplay() {
             lapTimeElement.textContent = currentLapTime;
             lastLapTimeElement.textContent = lastLapTime;
-            bestLapTimeElement.textContent = `Best: ${bestLapTime}`;
-            lapTimeComparisonElement.textContent = transitionValue; // Use transitionValue for display
+            lapTimeComparisonElement.textContent = transitionValue;
             lapTimeComparisonNameElement.textContent = lapTimeComparisonName.toUpperCase();
             sector1TextElement.textContent = 'S1';
             sector2TextElement.textContent = 'S2';
@@ -183,29 +187,15 @@
             positionElement.textContent = position;
             driverNameElement.textContent = driverName.toUpperCase();
             tyreCompoundElement.textContent = tyreCompound;
-            // Apply color based on tyre compound
+            positionElement.style.color = knockoutIndicator.style.display === 'block' ? '#C0C0C0' : '#000000'; // Silver when knockout is active, black otherwise
             switch (tyreCompound) {
-                case 'S':
-                    tyreCompoundElement.style.color = '#FF0000'; // Soft
-                    break;
-                case 'M':
-                    tyreCompoundElement.style.color = '#FFFF00'; // Medium
-                    break;
-                case 'H':
-                    tyreCompoundElement.style.color = '#FFFFFF'; // Hard
-                    break;
-                case 'I':
-                    tyreCompoundElement.style.color = '#00FF00'; // Intermediate
-                    break;
-                case 'W':
-                    tyreCompoundElement.style.color = '#018dd2'; // Wet
-                    break;
-                case 'SS':
-                    tyreCompoundElement.style.color = '#800080'; // Supersoft
-                    break;
-                default:
-                    tyreCompoundElement.textContent = '?';
-                    tyreCompoundElement.style.color = '#808080'; // Unknown
+                case 'S': tyreCompoundElement.style.color = '#FF0000'; break;
+                case 'M': tyreCompoundElement.style.color = '#FFFF00'; break;
+                case 'H': tyreCompoundElement.style.color = '#FFFFFF'; break;
+                case 'I': tyreCompoundElement.style.color = '#00FF00'; break;
+                case 'W': tyreCompoundElement.style.color = '#018dd2'; break;
+                case 'SS': tyreCompoundElement.style.color = '#800080'; break;
+                default: tyreCompoundElement.textContent = '?'; tyreCompoundElement.style.color = '#808080';
             }
 
             if (currentLapTime.includes(':')) {
@@ -257,15 +247,13 @@
                                 el.style.top = `${parseInt(getComputedStyle(el).top) || 0}px`;
                                 el.style.opacity = '1';
                             });
-                            anime.timeline({
-                                easing: 'easeInOutQuad'
-                            })
-                            .add({
-                                targets: lastLapTimeElement,
-                                top: function(el) { return (parseInt(getComputedStyle(el).top) || 57) + 80 + 'px'; },
-                                opacity: 1,
-                                duration: 333
-                            });
+                            anime.timeline({ easing: 'easeInOutQuad' })
+                                .add({
+                                    targets: lastLapTimeElement,
+                                    top: function(el) { return (parseInt(getComputedStyle(el).top) || 57) + 80 + 'px'; },
+                                    opacity: 1,
+                                    duration: 333
+                                });
                             anime({
                                 targets: [lapTimeComparisonElement, lapTimeComparisonNameElement, separatorElement, lapTimeElement],
                                 top: function(el) { return (parseInt(getComputedStyle(el).top) || 0) - 100 + 'px'; },
@@ -291,11 +279,11 @@
                             }, 5667);
                         }
 
-                        // Last Lap Delta logic with canUpdateReference check
-                        if ((lastLapTimeMS !== prevLastLapTimeMS || newCurrentLapNum !== currentLapNum) && newCurrentLapNum > 1 && canUpdateReference) {
+                        // Last Lap Delta logic with flag to prevent updates
+                        if ((lastLapTimeMS !== prevLastLapTimeMS || newCurrentLapNum !== currentLapNum) && newCurrentLapNum > 1) {
                             lapTimeElement.style.opacity = '0';
                             lastLapDeltaElement.style.opacity = '1';
-                            canUpdateReference = false; // Lock reference updates
+                            canUpdateReference = false;
                             const delta = lastLapTimeMS - refLastLapTimeMS;
                             if (sessionType === 18 && refLastLapTimeMS > 0) {
                                 lastLapDeltaElement.textContent = `${delta >= 0 ? '+' : '-'}${formatComparisonTime(Math.abs(delta))}`;
@@ -327,21 +315,21 @@
                     } else if (refLastLapTimeMS > 0 && currentSector === 2) {
                         lapTimeComparison = formatComparisonTime(refLastLapTimeMS);
                     } else {
-                        lapTimeComparison = '--:--.-'; // Fallback to avoid "00.000"
+                        lapTimeComparison = '--:--.-';
                     }
 
                     // Trigger transition before switching text
                     if (prevSector !== currentSector) {
                         if (sectorTimeout) clearTimeout(sectorTimeout);
                         isTransitioning = true;
-                        transitionValue = lapTimeComparisonElement.textContent; // Hold current display
+                        transitionValue = lapTimeComparisonElement.textContent;
                         sectorTimeout = setTimeout(() => {
-                            transitionValue = lapTimeComparison; // Switch to new value after delay
+                            transitionValue = lapTimeComparison;
                             isTransitioning = false;
                             updateLapDisplay();
                         }, 4000);
                     } else if (!isTransitioning) {
-                        transitionValue = lapTimeComparison; // Update immediately if no transition
+                        transitionValue = lapTimeComparison;
                         updateLapDisplay();
                     }
 
@@ -376,6 +364,41 @@
                         }
                     } else if ([15, 16, 17].includes(sessionType)) {
                         targetCarIdx = playerCarIdx;
+                    }
+
+                    // Knockout indicator display logic
+                    let isKnockoutVisible = false;
+                    if (([5, 10].includes(sessionType) && ((numActiveCars === 20 && position > 15) || (numActiveCars === 22 && position > 16))) ||
+                        ([6, 11].includes(sessionType) && position > 10)) {
+                        isKnockoutVisible = true;
+                    }
+                    knockoutIndicator.style.display = isKnockoutVisible ? 'block' : 'none';
+
+                    // Position change indicators with anime fade
+                    if (position !== prevPosition) {
+                        const positionChange = position - prevPosition;
+                        if (positionChange < 0) { // Position gained
+                            positionGainedIndicator.style.opacity = '1';
+                            positionLostIndicator.style.opacity = '0';
+                            anime({
+                                targets: positionGainedIndicator,
+                                opacity: [1, 0],
+                                duration: 2000,
+                                easing: 'easeInOutQuad',
+                                complete: () => positionGainedIndicator.style.opacity = '0'
+                            });
+                        } else if (positionChange > 0) { // Position lost
+                            positionLostIndicator.style.opacity = '1';
+                            positionGainedIndicator.style.opacity = '0';
+                            anime({
+                                targets: positionLostIndicator,
+                                opacity: [1, 0],
+                                duration: 2000,
+                                easing: 'easeInOutQuad',
+                                complete: () => positionLostIndicator.style.opacity = '0'
+                            });
+                        }
+                        prevPosition = position;
                     }
 
                     if (lastLapTime !== '--:--.-') {
@@ -461,38 +484,17 @@
                 if (carStatus) {
                     const visualTyreCompound = carStatus.m_visualTyreCompound;
                     switch (visualTyreCompound) {
-                        case 16: // F1 Soft
-                            tyreCompound = 'S';
-                            break;
-                        case 17: // F1 Medium
-                            tyreCompound = 'M';
-                            break;
-                        case 18: // F1 Hard
-                            tyreCompound = 'H';
-                            break;
-                        case 7: // F1 Intermediate
-                            tyreCompound = 'I';
-                            break;
-                        case 8: // F1 Wet
-                            tyreCompound = 'W';
-                            break;
-                        case 19: // F2 Supersoft
-                            tyreCompound = 'SS';
-                            break;
-                        case 20: // F2 Soft
-                            tyreCompound = 'S';
-                            break;
-                        case 21: // F2 Medium
-                            tyreCompound = 'M';
-                            break;
-                        case 22: // F2 Hard
-                            tyreCompound = 'H';
-                            break;
-                        case 15: // F2 Wet
-                            tyreCompound = 'W';
-                            break;
-                        default:
-                            tyreCompound = '?';
+                        case 16: tyreCompound = 'S'; break;
+                        case 17: tyreCompound = 'M'; break;
+                        case 18: tyreCompound = 'H'; break;
+                        case 7: tyreCompound = 'I'; break;
+                        case 8: tyreCompound = 'W'; break;
+                        case 19: tyreCompound = 'SS'; break;
+                        case 20: tyreCompound = 'S'; break;
+                        case 21: tyreCompound = 'M'; break;
+                        case 22: tyreCompound = 'H'; break;
+                        case 15: tyreCompound = 'W'; break;
+                        default: tyreCompound = '?';
                     }
                     updateLapDisplay();
                 }
@@ -507,7 +509,6 @@
                         lapTimeComparisonElement.style.display = 'flex';
                         lapTimeComparisonNameElement.style.display = 'flex';
                         refSector1TimeMS = timeTrialData.m_personalBestDataSet.m_sector1TimeInMS || -1;
-                        // Calculate refSector2TimeMS using m_sector1TimeInMS and m_sector2TimeInMS, defaulting missing to 0
                         const s1TimeMS = timeTrialData.m_personalBestDataSet.m_sector1TimeInMS || 0;
                         const s2TimeMS = timeTrialData.m_personalBestDataSet.m_sector2TimeInMS || 0;
                         refSector2TimeMS = s1TimeMS + s2TimeMS;

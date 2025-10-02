@@ -196,7 +196,7 @@
     width: 48px;
     height: 50px;
     font-family: "F1TV-2022-Position";
-    font-size: 26px;
+    font-size: 24px;
     color: #000000;
     display: flex;
     justify-content: center;
@@ -215,7 +215,7 @@
     background-image: url('/images/team-logos/Red_Bull_Racing.png'); /* Currently using Red Bull as placeholder */
     background-size: cover;
     background-position: center;
-    z-index: 1; /* Can be used as background level */
+    z-index: 2; /* Can be used as main text level */
 }
 
 .driver-name-layer {
@@ -302,6 +302,44 @@
     opacity: 0; /* Initially hidden */
 }
 
+.knockout-indicator-layer {
+    position: absolute;
+    top: 89px;
+    left: 0px;
+    width: 52px;
+    height: 52px;
+    background-image: url('/images/lap-timer/Knockout.png');
+    background-size: cover;
+    background-position: center;
+    display: none; /* Hidden by default */
+    z-index: 1; /* Used as background level when required */
+}
+
+.position-gained-indicator {
+    position: absolute;
+    top: 90px;
+    left: 0px;
+    width: 45px;
+    height: 20px;
+    background-image: url('/images/lap-timer/Green.png');
+    background-size: cover;
+    background-position: center;
+    z-index: 3;
+    opacity: 0;
+}
+
+.position-lost-indicator {
+    position: absolute;
+    top: 120px;
+    left: 0px;
+    width: 45px;
+    height: 20px;
+    background-image: url('/images/lap-timer/Red.png');
+    background-size: cover;
+    background-position: center;
+    z-index: 3;
+    opacity: 0;
+}
 
 .debug-text {
     position: absolute;
