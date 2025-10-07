@@ -3,7 +3,7 @@ F1TV HUD mod for latest Codemasters games, reworked and improved
 
 Originally created by MISS1LE, reworked for F1 25 by Mantazzo 
 
-Mod is being reworked with the help of AI (Grok)
+Mod is being reworked with the help of AI
 
 This project is worked on with Windows systems in mind - it may work correctly on Linux as well, but, since F1 25 is only available on Windows systems, the primary setup is for Windows.
 
@@ -24,8 +24,6 @@ This project is worked on with Windows systems in mind - it may work correctly o
 
 5. **Install dependencies.**  
    Run `npm install` in the Terminal. This will download the required packages.
-
-   *NOTE:* At the moment, the parser has some issues with Time Trial packets. I have included a patch to fix that for the time being. After installing the dependencies, run `npx patch-package` to deploy the fix from the "patches" folder.
 
 6. **Start the server.**  
    Run `node index.js`. Enter a port when prompted and press `Enter`. By default, if you don't enter anything, it will use port 20777 (as described in parentheses). Wait for a message confirming the server is running (e.g., "Overlays at http://localhost:3000/speedometer").
