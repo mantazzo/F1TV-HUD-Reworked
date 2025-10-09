@@ -2,7 +2,7 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const { F1TelemetryClient, constants } = require('@deltazeroproduction/f1-udp-parser');
-const { PACKETS } = constants;
+const { PACKETS, DRIVERS } = constants;
 const path = require('path');
 const prompt = require('prompt');
 
@@ -33,6 +33,18 @@ prompt.get(promptSchema, (err, result) => {
 
     // Set up F1 telemetry client with dynamic port
     const client = new F1TelemetryClient({ port: portNumber });
+
+    // Handle Socket.IO connections
+    io.on('connection', (socket) => {
+        console.log('Client connected');
+        
+        // Send DRIVERS constant to client
+        socket.emit('drivers_data', DRIVERS);
+        
+        socket.on('disconnect', () => {
+            console.log('Client disconnected');
+        });
+    });
 
     function convertBigInt(obj) {
         if (typeof obj === 'bigint') return obj.toString();
@@ -102,6 +114,6 @@ prompt.get(promptSchema, (err, result) => {
     app.get('/speedometer', (req, res) => res.sendFile(path.join(__dirname, 'views', 'speedometer.html')));
     app.get('/lap-timer', (req, res) => res.sendFile(path.join(__dirname, 'views', 'lap-timer.html')));
     app.get('/', (req, res) => res.redirect('/speedometer'));
-
+    
     server.listen(3000, () => console.log('Overlays at http://localhost:3000/speedometer'));
 });

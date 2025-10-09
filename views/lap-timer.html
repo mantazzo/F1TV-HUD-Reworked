@@ -82,12 +82,18 @@
         let canUpdateReference = true;
         let prevSector = -1;
         let sectorTimeout = null;
+        let sessionHistoryByCarIdx = {};
+
+        // Receive and process drivers data from server
+        socket.on('drivers_data', (data) => {
+            aiDrivers = data;
+            console.log('AI drivers updated from server:', aiDrivers);
+        });
 
         async function loadJsonFiles() {
             try {
                 const promises = [
-                    fetch('/data/DefaultTeams.json'),
-                    fetch('/data/DefaultAIDrivers.json')
+                    fetch('/data/DefaultTeams.json')
                 ];
                 if (formulaType === 0) {
                     promises.push(fetch('/data/CustomF1Drivers.json'));
@@ -96,13 +102,13 @@
                 }
                 const responses = await Promise.all(promises.map(p => p.catch(() => null)));
                 teamNames = responses[0] ? await responses[0].json() : {};
-                aiDrivers = responses[1] ? await responses[1].json() : {};
-                if (responses[2]) {
-                    const customDriversData = await responses[2].json();
+                if (responses[1]) {
+                    const customDriversData = await responses[1].json();
                     customDrivers = Array.isArray(customDriversData) ? customDriversData : [];
                 }
             } catch (error) {
                 console.error('Error loading JSON files:', error);
+                teamNames = {};
                 customDrivers = [];
             }
         }
@@ -349,6 +355,9 @@
                             for (let i = 0; i < data.m_lapData.length; i++) {
                                 if (data.m_lapData[i].m_carPosition === threshold) {
                                     targetCarIdx = i;
+                                    if (sessionHistoryByCarIdx[targetCarIdx].bestLapNum === 0) {
+                                        targetCarIdx = leaderCarIdx;
+                                    }
                                     break;
                                 }
                             }
@@ -358,6 +367,9 @@
                             for (let i = 0; i < data.m_lapData.length; i++) {
                                 if (data.m_lapData[i].m_carPosition === 10) {
                                     targetCarIdx = i;
+                                    if (sessionHistoryByCarIdx[targetCarIdx].bestLapNum === 0) {
+                                        targetCarIdx = leaderCarIdx;
+                                    }
                                     break;
                                 }
                             }
@@ -462,7 +474,7 @@
                     updateLapDisplay();
                 }
             } else if (data.m_header.m_packetId === 4) {
-                numActiveCars = data.m_participants.length;
+                numActiveCars = data.m_numActiveCars;
                 participantNames = {};
                 for (let i = 0; i < numActiveCars && i < data.m_participants.length; i++) {
                     const participant = data.m_participants[i];
@@ -473,7 +485,7 @@
                         participantNames[index] = getLastName(customMatch.displayName);
                     } else {
                         const aiDriver = aiDrivers[driverId];
-                        participantNames[index] = getLastName(aiDriver ? aiDriver.DisplayName : 'UNKNOWN_AI');
+                        participantNames[index] = getLastName(aiDriver ? aiDriver.lastName.toUpperCase() : 'UNKNOWN_AI');
                     }
                     if (i === playerCarIdx) updateTeamLogo(participant.m_teamId);
                 }
@@ -522,6 +534,14 @@
                     }
                 }
             } else if (data.m_header.m_packetId === 11) {
+                sessionHistoryByCarIdx[data.m_carIdx] = {
+                    numLaps: data.m_numLaps,
+                    bestLapNum: data.m_bestLapTimeLapNum,
+                    bestSector1LapNum: data.m_bestSector1LapNum,
+                    bestSector2LapNum: data.m_bestSector2LapNum,
+                    bestSector3LapNum: data.m_bestSector3LapNum,
+                    lapHistory: data.m_lapHistoryData
+                };
                 if (canUpdateReference && [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17].includes(sessionType)) {
                     if (data.m_carIdx === targetCarIdx && targetCarIdx !== -1) {
                         const historyData = data.m_lapHistoryData;
