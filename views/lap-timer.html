@@ -25,6 +25,9 @@
         <div id="lap-time-comparison" class="lap-time-comparison-layer">1:39.432</div>
         <div id="lap-time-comparison-name" class="lap-time-comparison-name-layer">MAX VERSTAPPEN</div>
         <div id="sector-line"></div>
+        <div id="sector1-indicator" class="sector1-indicator"></div>
+        <div id="sector2-indicator" class="sector2-indicator"></div>
+        <div id="sector3-indicator" class="sector3-indicator"></div>
         <div id="sector1-text" class="sector1-text-layer">S1</div>
         <div id="sector2-text" class="sector2-text-layer">S2</div>
         <div id="sector3-text" class="sector3-text-layer">S3</div>
@@ -51,6 +54,9 @@
         const knockoutIndicator = document.getElementById('knockout-indicator');
         const positionGainedIndicator = document.getElementById('position-gained-indicator');
         const positionLostIndicator = document.getElementById('position-lost-indicator');
+        const sector1Indicator = document.getElementById('sector1-indicator');
+        const sector2Indicator = document.getElementById('sector2-indicator');
+        const sector3Indicator = document.getElementById('sector3-indicator');
 
         let currentLapTime = '1:34.4';
         let lastLapTime = '1:36.426';
@@ -82,7 +88,10 @@
         let canUpdateReference = true;
         let prevSector = -1;
         let sectorTimeout = null;
-        let sessionHistoryByCarIdx = {};
+        let currentLapSectorSum = 0;
+        const sessionHistoryByCarIdx = {};
+        const overallBestSectors = { s1: -1, s2: -1, s3: -1 };
+        let newCurrentLapNum = -1;
 
         // Receive and process drivers data from server
         socket.on('drivers_data', (data) => {
@@ -187,19 +196,19 @@
             lastLapTimeElement.textContent = lastLapTime;
             lapTimeComparisonElement.textContent = transitionValue;
             lapTimeComparisonNameElement.textContent = lapTimeComparisonName.toUpperCase();
-            sector1TextElement.textContent = 'S1';
-            sector2TextElement.textContent = 'S2';
-            sector3TextElement.textContent = 'S3';
+            sector1TextElement.textContent = sector1TextElement.textContent || 'S1';
+            sector2TextElement.textContent = sector2TextElement.textContent || 'S2';
+            sector3TextElement.textContent = sector3TextElement.textContent || 'S3';
             positionElement.textContent = position;
             driverNameElement.textContent = driverName.toUpperCase();
             tyreCompoundElement.textContent = tyreCompound;
             positionElement.style.color = knockoutIndicator.style.display === 'block' ? '#C0C0C0' : '#000000'; // Silver when knockout is active, black otherwise
             switch (tyreCompound) {
-                case 'S': tyreCompoundElement.style.color = '#FF0000'; break;
-                case 'M': tyreCompoundElement.style.color = '#FFFF00'; break;
+                case 'S': tyreCompoundElement.style.color = '#F92D29'; break;
+                case 'M': tyreCompoundElement.style.color = '#EBD25F'; break;
                 case 'H': tyreCompoundElement.style.color = '#FFFFFF'; break;
-                case 'I': tyreCompoundElement.style.color = '#00FF00'; break;
-                case 'W': tyreCompoundElement.style.color = '#018dd2'; break;
+                case 'I': tyreCompoundElement.style.color = '#3AC82B'; break;
+                case 'W': tyreCompoundElement.style.color = '#4491D2'; break;
                 case 'SS': tyreCompoundElement.style.color = '#800080'; break;
                 default: tyreCompoundElement.textContent = '?'; tyreCompoundElement.style.color = '#808080';
             }
@@ -227,6 +236,26 @@
             img.src = logoPath;
         }
 
+        function setSectorIndicator(sector, color) {
+            const indicator = {
+                0: sector1Indicator,
+                1: sector2Indicator,
+                2: sector3Indicator
+            }[sector];
+            indicator.style.backgroundColor = color || 'transparent';
+            indicator.style.opacity = color ? '1' : '0';
+        }
+
+        function setSectorText(sector, text, color) {
+            const textElement = {
+                0: sector1TextElement,
+                1: sector2TextElement,
+                2: sector3TextElement
+            }[sector];
+            textElement.textContent = text;
+            textElement.style.color = color || 'gray';
+        }
+
         socket.on('f1_data', (data) => {
             if (data.m_header.m_packetId === 1) {
                 sessionType = data.m_sessionType;
@@ -243,7 +272,7 @@
                     const lastLapTimeMS = lapData.m_lastLapTimeInMS;
                     if (lastLapTimeMS > 0) {
                         lastLapTime = formatComparisonTime(lastLapTimeMS);
-                        const newCurrentLapNum = lapData.m_currentLapNum || 0;
+                        newCurrentLapNum = lapData.m_currentLapNum || 0;
                         if ((lastLapTimeMS !== prevLastLapTimeMS || newCurrentLapNum !== currentLapNum) && newLapTime > 2000) {
                             prevLastLapTimeMS = lastLapTimeMS;
                             currentLapNum = newCurrentLapNum;
@@ -282,7 +311,7 @@
                                     duration: 333,
                                     easing: 'easeInOutQuad'
                                 });
-                            }, 5667);
+                            }, 3667);
                         }
 
                         // Last Lap Delta logic with flag to prevent updates
@@ -305,6 +334,27 @@
                                 lastLapDeltaElement.style.opacity = '0';
                                 canUpdateReference = true;
                             }, 2000);
+                            const sector3TimeMS = lastLapTimeMS - currentLapSectorSum;
+                            if (sector3TimeMS > 0) {
+                                const personalBestS3 = sessionHistoryByCarIdx[playerCarIdx]?.lapHistory[sessionHistoryByCarIdx[playerCarIdx].bestSector3LapNum - 1]?.m_sector3TimeMSPart !== undefined
+                                ? calculateSectorTime(sessionHistoryByCarIdx[playerCarIdx].lapHistory[sessionHistoryByCarIdx[playerCarIdx].bestSector3LapNum - 1].m_sector3TimeMinutesPart,
+                                                    sessionHistoryByCarIdx[playerCarIdx].lapHistory[sessionHistoryByCarIdx[playerCarIdx].bestSector3LapNum - 1].m_sector3TimeMSPart)
+                                : -1;
+                                let color = 'gold'; // Default to slower (gold)
+                                if (sector3TimeMS < personalBestS3 || personalBestS3 === -1) color = 'lime'; // Lime if faster than personal best
+                                if (sector3TimeMS < overallBestSectors.s3 || overallBestSectors.s3 === -1) color = 'magenta'; // Magenta if faster than overall best
+                                setSectorIndicator(2, color);
+                                setSectorText(2, 'SECTOR 3', color);
+                                setTimeout(() => {
+                                    setSectorIndicator(2, 'transparent');
+                                    setSectorText(2, 'S3', 'gray');
+                                    setSectorIndicator(0, 'transparent');
+                                    setSectorIndicator(1, 'transparent');
+                                    setSectorText(0, 'S1', 'gray');
+                                    setSectorText(1, 'S2', 'gray');
+                                    currentLapSectorSum = 0; // Reset for next lap
+                                }, 6000);
+                            }
                         }
                     }
 
@@ -340,8 +390,7 @@
                     }
 
                     prevSector = currentSector;
-
-                    // Restore missing targetCarIdx logic
+                    
                     for (let i = 0; i < data.m_lapData.length; i++) {
                         if (data.m_lapData[i].m_carPosition === 1) {
                             leaderCarIdx = i;
@@ -355,7 +404,7 @@
                             for (let i = 0; i < data.m_lapData.length; i++) {
                                 if (data.m_lapData[i].m_carPosition === threshold) {
                                     targetCarIdx = i;
-                                    if (sessionHistoryByCarIdx[targetCarIdx].bestLapNum === 0) {
+                                    if (sessionHistoryByCarIdx[targetCarIdx]?.bestLapNum < 1) {
                                         targetCarIdx = leaderCarIdx;
                                     }
                                     break;
@@ -367,7 +416,7 @@
                             for (let i = 0; i < data.m_lapData.length; i++) {
                                 if (data.m_lapData[i].m_carPosition === 10) {
                                     targetCarIdx = i;
-                                    if (sessionHistoryByCarIdx[targetCarIdx].bestLapNum === 0) {
+                                    if (sessionHistoryByCarIdx[targetCarIdx]?.bestLapNum < 1) {
                                         targetCarIdx = leaderCarIdx;
                                     }
                                     break;
@@ -413,15 +462,6 @@
                         prevPosition = position;
                     }
 
-                    if (lastLapTime !== '--:--.-') {
-                        anime({
-                            targets: lapTimeElement,
-                            color: ['#ffffff', '#00ff00', '#ffffff'],
-                            duration: 500,
-                            easing: 'easeInOutQuad'
-                        });
-                    }
-
                     // Sector 1 delta logic with display mechanics
                     const sector1TimeMS = calculateSectorTime(lapData.m_sector1TimeMinutesPart, lapData.m_sector1TimeMSPart);
                     if (sector1TimeMS > 0 && sector1TimeMS !== prevSector1TimeMS) {
@@ -440,8 +480,19 @@
                             sector1DeltaElement.textContent = formatComparisonTime(sector1TimeMS);
                             sector1DeltaElement.style.color = '#ffffff';
                         }
+                        const personalBestS1 = sessionHistoryByCarIdx[playerCarIdx]?.lapHistory[sessionHistoryByCarIdx[playerCarIdx].bestSector1LapNum - 1]?.m_sector1TimeMSPart !== undefined
+                            ? calculateSectorTime(sessionHistoryByCarIdx[playerCarIdx].lapHistory[sessionHistoryByCarIdx[playerCarIdx].bestSector1LapNum - 1].m_sector1TimeMinutesPart,
+                                                sessionHistoryByCarIdx[playerCarIdx].lapHistory[sessionHistoryByCarIdx[playerCarIdx].bestSector1LapNum - 1].m_sector1TimeMSPart)
+                            : -1;
+                        let color = 'gold'; // Default to slower (gold)
+                        if (sector1TimeMS < personalBestS1 || personalBestS1 === -1) color = 'lime'; // Lime if faster than personal best
+                        if (sector1TimeMS < overallBestSectors.s1 || overallBestSectors.s1 === -1) color = 'magenta'; // Magenta if faster than overall best
+                        console.log('Setting color :', color, 'Sector 1 Time MS:', sector1TimeMS, 'Personal Best S1:', personalBestS1, 'Overall Best S1:', overallBestSectors.s1);
+                        setSectorIndicator(0, color);
+                        setSectorText(0, 'SECTOR 1', color);
                         setTimeout(() => {
                             sector1DeltaElement.style.opacity = '0';
+                            setSectorText(0, 'S1', color);
                             lapTimeElement.style.opacity = '1';
                         }, 4000);
                     }
@@ -465,8 +516,19 @@
                             sector2DeltaElement.textContent = formatComparisonTime(combinedTimeMS);
                             sector2DeltaElement.style.color = '#ffffff';
                         }
+                        currentLapSectorSum = combinedTimeMS;
+                        const personalBestS2 = sessionHistoryByCarIdx[playerCarIdx]?.lapHistory[sessionHistoryByCarIdx[playerCarIdx].bestSector2LapNum - 1]?.m_sector2TimeMSPart !== undefined
+                            ? calculateSectorTime(sessionHistoryByCarIdx[playerCarIdx].lapHistory[sessionHistoryByCarIdx[playerCarIdx].bestSector2LapNum - 1].m_sector2TimeMinutesPart,
+                                                sessionHistoryByCarIdx[playerCarIdx].lapHistory[sessionHistoryByCarIdx[playerCarIdx].bestSector2LapNum - 1].m_sector2TimeMSPart)
+                            : -1;
+                        let color = 'gold'; // Default to slower (gold)
+                        if (sector2TimeMS < personalBestS2 || personalBestS2 === -1) color = 'lime'; // Lime if faster than personal best
+                        if (sector2TimeMS < overallBestSectors.s2 || overallBestSectors.s2 === -1) color = 'magenta'; // Magenta if faster than overall best
+                        setSectorIndicator(1, color);
+                        setSectorText(1, 'SECTOR 2', color);
                         setTimeout(() => {
                             sector2DeltaElement.style.opacity = '0';
+                            setSectorText(1, 'S2', color);
                             lapTimeElement.style.opacity = '1';
                         }, 4000);
                     }
@@ -474,7 +536,7 @@
                     updateLapDisplay();
                 }
             } else if (data.m_header.m_packetId === 4) {
-                numActiveCars = data.m_numActiveCars;
+                numActiveCars = data.m_participants.length;
                 participantNames = {};
                 for (let i = 0; i < numActiveCars && i < data.m_participants.length; i++) {
                     const participant = data.m_participants[i];
@@ -510,39 +572,16 @@
                     }
                     updateLapDisplay();
                 }
-            } else if (data.m_header.m_packetId === 14) {
-                const playerIndex = data.m_header.m_playerCarIndex;
-                const timeTrialData = data;
-
-                if (timeTrialData && sessionType === 18 && canUpdateReference) {
-                    const personalBestTime = timeTrialData.m_personalBestDataSet.m_lapTimeInMS;
-                    if (personalBestTime != null && personalBestTime > 0) {
-                        lapTimeComparisonName = getLastName('PERSONAL BEST');
-                        lapTimeComparisonElement.style.display = 'flex';
-                        lapTimeComparisonNameElement.style.display = 'flex';
-                        refSector1TimeMS = timeTrialData.m_personalBestDataSet.m_sector1TimeInMS || -1;
-                        const s1TimeMS = timeTrialData.m_personalBestDataSet.m_sector1TimeInMS || 0;
-                        const s2TimeMS = timeTrialData.m_personalBestDataSet.m_sector2TimeInMS || 0;
-                        refSector2TimeMS = s1TimeMS + s2TimeMS;
-                        refLastLapTimeMS = personalBestTime || -1;
-                    } else {
-                        lapTimeComparisonElement.style.display = 'none';
-                        lapTimeComparisonNameElement.style.display = 'none';
-                        refSector1TimeMS = -1;
-                        refSector2TimeMS = -1;
-                        refLastLapTimeMS = -1;
-                    }
-                }
             } else if (data.m_header.m_packetId === 11) {
-                sessionHistoryByCarIdx[data.m_carIdx] = {
+                if (canUpdateReference && [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17].includes(sessionType)) {
+                    sessionHistoryByCarIdx[data.m_carIdx] = {
                     numLaps: data.m_numLaps,
                     bestLapNum: data.m_bestLapTimeLapNum,
                     bestSector1LapNum: data.m_bestSector1LapNum,
                     bestSector2LapNum: data.m_bestSector2LapNum,
                     bestSector3LapNum: data.m_bestSector3LapNum,
                     lapHistory: data.m_lapHistoryData
-                };
-                if (canUpdateReference && [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17].includes(sessionType)) {
+                    };
                     if (data.m_carIdx === targetCarIdx && targetCarIdx !== -1) {
                         const historyData = data.m_lapHistoryData;
                         const bestLapNum = data.m_bestLapTimeLapNum;
@@ -550,7 +589,7 @@
                             lapTimeComparisonName = getLastName((targetCarIdx === leaderCarIdx) ? 'LEADER' :
                                 ([5, 10].includes(sessionType) ? `POS ${numActiveCars === 20 ? 15 : 16}` : 'POS 10'));
                             if ([15, 16, 17].includes(sessionType)) {
-                                lapTimeComparisonName = getLastName('PERSONAL BEST');
+                                lapTimeComparisonName = 'PERSONAL BEST';
                             } else {
                                 lapTimeComparisonName = getLastName(participantNames[targetCarIdx] || 'UNKNOWN');
                             }
@@ -583,9 +622,50 @@
                         }
                     }
                 }
+                // Update overall best sectors
+                for (let idx in sessionHistoryByCarIdx) {
+                    const history = sessionHistoryByCarIdx[idx];
+                    const s1Time = history.lapHistory[history.bestSector1LapNum - 1]
+                        ? calculateSectorTime(history.lapHistory[history.bestSector1LapNum - 1].m_sector1TimeMinutesPart,
+                                            history.lapHistory[history.bestSector1LapNum - 1].m_sector1TimeMSPart)
+                        : -1;
+                    const s2Time = history.lapHistory[history.bestSector2LapNum - 1]
+                        ? calculateSectorTime(history.lapHistory[history.bestSector2LapNum - 1].m_sector2TimeMinutesPart,
+                                            history.lapHistory[history.bestSector2LapNum - 1].m_sector2TimeMSPart)
+                        : -1;
+                    const s3Time = history.lapHistory[history.bestSector3LapNum - 1]
+                        ? calculateSectorTime(history.lapHistory[history.bestSector3LapNum - 1].m_sector3TimeMinutesPart,
+                                            history.lapHistory[history.bestSector3LapNum - 1].m_sector3TimeMSPart)
+                        : -1;
+                    if (s1Time > 0 && (overallBestSectors.s1 === -1 || s1Time < overallBestSectors.s1)) overallBestSectors.s1 = s1Time;
+                    if (s2Time > 0 && (overallBestSectors.s2 === -1 || s2Time < overallBestSectors.s2)) overallBestSectors.s2 = s2Time;
+                    if (s3Time > 0 && (overallBestSectors.s3 === -1 || s3Time < overallBestSectors.s3)) overallBestSectors.s3 = s3Time;
+                }
+            } else if (data.m_header.m_packetId === 14) {
+                const playerIndex = data.m_header.m_playerCarIndex;
+                const timeTrialData = data;
+
+                if (timeTrialData && sessionType === 18 && canUpdateReference) {
+                    const personalBestTime = timeTrialData.m_personalBestDataSet.m_lapTimeInMS;
+                    if (personalBestTime != null && personalBestTime > 0) {
+                        lapTimeComparisonName = 'PERSONAL BEST';
+                        lapTimeComparisonElement.style.display = 'flex';
+                        lapTimeComparisonNameElement.style.display = 'flex';
+                        refSector1TimeMS = timeTrialData.m_personalBestDataSet.m_sector1TimeInMS || -1;
+                        const s1TimeMS = timeTrialData.m_personalBestDataSet.m_sector1TimeInMS || 0;
+                        const s2TimeMS = timeTrialData.m_personalBestDataSet.m_sector2TimeInMS || 0;
+                        refSector2TimeMS = s1TimeMS + s2TimeMS;
+                        refLastLapTimeMS = personalBestTime || -1;
+                    } else {
+                        lapTimeComparisonElement.style.display = 'none';
+                        lapTimeComparisonNameElement.style.display = 'none';
+                        refSector1TimeMS = -1;
+                        refSector2TimeMS = -1;
+                        refLastLapTimeMS = -1;
+                    }
+                }
             }
         });
-
         updateLapDisplay();
         loadJsonFiles();
     </script>

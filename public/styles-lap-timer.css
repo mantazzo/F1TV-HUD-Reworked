@@ -1,19 +1,17 @@
-/* Move fonts to fonts.css, so no @font-face here */
-
 .overlay-container {
     position: relative;
     width: 480px;
     height: 270px;
     background-image: url('/images/lap-timer/PlayerIndicator.png'), url('/images/lap-timer/PlayerIndicator.png'), url('/images/lap-timer/Gradient.png');
     background-repeat: no-repeat, no-repeat, no-repeat;
-    background-position: -1px 89px, 311px 89px, -5px 140px; /* Shifted to top: 90px (89px for alignment) */
+    background-position: -1px 89px, 311px 89px, -5px 140px;
     background-size: 318px 52px, 318px 52px, 485px 15px;
 }
 
 .overlay-container:before {
     content: '';
     position: absolute;
-    top: 89px; /* Repositioning */
+    top: 89px;
     left: 0px;
     width: 476px;
     height: 46px;
@@ -339,6 +337,42 @@
     background-position: center;
     z-index: 3;
     opacity: 0;
+}
+
+.sector1-indicator {
+    position: absolute;
+    top: 244px;
+    left: 0px;
+    width: 160px;
+    height: 6px;
+    background-color: transparent; /* Transparent overlay, will be later colored */
+    border: none;
+    z-index: 2; /* Above sector bar */
+    opacity: 1;
+}
+
+.sector2-indicator {
+    position: absolute;
+    top: 244px;
+    left: 160px;
+    width: 160px;
+    height: 6px;
+    background-color: transparent; /* Transparent overlay, will be later colored */
+    border: none;
+    z-index: 2; /* Above sector bar */
+    opacity: 1;
+}
+
+.sector3-indicator {
+    position: absolute;
+    top: 244px;
+    left: 320px;
+    width: 160px;
+    height: 6px;
+    background-color: transparent; /* Transparent overlay, will be later colored */
+    border: none;
+    z-index: 2; /* Above sector bar */
+    opacity: 1; 
 }
 
 .debug-text {
