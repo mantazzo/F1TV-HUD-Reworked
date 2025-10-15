@@ -10,7 +10,7 @@
 ## Currently Working On
 
 - Lap Timer
-    - Basic Design done, working on small tidbits and "animating"
+    - Most work done, working on refining and fixing potential issues
 
 ## Next Planned Overlay
 

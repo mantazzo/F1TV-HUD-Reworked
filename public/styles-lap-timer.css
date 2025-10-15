@@ -375,6 +375,53 @@
     opacity: 1; 
 }
 
+.stroke-bar {
+    position: absolute;
+    top: 254px;
+    left: -40px; /* Start 40px to the left for better alignment */
+    width: 520px; /* Compensate for the left offset */
+    height: 15px;
+    z-index: 2;
+    pointer-events: none;
+    display: flex;
+    align-items: flex-end;
+    overflow: hidden;
+    opacity: 1;
+    clip-path: inset(0 0 0 40px); /* Crop 40px from the left */
+}
+
+.stroke-rect {
+    width: 100px;
+    height: 2px;
+    margin-right: -40px; /* overlap for the angled effect */
+    background: #000;
+    opacity: 0.15;
+    filter: blur(1.5px);
+    transform: rotate(-45deg);
+}
+
+.rolex-widget {
+    position: absolute;
+    top: 0px;
+    left: 330px;
+    width: 150px;
+    height: 85px;
+    background-color: #185E33; /* Rolex green */
+    border-radius: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2;
+    opacity: 1; /* Hidden by default */
+    transition: opacity 0.3s ease;
+}
+
+.rolex-widget img {
+    width: 126px;
+    height: 70px;
+    object-fit: contain;
+}
+
 .debug-text {
     position: absolute;
     top: 280px;

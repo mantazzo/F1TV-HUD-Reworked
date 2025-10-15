@@ -47,6 +47,13 @@
 }
 
 @font-face {
+    font-family: "F1TV-2022-ObliqueCondensed";
+    src: url('/fonts/F1TV-2022-ObliqueCondensed.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
     font-family: "F1TV-2022";
     src: url('/fonts/F1TV-2022-Regular.ttf') format('truetype');
     font-weight: normal;
