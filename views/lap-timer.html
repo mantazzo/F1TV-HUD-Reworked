@@ -61,16 +61,17 @@
         const sector1Indicator = document.getElementById('sector1-indicator');
         const sector2Indicator = document.getElementById('sector2-indicator');
         const sector3Indicator = document.getElementById('sector3-indicator');
+        const rolexWidget = document.getElementById('rolex-widget');
 
-        let currentLapTime = '1:34.4';
-        let lastLapTime = '1:36.426';
-        let lapTimeComparison = '1:39.432';
-        let lapTimeComparisonName = 'MAX VERSTAPPEN';
-        let transitionValue = '1:39.432';
+        let currentLapTime = 'N/A';
+        let lastLapTime = 'N/A';
+        let lapTimeComparison = 'N/A';
+        let lapTimeComparisonName = 'WAITING FOR GAME';
+        let transitionValue = 'N/A';
         let isTransitioning = false;
         let position = '1';
         let prevPosition = '1';
-        let driverName = 'VERSTAPPEN';
+        let driverName = 'PLAYER';
         let tyreCompound = 'S';
         let sessionType = 0;
         let formulaType = 0;
@@ -96,6 +97,7 @@
         const sessionHistoryByCarIdx = {};
         const overallBestSectors = { s1: -1, s2: -1, s3: -1 };
         let newCurrentLapNum = -1;
+        let hideCurrentTime = false;
 
         // Receive and process drivers data from server
         socket.on('drivers_data', (data) => {
@@ -311,8 +313,12 @@
 
                 if (lapData) {
                     const newLapTime = lapData.m_currentLapTimeInMS;
-                    if (newLapTime > 0) currentLapTime = formatTime(newLapTime);
-
+                    if (newLapTime >= 0) currentLapTime = formatTime(newLapTime);
+                    if (lapData.m_driverStatus === 0) { // Hide while "In garage"
+                        lapTimeElement.style.opacity = 0;
+                    } else if (!hideCurrentTime) { // Show if not hidden otherwise
+                        lapTimeElement.style.opacity = 1;
+                    }
                     const lastLapTimeMS = lapData.m_lastLapTimeInMS;
                     if (lastLapTimeMS > 0) {
                         lastLapTime = formatComparisonTime(lastLapTimeMS);
@@ -324,7 +330,7 @@
                             lastLapTimeElement.style.opacity = '0';
                             [lapTimeComparisonElement, lapTimeComparisonNameElement, separatorElement, lapTimeElement].forEach(el => {
                                 el.style.top = `${parseInt(getComputedStyle(el).top) || 0}px`;
-                                el.style.opacity = '1';
+                                // el.style.opacity = '1';
                             });
                             anime.timeline({ easing: 'easeInOutQuad' })
                                 .add({
@@ -361,6 +367,7 @@
                         // Last Lap Delta logic with flag to prevent updates
                         if ((lastLapTimeMS !== prevLastLapTimeMS || newCurrentLapNum !== currentLapNum) && newCurrentLapNum > 1) {
                             lapTimeElement.style.opacity = '0';
+                            hideCurrentTime = true;
                             lastLapDeltaElement.style.opacity = '1';
                             canUpdateReference = false;
                             const delta = lastLapTimeMS - refLastLapTimeMS;
@@ -389,6 +396,7 @@
                                 if (sector3TimeMS < overallBestSectors.s3 || overallBestSectors.s3 === -1) color = 'magenta'; // Magenta if faster than overall best
                                 setSectorIndicator(2, color);
                                 setSectorText(2, 'SECTOR 3', color);
+                                rolexWidget.style.opacity = '1';
                                 setTimeout(() => {
                                     setSectorIndicator(2, 'transparent');
                                     setSectorText(2, 'S3', 'gray');
@@ -396,6 +404,8 @@
                                     setSectorIndicator(1, 'transparent');
                                     setSectorText(0, 'S1', 'gray');
                                     setSectorText(1, 'S2', 'gray');
+                                    rolexWidget.style.opacity = '0';
+                                    hideCurrentTime = false;
                                     currentLapSectorSum = 0; // Reset for next lap
                                 }, 6000);
                             }
@@ -415,7 +425,7 @@
                     } else if (refLastLapTimeMS > 0 && currentSector === 2) {
                         lapTimeComparison = formatComparisonTime(refLastLapTimeMS);
                     } else {
-                        lapTimeComparison = '--:--.-';
+                        lapTimeComparison = 'N/A';
                     }
 
                     // Trigger transition before switching text
@@ -511,6 +521,7 @@
                     if (sector1TimeMS > 0 && sector1TimeMS !== prevSector1TimeMS) {
                         prevSector1TimeMS = sector1TimeMS;
                         lapTimeElement.style.opacity = '0';
+                        hideCurrentTime = true;
                         sector1DeltaElement.style.opacity = '1';
                         if (sessionType === 18 && refSector1TimeMS > 0) {
                             const delta = sector1TimeMS - refSector1TimeMS;
@@ -533,10 +544,13 @@
                         if (sector1TimeMS < overallBestSectors.s1 || overallBestSectors.s1 === -1) color = 'magenta'; // Magenta if faster than overall best
                         setSectorIndicator(0, color);
                         setSectorText(0, 'SECTOR 1', color);
+                        rolexWidget.style.opacity = '1';
                         setTimeout(() => {
                             sector1DeltaElement.style.opacity = '0';
                             setSectorText(0, 'S1', color);
                             lapTimeElement.style.opacity = '1';
+                            hideCurrentTime = false;
+                            rolexWidget.style.opacity = '0';
                         }, 4000);
                     }
 
@@ -546,6 +560,7 @@
                     if (sector2TimeMS > 0 && combinedTimeMS !== prevSector2TimeMS) {
                         prevSector2TimeMS = combinedTimeMS;
                         lapTimeElement.style.opacity = '0';
+                        hideCurrentTime = true;
                         sector2DeltaElement.style.opacity = '1';
                         if (sessionType === 18 && refSector2TimeMS > 0) {
                             const delta = combinedTimeMS - refSector2TimeMS;
@@ -569,10 +584,13 @@
                         if (sector2TimeMS < overallBestSectors.s2 || overallBestSectors.s2 === -1) color = 'magenta'; // Magenta if faster than overall best
                         setSectorIndicator(1, color);
                         setSectorText(1, 'SECTOR 2', color);
+                        rolexWidget.style.opacity = '1';
                         setTimeout(() => {
                             sector2DeltaElement.style.opacity = '0';
                             setSectorText(1, 'S2', color);
                             lapTimeElement.style.opacity = '1';
+                            hideCurrentTime = false;
+                            rolexWidget.style.opacity = '0';
                         }, 4000);
                     }
 

@@ -412,7 +412,7 @@
     justify-content: center;
     align-items: center;
     z-index: 2;
-    opacity: 1; /* Hidden by default */
+    opacity: 0; /* Hidden by default */
     transition: opacity 0.3s ease;
 }
 
