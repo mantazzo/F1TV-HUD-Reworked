@@ -21,7 +21,7 @@
         <div id="sectors-background"></div>
         <div id="separator"></div>
         <div id="lap-time" class="lap-time-layer">1:34.4</div>
-        <div id="last-lap-time" class="last-lap-time-layer">Last: --:--.-</div>
+        <div id="last-lap-time" class="last-lap-time-layer">1:39.875</div>
         <div id="lap-time-comparison" class="lap-time-comparison-layer">1:39.432</div>
         <div id="lap-time-comparison-name" class="lap-time-comparison-name-layer">MAX VERSTAPPEN</div>
         <div id="sector-line"></div>
@@ -69,7 +69,7 @@
         let lapTimeComparisonName = 'WAITING FOR GAME';
         let transitionValue = 'N/A';
         let isTransitioning = false;
-        let position = '1';
+        let position = '0';
         let prevPosition = '1';
         let driverName = 'PLAYER';
         let tyreCompound = 'S';
@@ -264,12 +264,31 @@
         }
 
         function updateTeamLogo(teamId) {
-            const teamData = teamNames[teamId] || { Logo: 'red_bull_racing.png' };
-            const logoPath = `/images/team-logos/${teamData.Logo}`;
-            teamLogoElement.style.backgroundImage = `url(${logoPath})`;
-            const img = new Image();
-            img.onerror = () => teamLogoElement.style.backgroundImage = `url(/images/team-logos/red_bull_racing.png)`;
-            img.src = logoPath;
+            const teamData = teamNames[teamId];
+            
+            if (teamData && teamData.Logo) {
+                // Team data exists, use the specified logo
+                const logoPath = `/images/team-logos/${teamData.Logo}`;
+                const img = new Image();
+                
+                img.onload = () => {
+                    // Image loaded successfully, use the CSS background color and set the image
+                    teamLogoElement.style.backgroundColor = '#081425';
+                    teamLogoElement.style.backgroundImage = `url(${logoPath})`;
+                };
+                
+                img.onerror = () => {
+                    // Image failed to load, set to transparent with no image
+                    teamLogoElement.style.backgroundColor = 'transparent';
+                    teamLogoElement.style.backgroundImage = 'none';
+                };
+                
+                img.src = logoPath;
+            } else {
+                // No team data found, set to transparent with no image
+                teamLogoElement.style.backgroundColor = 'transparent';
+                teamLogoElement.style.backgroundImage = 'none';
+            }
         }
 
         function setSectorIndicator(sector, color) {
