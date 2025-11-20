@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>F1 Pit Timer Overlay</title>
+    <link rel="stylesheet" href="/fonts.css">
+    <link rel="stylesheet" href="/styles-pit-timer.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+</head>
+<body>
+    <div class="overlay-container">
+        <!-- Header Section -->
+        <div class="header-section">
+            <div class="pit-lane-text">PIT LANE</div>
+            <div class="header-line"></div>
+        </div>
+
+        <!-- Driver Info Section -->
+        <div class="driver-section">
+            <div class="driver-background"></div>
+            <div class="position-layer">1</div>
+            <div class="team-logo-layer"></div>
+            <div class="driver-name-layer">DRIVER</div>
+        </div>
+
+        <!-- Pit Timer Section -->
+        <div class="timer-section">
+            <div class="timer-background"></div>
+            
+            <!-- Stop Time Value -->
+            <div class="stop-time-value">0.0</div>
+            
+            <!-- Stop Time Display -->
+            <div class="stop-time-container">
+                <div class="stop-label">STOP</div>
+                <div class="time-label">TIME</div>
+            </div>
+            
+            <!-- Pit Time Display -->
+            <div class="pit-time-container">
+                <div class="pit-label">PIT</div>
+                <div class="pit-time-value">0.0</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+
+        // Element references
+        const positionElement = document.querySelector('.position-layer');
+        const teamLogoElement = document.querySelector('.team-logo-layer');
+        const driverNameElement = document.querySelector('.driver-name-layer');
+        const pitTimeValue = document.querySelector('.pit-time-value');
+        const stopTimeValue = document.querySelector('.stop-time-value');
+        const stopTimeContainer = document.querySelector('.stop-time-container');
+        const pitLaneText = document.querySelector('.pit-lane-text');
+        const headerSection = document.querySelector('.header-section');
+        const driverSection = document.querySelector('.driver-section');
+        const timerSection = document.querySelector('.timer-section');
+        const pitLabel = document.querySelector('.pit-label');
+        const stopLabel = document.querySelector('.stop-label');
+        const timeLabel = document.querySelector('.time-label');
+        const pitTimeContainer = document.querySelector('.pit-time-container');
+
+        // State variables
+        let position = 0;
+        let driverName = '';
+        let teamId = 0;
+        let primaryColor = null;
+        let pitTime = 0.0;
+        let stopTime = 0.0;
+        let isInPit = false;
+        let pitStopActive = false;
+        let previousPitStatus = 0;
+        let frozenPitTime = 0.0; // Frozen pit time to display during 6s hold after leaving pit lane
+        let frozenStopTime = 0.0; // Frozen stop time to display during 6s hold after leaving pit lane
+        let showStopTimeContainerUntil = 0; // Hold stop-time-container for 4s after pit stop ends
+        let showPitTimeContainerUntil = 0; // Hold pit-time-container for 6s after leaving pit lane
+        let containerAnimating = false; // Track if pit-time-container slide animation is in progress
+        let pitLaneTimerActive = false; // Track if pit lane timer is active (in pit lane during race)
+        let previousPitLaneTimerActive = false; // Track previous state to detect transitions
+        let showOverlayUntil = 0; // Hold overlay visible for 6s after pit lane timer deactivates
+
+        // Team and driver data
+        let teamNames = {};
+        let driversData = {};
+        let customF1Drivers = [];
+
+        // Load team and custom driver data
+        async function loadJsonFiles() {
+            try {
+                const [teamsResponse, customDriversResponse] = await Promise.all([
+                    fetch('/data/DefaultTeams.json'),
+                    fetch('/data/CustomF1Drivers.json')
+                ]);
+                teamNames = await teamsResponse.json();
+                customF1Drivers = await customDriversResponse.json();
+                console.debug('[PitTimer] Loaded custom F1 drivers:', customF1Drivers.length);
+            } catch (error) {
+                console.error('Error loading data files:', error);
+            }
+        }
+
+        // Match custom driver with priority: MatchName > Number+Team > Number only
+        function matchCustomDriver(playerName, raceNumber, teamId) {
+            if (!Array.isArray(customF1Drivers) || customF1Drivers.length === 0) {
+                return null;
+            }
+
+            const teamData = teamNames[teamId];
+            const teamName = teamData?.Name || '';
+
+            // Priority 1: Exact MatchName match
+            let match = customF1Drivers.find(d => d.MatchName && d.MatchName === playerName);
+            if (match) {
+                console.debug('[PitTimer] Matched by MatchName:', playerName);
+                return match;
+            }
+
+            // Priority 2: Number + Team match
+            if (teamName) {
+                match = customF1Drivers.find(d => 
+                    d.RaceNumber === raceNumber && 
+                    d.Team && d.Team.toLowerCase() === teamName.toLowerCase()
+                );
+                if (match) {
+                    console.debug('[PitTimer] Matched by Number+Team:', raceNumber, teamName);
+                    return match;
+                }
+            }
+
+            // Priority 3: Number only match
+            match = customF1Drivers.find(d => d.RaceNumber === raceNumber);
+            if (match) {
+                console.debug('[PitTimer] Matched by Number only:', raceNumber);
+                return match;
+            }
+
+            return null;
+        }
+
+        // Update team logo
+        function updateTeamLogo(teamId) {
+            const teamData = teamNames[teamId];
+            
+            if (teamData && teamData.Logo) {
+                const logoPath = `/images/team-logos/${teamData.Logo}`;
+                const img = new Image();
+                
+                img.onload = () => {
+                    teamLogoElement.style.backgroundColor = '#081425FF';
+                    teamLogoElement.style.backgroundImage = `url(${logoPath})`;
+                };
+                
+                img.onerror = () => {
+                    teamLogoElement.style.backgroundColor = 'transparent';
+                    teamLogoElement.style.backgroundImage = 'none';
+                };
+                
+                img.src = logoPath;
+            } else {
+                teamLogoElement.style.backgroundColor = 'transparent';
+                teamLogoElement.style.backgroundImage = 'none';
+            }
+        }
+
+        // Update stop time color
+        function updateStopTimeColor() {
+            if (!stopTimeValue) return;
+            
+            // Check if team has override color
+            if (teamId !== null && teamNames && teamNames[teamId] && teamNames[teamId].OverridePrimaryColor) {
+                const overrideColor = teamNames[teamId].OverridePrimaryColor;
+                stopTimeValue.style.color = overrideColor;
+                console.debug('[PitTimer] Using override color:', overrideColor);
+            } else if (primaryColor) {
+                // Use livery color from game
+                stopTimeValue.style.color = primaryColor;
+                console.debug('[PitTimer] Using livery color:', primaryColor);
+            }
+        }
+
+        // Update driver name styling
+        function updateDriverNameStyling(name) {
+            const nameLength = name.length;
+            
+            if (nameLength <= 10) {
+                driverNameElement.style.fontFamily = "F1TV-2022-ObliqueBold";
+                driverNameElement.style.fontSize = "26px";
+            } else if (nameLength <= 12) {
+                driverNameElement.style.fontFamily = "F1TV-2022-ObliqueCondensed";
+                driverNameElement.style.fontSize = "26px";
+            } else {
+                driverNameElement.style.fontFamily = "F1TV-2022-ObliqueCondensed";
+                driverNameElement.style.fontSize = "24px";
+            }
+        }
+
+        // Update display
+        function updateDisplay() {
+            const now = Date.now();
+            
+            positionElement.textContent = (position && position > 0) ? position : '-';
+            driverNameElement.textContent = driverName.toUpperCase();
+            updateDriverNameStyling(driverName.toUpperCase());
+            
+            // Use frozen values during 6s hold after leaving pit lane, otherwise use live values
+            const displayPitTime = (!isInPit && now < showPitTimeContainerUntil) ? frozenPitTime : pitTime;
+            const displayStopTime = (!isInPit && now < showPitTimeContainerUntil) ? frozenStopTime : stopTime;
+            
+            pitTimeValue.textContent = displayPitTime.toFixed(1);
+            stopTimeValue.textContent = displayStopTime.toFixed(1) + ' ';
+            
+            // Adjust stop time font size based on displayed duration
+            updateStopTimeFontSize(displayStopTime);
+        }
+        
+        // Update stop time font size: 80px for <= 9.9s, 60px for > 9.9s
+        function updateStopTimeFontSize(time) {
+            if (time > 9.9) {
+                stopTimeValue.style.fontSize = '60px';
+            } else {
+                stopTimeValue.style.fontSize = '80px';
+            }
+        }
+
+        // Update pit-time-container position with slide animation
+        function updatePitTimeContainerPosition() {
+            const now = Date.now();
+            const shouldBeVisible = isInPit || (now < showPitTimeContainerUntil);
+            
+            if (shouldBeVisible && pitTimeContainer.style.left !== '0px') {
+                // Slide in (show) - animate from 95px to 0px
+                if (!containerAnimating) {
+                    containerAnimating = true;
+                    anime({
+                        targets: pitTimeContainer,
+                        left: '0px',
+                        duration: 330, // ~0.33 seconds for smooth transition
+                        easing: 'linear',
+                        complete: () => {
+                            containerAnimating = false;
+                        }
+                    });
+                }
+            } else if (!shouldBeVisible && pitTimeContainer.style.left !== '95px') {
+                // Slide out (hide) - animate from 0px to 95px
+                if (!containerAnimating) {
+                    containerAnimating = true;
+                    anime({
+                        targets: pitTimeContainer,
+                        left: '95px',
+                        duration: 330,
+                        easing: 'linear',
+                        complete: () => {
+                            containerAnimating = false;
+                        }
+                    });
+                }
+            }
+        }
+
+        // Toggle container visibility based on pit stop state
+        function updateContainerVisibility() {
+            const now = Date.now();
+            
+            // Determine which container should be visible
+            let showStopTimeContainer = false;
+            let showPitTimeContainer = false;
+            
+            if (pitStopActive) {
+                // In pit box (status 2) - show stop-time-container only
+                showStopTimeContainer = true;
+            } else if (now < showStopTimeContainerUntil) {
+                // Within 4s hold after pit stop - keep showing stop-time-container
+                showStopTimeContainer = true;
+            } else if (isInPit || (now < showPitTimeContainerUntil)) {
+                // In pit lane (status 1) OR within 6s hold after leaving - show pit-time-container
+                showPitTimeContainer = true;
+            }
+            // Otherwise both containers hidden (on-track)
+            
+            // Apply visibility
+            stopTimeContainer.style.opacity = showStopTimeContainer ? '1' : '0';
+            pitTimeContainer.style.opacity = showPitTimeContainer ? '1' : '0';
+            
+            // Show stop timer value when there's a value to display (live or frozen)
+            const displayStopTime = (!isInPit && now < showPitTimeContainerUntil) ? frozenStopTime : stopTime;
+            
+            if (displayStopTime > 0) {
+                stopTimeValue.style.opacity = '1';
+            } else {
+                stopTimeValue.style.opacity = '0';
+            }
+        }
+
+        // Show/hide overlay sections based on pit lane timer status
+        function toggleOverlay() {
+            const now = Date.now();
+            // Show overlay when pit lane timer is active OR within 6s hold after it deactivates
+            const shouldShowOverlay = pitLaneTimerActive || (now < showOverlayUntil);
+            const opacity = shouldShowOverlay ? '1' : '0';
+            headerSection.style.opacity = opacity;
+            driverSection.style.opacity = opacity;
+            timerSection.style.opacity = opacity;
+        }
+
+        // Socket.IO event handlers
+        socket.on('drivers_data', (drivers) => {
+            driversData = drivers;
+            console.debug('[PitTimer] Received drivers data:', Object.keys(driversData).length, 'drivers');
+        });
+
+        socket.on('f1_data', (data) => {
+            try {
+                const playerIdx = data?.m_header?.m_playerCarIndex;
+
+                if (data?.m_header?.m_packetId === 2) { // Lap Data
+                    const lapData = Array.isArray(data.m_lapData) ? data.m_lapData[playerIdx] : undefined;
+                    if (lapData) {
+                        // Update position
+                        if (typeof lapData.m_carPosition === 'number') {
+                            position = lapData.m_carPosition;
+                        }
+
+                        
+                        // Track pit lane timer active status and detect transitions
+                        const newPitLaneTimerActive = (lapData.m_pitLaneTimerActive === 1);
+                        if (newPitLaneTimerActive !== previousPitLaneTimerActive) {
+                            pitLaneTimerActive = newPitLaneTimerActive;
+                            
+                            // When timer deactivates (leaving pit lane during race), hold overlay for 6s
+                            if (previousPitLaneTimerActive && !newPitLaneTimerActive) {
+                                showOverlayUntil = Date.now() + 6000;
+                                console.debug('[PitTimer] Pit lane timer deactivated - holding overlay for 6 seconds');
+                            } else {
+                                console.debug('[PitTimer] Pit lane timer active changed:', pitLaneTimerActive);
+                            }
+                            
+                            previousPitLaneTimerActive = newPitLaneTimerActive;
+                        }
+                        
+                        // Update pit state variables
+                        // isInPit: true when in pit lane (m_pitStatus > 0 OR m_pitLaneTimerActive = 1)
+                        isInPit = (lapData.m_pitStatus > 0) || (lapData.m_pitLaneTimerActive === 1);
+                        
+                        // pitStopActive: true when actually stopped in pit box (m_pitStatus = 2)
+                        const currentPitStatus = lapData.m_pitStatus;
+                        pitStopActive = (currentPitStatus === 2);
+                        
+                        // Detect pit stop end: transition from status 2 (in pit box) to 1 (leaving pit lane)
+                        if (previousPitStatus === 2 && currentPitStatus === 1) {
+                            // Pit stop just finished - hold stop-time-container for 4 seconds
+                            showStopTimeContainerUntil = Date.now() + 4000;
+                            console.debug('[PitTimer] Pit stop ended - holding stop-time-container for 4 seconds');
+                        }
+                        
+                        // Detect leaving pit lane: transition from 1 or 2 to 0
+                        if ((previousPitStatus === 1 || previousPitStatus === 2) && currentPitStatus === 0) {
+                            // Left pit lane - freeze both times and hold overlay/containers for 6 seconds
+                            frozenPitTime = pitTime;
+                            frozenStopTime = stopTime;
+                            showPitTimeContainerUntil = Date.now() + 6000;
+                            showOverlayUntil = Date.now() + 6000;
+                            console.debug('[PitTimer] Left pit lane - holding overlay and pit-time-container for 6 seconds with frozen times - pit:', frozenPitTime.toFixed(1), 'stop:', frozenStopTime.toFixed(1));
+                        }
+                        
+                        previousPitStatus = currentPitStatus;
+                        
+                        // Update container visibility based on pit stop state
+                        updateContainerVisibility();
+                        
+                        // Update overlay visibility
+                        toggleOverlay();
+                        
+                        // Update pit-time-container position
+                        updatePitTimeContainerPosition();
+                        
+                        // Update pit stop timer
+                        if (typeof lapData.m_pitStopTimerInMS === 'number' && lapData.m_pitStopTimerInMS > 0) {
+                            stopTime = lapData.m_pitStopTimerInMS / 1000.0; // Convert MS to seconds
+                        } else {
+                            stopTime = 0.0;
+                        }
+                        
+                        // Update pit lane timer
+                        if (typeof lapData.m_pitLaneTimeInLaneInMS === 'number' && lapData.m_pitLaneTimeInLaneInMS > 0) {
+                            pitTime = lapData.m_pitLaneTimeInLaneInMS / 1000.0; // Convert MS to seconds
+                        } else {
+                            pitTime = 0.0;
+                        }
+                        
+                        updateDisplay();
+                    }
+                }
+
+                if (data?.m_header?.m_packetId === 4) { // Participants
+                    const participantData = Array.isArray(data.m_participants) ? data.m_participants[playerIdx] : undefined;
+                    if (participantData) {
+                        // Get primary livery color and convert to hex
+                        if (participantData.m_liveryColour && Array.isArray(participantData.m_liveryColour) && participantData.m_liveryColour.length > 0) {
+                            const liveryColor = participantData.m_liveryColour[0];
+                            if (liveryColor && typeof liveryColor.red === 'number' && typeof liveryColor.green === 'number' && typeof liveryColor.blue === 'number') {
+                                const hexColor = `#${liveryColor.red.toString(16).padStart(2, '0')}${liveryColor.green.toString(16).padStart(2, '0')}${liveryColor.blue.toString(16).padStart(2, '0')}`;
+                                primaryColor = hexColor;
+                                updateStopTimeColor();
+                            }
+                        }
+                        
+                        // Update team ID
+                        if (typeof participantData.m_teamId === 'number') {
+                            const newTeamId = participantData.m_teamId;
+                            if (newTeamId !== teamId) {
+                                teamId = newTeamId;
+                                console.debug('[PitTimer] Packet 4 received. playerIdx:', playerIdx, 'teamId:', teamId);
+                                updateTeamLogo(teamId);
+                                updateStopTimeColor();
+                            }
+                        }
+
+                        // Update driver name
+                        const driverId = participantData.m_driverId;
+                        if (typeof driverId === 'number' && driverId !== 255) {
+                            // AI driver - lookup from driversData
+                            const aiDriver = driversData[driverId];
+                            if (aiDriver && aiDriver.lastName) {
+                                const newName = aiDriver.lastName;
+                                if (newName !== driverName) {
+                                    driverName = newName;
+                                    console.debug('[PitTimer] AI Driver ID:', driverId, 'name:', driverName);
+                                    updateDisplay();
+                                }
+                            }
+                        } else if (driverId === 255) {
+                            // Human player - match from CustomF1Drivers
+                            const playerName = participantData.m_name || '';
+                            const raceNumber = participantData.m_raceNumber || 0;
+                            
+                            const customDriver = matchCustomDriver(playerName, raceNumber, teamId);
+                            if (customDriver) {
+                                // Use LastName if available, otherwise fall back to DisplayName
+                                const newName = customDriver.LastName || customDriver.DisplayName || '';
+                                if (newName && newName !== driverName) {
+                                    driverName = newName;
+                                    const field = customDriver.LastName ? 'LastName' : 'DisplayName';
+                                    console.debug('[PitTimer] Human player matched:', playerName, '->', field + ':', driverName);
+                                    updateDisplay();
+                                }
+                            } else {
+                                // No match found - use team name + number as fallback
+                                const teamData = teamNames[teamId];
+                                const teamName = teamData?.ShortName || 'UNKNOWN';
+                                const fallbackName = `${teamName} #${raceNumber}`;
+                                if (fallbackName !== driverName) {
+                                    driverName = fallbackName;
+                                    console.debug('[PitTimer] Human player not matched, using fallback:', driverName);
+                                    updateDisplay();
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn('[PitTimer] Error handling f1_data:', e);
+            }
+        });
+
+        // Initialize
+        loadJsonFiles();
+        toggleOverlay(); // Start hidden (will show when entering pit lane during race)
+    </script>
+</body>
+</html>

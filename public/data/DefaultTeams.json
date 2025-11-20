@@ -37,7 +37,9 @@
   "7": {
     "ShortName": "Haas",
     "FullTeamName": "",
-    "Logo": "haas.png"
+    "Logo": "haas.png",
+    "OverridePrimaryColor": "#9C9FA2",
+    "OverridePrimaryColor_Note": "Use this field to set a custom primary color for any team if you're not satisfied with the primary color provided by the game."
   },
   "8": {
     "ShortName": "McLaren",

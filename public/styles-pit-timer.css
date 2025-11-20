@@ -1,0 +1,263 @@
+body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: transparent;
+}
+
+.overlay-container {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 340px;
+    height: 220px;
+    background: transparent;
+}
+
+/* Header Section */
+.header-section {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 340px;
+    height: 66px;
+    background-color: #0a0a0f;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+.pit-lane-text {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 340px;
+    height: 67px;
+    padding-bottom: 4px;
+    font-family: "F1TVname";
+    font-weight: bold;
+    font-size: 40px;
+    color: #ff0000;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-sizing: border-box;
+}
+
+.header-line {
+    position: absolute;
+    left: -0.5px;
+    top: 0;
+    width: 345px;
+    height: 20px;
+    opacity: 0.7;
+    background-image: url('/images/pit-timer/Gradient.png');
+    background-size: 345px 20px;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+/* Driver Section */
+.driver-section {
+    position: absolute;
+    left: 0;
+    top: 63px;
+    width: 340px;
+    height: 50px;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+.driver-background {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 340px;
+    height: 50px;
+    background-image: url('/images/pit-timer/PlayerIndicator.png');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.position-layer {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 47px;
+    height: 50px;
+    font-family: "F1TV-2022-Position";
+    font-weight: 700;
+    font-size: 27px;
+    color: #000000;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.team-logo-layer {
+    position: absolute;
+    left: 50px;
+    top: -0.5px;
+    width: 65px;
+    height: 50.5px;
+    background-color: #081425;
+    background-image: url('/images/team-logos/Red_Bull_Racing.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.driver-name-layer {
+    position: absolute;
+    left: 120px;
+    top: 0;
+    width: 220px;
+    height: 50px;
+    font-family: "F1TV-2022-ObliqueBold";
+    font-weight: 400;
+    font-size: 26px;
+    color: #000000;
+    text-align: left;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+/* Timer Section */
+.timer-section {
+    position: absolute;
+    left: 0;
+    top: 113px;
+    width: 340px;
+    height: 105px;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+.timer-background {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 340px;
+    height: 105px;
+    background-color: #12141a;
+}
+
+.timer-section::after {
+    content: '';
+    position: absolute;
+    left: -5px;
+    top: 0px;
+    width: 345px;
+    height: 105px;
+    background-image: url('/images/pit-timer/Gradient.png');
+    background-size: 345px 105px;
+    background-repeat: no-repeat;
+    background-position: center;
+    pointer-events: none;
+}
+
+/* Stop Time Labels */
+.stop-time-container {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 340px;
+    height: 155px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.stop-time-value {
+    position: absolute;
+    left: 155px;
+    top: 5px;
+    width: 170px;
+    height: 95px;
+    font-family: "F1TV-2022-ObliqueBold";
+    font-weight: bold;
+    font-size: 80px;
+    color: #3671c6;
+    text-align: right;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.stop-label {
+    position: absolute;
+    left: 30px;
+    top: 20px;
+    width: 100px;
+    height: 30px;
+    font-family: "F1TV-2022-Timing";
+    font-weight: 400;
+    font-size: 25px;
+    color: #ffffff;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.time-label {
+    position: absolute;
+    left: 30px;
+    top: 58px;
+    width: 100px;
+    height: 30px;
+    font-family: "F1TV-2022-Timing";
+    font-weight: 400;
+    font-size: 25px;
+    color: #ffffff;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Pit Time Display */
+.pit-time-container {
+    position: absolute;
+    left: 0;
+    top: 20px;
+    width: 155px;
+    height: 69px;
+    z-index: 2;
+}
+
+.pit-label {
+    position: absolute;
+    left: 45px;
+    top: 0;
+    width: 70px;
+    height: 30px;
+    font-family: "Formula1 TV";
+    font-weight: 400;
+    font-size: 25px;
+    color: #ffffff;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.pit-time-value {
+    position: absolute;
+    left: 0;
+    top: 37px;
+    width: 155px;
+    height: 30px;
+    font-family: "F1TV-2022-Timing";
+    font-weight: 700;
+    font-size: 35px;
+    color: #ffffff;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}

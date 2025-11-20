@@ -1,12 +1,26 @@
 [
   {
     "Name": "Platform_Name",
+    "Name_Note": "This will be deprecated in future versions. Use 'MatchName' instead.",
+    "MatchName": "Platform_Name",
+    "MatchName_Note": "Generally used for matching against Player name in UDP data. Case sensitive.",
     "RaceNumber": 1,
+    "RaceNumber_Note": "Mandatory field, used for matching drivers.",
+    "Team": "Team_Name",
+    "Team_Note": "Can be used to specify team for the driver. Mainly used when matching along with RaceNumber.",
     "DisplayName": "Display Name",
-    "Abbreviation": "DNA"
+    "DisplayName_Note": "Name to be displayed in HUD. Mandatory field. Used as a fallback field if LastName is not provided.",
+    "FirstName": "Display",
+    "FirstName_Note": "Optional field for First Name of the driver. Not used at the moment, but will likely be used in future updates.",
+    "LastName": "Name",
+    "LastName_Note": "Optional field for Last Name of the driver. If provided, this will be used in HUD instead of DisplayName.",
+    "Abbreviation": "DNA",
+    "Abbreviation_Note": "3-letter abbreviation for the driver. Not used at the moment, but may be used in future updates.",
+    "Notes": "Additional notes about the driver entry. Feel free to use them to your liking.",
+    "Other_Notes": "Consider this as a template entry. You can use it as a reference when adding new entries. Variable position doesn't matter. Only 'RaceNumber' and 'DisplayName' fields are mandatory. Note that 'notes' fields are just for your reference and do not affect functionality."
   },
   {
-    "Name": "MSchumacher",
+    "MatchName": "MSchumacher",
     "RaceNumber": 47,
     "Team": "Haas",
     "DisplayName": "Mick Schumacher",

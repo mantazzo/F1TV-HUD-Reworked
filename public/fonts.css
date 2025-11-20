@@ -67,10 +67,24 @@
     font-style: normal;
 }
 
+@font-face {
+    font-family: "F1TV-2022-Timing";
+    src: url('/fonts/F1TV-2022-Timing-Oblique.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
 /* Other fonts */
 @font-face {
     font-family: "F1TVnumbers";
     src: url('/fonts/F1TVnumbers.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: "F1TVname";
+    src: url('/fonts/F1TVname.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
 }

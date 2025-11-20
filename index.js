@@ -113,6 +113,7 @@ prompt.get(promptSchema, (err, result) => {
     // Routes
     app.get('/speedometer', (req, res) => res.sendFile(path.join(__dirname, 'views', 'speedometer.html')));
     app.get('/lap-timer', (req, res) => res.sendFile(path.join(__dirname, 'views', 'lap-timer.html')));
+    app.get('/pit-timer', (req, res) => res.sendFile(path.join(__dirname, 'views', 'pit-timer.html')));
     app.get('/', (req, res) => res.redirect('/speedometer'));
     
     server.listen(3000, () => console.log('Overlays at http://localhost:3000/speedometer'));
