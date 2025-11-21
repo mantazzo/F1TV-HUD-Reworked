@@ -62,6 +62,16 @@ prompt.get(promptSchema, (err, result) => {
         io.emit('f1_data', convertBigInt(data));
     });
 
+    // Listen for Lap Data packets (ID 2)
+    client.on(PACKETS.lapData, (data) => {
+        io.emit('f1_data', convertBigInt(data));
+    });
+
+    //Listen for Participants packets (ID 4)
+    client.on(PACKETS.participants, (data) => {
+        io.emit('f1_data', convertBigInt(data));
+    });
+
     // Listen for Car Telemetry packets (ID 6)
     client.on(PACKETS.carTelemetry, (data) => {
         io.emit('f1_data', convertBigInt(data));
@@ -72,23 +82,13 @@ prompt.get(promptSchema, (err, result) => {
         io.emit('f1_data', convertBigInt(data));
     });
 
-    // Listen for Lap Data packets (ID 2)
-    client.on(PACKETS.lapData, (data) => {
-        io.emit('f1_data', convertBigInt(data));
-    });
-
-    // Listen for Time Trial packets (ID 14)
-    client.on(PACKETS.timeTrial, (data) => {
-        io.emit('f1_data', convertBigInt(data));
-    });
-
     // Listen for Session History packets (ID 11)
     client.on(PACKETS.sessionHistory, (data) => {
         io.emit('f1_data', convertBigInt(data));
     });
 
-    //Listen for Participants packets (ID 4)
-    client.on(PACKETS.participants, (data) => {
+    // Listen for Time Trial packets (ID 14)
+    client.on(PACKETS.timeTrial, (data) => {
         io.emit('f1_data', convertBigInt(data));
     });
 
@@ -114,6 +114,7 @@ prompt.get(promptSchema, (err, result) => {
     app.get('/speedometer', (req, res) => res.sendFile(path.join(__dirname, 'views', 'speedometer.html')));
     app.get('/lap-timer', (req, res) => res.sendFile(path.join(__dirname, 'views', 'lap-timer.html')));
     app.get('/pit-timer', (req, res) => res.sendFile(path.join(__dirname, 'views', 'pit-timer.html')));
+    app.get('/live-speed', (req, res) => res.sendFile(path.join(__dirname, 'views', 'live-speed.html')));
     app.get('/', (req, res) => res.redirect('/speedometer'));
     
     server.listen(3000, () => console.log('Overlays at http://localhost:3000/speedometer'));

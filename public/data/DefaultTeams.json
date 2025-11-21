@@ -1,189 +1,192 @@
 {
   "0": {
     "ShortName": "Mercedes",
-    "FullTeamName": "",
+    "FullName": "",
     "Logo": "mercedes.png"
   },
   "1": {
     "ShortName": "Ferrari",
-    "FullTeamName": "Scuderia Ferrari HP",
+    "FullName": "Scuderia Ferrari HP",
     "Logo": "ferrari.png"
   },
   "2": {
     "ShortName": "Red Bull Racing",
-    "FullTeamName": "",
+    "FullName": "",
     "Logo": "red_bull_racing.png"
   },
   "3": {
     "ShortName": "Williams",
-    "FullTeamName": "",
+    "FullName": "",
     "Logo": "williams.png"
   },
   "4": {
     "ShortName": "Aston Martin",
-    "FullTeamName": "",
+    "FullName": "",
     "Logo": "aston_martin.png"
   },
   "5": {
     "ShortName": "Alpine",
-    "FullTeamName": "",
+    "FullName": "",
     "Logo": "alpine.png"
   },
   "6": {
     "ShortName": "RB",
-    "FullTeamName": "",
+    "FullName": "",
     "Logo": "rb.png"
   },
   "7": {
     "ShortName": "Haas",
-    "FullTeamName": "",
+    "ShortName_Note": "The short team name that will be used in various overlays.",
+    "FullName": "MoneyGram Haas F1 Team",
+    "FullName_Note": "The full team name. Not used at the moment.",
     "Logo": "haas.png",
+    "Logo_Note": "The filename of the team's logo image located in the /images/team-logos folder. Can also specify a subfolder, e.g., 'f2/teamlogo.png'.",
     "OverridePrimaryColor": "#9C9FA2",
     "OverridePrimaryColor_Note": "Use this field to set a custom primary color for any team if you're not satisfied with the primary color provided by the game."
   },
   "8": {
     "ShortName": "McLaren",
-    "FullTeamName": "",
+    "FullName": "",
     "Logo": "mclaren.png"
   },
   "9": {
     "ShortName": "Sauber",
-    "FullTeamName": "",
+    "FullName": "",
     "Logo": "sauber.png"
   },
   "41": {
     "ShortName": "F1 Generic",
-    "FullTeamName": "",
+    "FullName": "",
     "Logo": "fia.png"
   },
   "104": {
     "ShortName": "F1 Custom Team",
-    "FullTeamName": "",
+    "FullName": "",
     "Logo": "fia.png"
   },
   "129": {
     "ShortName": "Konnersport",
-    "FullTeamName": "",
+    "FullName": "",
     "Logo": "konnersport.png"
   },
   "142": {
     "ShortName": "APXGP ‘24",
-    "FullTeamName": "",
+    "FullName": "",
     "Logo": "apxgp_24.png"
   },
   "154": {
     "ShortName": "APXGP ‘25",
-    "FullTeamName": "",
+    "FullName": "",
     "Logo": "apxgp_25.png"
   },
   "155": {
     "ShortName": "Konnersport ‘24",
-    "FullTeamName": "",
+    "FullName": "",
     "Logo": "konnersport_24.png"
   },
   "158": {
     "ShortName": "Art GP ‘24",
-    "FullTeamName": "",
+    "FullName": "",
     "Logo": "f2/art.png"
   },
   "159": {
     "ShortName": "Campos ‘24",
-    "FullTeamName": "",
+    "FullName": "",
     "Logo": "f2/campos.png"
   },
   "160": {
     "ShortName": "Rodin Motorsport ‘24",
-    "FullTeamName": "",
+    "FullName": "",
     "Logo": "f2/rodin.png"
   },
   "161": {
     "ShortName": "AIX Racing ‘24",
-    "FullTeamName": "",
+    "FullName": "",
     "Logo": "f2/phm.png"
   },
   "162": {
     "ShortName": "DAMS ‘24",
-    "FullTeamName": "",
+    "FullName": "",
     "Logo": "f2/dams.png"
   },
   "163": {
     "ShortName": "Hitech ‘24",
-    "FullTeamName": "",
+    "FullName": "",
     "Logo": "f2/hitech.png"
   },
   "164": {
     "ShortName": "MP Motorsport ‘24",
-    "FullTeamName": "",
+    "FullName": "",
     "Logo": "f2/mp.png"
   },
   "165": {
     "ShortName": "Prema ‘24",
-    "FullTeamName": "",
+    "FullName": "",
     "Logo": "f2/prema.png"
   },
   "166": {
     "ShortName": "Trident ‘24",
-    "FullTeamName": "",
+    "FullName": "",
     "Logo": "f2/trident.png"
   },
   "167": {
     "ShortName": "Van Amersfoort Racing ‘24",
-    "FullTeamName": "",
+    "FullName": "",
     "Logo": "f2/var.png"
   },
   "168": {
     "ShortName": "Invicta ‘24",
-    "FullTeamName": "",
+    "FullName": "",
     "Logo": "f2/invicta.png"
   },
   "185": {
     "ShortName": "Mercedes ‘24",
-    "FullTeamName": "",
+    "FullName": "",
     "Logo": "mercedes.png"
   },
   "186": {
     "ShortName": "Ferrari ‘24",
-    "FullTeamName": "",
+    "FullName": "",
     "Logo": "ferrari.png"
   },
   "187": {
     "ShortName": "Red Bull Racing ‘24",
-    "FullTeamName": "",
+    "FullName": "",
     "Logo": "red_bull_racing.png"
   },
   "188": {
     "ShortName": "Williams ‘24",
-    "FullTeamName": "",
+    "FullName": "",
     "Logo": "williams.png"
   },
   "189": {
     "ShortName": "Aston Martin ‘24",
-    "FullTeamName": "",
+    "FullName": "",
     "Logo": "aston_martin.png"
   },
   "190": {
     "ShortName": "Alpine ‘24",
-    "FullTeamName": "",
+    "FullName": "",
     "Logo": "alpine.png"
   },
   "191": {
     "ShortName": "RB ‘24",
-    "FullTeamName": "",
+    "FullName": "",
     "Logo": "rb.png"
   },
   "192": {
     "ShortName": "Haas ‘24",
-    "FullTeamName": "",
+    "FullName": "",
     "Logo": "haas.png"
   },
   "193": {
     "ShortName": "McLaren ‘24",
-    "FullTeamName": "",
+    "FullName": "",
     "Logo": "mclaren.png"
   },
   "194": {
     "ShortName": "Sauber ‘24",
-    "FullTeamName": "",
+    "FullName": "",
     "Logo": "sauber.png"
   }
 }

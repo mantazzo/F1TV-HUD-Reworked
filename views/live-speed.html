@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F1 Live Speed Overlay</title>
+    <link rel="stylesheet" href="/fonts.css">
+    <link rel="stylesheet" href="/styles-live-speed.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <div class="overlay-container">
+        <!-- Base background -->
+        <div class="background-base"></div>
+        
+        <!-- Background gradient overlay -->
+        <div class="gradient-overlay"></div>
+        
+        <!-- Top gradient -->
+        <div class="top-gradient"></div>
+        
+        <!-- Bottom gradient with border -->
+        <div class="bottom-gradient"></div>
+        
+        <!-- LIVE SPEED label -->
+        <div class="live-speed-label">LIVE SPEED</div>
+        
+        <!-- Speed display - KM/H (top) -->
+        <div class="kmh-value">0 </div>
+        <div class="kmh-label">KM/H</div>
+        
+        <!-- Speed display - MPH (bottom) -->
+        <div class="mph-value">0 </div>
+        <div class="mph-label">MPH</div>
+        
+        <!-- Aramco widget -->
+        <div class="aramco-container"></div>
+        
+        <!-- Driver name -->
+        <div class="driver-name">PLAYER</div>
+        
+        <!-- Team color line -->
+        <div class="team-color-line"></div>
+    </div>
+
+    <script>
+        const socket = io();
+        
+        // Element references
+        const kmhValue = document.querySelector('.kmh-value');
+        const mphValue = document.querySelector('.mph-value');
+        const kmhLabel = document.querySelector('.kmh-label');
+        const mphLabel = document.querySelector('.mph-label');
+        const overlayContainer = document.querySelector('.overlay-container');
+        const driverName = document.querySelector('.driver-name');
+        const teamColorLine = document.querySelector('.team-color-line');
+        const aramcoContainer = document.querySelector('.aramco-container');
+        const liveSpeedLabel = document.querySelector('.live-speed-label');
+        
+        // State variables
+        let currentSpeedKmh = 0;
+        let currentSpeedMph = 0;
+        let previousSpeedKmh = 0;
+        let currentDriverName = '';
+        let currentTeamId = 0;
+        let playerIndex = -1;
+        let primaryColor = null;
+        let speedUnitsLeadPlayer = 1; // 0 = MPH, 1 = KPH (default to KPH)
+        let isSpeedIncreasing = false;
+        let aramcoHideTimeout = null;
+        let isDrsActive = false;
+        let liveSpeedLabelHideTimeout = null;
+        let isLiveSpeedLabelVisible = false;
+        
+        // Team and driver data
+        let teamNames = {};
+        let driversData = {};
+        let customF1Drivers = [];
+        
+        // Load team and custom driver data
+        async function loadJsonFiles() {
+            try {
+                const [teamsResponse, customDriversResponse] = await Promise.all([
+                    fetch('/data/DefaultTeams.json'),
+                    fetch('/data/CustomF1Drivers.json')
+                ]);
+                teamNames = await teamsResponse.json();
+                customF1Drivers = await customDriversResponse.json();
+                console.debug('[LiveSpeed] Loaded custom F1 drivers:', customF1Drivers.length);
+            } catch (error) {
+                console.error('[LiveSpeed] Error loading data files:', error);
+            }
+        }
+        
+        // Match custom driver with priority: MatchName > Number+Team > Number only
+        function matchCustomDriver(playerName, raceNumber, teamId) {
+            if (!Array.isArray(customF1Drivers) || customF1Drivers.length === 0) {
+                return null;
+            }
+
+            const teamData = teamNames[teamId];
+            const teamName = teamData?.Name || '';
+
+            // Priority 1: Exact MatchName match
+            let match = customF1Drivers.find(d => d.MatchName && d.MatchName === playerName);
+            if (match) {
+                console.debug('[LiveSpeed] Matched by MatchName:', playerName);
+                return match;
+            }
+
+            // Priority 2: Number + Team match
+            if (teamName) {
+                match = customF1Drivers.find(d => 
+                    d.RaceNumber === raceNumber && 
+                    d.Team && d.Team.toLowerCase() === teamName.toLowerCase()
+                );
+                if (match) {
+                    console.debug('[LiveSpeed] Matched by Number+Team:', raceNumber, teamName);
+                    return match;
+                }
+            }
+
+            // Priority 3: Number only match
+            match = customF1Drivers.find(d => d.RaceNumber === raceNumber);
+            if (match) {
+                console.debug('[LiveSpeed] Matched by Number only:', raceNumber);
+                return match;
+            }
+
+            return null;
+        }
+        
+        // Show live-speed-label and start 10s timer (only once per increase cycle)
+        function showLiveSpeedLabel() {
+            isLiveSpeedLabelVisible = true;
+            liveSpeedLabel.style.top = '27px';
+            liveSpeedLabel.style.opacity = '1';
+            
+            // Set timeout to hide after 10 seconds (don't reset if already running)
+            if (!liveSpeedLabelHideTimeout) {
+                liveSpeedLabelHideTimeout = setTimeout(() => {
+                    isLiveSpeedLabelVisible = false;
+                    liveSpeedLabel.style.top = '67px';
+                    liveSpeedLabel.style.opacity = '0';
+                    liveSpeedLabelHideTimeout = null;
+                    // When label hides, force aramco to hide too
+                    hideAramcoContainer();
+                }, 10000);
+            }
+        }
+        
+        // Hide live-speed-label only if timer is not running
+        function hideLiveSpeedLabel() {
+            // Only hide if there's no active timer (10s hasn't finished)
+            if (!liveSpeedLabelHideTimeout) {
+                isLiveSpeedLabelVisible = false;
+                liveSpeedLabel.style.top = '67px';
+                liveSpeedLabel.style.opacity = '0';
+                // When label hides, force aramco to hide too
+                hideAramcoContainer();
+            }
+            // If timer is still running, let it finish naturally
+        }
+        
+        // Show aramco container and start 6s timer (only once per increase cycle)
+        function showAramcoContainer() {
+            // Only show if live-speed-label is visible
+            if (!isLiveSpeedLabelVisible) return;
+            
+            aramcoContainer.style.opacity = '1';
+            
+            // Set timeout to hide after 6 seconds (don't reset if already running)
+            if (!aramcoHideTimeout) {
+                aramcoHideTimeout = setTimeout(() => {
+                    aramcoContainer.style.opacity = '0';
+                    aramcoHideTimeout = null;
+                }, 6000);
+            }
+        }
+        
+        // Hide aramco container (forced when label hides or independently)
+        function hideAramcoContainer() {
+            // Clear any active timer
+            if (aramcoHideTimeout) {
+                clearTimeout(aramcoHideTimeout);
+                aramcoHideTimeout = null;
+            }
+            aramcoContainer.style.opacity = '0';
+        }
+        
+        // Update speed display
+        function updateSpeed(speedKmh) {
+            const newSpeedKmh = Math.round(speedKmh);
+            currentSpeedMph = Math.round(speedKmh * 0.621371); // Convert to MPH
+            
+            // Track speed increase/decrease
+            if (newSpeedKmh > previousSpeedKmh) {
+                // Speed increased
+                if (!isSpeedIncreasing) {
+                    isSpeedIncreasing = true;
+                    showLiveSpeedLabel(); // Show label and start 10s timer
+                    showAramcoContainer(); // Show and start timer only on first increase (after label is visible)
+                }
+                // If already increasing, do nothing (let the timers run)
+            } else if (newSpeedKmh < previousSpeedKmh) {
+                // Speed decreased
+                if (isSpeedIncreasing) {
+                    isSpeedIncreasing = false;
+                    hideLiveSpeedLabel(); // Hide label only if timer finished
+                }
+            }
+            
+            previousSpeedKmh = newSpeedKmh;
+            currentSpeedKmh = newSpeedKmh;
+            
+            // Color both speed values based on speed and DRS status
+            if (isDrsActive) {
+                // DRS active - override to lime for both
+                kmhValue.style.color = 'lime';
+                mphValue.style.color = 'lime';
+            } else if (speedKmh >= 200) {
+                // High speed (200+ km/h) - red for both
+                kmhValue.style.color = 'rgb(255, 0, 0)';
+                mphValue.style.color = 'rgb(255, 0, 0)';
+            } else {
+                // Normal speed - white for both
+                kmhValue.style.color = 'rgb(255, 255, 255)';
+                mphValue.style.color = 'rgb(255, 255, 255)';
+            }
+            
+            // Swap display based on player's speed unit preference
+            if (speedUnitsLeadPlayer === 0) {
+                // Player uses MPH - show MPH on top, KPH on bottom
+                kmhValue.textContent = currentSpeedMph + ' ';
+                mphValue.textContent = currentSpeedKmh + ' ';
+                kmhLabel.textContent = 'MPH';
+                mphLabel.textContent = 'KM/H';
+            } else {
+                // Player uses KPH - show KPH on top, MPH on bottom (default)
+                kmhValue.textContent = currentSpeedKmh + ' ';
+                mphValue.textContent = currentSpeedMph + ' ';
+                kmhLabel.textContent = 'KM/H';
+                mphLabel.textContent = 'MPH';
+            }
+        }
+        
+        // Update team colors for driver name and team color line
+        function updateTeamColors() {
+            // Check if team has override color
+            if (currentTeamId !== null && teamNames && teamNames[currentTeamId] && teamNames[currentTeamId].OverridePrimaryColor) {
+                const overrideColor = teamNames[currentTeamId].OverridePrimaryColor;
+                driverName.style.color = overrideColor;
+                teamColorLine.style.backgroundColor = overrideColor;
+                console.debug('[LiveSpeed] Using override color:', overrideColor);
+            } else if (primaryColor) {
+                // Use livery color from game
+                driverName.style.color = primaryColor;
+                teamColorLine.style.backgroundColor = primaryColor;
+                console.debug('[LiveSpeed] Using livery color:', primaryColor);
+            }
+        }
+        
+        // Update driver name with dynamic font based on length
+        function updateDriverName(name) {
+            if (!name) return;
+            
+            driverName.textContent = name;
+            const nameLength = name.length;
+            
+            // Switch to condensed font for names > 10 characters
+            if (nameLength > 10) {
+                driverName.style.fontFamily = 'F1TV-2022-ObliqueCondensed, sans-serif';
+                // Progressive size reduction based on length
+                if (nameLength > 13) {
+                    driverName.style.fontSize = '16px';
+                } else if (nameLength > 12) {
+                    driverName.style.fontSize = '18px';
+                } else if (nameLength > 11) {
+                    driverName.style.fontSize = '20px';
+                } else {
+                    driverName.style.fontSize = '22px';
+                }
+            } else {
+                driverName.style.fontFamily = 'F1TV-2022-ObliqueBold, sans-serif';
+                driverName.style.fontSize = '22px';
+            }
+        }
+        
+        // Socket.IO event handlers
+        socket.on('drivers_data', (drivers) => {
+            driversData = drivers;
+            console.debug('[LiveSpeed] Received drivers data:', Object.keys(driversData).length, 'drivers');
+        });
+        
+        socket.on('f1_data', (data) => {
+            try {
+                const playerIdx = data?.m_header?.m_playerCarIndex;
+                
+                if (playerIdx !== undefined && playerIdx !== playerIndex) {
+                    playerIndex = playerIdx;
+                }
+                
+                if (data?.m_header?.m_packetId === 1) { // Session Data
+                    // Get player's speed unit preference (0 = MPH, 1 = KPH)
+                    if (typeof data.m_speedUnitsLeadPlayer === 'number') {
+                        const newSpeedUnits = data.m_speedUnitsLeadPlayer;
+                        if (newSpeedUnits !== speedUnitsLeadPlayer) {
+                            speedUnitsLeadPlayer = newSpeedUnits;
+                            const unitName = speedUnitsLeadPlayer === 0 ? 'MPH' : 'KPH';
+                            console.debug('[LiveSpeed] Speed units preference:', unitName);
+                            // Re-display with updated units
+                            updateSpeed(currentSpeedKmh);
+                        }
+                    }
+                }
+
+                if (data?.m_header?.m_packetId === 4) { // Participants Data
+                    const participantData = Array.isArray(data.m_participants) ? data.m_participants[playerIdx] : undefined;
+                    if (participantData) {
+                        // Get primary livery color (keep as RGB)
+                        if (participantData.m_liveryColour && Array.isArray(participantData.m_liveryColour) && participantData.m_liveryColour.length > 0) {
+                            const liveryColor = participantData.m_liveryColour[0];
+                            if (liveryColor && typeof liveryColor.red === 'number' && typeof liveryColor.green === 'number' && typeof liveryColor.blue === 'number') {
+                                primaryColor = `rgb(${liveryColor.red}, ${liveryColor.green}, ${liveryColor.blue})`;
+                                updateTeamColors();
+                            }
+                        }
+                        
+                        // Update team ID
+                        if (typeof participantData.m_teamId === 'number') {
+                            const newTeamId = participantData.m_teamId;
+                            if (newTeamId !== currentTeamId) {
+                                currentTeamId = newTeamId;
+                                console.debug('[LiveSpeed] Team ID updated:', currentTeamId);
+                                updateTeamColors();
+                            }
+                        }
+
+                        // Update driver name
+                        const driverId = participantData.m_driverId;
+                        if (typeof driverId === 'number' && driverId !== 255) {
+                            // AI driver - lookup from driversData
+                            const aiDriver = driversData[driverId];
+                            if (aiDriver && aiDriver.lastName) {
+                                const newName = aiDriver.lastName;
+                                if (newName !== currentDriverName) {
+                                    currentDriverName = newName;
+                                    console.debug('[LiveSpeed] AI Driver ID:', driverId, 'name:', currentDriverName);
+                                    updateDriverName(currentDriverName.toUpperCase());
+                                }
+                            }
+                        } else if (driverId === 255) {
+                            // Human player - match from CustomF1Drivers
+                            const playerName = participantData.m_name || '';
+                            const raceNumber = participantData.m_raceNumber || 0;
+                            
+                            const customDriver = matchCustomDriver(playerName, raceNumber, currentTeamId);
+                            if (customDriver) {
+                                // Use LastName if available, otherwise fall back to DisplayName
+                                const newName = customDriver.LastName || customDriver.DisplayName || '';
+                                if (newName && newName !== currentDriverName) {
+                                    currentDriverName = newName;
+                                    const field = customDriver.LastName ? 'LastName' : 'DisplayName';
+                                    console.debug('[LiveSpeed] Human player matched:', playerName, '->', field + ':', currentDriverName);
+                                    updateDriverName(currentDriverName.toUpperCase());
+                                }
+                            } else {
+                                // No match found - use team name + number as fallback
+                                const teamData = teamNames[currentTeamId];
+                                const teamName = teamData?.ShortName || 'UNKNOWN';
+                                const fallbackName = `${teamName} #${raceNumber}`;
+                                if (fallbackName !== currentDriverName) {
+                                    currentDriverName = fallbackName;
+                                    console.debug('[LiveSpeed] Human player not matched, using fallback:', currentDriverName);
+                                    updateDriverName(currentDriverName.toUpperCase());
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (data?.m_header?.m_packetId === 6) { // Car Telemetry Data
+                    const carTelemetry = Array.isArray(data.m_carTelemetryData) ? data.m_carTelemetryData[playerIdx] : undefined;
+                    if (carTelemetry) {
+                        if (typeof carTelemetry.m_speed === 'number') {
+                            updateSpeed(carTelemetry.m_speed);
+                        }
+                        
+                        // Update DRS status and adjust mph-value opacity
+                        if (typeof carTelemetry.m_drs === 'number') {
+                            const drsActive = carTelemetry.m_drs === 1;
+                            if (drsActive !== isDrsActive) {
+                                isDrsActive = drsActive;
+                                mphValue.style.opacity = isDrsActive ? '0.6' : '0.8';
+                                // Re-apply speed colors with new DRS state
+                                updateSpeed(carTelemetry.m_speed);
+                            }
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('[LiveSpeed] Error processing data:', error);
+            }
+        });
+        
+        // Initialize
+        loadJsonFiles().then(() => {
+            console.log('[LiveSpeed] Initialized');
+        });
+    </script>
+</body>
+</html>
