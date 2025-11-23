@@ -1,43 +1,104 @@
+/* CSS Variables for colors and common values */
+:root {
+    /* Colors */
+    --color-bg-dark: #12141A;
+    --color-bg-player-indicator: rgba(230, 230, 230, 0.6);
+    --color-border-light: #E6E6E6;
+    --color-text-white: #ffffff;
+    --color-text-gray: #808080;
+    --color-text-black: #000000;
+    --color-sector-line: #8C8C8C;
+    --color-tyre-bg: #00000A;
+    --color-team-logo-bg: #081425;
+    --color-rolex-green: #185E33;
+    
+    /* Tyre compound colors */
+    --color-tyre-soft: #F92D29;
+    --color-tyre-medium: #EBD25F;
+    --color-tyre-hard: #FFFFFF;
+    --color-tyre-inter: #3AC82B;
+    --color-tyre-wet: #4491D2;
+    --color-tyre-super-soft: #800080;
+    
+    /* Dimensions */
+    --overlay-width: 480px;
+    --overlay-height: 270px;
+    --player-indicator-height: 52px;
+    --player-indicator-top: 89px;
+    
+    /* Fonts */
+    --font-main: "F1TV-2022-ObliqueBold";
+    --font-timing: "F1TV-2022-NameCondensed-BoldOblique";
+    --font-position: "F1TV-2022-Position";
+    --font-numbers: "F1TVnumbers";
+    --font-italic: "Formula1 TV-Italic";
+    
+    /* Z-index layers */
+    --z-background: 0;
+    --z-base: 1;
+    --z-content: 2;
+    --z-overlay: 3;
+    --z-top: 4;
+}
+
+/* Utility classes */
+.flex-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.flex-start {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.text-shadow {
+    text-shadow: 2px 2px 4px #000000;
+}
+
 .overlay-container {
     position: relative;
-    width: 480px;
-    height: 270px;
+    width: var(--overlay-width);
+    height: var(--overlay-height);
     background-image: url('/images/lap-timer/PlayerIndicator.png'), url('/images/lap-timer/PlayerIndicator.png'), url('/images/lap-timer/Gradient.png');
     background-repeat: no-repeat, no-repeat, no-repeat;
-    background-position: -1px 89px, 311px 89px, -5px 140px;
-    background-size: 318px 52px, 318px 52px, 485px 15px;
+    background-position: -1px var(--player-indicator-top), 311px var(--player-indicator-top), -5px 140px;
+    background-size: 318px var(--player-indicator-height), 318px var(--player-indicator-height), 485px 15px;
+    overflow: hidden;
 }
 
 .overlay-container:before {
     content: '';
     position: absolute;
-    top: 89px;
+    top: var(--player-indicator-top);
     left: 0px;
     width: 476px;
     height: 46px;
-    background-color: rgba(230, 230, 230, 0.6); /* 60% opacity */
-    border: 2px solid #E6E6E6FF; /* Full opacity border */
-    z-index: 0; /* Below everything */
+    background-color: var(--color-bg-player-indicator);
+    border: 2px solid var(--color-border-light);
+    z-index: var(--z-background);
 }
 
 #timer-background {
     position: absolute;
     top: 138px;
     left: 0px;
-    width: 480px;
+    width: var(--overlay-width);
     height: 78px;
-    background-color: #12141AFF; /* Dark grayish-blue, no border */
-    z-index: 1; /* Background level */
+    background-color: var(--color-bg-dark);
+    z-index: var(--z-base);
 }
 
 #sectors-background {
     position: absolute;
     top: 216px;
     left: 0px;
-    width: 480px;
+    width: var(--overlay-width);
     height: 38px;
-    background-color: #12141AFF; /* Dark grayish-blue, no border */
-    z-index: 1; /* Background level */
+    background-color: var(--color-bg-dark);
+    z-index: var(--z-base);
 }
 
 #separator {
@@ -47,37 +108,37 @@
     width: 240px;
     height: 74px;
     background-color: transparent;
-    border-right: 1px solid gray; /* 1px gray right border */
-    z-index: 2; /* Same level as lap time */
+    border-right: 1px solid var(--color-text-gray);
+    z-index: var(--z-content);
 }
 
 #sector-line {
     position: absolute;
     top: 245.5px;
     left: 0px;
-    width: 480px;
+    width: var(--overlay-width);
     height: 3px;
-    background-color: #8C8C8CFF; /* Medium gray with full opacity */
-    border: none; /* No borders */
-    z-index: 1; /* Background level, will act as a base */
+    background-color: var(--color-sector-line);
+    border: none;
+    z-index: var(--z-base);
 }
 
 .lap-time-layer {
     position: absolute;
     top: 147px;
-    left: 65px; /* Default position, will be overridden dynamically */
+    left: 65px; /* Default position, overridden dynamically */
     width: 190px;
     height: 60px;
-    font-family: "F1TV-2022-NameCondensed-BoldOblique";
+    font-family: var(--font-timing);
     font-size: 44px;
     font-weight: bold;
-    color: #ffffff;
+    color: var(--color-text-white);
     text-align: left;
     display: flex;
     justify-content: flex-start;
     align-items: center;
     text-shadow: 2px 2px 4px #000000;
-    z-index: 2; /* Main text level */
+    z-index: var(--z-content);
 }
 
 .lap-time-comparison-layer {
@@ -86,16 +147,16 @@
     left: 240px;
     width: 240px;
     height: 35px;
-    font-family: "F1TV-2022-NameCondensed-BoldOblique";
+    font-family: var(--font-timing);
     font-size: 29px;
     font-weight: normal;
-    color: #ffffff;
+    color: var(--color-text-white);
     text-align: center;
     display: flex;
     justify-content: center;
     align-items: center;
     text-shadow: 2px 2px 4px #000000;
-    z-index: 2; /* Main text level */
+    z-index: var(--z-content);
 }
 
 .lap-time-comparison-name-layer {
@@ -104,87 +165,65 @@
     left: 240px;
     width: 240px;
     height: 25px;
-    font-family: "Formula1 TV-Italic";
+    font-family: var(--font-italic);
     font-size: 18px;
     font-weight: bold;
-    color: gray;
+    color: var(--color-text-gray);
     text-align: center;
     display: flex;
     justify-content: center;
     align-items: center;
     text-shadow: 2px 2px 4px #000000;
-    z-index: 2; /* Main text level */
+    z-index: var(--z-content);
 }
 
-.sector1-text-layer {
-    position: absolute;
-    top: 217px;
-    left: 0px;
-    width: 160px;
-    height: 25px;
-    font-family: "F1TVnumbers";
-    font-size: 16px;
-    font-weight: bold;
-    color: gray;
-    text-align: center;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    text-shadow: 2px 2px 4px #000000;
-    z-index: 2; /* Same main text level */
-}
-
-.sector2-text-layer {
-    position: absolute;
-    top: 217px;
-    left: 160px;
-    width: 160px;
-    height: 25px;
-    font-family: "F1TVnumbers";
-    font-size: 16px;
-    font-weight: bold;
-    color: gray;
-    text-align: center;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    text-shadow: 2px 2px 4px #000000;
-    z-index: 2; /* Same main text level */
-}
-
+/* Common sector text styling */
+.sector1-text-layer,
+.sector2-text-layer,
 .sector3-text-layer {
     position: absolute;
     top: 217px;
-    left: 320px;
     width: 160px;
     height: 25px;
-    font-family: "F1TVnumbers";
+    font-family: var(--font-numbers);
     font-size: 16px;
     font-weight: bold;
-    color: gray;
+    color: var(--color-text-gray);
     text-align: center;
     display: flex;
     justify-content: center;
     align-items: center;
     text-shadow: 2px 2px 4px #000000;
-    z-index: 2; /* Same main text level */
+    z-index: var(--z-content);
+}
+
+.sector1-text-layer {
+    left: 0px;
+}
+
+.sector2-text-layer {
+    left: 160px;
+}
+
+.sector3-text-layer {
+    left: 320px;
 }
 
 .last-lap-time-layer {
     position: absolute;
     top: 57px;
     left: 0px;
-    width: 480px;
+    width: var(--overlay-width);
     height: 80px;
-    font-family: "F1TV-2022-NameCondensed-BoldOblique";
+    font-family: var(--font-timing);
     font-size: 44px;
-    color: #ffffff;
+    color: var(--color-text-white);
     display: flex;
     justify-content: center;
     align-items: center;
     text-align: center;
-    z-index: 4; /* Above other elements */
-    opacity: 0; /* Initially hidden */
+    z-index: var(--z-top);
+    opacity: 0;
 }
 
 .position-layer {
@@ -193,27 +232,27 @@
     left: 0px;
     width: 48px;
     height: 50px;
-    font-family: "F1TV-2022-Position";
+    font-family: var(--font-position);
     font-size: 24px;
-    color: #000000;
+    color: var(--color-text-black);
     display: flex;
     justify-content: center;
     align-items: center;
     text-align: center;
-    z-index: 2; /* Main text level */
+    z-index: var(--z-content);
 }
 
 .team-logo-layer {
     position: absolute;
-    top: 89px;
+    top: var(--player-indicator-top);
     left: 48px;
     width: 57px;
-    height: 52px;
-    background-color: #081425; /* Dark blue background */
-    background-image: url('/images/team-logos/Red_Bull_Racing.png'); /* Currently using Red Bull as placeholder */
+    height: var(--player-indicator-height);
+    background-color: var(--color-team-logo-bg);
+    background-image: url('/images/team-logos/Red_Bull_Racing.png');
     background-size: cover;
     background-position: center;
-    z-index: 2; /* Can be used as main text level */
+    z-index: var(--z-content);
 }
 
 .driver-name-layer {
@@ -222,67 +261,36 @@
     left: 120px;
     width: 320px;
     height: 50px;
-    font-family: "F1TV-2022-ObliqueBold";
+    font-family: var(--font-main);
     font-size: 32px;
-    color: #000000;
+    color: var(--color-text-black);
     display: flex;
     justify-content: flex-start;
     align-items: center;
     text-align: left;
-    z-index: 2; /* Main text level */
+    z-index: var(--z-content);
 }
 
 .tyre-compound-layer {
     position: absolute;
-    top: 89px;
+    top: var(--player-indicator-top);
     left: 425px;
     width: 55px;
-    height: 52px;
-    background-color: #00000AFF;
-    font-family: "F1TV-2022";
+    height: var(--player-indicator-height);
+    background-color: var(--color-tyre-bg);
+    font-family: var(--font-main);
     font-size: 24px;
-    color: #FF0000; /* Default to Soft (Red) */
+    color: var(--color-tyre-soft);
     display: flex;
     justify-content: center;
     align-items: center;
     text-align: center;
-    z-index: 2; /* Main text level */
+    z-index: var(--z-content);
 }
 
-.sector-display-layer#sector1-delta {
-    position: absolute;
-    top: 148px;
-    left: -5px;
-    width: 245px;
-    height: 60px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 44px;
-    font-weight: bold;
-    font-family: "F1TV-2022-NameCondensed-BoldOblique";
-    color: #ffffff;
-    z-index: 3; /* Above Lap Time */
-    opacity: 0; /* Initially hidden */
-}
-
-.sector-display-layer#sector2-delta {
-    position: absolute;
-    top: 148px;
-    left: -5px;
-    width: 245px;
-    height: 60px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 44px;
-    font-weight: bold;
-    font-family: "F1TV-2022-NameCondensed-BoldOblique";
-    color: #ffffff;
-    z-index: 3; /* Above Lap Time */
-    opacity: 0; /* Initially hidden */
-}
-
+/* Common sector delta display styling */
+.sector-display-layer#sector1-delta,
+.sector-display-layer#sector2-delta,
 .sector-display-layer#last-lap-delta {
     position: absolute;
     top: 148px;
@@ -294,23 +302,23 @@
     align-items: center;
     font-size: 44px;
     font-weight: bold;
-    font-family: "F1TV-2022-NameCondensed-BoldOblique";
-    color: #ffffff;
-    z-index: 3; /* Above Lap Time */
-    opacity: 0; /* Initially hidden */
+    font-family: var(--font-timing);
+    color: var(--color-text-white);
+    z-index: var(--z-overlay);
+    opacity: 0;
 }
 
 .knockout-indicator-layer {
     position: absolute;
-    top: 89px;
+    top: var(--player-indicator-top);
     left: 0px;
-    width: 52px;
-    height: 52px;
+    width: var(--player-indicator-height);
+    height: var(--player-indicator-height);
     background-image: url('/images/lap-timer/Knockout.png');
     background-size: cover;
     background-position: center;
-    display: none; /* Hidden by default */
-    z-index: 1; /* Used as background level when required */
+    display: none;
+    z-index: var(--z-base);
 }
 
 .position-gained-indicator {
@@ -322,7 +330,7 @@
     background-image: url('/images/lap-timer/Green.png');
     background-size: cover;
     background-position: center;
-    z-index: 3;
+    z-index: var(--z-overlay);
     opacity: 0;
 }
 
@@ -335,44 +343,34 @@
     background-image: url('/images/lap-timer/Red.png');
     background-size: cover;
     background-position: center;
-    z-index: 3;
+    z-index: var(--z-overlay);
     opacity: 0;
 }
 
-.sector1-indicator {
-    position: absolute;
-    top: 244px;
-    left: 0px;
-    width: 160px;
-    height: 6px;
-    background-color: transparent; /* Transparent overlay, will be later colored */
-    border: none;
-    z-index: 2; /* Above sector bar */
-    opacity: 1;
-}
-
-.sector2-indicator {
-    position: absolute;
-    top: 244px;
-    left: 160px;
-    width: 160px;
-    height: 6px;
-    background-color: transparent; /* Transparent overlay, will be later colored */
-    border: none;
-    z-index: 2; /* Above sector bar */
-    opacity: 1;
-}
-
+/* Common sector indicator styling */
+.sector1-indicator,
+.sector2-indicator,
 .sector3-indicator {
     position: absolute;
     top: 244px;
-    left: 320px;
     width: 160px;
     height: 6px;
-    background-color: transparent; /* Transparent overlay, will be later colored */
+    background-color: transparent;
     border: none;
-    z-index: 2; /* Above sector bar */
-    opacity: 1; 
+    z-index: var(--z-content);
+    opacity: 1;
+}
+
+.sector1-indicator {
+    left: 0px;
+}
+
+.sector2-indicator {
+    left: 160px;
+}
+
+.sector3-indicator {
+    left: 320px;
 }
 
 .stroke-bar {
@@ -406,13 +404,13 @@
     left: 330px;
     width: 150px;
     height: 85px;
-    background-color: #185E33; /* Rolex green */
+    background-color: var(--color-rolex-green);
     border-radius: 5px;
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 2;
-    opacity: 0; /* Hidden by default */
+    z-index: var(--z-content);
+    opacity: 0;
     transition: opacity 0.3s ease;
 }
 
@@ -426,14 +424,14 @@
     position: absolute;
     top: 280px;
     left: 0;
-    width: 480px;
+    width: var(--overlay-width);
     font-family: monospace;
     font-size: 12px;
-    color: #ffffff;
+    color: var(--color-text-white);
     background-color: rgba(0, 0, 0, 0.8);
     padding: 5px;
     word-wrap: break-word;
     display: none;
     opacity: 0;
-    z-index: 3;
+    z-index: var(--z-overlay);
 }

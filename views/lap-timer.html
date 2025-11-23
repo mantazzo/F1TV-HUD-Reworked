@@ -63,6 +63,82 @@
         const sector3Indicator = document.getElementById('sector3-indicator');
         const rolexWidget = document.getElementById('rolex-widget');
 
+        // Constants
+        const SESSION_TYPE = {
+            UNKNOWN: 0,
+            PRACTICE_1: 1,
+            PRACTICE_2: 2,
+            PRACTICE_3: 3,
+            SHORT_PRACTICE: 4,
+            QUALIFYING_1: 5,
+            QUALIFYING_2: 6,
+            QUALIFYING_3: 7,
+            SHORT_QUALIFYING: 8,
+            ONE_SHOT_QUALIFYING: 9,
+            SPRINT_SHOOTOUT_1: 10,
+            SPRINT_SHOOTOUT_2: 11,
+            SPRINT_SHOOTOUT_3: 12,
+            SHORT_SPRINT_SHOOTOUT: 13,
+            ONE_SHOT_SPRINT_SHOOTOUT: 14,
+            RACE: 15,
+            RACE_2: 16,
+            RACE_3: 17,
+            TIME_TRIAL: 18
+        };
+
+        const ANIMATION_DURATION = {
+            SECTOR_DELTA_FADE_IN: 100,
+            SECTOR_DELTA_DISPLAY: 3000,
+            SECTOR_DELTA_FADE_OUT: 500,
+            LAST_LAP_SLIDE_UP: 333,
+            LAST_LAP_DISPLAY: 5000,
+            LAST_LAP_SLIDE_DOWN: 333,
+            POSITION_CHANGE_FADE_IN: 500,
+            POSITION_CHANGE_DISPLAY: 2000,
+            POSITION_CHANGE_FADE_OUT: 500
+        };
+
+        const TYRE_COMPOUND = {
+            SOFT: { code: 'S', color: '#F92D29' }, // Soft, Red
+            MEDIUM: { code: 'M', color: '#EBD25F' }, // Medium, Yellow
+            HARD: { code: 'H', color: '#FFFFFF' }, // Hard, White
+            INTER: { code: 'I', color: '#3AC82B' }, // Intermediate, Green
+            WET: { code: 'W', color: '#4491D2' }, // Wet, Blue
+            SUPER_SOFT: { code: 'SS', color: '#800080' }, // Super Soft (F2 only), Purple
+            UNKNOWN: { code: '?', color: '#808080' } // Compound is unknown
+        };
+
+        const KNOCKOUT_ZONE_POSITIONS = {
+            Q1_20_CARS: 15,  // 20 car grid
+            Q1_22_CARS: 16,  // 22 car grid (F2 or MyTeam)
+            Q2: 10,
+            Q3: 0  // No knockout in Q3
+        };
+
+        const SECTOR_COLORS = {
+            FASTER: 'lime',      // Faster than reference
+            SLOWER: '#FDD30A',   // Slower than reference (yellow)
+            NEUTRAL: '#ffffff',  // No reference available
+            PERSONAL_BEST: 'lime',
+            OVERALL_BEST: 'magenta',
+            DEFAULT: 'gold',
+            GRAY: 'gray'
+        };
+
+        // Visual tyre compound ID mappings from F1 game telemetry
+        const VISUAL_TYRE_COMPOUND = {
+            7: 'I',   // Intermediate
+            8: 'W',   // Wet
+            15: 'W',  // Wet (F2)
+            16: 'S',  // Soft (F1)
+            17: 'M',  // Medium (F1)
+            18: 'H',  // Hard (F1)
+            19: 'SS', // Super Soft (F2)
+            20: 'S',  // Soft (F2)
+            21: 'M',  // Medium (F2)
+            22: 'H'   // Hard (F2)
+        };
+
         let currentLapTime = 'N/A';
         let lastLapTime = 'N/A';
         let lapTimeComparison = 'N/A';
@@ -120,6 +196,7 @@
                 if (responses[1]) {
                     const customDriversData = await responses[1].json();
                     customDrivers = Array.isArray(customDriversData) ? customDriversData : [];
+                    console.log(`Custom drivers loaded for ${formulaType === 0 ? 'F1' : formulaType === 2 ? 'F2' : 'Unknown Formula'} (${customDrivers.length} drivers):`, customDrivers);
                 }
             } catch (error) {
                 console.error('Error loading JSON files:', error);
@@ -226,6 +303,128 @@
             return calculateSectorTime(s1MinutesPart, s1MsPart) + calculateSectorTime(s2MinutesPart, s2MsPart);
         }
 
+        /**
+         * Display sector/lap time with delta comparison
+         * @param {HTMLElement} element - The delta display element
+         * @param {number} currentTimeMS - Current sector/lap time in milliseconds
+         * @param {number} referenceTimeMS - Reference time to compare against (or -1 if none)
+         * @param {number} currentSessionType - Current session type
+         */
+        function displayTimeDelta(element, currentTimeMS, referenceTimeMS, currentSessionType) {
+            // Show delta if reference exists and session is Time Trial or any racing session
+            const hasReference = referenceTimeMS > 0 && (currentSessionType === SESSION_TYPE.TIME_TRIAL || (currentSessionType >= SESSION_TYPE.PRACTICE_1 && currentSessionType <= SESSION_TYPE.TIME_TRIAL));
+            
+            if (hasReference) {
+                // Show delta comparison
+                const delta = currentTimeMS - referenceTimeMS;
+                element.textContent = `${delta >= 0 ? '+' : '-'}${formatComparisonTime(Math.abs(delta))}`;
+                element.style.color = delta >= 0 ? SECTOR_COLORS.SLOWER : SECTOR_COLORS.FASTER;
+            } else {
+                // Show absolute time
+                element.textContent = formatComparisonTime(currentTimeMS);
+                element.style.color = SECTOR_COLORS.NEUTRAL;
+            }
+        }
+
+        /**
+         * Handle Session packet (ID: 1)
+         * Updates session type and formula type, loads appropriate custom driver data
+         */
+        function handleSessionPacket(data) {
+            const newSessionType = data.m_sessionType;
+            const newFormulaType = data.m_formula;
+            
+            // Only reload custom drivers if formula type changed or first load
+            if (formulaType !== newFormulaType || !customDrivers.length) {
+                sessionType = newSessionType;
+                formulaType = newFormulaType;
+                loadJsonFiles();
+            } else {
+                sessionType = newSessionType;
+                formulaType = newFormulaType;
+            }
+        }
+
+        /**
+         * Handle Participants packet (ID: 4)
+         * Updates driver names for all participants in the session
+         */
+        function handleParticipantsPacket(data) {
+            numActiveCars = data.m_participants.length;
+            participantNames = {};
+            
+            for (let i = 0; i < numActiveCars && i < data.m_participants.length; i++) {
+                const participant = data.m_participants[i];
+                const index = participant.m_participantIndex !== undefined ? participant.m_participantIndex : i;
+                const driverId = participant.m_driverId;
+                
+                if (driverId === 255) {
+                    // Human player - use custom driver match
+                    participantNames[index] = matchCustomDriver(participant);
+                } else {
+                    // AI driver - use lastName from driversData
+                    const aiDriver = aiDrivers[driverId];
+                    participantNames[index] = aiDriver ? aiDriver.lastName.toUpperCase() : 'UNKNOWN_AI';
+                }
+                
+                // Update team logo if this is the player
+                if (i === playerCarIdx) {
+                    updateTeamLogo(participant.m_teamId);
+                }
+            }
+            
+            updateLapDisplay();
+        }
+
+        /**
+         * Handle Car Status packet (ID: 7)
+         * Updates tyre compound for the player
+         */
+        function handleCarStatusPacket(data) {
+            const playerIndex = data.m_header.m_playerCarIndex;
+            const carStatus = data.m_carStatusData[playerIndex];
+            
+            if (carStatus) {
+                const visualTyreCompound = carStatus.m_visualTyreCompound;
+                tyreCompound = VISUAL_TYRE_COMPOUND[visualTyreCompound] || '?';
+                updateLapDisplay();
+            }
+        }
+
+        /**
+         * Handle Time Trial packet (ID: 14)
+         * Updates reference times from personal best in Time Trial mode
+         * Uses m_personalBestDataSet to maintain persistent comparison across sessions
+         */
+        function handleTimeTrialPacket(data) {
+            // Only process in Time Trial mode and when updates are allowed (not immediately after crossing line)
+            if (sessionType !== SESSION_TYPE.TIME_TRIAL || !canUpdateReference) {
+                return;
+            }
+
+            const personalBestData = data.m_personalBestDataSet;
+            const personalBestTime = personalBestData?.m_lapTimeInMS;
+            
+            if (personalBestTime != null && personalBestTime > 0) {
+                // Valid personal best exists - show comparison and update reference times
+                lapTimeComparisonName = 'PERSONAL BEST';
+                lapTimeComparisonElement.style.display = 'flex';
+                lapTimeComparisonNameElement.style.display = 'flex';
+                
+                // Set sector reference times (Sector 2 is cumulative: S1 + S2)
+                refSector1TimeMS = personalBestData.m_sector1TimeInMS || -1;
+                refSector2TimeMS = (personalBestData.m_sector1TimeInMS || 0) + (personalBestData.m_sector2TimeInMS || 0);
+                refLastLapTimeMS = personalBestTime;
+            } else {
+                // No personal best yet - hide comparison display
+                lapTimeComparisonElement.style.display = 'none';
+                lapTimeComparisonNameElement.style.display = 'none';
+                refSector1TimeMS = -1;
+                refSector2TimeMS = -1;
+                refLastLapTimeMS = -1;
+            }
+        }
+
         function updateLapDisplay() {
             lapTimeElement.textContent = currentLapTime;
             lastLapTimeElement.textContent = lastLapTime;
@@ -239,15 +438,19 @@
             updateDriverNameStyling(driverName.toUpperCase());
             tyreCompoundElement.textContent = tyreCompound;
             positionElement.style.color = knockoutIndicator.style.display === 'block' ? '#C0C0C0' : '#000000'; // Silver when knockout is active, black otherwise
-            switch (tyreCompound) {
-                case 'S': tyreCompoundElement.style.color = '#F92D29'; break;
-                case 'M': tyreCompoundElement.style.color = '#EBD25F'; break;
-                case 'H': tyreCompoundElement.style.color = '#FFFFFF'; break;
-                case 'I': tyreCompoundElement.style.color = '#3AC82B'; break;
-                case 'W': tyreCompoundElement.style.color = '#4491D2'; break;
-                case 'SS': tyreCompoundElement.style.color = '#800080'; break;
-                default: tyreCompoundElement.textContent = '?'; tyreCompoundElement.style.color = '#808080';
-            }
+            
+            // Update tyre compound color using constants
+            const tyreConfig = {
+                'S': TYRE_COMPOUND.SOFT,
+                'M': TYRE_COMPOUND.MEDIUM,
+                'H': TYRE_COMPOUND.HARD,
+                'I': TYRE_COMPOUND.INTER,
+                'W': TYRE_COMPOUND.WET,
+                'SS': TYRE_COMPOUND.SUPER_SOFT
+            }[tyreCompound] || TYRE_COMPOUND.UNKNOWN;
+            
+            tyreCompoundElement.textContent = tyreConfig.code;
+            tyreCompoundElement.style.color = tyreConfig.color;
 
             if (currentLapTime.includes(':')) {
                 const [minutes] = currentLapTime.split(':').map(Number);
@@ -322,11 +525,11 @@
         }   
 
         socket.on('f1_data', (data) => {
-            if (data.m_header.m_packetId === 1) {
-                sessionType = data.m_sessionType;
-                formulaType = data.m_formula;
-                if (!customDrivers.length) loadJsonFiles();
-            } else if (data.m_header.m_packetId === 2) {
+            const packetId = data.m_header.m_packetId;
+
+            if (packetId === 1) {
+                handleSessionPacket(data);
+            } else if (packetId === 2) {
                 const playerIndex = data.m_header.m_playerCarIndex;
                 const lapData = data.m_lapData[playerIndex];
 
@@ -389,17 +592,7 @@
                             hideCurrentTime = true;
                             lastLapDeltaElement.style.opacity = '1';
                             canUpdateReference = false;
-                            const delta = lastLapTimeMS - refLastLapTimeMS;
-                            if (sessionType === 18 && refLastLapTimeMS > 0) {
-                                lastLapDeltaElement.textContent = `${delta >= 0 ? '+' : '-'}${formatComparisonTime(Math.abs(delta))}`;
-                                lastLapDeltaElement.style.color = delta >= 0 ? '#FDD30A' : 'lime';
-                            } else if ([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17].includes(sessionType) && refLastLapTimeMS > 0) {
-                                lastLapDeltaElement.textContent = `${delta >= 0 ? '+' : '-'}${formatComparisonTime(Math.abs(delta))}`;
-                                lastLapDeltaElement.style.color = delta >= 0 ? '#FDD30A' : 'lime';
-                            } else {
-                                lastLapDeltaElement.textContent = formatComparisonTime(lastLapTimeMS);
-                                lastLapDeltaElement.style.color = '#ffffff';
-                            }
+                            displayTimeDelta(lastLapDeltaElement, lastLapTimeMS, refLastLapTimeMS, sessionType);
                             setTimeout(() => {
                                 lastLapDeltaElement.style.opacity = '0';
                                 canUpdateReference = true;
@@ -410,19 +603,19 @@
                                 ? calculateSectorTime(sessionHistoryByCarIdx[playerCarIdx].lapHistory[sessionHistoryByCarIdx[playerCarIdx].bestSector3LapNum - 1].m_sector3TimeMinutesPart,
                                                     sessionHistoryByCarIdx[playerCarIdx].lapHistory[sessionHistoryByCarIdx[playerCarIdx].bestSector3LapNum - 1].m_sector3TimeMSPart)
                                 : -1;
-                                let color = 'gold'; // Default to slower (gold)
-                                if (sector3TimeMS < personalBestS3 || personalBestS3 === -1) color = 'lime'; // Lime if faster than personal best
-                                if (sector3TimeMS < overallBestSectors.s3 || overallBestSectors.s3 === -1) color = 'magenta'; // Magenta if faster than overall best
+                                let color = SECTOR_COLORS.DEFAULT;
+                                if (sector3TimeMS < personalBestS3 || personalBestS3 === -1) color = SECTOR_COLORS.PERSONAL_BEST;
+                                if (sector3TimeMS < overallBestSectors.s3 || overallBestSectors.s3 === -1) color = SECTOR_COLORS.OVERALL_BEST;
                                 setSectorIndicator(2, color);
                                 setSectorText(2, 'SECTOR 3', color);
                                 rolexWidget.style.opacity = '1';
                                 setTimeout(() => {
                                     setSectorIndicator(2, 'transparent');
-                                    setSectorText(2, 'S3', 'gray');
+                                    setSectorText(2, 'S3', SECTOR_COLORS.GRAY);
                                     setSectorIndicator(0, 'transparent');
                                     setSectorIndicator(1, 'transparent');
-                                    setSectorText(0, 'S1', 'gray');
-                                    setSectorText(1, 'S2', 'gray');
+                                    setSectorText(0, 'S1', SECTOR_COLORS.GRAY);
+                                    setSectorText(1, 'S2', SECTOR_COLORS.GRAY);
                                     rolexWidget.style.opacity = '0';
                                     hideCurrentTime = false;
                                     currentLapSectorSum = 0; // Reset for next lap
@@ -471,8 +664,8 @@
                         }
                     }
                     targetCarIdx = leaderCarIdx;
-                    if ([5, 10].includes(sessionType)) {
-                        const threshold = numActiveCars === 20 ? 15 : 16;
+                    if ([SESSION_TYPE.QUALIFYING_1, SESSION_TYPE.SPRINT_SHOOTOUT_1].includes(sessionType)) {
+                        const threshold = numActiveCars === 20 ? KNOCKOUT_ZONE_POSITIONS.Q1_20_CARS : KNOCKOUT_ZONE_POSITIONS.Q1_22_CARS;
                         if (position > threshold) {
                             for (let i = 0; i < data.m_lapData.length; i++) {
                                 if (data.m_lapData[i].m_carPosition === threshold) {
@@ -484,10 +677,10 @@
                                 }
                             }
                         }
-                    } else if ([6, 11].includes(sessionType)) {
-                        if (position > 10) {
+                    } else if ([SESSION_TYPE.QUALIFYING_2, SESSION_TYPE.SPRINT_SHOOTOUT_2].includes(sessionType)) {
+                        if (position > KNOCKOUT_ZONE_POSITIONS.Q2) {
                             for (let i = 0; i < data.m_lapData.length; i++) {
-                                if (data.m_lapData[i].m_carPosition === 10) {
+                                if (data.m_lapData[i].m_carPosition === KNOCKOUT_ZONE_POSITIONS.Q2) {
                                     targetCarIdx = i;
                                     if (sessionHistoryByCarIdx[targetCarIdx]?.bestLapNum < 1) {
                                         targetCarIdx = leaderCarIdx;
@@ -496,14 +689,17 @@
                                 }
                             }
                         }
-                    } else if ([15, 16, 17].includes(sessionType)) {
+                    } else if ([SESSION_TYPE.RACE, SESSION_TYPE.RACE_2, SESSION_TYPE.RACE_3].includes(sessionType)) {
                         targetCarIdx = playerCarIdx;
                     }
 
                     // Knockout indicator display logic
+                    const isQ1 = [SESSION_TYPE.QUALIFYING_1, SESSION_TYPE.SPRINT_SHOOTOUT_1].includes(sessionType);
+                    const isQ2 = [SESSION_TYPE.QUALIFYING_2, SESSION_TYPE.SPRINT_SHOOTOUT_2].includes(sessionType);
+                    
                     let isKnockoutVisible = false;
-                    if (([5, 10].includes(sessionType) && ((numActiveCars === 20 && position > 15) || (numActiveCars === 22 && position > 16))) ||
-                        ([6, 11].includes(sessionType) && position > 10)) {
+                    if ((isQ1 && ((numActiveCars === 20 && position > KNOCKOUT_ZONE_POSITIONS.Q1_20_CARS) || (numActiveCars === 22 && position > KNOCKOUT_ZONE_POSITIONS.Q1_22_CARS))) ||
+                        (isQ2 && position > KNOCKOUT_ZONE_POSITIONS.Q2)) {
                         isKnockoutVisible = true;
                     }
                     knockoutIndicator.style.display = isKnockoutVisible ? 'block' : 'none';
@@ -542,25 +738,14 @@
                         lapTimeElement.style.opacity = '0';
                         hideCurrentTime = true;
                         sector1DeltaElement.style.opacity = '1';
-                        if (sessionType === 18 && refSector1TimeMS > 0) {
-                            const delta = sector1TimeMS - refSector1TimeMS;
-                            sector1DeltaElement.textContent = `${delta >= 0 ? '+' : '-'}${formatComparisonTime(Math.abs(delta))}`;
-                            sector1DeltaElement.style.color = delta >= 0 ? '#FDD30A' : 'lime';
-                        } else if ([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17].includes(sessionType) && refSector1TimeMS > 0) {
-                            const delta = sector1TimeMS - refSector1TimeMS;
-                            sector1DeltaElement.textContent = `${delta >= 0 ? '+' : '-'}${formatComparisonTime(Math.abs(delta))}`;
-                            sector1DeltaElement.style.color = delta >= 0 ? '#FDD30A' : 'lime';
-                        } else {
-                            sector1DeltaElement.textContent = formatComparisonTime(sector1TimeMS);
-                            sector1DeltaElement.style.color = '#ffffff';
-                        }
+                        displayTimeDelta(sector1DeltaElement, sector1TimeMS, refSector1TimeMS, sessionType);
                         const personalBestS1 = sessionHistoryByCarIdx[playerCarIdx]?.lapHistory[sessionHistoryByCarIdx[playerCarIdx].bestSector1LapNum - 1]?.m_sector1TimeMSPart !== undefined
                             ? calculateSectorTime(sessionHistoryByCarIdx[playerCarIdx].lapHistory[sessionHistoryByCarIdx[playerCarIdx].bestSector1LapNum - 1].m_sector1TimeMinutesPart,
                                                 sessionHistoryByCarIdx[playerCarIdx].lapHistory[sessionHistoryByCarIdx[playerCarIdx].bestSector1LapNum - 1].m_sector1TimeMSPart)
                             : -1;
-                        let color = 'gold'; // Default to slower (gold)
-                        if (sector1TimeMS < personalBestS1 || personalBestS1 === -1) color = 'lime'; // Lime if faster than personal best
-                        if (sector1TimeMS < overallBestSectors.s1 || overallBestSectors.s1 === -1) color = 'magenta'; // Magenta if faster than overall best
+                        let color = SECTOR_COLORS.DEFAULT;
+                        if (sector1TimeMS < personalBestS1 || personalBestS1 === -1) color = SECTOR_COLORS.PERSONAL_BEST;
+                        if (sector1TimeMS < overallBestSectors.s1 || overallBestSectors.s1 === -1) color = SECTOR_COLORS.OVERALL_BEST;
                         setSectorIndicator(0, color);
                         setSectorText(0, 'SECTOR 1', color);
                         rolexWidget.style.opacity = '1';
@@ -581,26 +766,15 @@
                         lapTimeElement.style.opacity = '0';
                         hideCurrentTime = true;
                         sector2DeltaElement.style.opacity = '1';
-                        if (sessionType === 18 && refSector2TimeMS > 0) {
-                            const delta = combinedTimeMS - refSector2TimeMS;
-                            sector2DeltaElement.textContent = `${delta >= 0 ? '+' : '-'}${formatComparisonTime(Math.abs(delta))}`;
-                            sector2DeltaElement.style.color = delta >= 0 ? '#FDD30A' : 'lime';
-                        } else if ([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17].includes(sessionType) && refSector2TimeMS > 0) {
-                            const delta = combinedTimeMS - refSector2TimeMS;
-                            sector2DeltaElement.textContent = `${delta >= 0 ? '+' : '-'}${formatComparisonTime(Math.abs(delta))}`;
-                            sector2DeltaElement.style.color = delta >= 0 ? '#FDD30A' : 'lime';
-                        } else {
-                            sector2DeltaElement.textContent = formatComparisonTime(combinedTimeMS);
-                            sector2DeltaElement.style.color = '#ffffff';
-                        }
+                        displayTimeDelta(sector2DeltaElement, combinedTimeMS, refSector2TimeMS, sessionType);
                         currentLapSectorSum = combinedTimeMS;
                         const personalBestS2 = sessionHistoryByCarIdx[playerCarIdx]?.lapHistory[sessionHistoryByCarIdx[playerCarIdx].bestSector2LapNum - 1]?.m_sector2TimeMSPart !== undefined
                             ? calculateSectorTime(sessionHistoryByCarIdx[playerCarIdx].lapHistory[sessionHistoryByCarIdx[playerCarIdx].bestSector2LapNum - 1].m_sector2TimeMinutesPart,
                                                 sessionHistoryByCarIdx[playerCarIdx].lapHistory[sessionHistoryByCarIdx[playerCarIdx].bestSector2LapNum - 1].m_sector2TimeMSPart)
                             : -1;
-                        let color = 'gold'; // Default to slower (gold)
-                        if (sector2TimeMS < personalBestS2 || personalBestS2 === -1) color = 'lime'; // Lime if faster than personal best
-                        if (sector2TimeMS < overallBestSectors.s2 || overallBestSectors.s2 === -1) color = 'magenta'; // Magenta if faster than overall best
+                        let color = SECTOR_COLORS.DEFAULT;
+                        if (sector2TimeMS < personalBestS2 || personalBestS2 === -1) color = SECTOR_COLORS.PERSONAL_BEST;
+                        if (sector2TimeMS < overallBestSectors.s2 || overallBestSectors.s2 === -1) color = SECTOR_COLORS.OVERALL_BEST;
                         setSectorIndicator(1, color);
                         setSectorText(1, 'SECTOR 2', color);
                         rolexWidget.style.opacity = '1';
@@ -615,46 +789,12 @@
 
                     updateLapDisplay();
                 }
-            } else if (data.m_header.m_packetId === 4) {
-                numActiveCars = data.m_participants.length;
-                participantNames = {};
-                for (let i = 0; i < numActiveCars && i < data.m_participants.length; i++) {
-                    const participant = data.m_participants[i];
-                    const index = participant.m_participantIndex !== undefined ? participant.m_participantIndex : i;
-                    const driverId = participant.m_driverId;
-                    if (driverId === 255) {
-                        // Human player - use custom driver match (already returns LastName or DisplayName)
-                        participantNames[index] = matchCustomDriver(participant);
-                    } else {
-                        // AI driver - use lastName directly from driversData
-                        const aiDriver = aiDrivers[driverId];
-                        participantNames[index] = aiDriver ? aiDriver.lastName.toUpperCase() : 'UNKNOWN_AI';
-                    }
-                    if (i === playerCarIdx) updateTeamLogo(participant.m_teamId);
-                }
-                updateLapDisplay();
-            } else if (data.m_header.m_packetId === 7) {
-                const playerIndex = data.m_header.m_playerCarIndex;
-                const carStatus = data.m_carStatusData[playerIndex];
-                if (carStatus) {
-                    const visualTyreCompound = carStatus.m_visualTyreCompound;
-                    switch (visualTyreCompound) {
-                        case 16: tyreCompound = 'S'; break;
-                        case 17: tyreCompound = 'M'; break;
-                        case 18: tyreCompound = 'H'; break;
-                        case 7: tyreCompound = 'I'; break;
-                        case 8: tyreCompound = 'W'; break;
-                        case 19: tyreCompound = 'SS'; break;
-                        case 20: tyreCompound = 'S'; break;
-                        case 21: tyreCompound = 'M'; break;
-                        case 22: tyreCompound = 'H'; break;
-                        case 15: tyreCompound = 'W'; break;
-                        default: tyreCompound = '?';
-                    }
-                    updateLapDisplay();
-                }
-            } else if (data.m_header.m_packetId === 11) {
-                if (canUpdateReference && [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17].includes(sessionType)) {
+            } else if (packetId === 4) {
+                handleParticipantsPacket(data);
+            } else if (packetId === 7) {
+                handleCarStatusPacket(data);
+            } else if (packetId === 11) {
+                if (canUpdateReference && sessionType >= SESSION_TYPE.PRACTICE_1 && sessionType < SESSION_TYPE.TIME_TRIAL) {
                     sessionHistoryByCarIdx[data.m_carIdx] = {
                         numLaps: data.m_numLaps,
                         bestLapNum: data.m_bestLapTimeLapNum,
@@ -667,18 +807,18 @@
                         const historyData = data.m_lapHistoryData;
                         const bestLapNum = data.m_bestLapTimeLapNum;
                         if (historyData && bestLapNum > 0 && bestLapNum <= historyData.length) {
-                            if ([15, 16, 17].includes(sessionType)) {
+                            if ([SESSION_TYPE.RACE, SESSION_TYPE.RACE_2, SESSION_TYPE.RACE_3].includes(sessionType)) {
                                 lapTimeComparisonName = 'PERSONAL BEST';
                             } else if (targetCarIdx === leaderCarIdx) {
                                 lapTimeComparisonName = 'LEADER';
-                            } else if ([5, 10].includes(sessionType)) {
-                                lapTimeComparisonName = `POS ${numActiveCars === 20 ? 15 : 16}`;
-                            } else if ([6, 11].includes(sessionType)) {
+                            } else if ([SESSION_TYPE.QUALIFYING_1, SESSION_TYPE.SPRINT_SHOOTOUT_1].includes(sessionType)) {
+                                lapTimeComparisonName = `POS ${numActiveCars === 20 ? KNOCKOUT_ZONE_POSITIONS.Q1_20_CARS : KNOCKOUT_ZONE_POSITIONS.Q1_22_CARS}`;
+                            } else if ([SESSION_TYPE.QUALIFYING_2, SESSION_TYPE.SPRINT_SHOOTOUT_2].includes(sessionType)) {
                                 lapTimeComparisonName = 'POS 10';
                             } else {
                                 lapTimeComparisonName = participantNames[targetCarIdx] || 'UNKNOWN';
                             }
-                            if ([15, 16, 17].includes(sessionType)) {
+                            if ([SESSION_TYPE.RACE, SESSION_TYPE.RACE_2, SESSION_TYPE.RACE_3].includes(sessionType)) {
                                 if (currentLapNum < 3) {
                                     lapTimeComparisonElement.style.display = 'none';
                                     lapTimeComparisonNameElement.style.display = 'none';
@@ -706,7 +846,7 @@
                             refLastLapTimeMS = -1;
                         }
                     }
-                } else if (canUpdateReference && [18].includes(sessionType)) {
+                } else if (canUpdateReference && sessionType === SESSION_TYPE.TIME_TRIAL) {
                     // We just need to store the data for overall best sectors when in Time Trial
                     sessionHistoryByCarIdx[data.m_carIdx] = {
                         numLaps: data.m_numLaps,
@@ -736,29 +876,8 @@
                     if (s2Time > 0 && (overallBestSectors.s2 === -1 || s2Time < overallBestSectors.s2)) overallBestSectors.s2 = s2Time;
                     if (s3Time > 0 && (overallBestSectors.s3 === -1 || s3Time < overallBestSectors.s3)) overallBestSectors.s3 = s3Time;
                 }
-            } else if (data.m_header.m_packetId === 14) {
-                const playerIndex = data.m_header.m_playerCarIndex;
-                const timeTrialData = data;
-
-                if (timeTrialData && sessionType === 18 && canUpdateReference) {
-                    const personalBestTime = timeTrialData.m_personalBestDataSet.m_lapTimeInMS;
-                    if (personalBestTime != null && personalBestTime > 0) {
-                        lapTimeComparisonName = 'PERSONAL BEST';
-                        lapTimeComparisonElement.style.display = 'flex';
-                        lapTimeComparisonNameElement.style.display = 'flex';
-                        refSector1TimeMS = timeTrialData.m_personalBestDataSet.m_sector1TimeInMS || -1;
-                        const s1TimeMS = timeTrialData.m_personalBestDataSet.m_sector1TimeInMS || 0;
-                        const s2TimeMS = timeTrialData.m_personalBestDataSet.m_sector2TimeInMS || 0;
-                        refSector2TimeMS = s1TimeMS + s2TimeMS;
-                        refLastLapTimeMS = personalBestTime || -1;
-                    } else {
-                        lapTimeComparisonElement.style.display = 'none';
-                        lapTimeComparisonNameElement.style.display = 'none';
-                        refSector1TimeMS = -1;
-                        refSector2TimeMS = -1;
-                        refLastLapTimeMS = -1;
-                    }
-                }
+            } else if (packetId === 14) {
+                handleTimeTrialPacket(data);
             }
         });
         createStrokeBar();

@@ -20,7 +20,7 @@
 
 ## Currently Working On
 
-???
+Reworking Lap Timer (and possibly Speedometer)
 
 ## Next Planned Overlay
 
