@@ -140,23 +140,32 @@
             const teamId = participant.m_teamId;
             const team = teamNames[teamId] ? teamNames[teamId].ShortName : `Team_${teamId}`;
 
+            // Priority 1: Exact name match (MatchName field)
             for (let driver of customDrivers) {
-                if (driver.Name && driver.Name.toUpperCase() === name.toUpperCase()) {
-                    return { displayName: driver.DisplayName, abbreviation: driver.Abbreviation || getAbbreviation(driver.DisplayName) };
-                }
-                if (driver.RaceNumber && driver.Team && driver.RaceNumber === raceNumber && driver.Team === team) {
-                    return { displayName: driver.DisplayName, abbreviation: driver.Abbreviation || getAbbreviation(driver.DisplayName) };
-                }
-                if (driver.RaceNumber && driver.RaceNumber === raceNumber) {
-                    return { displayName: driver.DisplayName, abbreviation: driver.Abbreviation || getAbbreviation(driver.DisplayName) };
+                if (driver.MatchName && driver.MatchName.toUpperCase() === name.toUpperCase()) {
+                    const driverName = driver.LastName || driver.DisplayName || '';
+                    return { displayName: driverName, abbreviation: driver.Abbreviation || getAbbreviation(driverName) };
                 }
             }
-            return { displayName: `${team}-#${raceNumber}`, abbreviation: getAbbreviation(`#${raceNumber}`) };
-        }
 
-        function getLastName(displayName) {
-            const words = displayName.split(' ');
-            return words.length > 1 ? words.slice(1).join(' ') : displayName;
+            // Priority 2: Number + Team match
+            for (let driver of customDrivers) {
+                if (driver.RaceNumber && driver.Team && driver.RaceNumber === raceNumber && driver.Team === team) {
+                    const driverName = driver.LastName || driver.DisplayName || '';
+                    return { displayName: driverName, abbreviation: driver.Abbreviation || getAbbreviation(driverName) };
+                }
+            }
+
+            // Priority 3: Number only match
+            for (let driver of customDrivers) {
+                if (driver.RaceNumber && driver.RaceNumber === raceNumber) {
+                    const driverName = driver.LastName || driver.DisplayName || '';
+                    return { displayName: driverName, abbreviation: driver.Abbreviation || getAbbreviation(driverName) };
+                }
+            }
+
+            // No match - return fallback
+            return { displayName: `${team} #${raceNumber}`, abbreviation: getAbbreviation(`#${raceNumber}`) };
         }
 
         function formatTime(milliseconds) {
@@ -433,7 +442,7 @@
 
                     position = lapData.m_carPosition || '1';
                     playerCarIdx = playerIndex;
-                    driverName = getLastName(participantNames[playerCarIdx] || 'UNKNOWN');
+                    driverName = participantNames[playerCarIdx] || 'UNKNOWN';
 
                     // Dynamically update lap time comparison based on current sector
                     const currentSector = lapData.m_sector;
@@ -623,11 +632,13 @@
                     const index = participant.m_participantIndex !== undefined ? participant.m_participantIndex : i;
                     const driverId = participant.m_driverId;
                     if (driverId === 255) {
+                        // Human player - use custom driver match (already returns LastName or DisplayName)
                         const customMatch = matchCustomDriver(participant);
-                        participantNames[index] = getLastName(customMatch.displayName);
+                        participantNames[index] = customMatch.displayName;
                     } else {
+                        // AI driver - use lastName directly from driversData
                         const aiDriver = aiDrivers[driverId];
-                        participantNames[index] = getLastName(aiDriver ? aiDriver.lastName.toUpperCase() : 'UNKNOWN_AI');
+                        participantNames[index] = aiDriver ? aiDriver.lastName.toUpperCase() : 'UNKNOWN_AI';
                     }
                     if (i === playerCarIdx) updateTeamLogo(participant.m_teamId);
                 }
@@ -666,12 +677,16 @@
                         const historyData = data.m_lapHistoryData;
                         const bestLapNum = data.m_bestLapTimeLapNum;
                         if (historyData && bestLapNum > 0 && bestLapNum <= historyData.length) {
-                            lapTimeComparisonName = getLastName((targetCarIdx === leaderCarIdx) ? 'LEADER' :
-                                ([5, 10].includes(sessionType) ? `POS ${numActiveCars === 20 ? 15 : 16}` : 'POS 10'));
                             if ([15, 16, 17].includes(sessionType)) {
                                 lapTimeComparisonName = 'PERSONAL BEST';
+                            } else if (targetCarIdx === leaderCarIdx) {
+                                lapTimeComparisonName = 'LEADER';
+                            } else if ([5, 10].includes(sessionType)) {
+                                lapTimeComparisonName = `POS ${numActiveCars === 20 ? 15 : 16}`;
+                            } else if ([6, 11].includes(sessionType)) {
+                                lapTimeComparisonName = 'POS 10';
                             } else {
-                                lapTimeComparisonName = getLastName(participantNames[targetCarIdx] || 'UNKNOWN');
+                                lapTimeComparisonName = participantNames[targetCarIdx] || 'UNKNOWN';
                             }
                             if ([15, 16, 17].includes(sessionType)) {
                                 if (currentLapNum < 3) {
