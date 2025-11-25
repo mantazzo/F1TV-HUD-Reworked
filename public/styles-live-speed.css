@@ -99,8 +99,9 @@ body {
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    font-family: 'Formula1 TV-BoldItalic', sans-serif;
+    font-family: 'Formula1 TV', sans-serif;
     font-weight: 700;
+    font-style: italic;
     font-size: 42px;
     color: rgb(255, 255, 255);
     white-space: pre;
@@ -116,9 +117,9 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: 'F1TV-2022-Oblique', sans-serif;
+    font-family: 'F1TV-2022', sans-serif;
     font-size: 15px;
-    font-style: italic;
+    font-style: oblique;
     color: rgb(255, 255, 255);
     opacity: 0.5;
 }
@@ -133,8 +134,9 @@ body {
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    font-family: 'Formula1 TV-Italic', sans-serif;
+    font-family: 'Formula1 TV', sans-serif;
     font-size: 42px;
+    font-style: italic;
     color: rgb(255, 255, 255);
     opacity: 0.8;
     white-space: pre;
@@ -150,9 +152,9 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: 'F1TV-2022-Oblique', sans-serif;
+    font-family: 'F1TV-2022', sans-serif;
     font-size: 15px;
-    font-style: italic;
+    font-style: oblique;
     color: rgb(255, 255, 255);
     opacity: 0.5;
 }
@@ -183,8 +185,10 @@ body {
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    font-family: 'F1TV-2022-ObliqueBold', sans-serif;
+    font-family: 'F1TV-2022', sans-serif;
     font-size: 22px;
+    font-weight: 700;
+    font-style: oblique;
     color: white;
     transition: font-size 0.3s ease, font-family 0.3s ease;
 }

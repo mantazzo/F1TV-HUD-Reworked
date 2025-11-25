@@ -1,115 +1,195 @@
-/* Formula1 Display fonts*/
+/* Formula1 Display fonts */
 @font-face {
     font-family: 'Formula1 Display';
     src: url('/fonts/woff2/Formula1-Regular.woff2') format('woff2'),
          url('/fonts/Formula1-Regular.ttf') format('truetype');
-    font-weight: normal;
+    font-weight: 400;
     font-style: normal;
+    font-display: swap;
 }
 
 @font-face {
     font-family: 'Formula1 Display';
     src: url('/fonts/woff2/Formula1-Bold.woff2') format('woff2'),
          url('/fonts/Formula1-Bold.ttf') format('truetype');
-    font-weight: bold;
+    font-weight: 700;
     font-style: normal;
+    font-display: swap;
 }
 
-/* Formula1 TV fonts*/
+/* Formula1 TV fonts */
 @font-face {
     font-family: 'Formula1 TV';
     src: url('/fonts/woff2/Formula1TV-Regular.woff2') format('woff2'),
          url('/fonts/Formula1TV-Regular.ttf') format('truetype');
-    font-weight: normal;
+    font-weight: 400;
     font-style: normal;
+    font-display: swap;
 }
 
 @font-face {
-    font-family: 'Formula1 TV-Italic';
+    font-family: 'Formula1 TV';
+    src: url('/fonts/woff2/Formula1TV-Bold.woff2') format('woff2'),
+         url('/fonts/Formula1TV-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Formula1 TV';
     src: url('/fonts/woff2/Formula1TV-Italic.woff2') format('woff2'),
          url('/fonts/Formula1TV-Italic.ttf') format('truetype');
-    font-weight: normal;
+    font-weight: 400;
     font-style: italic;
+    font-display: swap;
 }
 
 @font-face {
-    font-family: 'Formula1 TV-BoldItalic';
+    font-family: 'Formula1 TV';
     src: url('/fonts/woff2/Formula1TV-BoldItalic.woff2') format('woff2'),
          url('/fonts/Formula1TV-BoldItalic.ttf') format('truetype');
-    font-weight: bold;
+    font-weight: 700;
     font-style: italic;
+    font-display: swap;
 }
 
-/*F1TV-2022 fonts */
+/* F1TV 2022 fonts - specialized variants kept as separate families */
+/* Note: These fonts have unique designs (Position, Timing, etc.) so they remain separate */
 @font-face {
-    font-family: "F1TV-2022-Position";
+    font-family: 'F1TV-2022-Position';
     src: url('/fonts/woff2/F1TV-2022-Position.woff2') format('woff2'),
          url('/fonts/F1TV-2022-Position.ttf') format('truetype');
-    font-weight: normal;
+    font-weight: 400;
     font-style: normal;
+    font-display: swap;
 }
 
 @font-face {
-    font-family: "F1TV-2022-ObliqueBold";
+    font-family: 'F1TV-2022';
     src: url('/fonts/woff2/F1TV-2022-ObliqueBold.woff2') format('woff2'),
          url('/fonts/F1TV-2022-ObliqueBold.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
+    font-weight: 700;
+    font-style: oblique;
+    font-display: swap;
 }
 
 @font-face {
-    font-family: "F1TV-2022-ObliqueCondensed";
+    font-family: 'F1TV-2022';
     src: url('/fonts/woff2/F1TV-2022-ObliqueCondensed.woff2') format('woff2'),
          url('/fonts/F1TV-2022-ObliqueCondensed.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
+    font-weight: 400;
+    font-style: oblique;
+    font-stretch: condensed;
+    font-display: swap;
 }
 
 @font-face {
-    font-family: "F1TV-2022";
+    font-family: 'F1TV-2022';
+    src: url('/fonts/woff2/F1TV-2022-ObliqueSemiBold.woff2') format('woff2'),
+         url('/fonts/F1TV-2022-ObliqueSemiBold.ttf') format('truetype');
+    font-weight: 600;
+    font-style: oblique;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'F1TV-2022';
     src: url('/fonts/woff2/F1TV-2022-Regular.woff2') format('woff2'),
          url('/fonts/F1TV-2022-Regular.ttf') format('truetype');
-    font-weight: normal;
+    font-weight: 400;
     font-style: normal;
+    font-display: swap;
 }
 
 @font-face {
-    font-family: "F1TV-2022-Oblique";
+    font-family: 'F1TV-2022';
     src: url('/fonts/woff2/F1TV-2022-Regular-Oblique.woff2') format('woff2'),
          url('/fonts/F1TV-2022-Regular-Oblique.ttf') format('truetype');
-    font-weight: normal;
+    font-weight: 400;
     font-style: oblique;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'F1TV-2022';
+    src: url('/fonts/woff2/F1TV-2022-Bold.woff2') format('woff2'),
+         url('/fonts/F1TV-2022-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
 }
 
 @font-face {
-    font-family: "F1TV-2022-NameCondensed-BoldOblique";
+    font-family: 'F1TV-2022';
+    src: url('/fonts/woff2/F1TV-2022-SemiBold.woff2') format('woff2'),
+         url('/fonts/F1TV-2022-SemiBold.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'F1TV-2022';
+    src: url('/fonts/woff2/F1TV-2022-Black.woff2') format('woff2'),
+         url('/fonts/F1TV-2022-Black.ttf') format('truetype');
+    font-weight: 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'F1TV-2022-Name';
     src: url('/fonts/woff2/F1TV-2022-NameCondensed-BoldOblique.woff2') format('woff2'),
          url('/fonts/F1TV-2022-NameCondensed-BoldOblique.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
+    font-weight: 700;
+    font-style: oblique;
+    font-stretch: condensed;
+    font-display: swap;
 }
 
 @font-face {
-    font-family: "F1TV-2022-Timing";
+    font-family: 'F1TV-2022-Name';
+    src: url('/fonts/woff2/F1TV-2022-NameCondensed-Bold.woff2') format('woff2'),
+         url('/fonts/F1TV-2022-NameCondensed-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-stretch: condensed;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'F1TV-2022-Name';
+    src: url('/fonts/woff2/F1TV-2022-Name-Bold.woff2') format('woff2'),
+         url('/fonts/F1TV-2022-Name-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'F1TV-2022-Timing';
     src: url('/fonts/woff2/F1TV-2022-Timing-Oblique.woff2') format('woff2'),
          url('/fonts/F1TV-2022-Timing-Oblique.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
+    font-weight: 400;
+    font-style: oblique;
+    font-display: swap;
 }
 
-/* Other fonts */
+/* Legacy/Other fonts */
 @font-face {
-    font-family: "F1TVnumbers";
+    font-family: 'F1TVnumbers';
     src: url('/fonts/woff2/F1TVnumbers.woff2') format('woff2'),
          url('/fonts/F1TVnumbers.ttf') format('truetype');
-    font-weight: normal;
+    font-weight: 400;
     font-style: normal;
+    font-display: swap;
 }
 
 @font-face {
-    font-family: "F1TVname";
+    font-family: 'F1TVname';
     src: url('/fonts/woff2/F1TVname.woff2') format('woff2'),
          url('/fonts/F1TVname.ttf') format('truetype');
-    font-weight: normal;
+    font-weight: 400;
     font-style: normal;
+    font-display: swap;
 }

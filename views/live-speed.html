@@ -269,7 +269,9 @@
             
             // Switch to condensed font for names > 10 characters
             if (nameLength > 10) {
-                driverName.style.fontFamily = 'F1TV-2022-ObliqueCondensed, sans-serif';
+                driverName.style.fontWeight = '400';
+                driverName.style.fontStyle = 'oblique';
+                driverName.style.fontStretch = 'condensed';
                 // Progressive size reduction based on length
                 if (nameLength > 13) {
                     driverName.style.fontSize = '16px';
@@ -281,8 +283,10 @@
                     driverName.style.fontSize = '22px';
                 }
             } else {
-                driverName.style.fontFamily = 'F1TV-2022-ObliqueBold, sans-serif';
                 driverName.style.fontSize = '22px';
+                driverName.style.fontWeight = '700';
+                driverName.style.fontStyle = 'oblique';
+                driverName.style.fontStretch = 'normal';
             }
         }
         

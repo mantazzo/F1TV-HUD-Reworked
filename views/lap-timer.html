@@ -313,26 +313,38 @@
             
             if (nameLength <= 10) {
                 // Default styling for short names
-                driverNameElement.style.fontFamily = "F1TV-2022-ObliqueBold";
                 driverNameElement.style.fontSize = "32px";
+                driverNameElement.style.fontWeight = "700";
+                driverNameElement.style.fontStyle = "oblique";
+                driverNameElement.style.fontStretch = "normal";
             } else if (nameLength <= 12) {
                 // Condensed font for names 11-12 characters
-                driverNameElement.style.fontFamily = "F1TV-2022-ObliqueCondensed";
                 driverNameElement.style.fontSize = "32px";
+                driverNameElement.style.fontWeight = "400";
+                driverNameElement.style.fontStyle = "oblique";
+                driverNameElement.style.fontStretch = "condensed";
             } else if (nameLength === 13) {
                 // Condensed font + smaller size for names 13 characters (and we reduce the size more for 14, 15 and more characters)
-                driverNameElement.style.fontFamily = "F1TV-2022-ObliqueCondensed";
                 driverNameElement.style.fontSize = "30px";
+                driverNameElement.style.fontWeight = "400";
+                driverNameElement.style.fontStyle = "oblique";
+                driverNameElement.style.fontStretch = "condensed";
             } else if (nameLength === 14) {
-                driverNameElement.style.fontFamily = "F1TV-2022-ObliqueCondensed";
                 driverNameElement.style.fontSize = "28px";
+                driverNameElement.style.fontWeight = "400";
+                driverNameElement.style.fontStyle = "oblique";
+                driverNameElement.style.fontStretch = "condensed";
             } else if (nameLength === 15) {
-                driverNameElement.style.fontFamily = "F1TV-2022-ObliqueCondensed";
                 driverNameElement.style.fontSize = "26px";
+                driverNameElement.style.fontWeight = "400";
+                driverNameElement.style.fontStyle = "oblique";
+                driverNameElement.style.fontStretch = "condensed";
             } else {
                 // Smallest size for names longer than 15 characters
-                driverNameElement.style.fontFamily = "F1TV-2022-ObliqueCondensed";
                 driverNameElement.style.fontSize = "24px";
+                driverNameElement.style.fontWeight = "400";
+                driverNameElement.style.fontStyle = "oblique";
+                driverNameElement.style.fontStretch = "condensed";
             }
         }
 

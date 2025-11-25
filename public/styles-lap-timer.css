@@ -27,11 +27,11 @@
     --player-indicator-top: 90px;
     
     /* Fonts */
-    --font-main: "F1TV-2022-ObliqueBold";
-    --font-timing: "F1TV-2022-NameCondensed-BoldOblique";
+    --font-main: "F1TV-2022";
+    --font-timing: "F1TV-2022-Name";
     --font-position: "F1TV-2022-Position";
     --font-numbers: "F1TVnumbers";
-    --font-italic: "Formula1 TV-Italic";
+    --font-italic: "Formula1 TV";
     
     /* Z-index layers */
     --z-background: 0;
@@ -201,7 +201,9 @@
     height: 60px;
     font-family: var(--font-timing);
     font-size: 44px;
-    font-weight: bold;
+    font-weight: 700;
+    font-style: oblique;
+    font-stretch: condensed;
     color: var(--color-text-white);
     text-align: left;
     display: flex;
@@ -219,7 +221,9 @@
     height: 35px;
     font-family: var(--font-timing);
     font-size: 29px;
-    font-weight: normal;
+    font-weight: 700;
+    font-style: oblique;
+    font-stretch: condensed;
     color: var(--color-text-white);
     text-align: center;
     display: flex;
@@ -237,7 +241,8 @@
     height: 25px;
     font-family: var(--font-italic);
     font-size: 18px;
-    font-weight: bold;
+    font-weight: 700;
+    font-style: italic;
     color: var(--color-text-gray);
     text-align: center;
     display: flex;
@@ -287,6 +292,9 @@
     height: 80px;
     font-family: var(--font-timing);
     font-size: 44px;
+    font-weight: 700;
+    font-style: oblique;
+    font-stretch: condensed;
     color: var(--color-text-white);
     display: flex;
     justify-content: center;
@@ -371,7 +379,9 @@
     justify-content: center;
     align-items: center;
     font-size: 44px;
-    font-weight: bold;
+    font-weight: 700;
+    font-style: oblique;
+    font-stretch: condensed;
     font-family: var(--font-timing);
     color: var(--color-text-white);
     z-index: var(--z-overlay);

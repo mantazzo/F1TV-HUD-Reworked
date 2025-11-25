@@ -186,14 +186,20 @@
             const nameLength = name.length;
             
             if (nameLength <= 10) {
-                driverNameElement.style.fontFamily = "F1TV-2022-ObliqueBold";
+                driverNameElement.style.fontWeight = "700";
+                driverNameElement.style.fontStyle = "oblique";
                 driverNameElement.style.fontSize = "26px";
+                driverNameElement.style.fontStretch = "normal";
             } else if (nameLength <= 12) {
-                driverNameElement.style.fontFamily = "F1TV-2022-ObliqueCondensed";
                 driverNameElement.style.fontSize = "26px";
+                driverNameElement.style.fontWeight = "400";
+                driverNameElement.style.fontStyle = "oblique";
+                driverNameElement.style.fontStretch = "condensed";
             } else {
-                driverNameElement.style.fontFamily = "F1TV-2022-ObliqueCondensed";
                 driverNameElement.style.fontSize = "24px";
+                driverNameElement.style.fontWeight = "400";
+                driverNameElement.style.fontStyle = "oblique";
+                driverNameElement.style.fontStretch = "condensed";
             }
         }
 
