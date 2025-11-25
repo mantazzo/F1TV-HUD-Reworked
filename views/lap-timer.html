@@ -9,34 +9,67 @@
 </head>
 <body>
     <div class="overlay-container">
-        <div class="position-layer">1</div>
-        <div class="team-logo-layer"></div>
-        <div class="driver-name-layer">VERSTAPPEN</div>
-        <div class="tyre-compound-layer">S</div>
-        <div id="knockout-indicator" class="knockout-indicator-layer"></div>
-        <div id="sector1-delta" class="sector-display-layer">27.8</div>
-        <div id="sector2-delta" class="sector-display-layer">1:02.6</div>
-        <div id="last-lap-delta" class="sector-display-layer">--:--.-</div>
-        <div id="timer-background"></div>
-        <div id="sectors-background"></div>
-        <div id="separator"></div>
-        <div id="lap-time" class="lap-time-layer">1:34.4</div>
-        <div id="last-lap-time" class="last-lap-time-layer">1:39.875</div>
-        <div id="lap-time-comparison" class="lap-time-comparison-layer">1:39.432</div>
-        <div id="lap-time-comparison-name" class="lap-time-comparison-name-layer">MAX VERSTAPPEN</div>
-        <div id="sector-line"></div>
-        <div id="sector1-indicator" class="sector1-indicator"></div>
-        <div id="sector2-indicator" class="sector2-indicator"></div>
-        <div id="sector3-indicator" class="sector3-indicator"></div>
-        <div id="sector1-text" class="sector1-text-layer">S1</div>
-        <div id="sector2-text" class="sector2-text-layer">S2</div>
-        <div id="sector3-text" class="sector3-text-layer">S3</div>
-        <div id="position-gained-indicator" class="position-gained-indicator"></div>
-        <div id="position-lost-indicator" class="position-lost-indicator"></div>
-        <div id="stroke-bar" class="stroke-bar"></div>
+        <!-- DRIVER INFO BAR (top section) -->
+        <div class="driver-info-group">
+            <div class="position-layer">1</div>
+            <div class="team-logo-layer"></div>
+            <div class="driver-name-layer">VERSTAPPEN</div>
+            <div class="tyre-compound-layer">S</div>
+            <div id="knockout-indicator" class="knockout-indicator-layer"></div>
+            <div class="position-indicators">
+                <div id="position-gained-indicator" class="position-gained-indicator"></div>
+                <div id="position-lost-indicator" class="position-lost-indicator"></div>
+            </div>
+        </div>
+
+        <!-- TIMING DISPLAY (main section) -->
+        <div class="timing-group">
+            <div id="timer-background"></div>
+            
+            <!-- Main timing display (slides up during last lap popup) -->
+            <div class="main-timing-display">
+                <div id="separator"></div>
+                <div id="lap-time" class="lap-time-layer">1:34.4</div>
+                <div id="lap-time-comparison" class="lap-time-comparison-layer">1:39.432</div>
+                <div id="lap-time-comparison-name" class="lap-time-comparison-name-layer">MAX VERSTAPPEN</div>
+            </div>
+            
+            <!-- Last lap popup (slides down) -->
+            <div id="last-lap-time" class="last-lap-time-layer">1:39.875</div>
+            
+            <!-- Sector deltas (overlay on timing display) -->
+            <div class="sector-deltas">
+                <div id="sector1-delta" class="sector-display-layer">27.8</div>
+                <div id="sector2-delta" class="sector-display-layer">1:02.6</div>
+                <div id="last-lap-delta" class="sector-display-layer">--:--.-</div>
+            </div>
+        </div>
+
+        <!-- SECTOR BAR (bottom section) -->
+        <div class="sector-bar-group">
+            <div id="sectors-background"></div>
+            <div id="sector-line"></div>
+            
+            <div class="sector-indicators">
+                <div id="sector1-indicator" class="sector1-indicator"></div>
+                <div id="sector2-indicator" class="sector2-indicator"></div>
+                <div id="sector3-indicator" class="sector3-indicator"></div>
+            </div>
+            
+            <div class="sector-labels">
+                <div id="sector1-text" class="sector1-text-layer">S1</div>
+                <div id="sector2-text" class="sector2-text-layer">S2</div>
+                <div id="sector3-text" class="sector3-text-layer">S3</div>
+            </div>
+        </div>
+
+        <!-- ROLEX WIDGET (displayed above driver info during sector completion) -->
         <div id="rolex-widget" class="rolex-widget">
             <img id="rolex-logo" src="/images/other-logos/Rolex.png">
         </div>
+
+        <!-- DECORATIVE STROKE BAR -->
+        <div id="stroke-bar" class="stroke-bar"></div>
     </div>
     <script>
         const socket = io();
@@ -172,7 +205,12 @@
         const sessionHistoryByCarIdx = {};
         const overallBestSectors = { s1: -1, s2: -1, s3: -1 };
         let newCurrentLapNum = -1;
-        let hideCurrentTime = false;
+        let trackLength = -1;
+        let safetyCarStatus = 0;
+        let shouldShowOverlay = false;
+        let overlayAnimating = false;
+
+        const overlayContainer = document.querySelector('.overlay-container');
 
         // Receive and process drivers data from server
         socket.on('drivers_data', (data) => {
@@ -439,6 +477,10 @@
             const newSessionType = data.m_sessionType;
             const newFormulaType = data.m_formula;
             
+            // Store track length and safety car status for overlay visibility calculations
+            trackLength = data.m_trackLength || -1;
+            safetyCarStatus = data.m_safetyCarStatus || 0;
+            
             // Only reload custom drivers if formula type changed or first load
             if (formulaType !== newFormulaType || !customDrivers.length) {
                 sessionType = newSessionType;
@@ -504,10 +546,6 @@
          * @param {number} refTimeMS - Reference time to compare against
          */
         function handleSectorCompletion(sectorNum, sectorTimeMS, cumulativeTimeMS, refTimeMS) {
-            // Hide current lap time and show delta
-            lapTimeElement.style.opacity = '0';
-            hideCurrentTime = true;
-            
             const deltaElement = [sector1DeltaElement, sector2DeltaElement, lastLapDeltaElement][sectorNum];
             deltaElement.style.opacity = '1';
             displayTimeDelta(deltaElement, cumulativeTimeMS, refTimeMS, sessionType);
@@ -553,8 +591,6 @@
                 }
                 
                 setSectorText(sectorNum, ['S1', 'S2', 'S3'][sectorNum], color);
-                lapTimeElement.style.opacity = '1';
-                hideCurrentTime = false;
                 rolexWidget.style.opacity = '0';
                 
                 // For sector 3, also reset all indicators
@@ -574,25 +610,23 @@
          * Handle last lap completion - animate last lap time display
          */
         function handleLastLapAnimation(lastLapTimeMS, newLapTime) {
-            lastLapTimeElement.style.top = `${parseInt(getComputedStyle(lastLapTimeElement).top) || 57}px`;
+            const mainTimingDisplay = document.querySelector('.main-timing-display');
+            
+            // Initialize positions
             lastLapTimeElement.style.opacity = '0';
             
-            [lapTimeComparisonElement, lapTimeComparisonNameElement, separatorElement, lapTimeElement].forEach(el => {
-                el.style.top = `${parseInt(getComputedStyle(el).top) || 0}px`;
+            // Slide last lap time down into view, main timing display down out of view
+            anime({
+                targets: lastLapTimeElement,
+                top: '0px',
+                opacity: 1,
+                duration: ANIMATION_DURATION.LAST_LAP_SLIDE_UP,
+                easing: 'easeInOutQuad'
             });
             
-            // Slide last lap time down, other elements up
-            anime.timeline({ easing: 'easeInOutQuad' })
-                .add({
-                    targets: lastLapTimeElement,
-                    top: function(el) { return (parseInt(getComputedStyle(el).top) || 57) + 80 + 'px'; },
-                    opacity: 1,
-                    duration: ANIMATION_DURATION.LAST_LAP_SLIDE_UP
-                });
-            
             anime({
-                targets: [lapTimeComparisonElement, lapTimeComparisonNameElement, separatorElement, lapTimeElement],
-                top: function(el) { return (parseInt(getComputedStyle(el).top) || 0) - 100 + 'px'; },
+                targets: mainTimingDisplay,
+                top: '100px',
                 opacity: 0,
                 duration: ANIMATION_DURATION.LAST_LAP_SLIDE_UP,
                 easing: 'easeInOutQuad'
@@ -602,19 +636,19 @@
             setTimeout(() => {
                 anime({
                     targets: lastLapTimeElement,
-                    top: function(el) { return (parseInt(getComputedStyle(el).top) || 137) - 80 + 'px'; },
+                    top: '-80px',
                     opacity: 0,
                     duration: ANIMATION_DURATION.LAST_LAP_SLIDE_DOWN,
                     easing: 'easeInOutQuad'
                 });
                 anime({
-                    targets: [lapTimeComparisonElement, lapTimeComparisonNameElement, separatorElement, lapTimeElement],
-                    top: function(el) { return (parseInt(getComputedStyle(el).top) || -100) + 100 + 'px'; },
+                    targets: mainTimingDisplay,
+                    top: '0px',
                     opacity: 1,
                     duration: ANIMATION_DURATION.LAST_LAP_SLIDE_DOWN,
                     easing: 'easeInOutQuad'
                 });
-            }, 3667);
+            }, ANIMATION_DURATION.LAST_LAP_DISPLAY);
         }
 
         /**
@@ -699,6 +733,102 @@
             }
             
             prevPosition = newPosition;
+        }
+
+        /**
+         * Animate overlay visibility with slide and fade effect
+         * @param {boolean} show - Whether to show or hide the overlay
+         */
+        function animateOverlayVisibility(show) {
+            if (overlayAnimating) return; // Prevent overlapping animations
+            overlayAnimating = true;
+
+            const duration = 200; // 0.2 seconds (inertia with changespersecond=5)
+            
+            if (show) {
+                // Slide in from right, expand width, fade in
+                anime({
+                    targets: overlayContainer,
+                    left: [240, 0],
+                    width: [0, 480],
+                    opacity: [0, 1],
+                    duration: duration,
+                    easing: 'easeOutQuad',
+                    complete: () => overlayAnimating = false
+                });
+            } else {
+                // Slide out to right, collapse width, fade out
+                // Reset sector indicators and text when hiding overlay
+                setSectorIndicator(0, 'transparent');
+                setSectorIndicator(1, 'transparent');
+                setSectorIndicator(2, 'transparent');
+                setSectorText(0, 'S1', SECTOR_COLORS.GRAY);
+                setSectorText(1, 'S2', SECTOR_COLORS.GRAY);
+                setSectorText(2, 'S3', SECTOR_COLORS.GRAY);
+                rolexWidget.style.opacity = '0';
+                
+                anime({
+                    targets: overlayContainer,
+                    left: [0, 240],
+                    width: [480, 0],
+                    opacity: [1, 0],
+                    duration: duration,
+                    easing: 'easeInQuad',
+                    complete: () => overlayAnimating = false
+                });
+            }
+        }
+
+        /**
+         * Calculate if overlay should be visible based on session type and driver status
+         * @param {number} driverStatus - Current driver status (0=garage, 1=flying, 2=in lap, 3=out lap, 4=on track)
+         * @param {number} lapDistance - Current lap distance
+         * @returns {boolean} Whether overlay should be visible
+         */
+        function calculateOverlayVisibility(driverStatus, lapDistance) {
+            // Rule 1: Always hide in garage
+            if (driverStatus === 0) {
+                return false;
+            }
+
+            // Rule 2: Practice/Qualifying (1-14) - show after 90% lap distance on out lap
+            if (sessionType >= SESSION_TYPE.PRACTICE_1 && sessionType <= SESSION_TYPE.ONE_SHOT_SPRINT_SHOOTOUT) {
+                if (driverStatus === 3) { // Out lap
+                    if (trackLength <= 0) {
+                        return false;
+                    }
+                    
+                    // Show when 90% of lap completed
+                    if (lapDistance < 0) {
+                        // Handle negative lap distance (first out lap only)
+                        // Show when within last 10% (e.g., if track is 5000m, show when lapDistance > -500)
+                        const threshold = -(trackLength * 0.1);
+                        return lapDistance > threshold;
+                    } else {
+                        // Positive lap distance - normal calculation
+                        return (lapDistance / trackLength) >= 0.9;
+                    }
+                }
+                // Once out of out lap status, keep visible until garage
+                return shouldShowOverlay; // Maintain previous state
+            }
+
+            // Rule 3: Race (15-17) - always visible (except garage and formation lap)
+            if (sessionType >= SESSION_TYPE.RACE && sessionType <= SESSION_TYPE.RACE_3) {
+                // Hide during formation lap (safetyCarStatus === 3)
+                if (safetyCarStatus === 3) {
+                    return false;
+                }
+                return true;
+            }
+
+            // Rule 4: Time Trial (18) - visible when not in garage
+            if (sessionType === SESSION_TYPE.TIME_TRIAL) {
+                return true;
+            }
+
+            // Default: visible
+            return true;
         }
 
         /**
@@ -870,16 +1000,19 @@
                     position = lapData.m_carPosition || '1';
                     driverName = participantNames[playerCarIdx] || 'UNKNOWN';
                     
+                    // === OVERLAY VISIBILITY CONTROL ===
+                    const driverStatus = lapData.m_driverStatus;
+                    const lapDistance = lapData.m_lapDistance;
+                    const newOverlayVisibility = calculateOverlayVisibility(driverStatus, lapDistance);
+                    
+                    if (newOverlayVisibility !== shouldShowOverlay) {
+                        shouldShowOverlay = newOverlayVisibility;
+                        animateOverlayVisibility(shouldShowOverlay);
+                    }
+                    
                     // === CURRENT LAP TIME DISPLAY ===
                     const newLapTime = lapData.m_currentLapTimeInMS;
                     if (newLapTime >= 0) currentLapTime = formatTime(newLapTime);
-                    
-                    // Hide in garage, show when on track (unless sector delta is displaying)
-                    if (lapData.m_driverStatus === 0) {
-                        lapTimeElement.style.opacity = 0;
-                    } else if (!hideCurrentTime) {
-                        lapTimeElement.style.opacity = 1;
-                    }
                     
                     // === LAST LAP COMPLETION ===
                     const lastLapTimeMS = lapData.m_lastLapTimeInMS;
@@ -984,6 +1117,12 @@
                 handleTimeTrialPacket(data);
             }
         });
+        
+        // Initialize overlay as hidden
+        overlayContainer.style.left = '240px';
+        overlayContainer.style.width = '0px';
+        overlayContainer.style.opacity = '0';
+        
         createStrokeBar();
         updateLapDisplay();
         loadJsonFiles();

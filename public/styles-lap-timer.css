@@ -24,7 +24,7 @@
     --overlay-width: 480px;
     --overlay-height: 270px;
     --player-indicator-height: 52px;
-    --player-indicator-top: 89px;
+    --player-indicator-top: 90px;
     
     /* Fonts */
     --font-main: "F1TV-2022-ObliqueBold";
@@ -69,6 +69,76 @@
     overflow: hidden;
 }
 
+/* === GROUP CONTAINERS === */
+.driver-info-group {
+    position: absolute;
+    width: 480px;
+    height: 50px;
+    left: 0;
+    top: 90px;
+    z-index: var(--z-content);
+    overflow: hidden;
+}
+
+.position-indicators {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 50px;
+    height: 52px;
+}
+
+.timing-group {
+    position: absolute;
+    width: 480px;
+    height: 80px;
+    left: 0;
+    top: 137px;
+    z-index: var(--z-content);
+}
+
+.main-timing-display {
+    position: absolute;
+    width: 480px;
+    height: 80px;
+    left: 0;
+    top: 0;
+}
+
+.sector-deltas {
+    position: absolute;
+    width: 480px;
+    height: 80px;
+    left: 0;
+    top: 0;
+    pointer-events: none;
+}
+
+.sector-bar-group {
+    position: absolute;
+    width: 480px;
+    height: 33px;
+    left: 0;
+    top: 217px;
+    z-index: var(--z-content);
+}
+
+.sector-indicators {
+    position: absolute;
+    width: 480px;
+    height: 6px;
+    left: 0;
+    top: 27px;
+}
+
+.sector-labels {
+    position: absolute;
+    width: 480px;
+    height: 25px;
+    left: 0;
+    top: 0;
+}
+
 .overlay-container:before {
     content: '';
     position: absolute;
@@ -83,7 +153,7 @@
 
 #timer-background {
     position: absolute;
-    top: 138px;
+    top: 1px;
     left: 0px;
     width: var(--overlay-width);
     height: 78px;
@@ -93,7 +163,7 @@
 
 #sectors-background {
     position: absolute;
-    top: 216px;
+    top: -1px;
     left: 0px;
     width: var(--overlay-width);
     height: 38px;
@@ -103,7 +173,7 @@
 
 #separator {
     position: absolute;
-    top: 140px;
+    top: 3px;
     left: 0px;
     width: 240px;
     height: 74px;
@@ -114,7 +184,7 @@
 
 #sector-line {
     position: absolute;
-    top: 245.5px;
+    top: 28.5px;
     left: 0px;
     width: var(--overlay-width);
     height: 3px;
@@ -125,7 +195,7 @@
 
 .lap-time-layer {
     position: absolute;
-    top: 147px;
+    top: 10px;
     left: 65px; /* Default position, overridden dynamically */
     width: 190px;
     height: 60px;
@@ -143,7 +213,7 @@
 
 .lap-time-comparison-layer {
     position: absolute;
-    top: 150px;
+    top: 13px;
     left: 240px;
     width: 240px;
     height: 35px;
@@ -161,7 +231,7 @@
 
 .lap-time-comparison-name-layer {
     position: absolute;
-    top: 183px;
+    top: 46px;
     left: 240px;
     width: 240px;
     height: 25px;
@@ -182,7 +252,7 @@
 .sector2-text-layer,
 .sector3-text-layer {
     position: absolute;
-    top: 217px;
+    top: 0px;
     width: 160px;
     height: 25px;
     font-family: var(--font-numbers);
@@ -211,7 +281,7 @@
 
 .last-lap-time-layer {
     position: absolute;
-    top: 57px;
+    top: -80px;
     left: 0px;
     width: var(--overlay-width);
     height: 80px;
@@ -228,7 +298,7 @@
 
 .position-layer {
     position: absolute;
-    top: 90px;
+    top: 0px;
     left: 0px;
     width: 48px;
     height: 50px;
@@ -244,10 +314,10 @@
 
 .team-logo-layer {
     position: absolute;
-    top: var(--player-indicator-top);
-    left: 48px;
-    width: 57px;
-    height: var(--player-indicator-height);
+    top: -2px;
+    left: 50px;
+    width: 60px;
+    height: 53px;
     background-color: var(--color-team-logo-bg);
     background-image: url('/images/team-logos/Red_Bull_Racing.png');
     background-size: cover;
@@ -257,7 +327,7 @@
 
 .driver-name-layer {
     position: absolute;
-    top: 90px;
+    top: 0px;
     left: 120px;
     width: 320px;
     height: 50px;
@@ -273,9 +343,9 @@
 
 .tyre-compound-layer {
     position: absolute;
-    top: var(--player-indicator-top);
+    top: -1px;
     left: 425px;
-    width: 55px;
+    width: 57px;
     height: var(--player-indicator-height);
     background-color: var(--color-tyre-bg);
     font-family: var(--font-main);
@@ -293,7 +363,7 @@
 .sector-display-layer#sector2-delta,
 .sector-display-layer#last-lap-delta {
     position: absolute;
-    top: 148px;
+    top: 11px;
     left: -5px;
     width: 245px;
     height: 60px;
@@ -310,8 +380,8 @@
 
 .knockout-indicator-layer {
     position: absolute;
-    top: var(--player-indicator-top);
-    left: 0px;
+    top: -1px;
+    left: -1px;
     width: var(--player-indicator-height);
     height: var(--player-indicator-height);
     background-image: url('/images/lap-timer/Knockout.png');
@@ -323,7 +393,7 @@
 
 .position-gained-indicator {
     position: absolute;
-    top: 90px;
+    top: 0px;
     left: 0px;
     width: 45px;
     height: 20px;
@@ -336,7 +406,7 @@
 
 .position-lost-indicator {
     position: absolute;
-    top: 120px;
+    top: 30px;
     left: 0px;
     width: 45px;
     height: 20px;
@@ -352,7 +422,7 @@
 .sector2-indicator,
 .sector3-indicator {
     position: absolute;
-    top: 244px;
+    top: 0px;
     width: 160px;
     height: 6px;
     background-color: transparent;
@@ -415,6 +485,8 @@
 }
 
 .rolex-widget img {
+    top: 7.5px;
+    left: 12px;
     width: 126px;
     height: 70px;
     object-fit: contain;
