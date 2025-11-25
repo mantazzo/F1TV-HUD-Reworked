@@ -209,6 +209,10 @@
         let safetyCarStatus = 0;
         let shouldShowOverlay = false;
         let overlayAnimating = false;
+        
+        // Timeout tracking for cleanup
+        let sectorResetTimeouts = [null, null, null];
+        let comparisonUpdateTimeout = null;
 
         const overlayContainer = document.querySelector('.overlay-container');
 
@@ -582,9 +586,14 @@
                 }, 2000);
             }
             
+            // Clear existing timeout for this sector to prevent overlaps (e.g., spectator mode cycling)
+            if (sectorResetTimeouts[sectorNum]) {
+                clearTimeout(sectorResetTimeouts[sectorNum]);
+            }
+            
             // Reset after 4 seconds (or 6 for sector 3)
             const displayDuration = sectorNum === 2 ? 6000 : 4000;
-            setTimeout(() => {
+            sectorResetTimeouts[sectorNum] = setTimeout(() => {
                 if (sectorNum !== 2) {
                     // S1/S2: Hide delta
                     deltaElement.style.opacity = '0';
@@ -603,6 +612,7 @@
                     setSectorText(2, 'S3', SECTOR_COLORS.GRAY);
                     currentLapSectorSum = 0;
                 }
+                sectorResetTimeouts[sectorNum] = null;
             }, displayDuration);
         }
 
@@ -786,7 +796,7 @@
          * @returns {boolean} Whether overlay should be visible
          */
         function calculateOverlayVisibility(driverStatus, lapDistance) {
-            // Rule 1: Always hide in garage
+            // Rule 1: Always hide in garage (defensive check - highest priority)
             if (driverStatus === 0) {
                 return false;
             }
@@ -1056,11 +1066,18 @@
                     if (prevSector !== currentSector) {
                         prevSector = currentSector;
                         canUpdateComparison = false;
-                        setTimeout(() => {
+                        
+                        // Clear existing comparison timeout to prevent overlaps
+                        if (comparisonUpdateTimeout) {
+                            clearTimeout(comparisonUpdateTimeout);
+                        }
+                        
+                        comparisonUpdateTimeout = setTimeout(() => {
                             canUpdateComparison = true;
                             lapTimeComparison = newComparisonValue;
                             transitionValue = newComparisonValue;
                             updateLapDisplay();
+                            comparisonUpdateTimeout = null;
                         }, 4000); // Update after sector delta disappears
                     } else if (canUpdateComparison) {
                         // Only update when not locked (prevents constant overwriting at 60 Hz)
