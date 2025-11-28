@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>F1 Fastest Lap Overlay</title>
+    <link rel="stylesheet" href="/fonts.css">
+    <link rel="stylesheet" href="/styles-fastest-lap.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+</head>
+<body>
+    <div class="fastest-lap-container">
+        <!-- Background -->
+        <div class="fl-background"></div>
+        
+        <!-- Stripe container with background images -->
+        <div class="fl-stripe">
+            <div class="fl-bg-image"></div>
+            <div class="fl-bg-gradient-1"></div>
+            <div class="fl-bg-gradient-2"></div>
+            <div class="fl-bg-gradient-3"></div>
+            <div class="fl-bg-gradient-4"></div>
+            <div class="fl-bg-gradient-5"></div>
+        </div>
+        
+        <!-- Main content -->
+        <div class="fl-content">
+            <!-- Left section: FASTEST LAP text -->
+            <div class="fl-label-fastest">FASTEST</div>
+            <div class="fl-label-lap">LAP</div>
+            
+            <!-- Middle section: Driver name (colored with team color) -->
+            <div class="fl-driver-name">VERSTAPPEN</div>
+            
+            <!-- Right section: Lap time -->
+            <div class="fl-time-section">
+                <div class="fl-lap-time">1:34.567</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Stroke element (animated line at top) -->
+    <div class="stroke-container">
+        <div class="stroke-background"></div>
+        <div class="stroke-diagonal-bar" id="stroke-diagonal-bar"></div>
+        <div class="stroke-border-blur"></div>
+        <div class="stroke-gradient-1"></div>
+        <div class="stroke-gradient-2"></div>
+    </div>
+    
+    <script>
+        const socket = io();
+        const flContainer = document.querySelector('.fastest-lap-container');
+        const strokeContainer = document.querySelector('.stroke-container');
+        const flDriverName = document.querySelector('.fl-driver-name');
+        const flLapTime = document.querySelector('.fl-lap-time');
+        const flGradient3 = document.querySelector('.fl-bg-gradient-3');
+        const flGradient4 = document.querySelector('.fl-bg-gradient-4');
+        const flGradient5 = document.querySelector('.fl-bg-gradient-5');
+
+        let participantNames = {};
+        let participantTeams = {};
+        let participantShowOnlineNames = {};
+        let participantPrimaryColors = {};
+        let teamNames = {};
+        let customDrivers = [];
+        let aiDrivers = {};
+        let eventCodes = {};
+        let formulaType = 0;
+        let isAnimating = false;
+
+        // Animation constants
+        const ANIMATION_DURATION = {
+            SLIDE_SHORT: 200,
+            SLIDE: 333,
+            SLIDE_GRADIENT: 500,
+            DISPLAY: 8000
+        };
+
+        socket.on('drivers_data', (data) => {
+            aiDrivers = data;
+            console.log('AI drivers updated from server:', aiDrivers);
+        });
+
+        socket.on('event_codes', (data) => {
+            eventCodes = data;
+            console.log('Event codes received:', eventCodes);
+        });
+
+        async function loadJsonFiles() {
+            try {
+                const promises = [fetch('/data/DefaultTeams.json')];
+                if (formulaType === 0) {
+                    promises.push(fetch('/data/CustomF1Drivers.json'));
+                } else if (formulaType === 2) {
+                    promises.push(fetch('/data/CustomF2Drivers.json'));
+                }
+                const responses = await Promise.all(promises.map(p => p.catch(() => null)));
+                teamNames = responses[0] ? await responses[0].json() : {};
+                if (responses[1]) {
+                    const customDriversData = await responses[1].json();
+                    customDrivers = Array.isArray(customDriversData) ? customDriversData : [];
+                }
+            } catch (error) {
+                console.error('Error loading JSON files:', error);
+                teamNames = {};
+                customDrivers = [];
+            }
+        }
+
+        function matchCustomDriver(participant, showOnlineNames) {
+            const raceNumber = participant.m_raceNumber;
+            const name = participant.m_name;
+            const teamId = participant.m_teamId;
+            const team = teamNames[teamId] ? teamNames[teamId].ShortName : `Team_${teamId}`;
+
+            // Priority 1: Exact name match (only if showOnlineNames is 1)
+            // Skip name matching if showOnlineNames is 0 (player shows as "PLAYER")
+            if (showOnlineNames === 1) {
+                for (let driver of customDrivers) {
+                    if (driver.MatchName && driver.MatchName.toUpperCase() === name.toUpperCase()) {
+                        return driver.LastName || driver.DisplayName || '';
+                    }
+                }
+            }
+
+            // Priority 2: Number + Team match
+            for (let driver of customDrivers) {
+                if (driver.RaceNumber && driver.Team && driver.RaceNumber === raceNumber && driver.Team === team) {
+                    return driver.LastName || driver.DisplayName || '';
+                }
+            }
+
+            // Priority 3: Number only match
+            for (let driver of customDrivers) {
+                if (driver.RaceNumber && driver.RaceNumber === raceNumber) {
+                    return driver.LastName || driver.DisplayName || '';
+                }
+            }
+
+            return `${team} #${raceNumber}`;
+        }
+
+        function formatLapTime(milliseconds) {
+            const minutes = Math.floor(milliseconds / 60000);
+            const seconds = Math.floor((milliseconds % 60000) / 1000);
+            const ms = milliseconds % 1000;
+            return `${minutes}:${String(seconds).padStart(2, '0')}.${String(ms).padStart(3, '0')}`;
+        }
+
+        function getTeamColor(teamId, vehicleIdx) {
+            const teamData = teamNames[teamId];
+            
+            // Priority 1: Override color from team data
+            if (teamData && teamData.OverridePrimaryColor) {
+                return teamData.OverridePrimaryColor;
+            }
+            
+            // Priority 2: Livery color from game (stored in participantPrimaryColors)
+            if (vehicleIdx !== undefined && participantPrimaryColors[vehicleIdx]) {
+                return participantPrimaryColors[vehicleIdx];
+            }
+            
+            // Fallback: Default team color or white
+            if (teamData && teamData.Color) {
+                return teamData.Color;
+            }
+            
+            return 'rgb(255, 255, 255)';
+        }
+
+        function showFastestLapNotification(driverName, lapTime, teamId, vehicleIdx) {
+            if (isAnimating) return;
+            isAnimating = true;
+
+            console.log(`Fastest Lap: ${driverName} - ${formatLapTime(lapTime)} - Team ${teamId}`);
+
+            // Update content
+            flDriverName.textContent = driverName.toUpperCase();
+            flDriverName.style.color = getTeamColor(teamId, vehicleIdx);
+            flLapTime.textContent = formatLapTime(lapTime);
+
+            // Reset any previous animation state
+            anime.remove([flContainer, strokeContainer, flGradient3, flGradient4, flGradient5]);
+
+            // Animate in: left 460px->0, width 0->920px over 333ms, opacity over 200ms
+            anime({
+                targets: flContainer,
+                left: [460, 0],
+                width: [0, 920],
+                duration: ANIMATION_DURATION.SLIDE,
+                easing: 'easeOutQuad'
+            });
+            
+            anime({
+                targets: flContainer,
+                opacity: [0, 1],
+                duration: ANIMATION_DURATION.SLIDE_SHORT,
+                easing: 'linear'
+            });
+            
+            anime({
+                targets: strokeContainer,
+                left: [460, 0],
+                width: [0, 920],
+                duration: ANIMATION_DURATION.SLIDE,
+                easing: 'easeOutQuad'
+            });
+            
+            anime({
+                targets: strokeContainer,
+                opacity: [0, 0.5],
+                duration: ANIMATION_DURATION.SLIDE_SHORT,
+                easing: 'linear'
+            });
+            
+            // Show and animate gradient elements with slight delay (start after container begins expanding)
+            setTimeout(() => {
+                flGradient3.style.display = 'block';
+                flGradient4.style.display = 'block';
+                flGradient5.style.display = 'block';
+                
+                anime({
+                    targets: flGradient3,
+                    left: [0, 900],
+                    duration: ANIMATION_DURATION.SLIDE_GRADIENT,
+                    easing: 'easeOutQuad'
+                });
+                
+                anime({
+                    targets: flGradient4,
+                    left: [100, 1000],
+                    duration: ANIMATION_DURATION.SLIDE_GRADIENT,
+                    easing: 'easeOutQuad'
+                });
+                
+                anime({
+                    targets: flGradient5,
+                    left: [200, 1100],
+                    duration: ANIMATION_DURATION.SLIDE_GRADIENT,
+                    easing: 'easeOutQuad'
+                });
+            }, 100); // Small delay so gradients animate after container starts expanding
+
+            // Slide out after display duration
+            setTimeout(() => {
+                anime({
+                    targets: flContainer,
+                    left: [0, 460],
+                    width: [920, 0],
+                    duration: ANIMATION_DURATION.SLIDE,
+                    easing: 'easeInQuad'
+                });
+                
+                anime({
+                    targets: flContainer,
+                    opacity: [1, 0],
+                    duration: ANIMATION_DURATION.SLIDE_SHORT,
+                    easing: 'linear'
+                });
+                
+                anime({
+                    targets: strokeContainer,
+                    left: [0, 460],
+                    width: [920, 0],
+                    duration: ANIMATION_DURATION.SLIDE,
+                    easing: 'easeInQuad',
+                    complete: () => {
+                        isAnimating = false;
+                        
+                        // Reset gradient positions and hide them
+                        flGradient3.style.left = '0px';
+                        flGradient4.style.left = '100px';
+                        flGradient5.style.left = '200px';
+                        flGradient3.style.display = 'none';
+                        flGradient4.style.display = 'none';
+                        flGradient5.style.display = 'none';
+                    }
+                });
+                
+                anime({
+                    targets: strokeContainer,
+                    opacity: [0.5, 0],
+                    duration: ANIMATION_DURATION.SLIDE_SHORT,
+                    easing: 'linear'
+                });
+            }, ANIMATION_DURATION.DISPLAY);
+        }
+
+        function createStrokeDiagonalBar() {
+            const strokeBar = document.getElementById('stroke-diagonal-bar');
+            const rectCount = Math.ceil(950 / 7); // Adjust for a slight offset
+            for (let i = 0; i < rectCount; i++) {
+                const rect = document.createElement('div');
+                rect.className = 'stroke-diagonal-rect';
+                strokeBar.appendChild(rect);
+            }
+        }
+
+        socket.on('f1_data', (data) => {
+            const packetId = data.m_header.m_packetId;
+
+            if (packetId === 1) {
+                // Session packet - update formula type
+                formulaType = data.m_formula;
+                if (!customDrivers.length) {
+                    loadJsonFiles();
+                }
+            } else if (packetId === 3) {
+                // Event packet - check for fastest lap event
+                const eventCode = data.m_eventStringCode;
+                
+                if (eventCode === eventCodes.FastestLap) {
+                    // Fastest Lap event triggered
+                    const vehicleIdx = data.m_eventDetails.vehicleIdx;
+                    const lapTimeSeconds = data.m_eventDetails.lapTime;
+                    const lapTimeMS = Math.round(lapTimeSeconds * 1000);
+                    
+                    // Get driver name and team from stored participant data
+                    const driverName = participantNames[vehicleIdx] || 'UNKNOWN';
+                    const teamId = vehicleIdx in participantTeams ? participantTeams[vehicleIdx] : 255;
+                    
+                    // Show notification
+                    showFastestLapNotification(driverName, lapTimeMS, teamId, vehicleIdx);
+                }
+            } else if (packetId === 4) {
+                // Participants packet - update driver names and team IDs
+                participantNames = {};
+                participantTeams = {};
+                participantPrimaryColors = {};
+                const numActiveCars = data.m_participants.length;
+                
+                for (let i = 0; i < numActiveCars; i++) {
+                    const participant = data.m_participants[i];
+                    const index = participant.m_participantIndex !== undefined ? participant.m_participantIndex : i;
+                    const driverId = participant.m_driverId;
+                    const teamId = participant.m_teamId;
+                    const showOnlineNames = participant.m_showOnlineNames;
+                    
+                    // Store team ID and showOnlineNames flag
+                    participantTeams[index] = teamId;
+                    participantShowOnlineNames[index] = showOnlineNames;
+                    
+                    // Store primary livery color
+                    if (participant.m_liveryColour && Array.isArray(participant.m_liveryColour) && participant.m_liveryColour.length > 0) {
+                        const liveryColor = participant.m_liveryColour[0];
+                        if (liveryColor && typeof liveryColor.red === 'number' && typeof liveryColor.green === 'number' && typeof liveryColor.blue === 'number') {
+                            participantPrimaryColors[index] = `rgb(${liveryColor.red}, ${liveryColor.green}, ${liveryColor.blue})`;
+                        }
+                    }
+                    
+                    if (driverId === 255) {
+                        participantNames[index] = matchCustomDriver(participant, showOnlineNames);
+                    } else {
+                        const aiDriver = aiDrivers[driverId];
+                        participantNames[index] = aiDriver ? aiDriver.lastName.toUpperCase() : 'UNKNOWN_AI';
+                    }
+                }
+            }
+        });
+
+        // Initialize
+        createStrokeDiagonalBar();
+        loadJsonFiles();
+    </script>
+</body>
+</html>

@@ -2,7 +2,7 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const { F1TelemetryClient, constants } = require('@deltazeroproduction/f1-udp-parser');
-const { PACKETS, DRIVERS } = constants;
+const { PACKETS, DRIVERS, EVENT_CODES } = constants;
 const path = require('path');
 const prompt = require('prompt');
 
@@ -38,8 +38,9 @@ prompt.get(promptSchema, (err, result) => {
     io.on('connection', (socket) => {
         console.log('Client connected');
         
-        // Send DRIVERS constant to client
+        // Send constants to client
         socket.emit('drivers_data', DRIVERS);
+        socket.emit('event_codes', EVENT_CODES);
         
         socket.on('disconnect', () => {
             console.log('Client disconnected');
@@ -64,6 +65,11 @@ prompt.get(promptSchema, (err, result) => {
 
     // Listen for Lap Data packets (ID 2)
     client.on(PACKETS.lapData, (data) => {
+        io.emit('f1_data', convertBigInt(data));
+    });
+
+    // Listen for Event packets (ID 3)
+    client.on(PACKETS.event, (data) => {
         io.emit('f1_data', convertBigInt(data));
     });
 
@@ -115,6 +121,7 @@ prompt.get(promptSchema, (err, result) => {
     app.get('/lap-timer', (req, res) => res.sendFile(path.join(__dirname, 'views', 'lap-timer.html')));
     app.get('/pit-timer', (req, res) => res.sendFile(path.join(__dirname, 'views', 'pit-timer.html')));
     app.get('/live-speed', (req, res) => res.sendFile(path.join(__dirname, 'views', 'live-speed.html')));
+    app.get('/fastest-lap', (req, res) => res.sendFile(path.join(__dirname, 'views', 'fastest-lap.html')));
     app.get('/', (req, res) => res.redirect('/speedometer'));
     
     server.listen(3000, () => console.log('Overlays at http://localhost:3000/speedometer'));

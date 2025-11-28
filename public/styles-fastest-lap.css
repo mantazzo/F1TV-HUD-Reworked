@@ -1,0 +1,281 @@
+/* F1 Fastest Lap Overlay Styles - Matching SimHub Original Design */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: transparent;
+}
+
+/* Main container - 920x110px matching SimHub */
+.fastest-lap-container {
+    position: absolute;
+    left: 460px;
+    top: 15px;
+    width: 0;
+    height: 110px;
+    opacity: 0;
+    overflow: hidden;
+    z-index: 1000;
+}
+
+/* Stroke element - animated line above the main container */
+.stroke-container {
+    position: absolute;
+    left: 460px;
+    top: 0;
+    width: 0;
+    height: 15px;
+    opacity: 0;
+    overflow: hidden;
+    z-index: 1001;
+}
+
+.stroke-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.05);
+    z-index: 1;
+}
+
+.stroke-diagonal-bar {
+    position: absolute;
+    top: 0;
+    left: -30px;
+    width: 950px; /* Adjusted width for slight offset */
+    height: 100%;
+    z-index: 7;
+    display: flex;
+    align-items: center;
+    overflow: visible;
+}
+
+.stroke-diagonal-rect {
+    width: 100px;
+    height: 2px;
+    margin-right: -40px;
+    background: rgba(255, 255, 255, 1);
+    opacity: 0.1;
+    transform: rotate(-45deg);
+}
+
+.stroke-border-blur {
+    position: absolute;
+    top: 6px;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 10px;
+    border-bottom: 8px solid rgba(0, 0, 0, 0.3);
+    filter: blur(3px);
+    z-index: 3;
+}
+
+.stroke-gradient-1 {
+    position: absolute;
+    top: 0;
+    left: -1000px;
+    width: 10000px;
+    height: 12px;
+    background-image: url('../images/fastest-lap/Gradient.png');
+    background-repeat: repeat-x;
+    background-size: auto 12px;
+    z-index: 4;
+}
+
+.stroke-gradient-2 {
+    position: absolute;
+    top: 0;
+    left: -1000px;
+    width: 10000px;
+    height: 12px;
+    background-image: url('../images/fastest-lap/Gradient.png');
+    background-repeat: repeat-x;
+    background-size: auto 12px;
+    z-index: 5;
+}
+
+/* Background - solid dark color */
+.fl-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgb(10, 10, 15);
+    z-index: 1;
+}
+
+/* Stripe container with overflow hidden */
+.fl-stripe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 920px;
+    height: 110px;
+    overflow: hidden;
+    z-index: 2;
+}
+
+/* Background image layers matching SimHub structure */
+.fl-bg-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 270px;
+    height: 110px;
+    background-image: url('/images/fastest-lap/FLBG.png');
+    background-size: 270px 110px;
+}
+
+.fl-bg-gradient-1 {
+    position: absolute;
+    top: -50px;
+    left: 190px;
+    width: 180px;
+    height: 210px;
+    opacity: 0.35;
+    background-image: url('/images/fastest-lap/FLBG1.png');
+    background-size: 180px 210px;
+}
+
+.fl-bg-gradient-2 {
+    position: absolute;
+    top: -50px;
+    left: 290px;
+    width: 180px;
+    height: 210px;
+    opacity: 0.15;
+    background-image: url('/images/fastest-lap/FLBG1.png');
+    background-size: 180px 210px;
+}
+
+.fl-bg-gradient-3 {
+    position: absolute;
+    top: -50px;
+    left: 0px;
+    width: 180px;
+    height: 210px;
+    opacity: 0.75;
+    background-image: url('/images/fastest-lap/FLBG1.png');
+    background-size: 180px 210px;
+    display: none;
+}
+
+.fl-bg-gradient-4 {
+    position: absolute;
+    top: -50px;
+    left: 100px;
+    width: 180px;
+    height: 210px;
+    opacity: 0.75;
+    background-image: url('/images/fastest-lap/FLBG1.png');
+    background-size: 180px 210px;
+    display: none;
+}
+
+.fl-bg-gradient-5 {
+    position: absolute;
+    top: -50px;
+    left: 200px;
+    width: 180px;
+    height: 210px;
+    opacity: 0.75;
+    background-image: url('/images/fastest-lap/FLBG1.png');
+    background-size: 180px 210px;
+    display: none;
+}
+
+/* Main content container */
+.fl-content {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    z-index: 3;
+}
+
+/* FASTEST LAP label - left section (two separate elements) */
+.fl-label-fastest {
+    position: absolute;
+    left: 20px;
+    top: 20px;
+    width: 185px;
+    height: 40px;
+    font-family: 'F1TV-2022', sans-serif;
+    font-weight: 700;
+    font-size: 34px;
+    color: #FFFFFF;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.fl-label-lap {
+    position: absolute;
+    left: 20px;
+    top: 60px;
+    width: 185px;
+    height: 35px;
+    font-family: 'F1TV-2022', sans-serif;
+    font-weight: 700;
+    font-size: 34px;
+    color: #FFFFFF;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+/* Driver name - center section (colored with team color) */
+.fl-driver-name {
+    position: absolute;
+    left: 280px;
+    top: 0;
+    width: 370px;
+    height: 110px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    font-family: 'F1TV-2022', sans-serif;
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 42px;
+    color: rgb(54, 113, 198); /* Default: Red Bull blue, will be overridden */
+    text-transform: uppercase;
+    text-shadow: 1.41421px 1.41421px 2px rgb(0, 0, 0);
+    white-space: pre;
+}
+
+/* Lap time section - right side */
+.fl-time-section {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 330px;
+    height: 110px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+/* Lap time - main display */
+.fl-lap-time {
+    font-family: 'F1TV-2022', sans-serif;
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 45px;
+    color: #FFFFFF;
+    text-align: right;
+    padding-right: 30px;
+    white-space: pre;
+}
