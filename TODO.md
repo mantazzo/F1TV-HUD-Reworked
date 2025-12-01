@@ -24,6 +24,12 @@
 - Fastest Lap
     - Small popup showing the fastest lap set, with laptime and driver name in team color
     - Works based on the received Event packet instead of cycling through data
+    - Currently works in any session (might change it later)
+- Weather
+    - An overlay showing current weather and weather forecast for the next 5, 10, 15 and 30 minutes
+    - Primary units change depending on the default temperature units set by the player
+    - Also includes night icons for use at night tracks (needs some more testing)
+    - Will be improved later in the future
 
 ## Currently Working On
 
@@ -31,7 +37,7 @@
 
 ## Next Planned Overlay
 
-???
+Control Dashboard (can't really progress any further without implementing it, but I want to implement an extended version of it as well)
 
 ## Not started
 
@@ -47,7 +53,6 @@ In no particular order:
 - Pit Windows
 - Session Info
 - Turn Indicator
-- Weather
 - Control Dashboard
 
 ## Debatable

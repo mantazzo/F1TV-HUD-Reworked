@@ -29,7 +29,7 @@ This project is worked on with Windows systems in mind - it may work on Linux as
    Run `node index.js`. Enter a port when prompted and press `Enter`. By default, if you don't enter anything, it will use port 20777 (as described in parentheses). Wait for a message confirming the server is running (e.g., "Overlays at http://localhost:3000/speedometer").
 
 7. **Access the overlays.**  
-   Open a browser and go to `http://localhost:3000` to see the default page, or `http://localhost:3000/speedometer` for the speedometer, or `http://localhost:3000/lap-timer` for the lap timer. You can use these in tools like OBS to enhance your streams or recordings.
+   Open a browser and go to `http://localhost:3000` to see the default page (Speedometer overlay). Check the [Available Overlays](https://github.com/mantazzo/F1TV-HUD-Reworked/blob/main/AVAILABLE_OVERLAYS.md) page for all currently available overlays that can be used, with size references. You can use these in tools like OBS to enhance your streams or recordings.
 
 ## Configuration
 - Ensure telemetry is enabled in F1 25 and set to port you entered in the Terminal.

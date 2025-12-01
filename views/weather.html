@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>F1 Weather Overlay</title>
+    <link rel="stylesheet" href="/fonts.css">
+    <link rel="stylesheet" href="/styles-weather.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <div class="weather-container">
+        <!-- Top Header: CURRENT CONDITIONS -->
+        <div class="header-section">
+            <div class="header-bg"></div>
+            <div class="header-text">
+                <div class="header-current">CURRENT</div>
+                <div class="header-conditions">CONDITIONS</div>
+            </div>
+        </div>
+        
+        <!-- Current Weather Section -->
+        <div class="current-weather-section">
+            <div class="section-bg"></div>
+            
+            <!-- Gradient decoration at top -->
+            <div class="section-gradient"></div>
+            
+            <!-- Air Temperature -->
+            <div class="air-temp-row">
+                <div class="temp-label">AIR TEMP</div>
+                <div class="temp-line air-line"></div>
+            </div>
+            
+            <!-- Weather Icon + Air Temperatures -->
+            <div class="air-temp-values">
+                <div class="weather-icon-large" id="current-weather-icon"></div>
+                <div class="temp-celsius">
+                    <span class="temp-value-main" id="air-temp-primary">22</span>
+                    <span class="temp-unit" id="air-unit-primary">°C</span>
+                </div>
+                <div class="temp-fahrenheit">
+                    <span class="temp-value-secondary" id="air-temp-secondary">72</span>
+                    <span class="temp-unit-secondary" id="air-unit-secondary">°F</span>
+                </div>
+            </div>
+            
+            <!-- Track Temperature -->
+            <div class="track-temp-row">
+                <div class="temp-label">TRACK TEMP</div>
+                <div class="temp-line track-line"></div>
+            </div>
+            
+            <!-- Track Icon + Track Temperatures -->
+            <div class="track-temp-values">
+                <div class="track-icon"></div>
+                <div class="temp-celsius">
+                    <span class="temp-value-main" id="track-temp-primary">35</span>
+                    <span class="temp-unit" id="track-unit-primary">°C</span>
+                </div>
+                <div class="temp-fahrenheit">
+                    <span class="temp-value-secondary" id="track-temp-secondary">95</span>
+                    <span class="temp-unit-secondary" id="track-unit-secondary">°F</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Forecast Section -->
+        <div class="forecast-section">
+            <div class="section-bg"></div>
+            
+            <!-- Gradient decoration at top -->
+            <div class="section-gradient forecast-gradient"></div>
+            
+            <!-- Forecast Header -->
+            <div class="forecast-header-row">
+                <div class="forecast-label">FORECAST</div>
+                <div class="forecast-line"></div>
+            </div>
+            
+            <!-- Forecast Row 1: +5m -->
+            <div class="forecast-row" id="forecast-row-1">
+                <div class="forecast-icon" id="forecast-icon-1"></div>
+                <div class="forecast-info">
+                    <div class="forecast-condition" id="forecast-condition-1">CLEAR</div>
+                    <div class="forecast-time">+5m</div>
+                </div>
+                <div class="forecast-chance" id="forecast-chance-1">0%</div>
+                <div class="forecast-divider"></div>
+            </div>
+            
+            <!-- Forecast Row 2: +10m -->
+            <div class="forecast-row" id="forecast-row-2">
+                <div class="forecast-icon" id="forecast-icon-2"></div>
+                <div class="forecast-info">
+                    <div class="forecast-condition" id="forecast-condition-2">CLEAR</div>
+                    <div class="forecast-time">+10m</div>
+                </div>
+                <div class="forecast-chance" id="forecast-chance-2">0%</div>
+                <div class="forecast-divider"></div>
+            </div>
+            
+            <!-- Forecast Row 3: +15m -->
+            <div class="forecast-row" id="forecast-row-3">
+                <div class="forecast-icon" id="forecast-icon-3"></div>
+                <div class="forecast-info">
+                    <div class="forecast-condition" id="forecast-condition-3">CLEAR</div>
+                    <div class="forecast-time">+15m</div>
+                </div>
+                <div class="forecast-chance" id="forecast-chance-3">0%</div>
+                <div class="forecast-divider"></div>
+            </div>
+            
+            <!-- Forecast Row 4: +30m -->
+            <div class="forecast-row" id="forecast-row-4">
+                <div class="forecast-icon" id="forecast-icon-4"></div>
+                <div class="forecast-info">
+                    <div class="forecast-condition" id="forecast-condition-4">CLEAR</div>
+                    <div class="forecast-time">+30m</div>
+                </div>
+                <div class="forecast-chance" id="forecast-chance-4">0%</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const socket = io();
+        
+        // Weather conditions - will be populated from server
+        let weatherNames = ['Clear', 'Light Cloud', 'Overcast', 'Light Rain', 'Heavy Rain', 'Storm'];
+        
+        // Weather icon mapping (day versions)
+        const WEATHER_ICONS = {
+            0: 'clear.png',
+            1: 'light_cloud.png',
+            2: 'overcast.png',
+            3: 'light_rain.png',
+            4: 'heavy_rain.png',
+            5: 'storm.png'
+        };
+        
+        // Weather icons that have night variants (weather ID -> night icon filename)
+        const WEATHER_ICONS_NIGHT = {
+            0: 'clear_night.png',
+            1: 'light_cloud_night.png',
+            3: 'light_rain_night.png'
+        };
+        
+        // Night time detection (true if between 20:00 and 06:00)
+        let isNightTime = false;
+        
+        // Element references
+        const airTempPrimary = document.getElementById('air-temp-primary');
+        const airTempSecondary = document.getElementById('air-temp-secondary');
+        const airUnitPrimary = document.getElementById('air-unit-primary');
+        const airUnitSecondary = document.getElementById('air-unit-secondary');
+        const trackTempPrimary = document.getElementById('track-temp-primary');
+        const trackTempSecondary = document.getElementById('track-temp-secondary');
+        const trackUnitPrimary = document.getElementById('track-unit-primary');
+        const trackUnitSecondary = document.getElementById('track-unit-secondary');
+        const currentWeatherIcon = document.getElementById('current-weather-icon');
+        
+        // Temperature unit preference: 0 = Celsius primary, 1 = Fahrenheit primary
+        let temperatureUnits = 0;
+        
+        // Store current temperatures for re-display when units change
+        let currentAirTemp = 22;
+        let currentTrackTemp = 35;
+        let currentWeatherId = 0;
+        
+        // Store forecast weather IDs for refreshing icons on day/night change
+        let forecastWeatherIds = [0, 0, 0, 0];
+        
+        // Forecast elements
+        const forecastRows = [1, 2, 3, 4].map(i => ({
+            row: document.getElementById(`forecast-row-${i}`),
+            icon: document.getElementById(`forecast-icon-${i}`),
+            condition: document.getElementById(`forecast-condition-${i}`),
+            chance: document.getElementById(`forecast-chance-${i}`)
+        }));
+        
+        // Convert Celsius to Fahrenheit
+        function celsiusToFahrenheit(celsius) {
+            return Math.round((celsius * 9/5) + 32);
+        }
+        
+        // Set weather icon (uses night variant if available and it's night time)
+        function setWeatherIcon(element, weatherId) {
+            let icon;
+            if (isNightTime && WEATHER_ICONS_NIGHT[weatherId]) {
+                icon = WEATHER_ICONS_NIGHT[weatherId];
+            } else {
+                icon = WEATHER_ICONS[weatherId] || WEATHER_ICONS[0];
+            }
+            element.style.backgroundImage = `url('/images/weather/${icon}')`;
+        }
+        
+        // Check if time of day is night (between 20:00/8PM and 06:00/6AM)
+        // timeOfDay is in minutes since midnight
+        function checkNightTime(timeOfDay) {
+            const NIGHT_START = 20 * 60;  // 20:00 = 1200 minutes
+            const NIGHT_END = 6 * 60;     // 06:00 = 360 minutes
+            return timeOfDay >= NIGHT_START || timeOfDay < NIGHT_END;
+        }
+        
+        // Get weather condition name
+        function getWeatherName(weatherId) {
+            const name = weatherNames[weatherId] || weatherNames[0];
+            return name.toUpperCase();
+        }
+        
+        // Update current weather display based on temperature unit preference
+        function updateCurrentWeather(airTemp, trackTemp, weatherId) {
+            currentAirTemp = airTemp;
+            currentTrackTemp = trackTemp;
+            currentWeatherId = weatherId;
+            
+            // Temps are already integers (int8 from UDP), only Fahrenheit conversion needs rounding
+            const airF = celsiusToFahrenheit(airTemp);
+            const trackF = celsiusToFahrenheit(trackTemp);
+            
+            if (temperatureUnits === 0) {
+                // Celsius primary
+                airTempPrimary.textContent = airTemp;
+                airTempSecondary.textContent = airF;
+                airUnitPrimary.textContent = '°C';
+                airUnitSecondary.textContent = '°F';
+                trackTempPrimary.textContent = trackTemp;
+                trackTempSecondary.textContent = trackF;
+                trackUnitPrimary.textContent = '°C';
+                trackUnitSecondary.textContent = '°F';
+            } else {
+                // Fahrenheit primary
+                airTempPrimary.textContent = airF;
+                airTempSecondary.textContent = airTemp;
+                airUnitPrimary.textContent = '°F';
+                airUnitSecondary.textContent = '°C';
+                trackTempPrimary.textContent = trackF;
+                trackTempSecondary.textContent = trackTemp;
+                trackUnitPrimary.textContent = '°F';
+                trackUnitSecondary.textContent = '°C';
+            }
+            
+            setWeatherIcon(currentWeatherIcon, weatherId);
+        }
+        
+        // Update forecast row with dynamic font sizing for long weather names
+        function updateForecastRow(index, weatherId, rainChance) {
+            const row = forecastRows[index];
+            if (row) {
+                // Store weather ID for refreshing on day/night change
+                forecastWeatherIds[index] = weatherId;
+                
+                setWeatherIcon(row.icon, weatherId);
+                const weatherName = getWeatherName(weatherId);
+                row.condition.textContent = weatherName;
+                
+                // Reduce font size for longer weather names to fit on one line
+                if (weatherName.length > 10) {
+                    row.condition.style.fontSize = '14px';
+                } else if (weatherName.length > 8) {
+                    row.condition.style.fontSize = '16px';
+                } else {
+                    row.condition.style.fontSize = '20px';
+                }
+                
+                row.chance.textContent = `${Math.round(rainChance)}%`;
+            }
+        }
+        
+        // Refresh all weather icons (used when day/night changes)
+        function refreshAllWeatherIcons() {
+            setWeatherIcon(currentWeatherIcon, currentWeatherId);
+            forecastRows.forEach((row, index) => {
+                setWeatherIcon(row.icon, forecastWeatherIds[index]);
+            });
+        }
+        
+        // Socket.IO event handlers
+        socket.on('weather_data', (data) => {
+            if (Array.isArray(data)) {
+                weatherNames = data;
+                console.log('[Weather] Weather names loaded from server:', weatherNames);
+            }
+        });
+        
+        socket.on('f1_data', (data) => {
+            try {
+                const packetId = data?.m_header?.m_packetId;
+                
+                if (packetId === 1) {
+                    // Session packet - contains weather data
+                    
+                    // Check for time of day change (for night icons)
+                    if (typeof data.m_timeOfDay === 'number') {
+                        const wasNight = isNightTime;
+                        isNightTime = checkNightTime(data.m_timeOfDay);
+                        if (wasNight !== isNightTime) {
+                            console.log('[Weather] Time period changed to:', isNightTime ? 'Night' : 'Day', `(${Math.floor(data.m_timeOfDay / 60)}:${String(data.m_timeOfDay % 60).padStart(2, '0')})`);
+                            // Refresh all icons with correct day/night variants
+                            refreshAllWeatherIcons();
+                        }
+                    }
+                    
+                    // Check for temperature unit preference change
+                    if (typeof data.m_temperatureUnitsLeadPlayer === 'number') {
+                        const newUnits = data.m_temperatureUnitsLeadPlayer;
+                        if (newUnits !== temperatureUnits) {
+                            temperatureUnits = newUnits;
+                            console.log('[Weather] Temperature units changed to:', temperatureUnits === 0 ? 'Celsius' : 'Fahrenheit');
+                            // Re-display with updated units
+                            updateCurrentWeather(currentAirTemp, currentTrackTemp, currentWeatherId);
+                        }
+                    }
+                    
+                    const airTemp = data.m_airTemperature;
+                    const trackTemp = data.m_trackTemperature;
+                    const weather = data.m_weather;
+                    
+                    if (airTemp !== undefined && trackTemp !== undefined) {
+                        updateCurrentWeather(airTemp, trackTemp, weather);
+                    }
+                    
+                    // Forecast data (if available)
+                    if (data.m_weatherForecastSamples && Array.isArray(data.m_weatherForecastSamples)) {
+                        // Map forecast times to row indices: +5m=0, +10m=1, +15m=2, +30m=3
+                        const forecastTimes = [5, 10, 15, 30];
+                        
+                        forecastTimes.forEach((time, index) => {
+                            const sample = data.m_weatherForecastSamples.find(s => s.m_timeOffset === time);
+                            if (sample) {
+                                updateForecastRow(index, sample.m_weather, sample.m_rainPercentage);
+                            }
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('[Weather] Error processing data:', error);
+            }
+        });
+        
+        // Set initial weather icon (clear)
+        setWeatherIcon(currentWeatherIcon, 0);
+        forecastRows.forEach((row, index) => {
+            setWeatherIcon(row.icon, 0);
+        });
+        
+        console.log('[Weather] Overlay initialized');
+    </script>
+</body>
+</html>

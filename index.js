@@ -2,7 +2,7 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const { F1TelemetryClient, constants } = require('@deltazeroproduction/f1-udp-parser');
-const { PACKETS, DRIVERS, EVENT_CODES } = constants;
+const { PACKETS, DRIVERS, EVENT_CODES, WEATHER } = constants;
 const path = require('path');
 const prompt = require('prompt');
 
@@ -41,6 +41,7 @@ prompt.get(promptSchema, (err, result) => {
         // Send constants to client
         socket.emit('drivers_data', DRIVERS);
         socket.emit('event_codes', EVENT_CODES);
+        socket.emit('weather_data', WEATHER);
         
         socket.on('disconnect', () => {
             console.log('Client disconnected');
@@ -122,6 +123,7 @@ prompt.get(promptSchema, (err, result) => {
     app.get('/pit-timer', (req, res) => res.sendFile(path.join(__dirname, 'views', 'pit-timer.html')));
     app.get('/live-speed', (req, res) => res.sendFile(path.join(__dirname, 'views', 'live-speed.html')));
     app.get('/fastest-lap', (req, res) => res.sendFile(path.join(__dirname, 'views', 'fastest-lap.html')));
+    app.get('/weather', (req, res) => res.sendFile(path.join(__dirname, 'views', 'weather.html')));
     app.get('/', (req, res) => res.redirect('/speedometer'));
     
     server.listen(3000, () => console.log('Overlays at http://localhost:3000/speedometer'));
