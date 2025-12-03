@@ -124,7 +124,7 @@
             SECTOR_DELTA_DISPLAY: 3000,
             SECTOR_DELTA_FADE_OUT: 500,
             LAST_LAP_SLIDE_UP: 333,
-            LAST_LAP_DISPLAY: 5000,
+            LAST_LAP_DISPLAY: 5667,
             LAST_LAP_SLIDE_DOWN: 333,
             POSITION_CHANGE_FADE_IN: 500,
             POSITION_CHANGE_DISPLAY: 2000,
@@ -564,6 +564,7 @@
         function handleSectorCompletion(sectorNum, sectorTimeMS, cumulativeTimeMS, refTimeMS) {
             const deltaElement = [sector1DeltaElement, sector2DeltaElement, lastLapDeltaElement][sectorNum];
             deltaElement.style.opacity = '1';
+            lapTimeElement.style.opacity = '0'; // Hide lap time while delta is showing
             displayTimeDelta(deltaElement, cumulativeTimeMS, refTimeMS, sessionType);
             
             // Get personal best for this sector
@@ -607,9 +608,11 @@
             const displayDuration = sectorNum === 2 ? 6000 : 4000;
             sectorResetTimeouts[sectorNum] = setTimeout(() => {
                 if (sectorNum !== 2) {
-                    // S1/S2: Hide delta
+                    // S1/S2: Hide delta, show lap time again
                     deltaElement.style.opacity = '0';
+                    lapTimeElement.style.opacity = '1';
                 }
+                // Note: For sector 3, lap time opacity is managed by handleLastLapAnimation
                 
                 setSectorText(sectorNum, ['S1', 'S2', 'S3'][sectorNum], color);
                 rolexWidget.style.opacity = '0';
@@ -668,7 +671,11 @@
                     top: '0px',
                     opacity: 1,
                     duration: ANIMATION_DURATION.LAST_LAP_SLIDE_DOWN,
-                    easing: 'easeInOutQuad'
+                    easing: 'easeInOutQuad',
+                    complete: () => {
+                        // Restore lap time visibility after animation completes
+                        lapTimeElement.style.opacity = '1';
+                    }
                 });
             }, ANIMATION_DURATION.LAST_LAP_DISPLAY);
         }
