@@ -35,6 +35,20 @@
             </div>
         </section>
 
+        <section class="overlay-section" id="lap-timer-options-section">
+            <h2>Lap Timer Options</h2>
+            <div class="option-row">
+                <label class="select-label">
+                    <span class="select-text">Visibility Mode:</span>
+                    <select id="lap-timer-visibility-mode" class="select-dropdown">
+                        <option value="off">Always Off</option>
+                        <option value="automatic">Automatic</option>
+                        <option value="always-on">Always On</option>
+                    </select>
+                </label>
+            </div>
+        </section>
+
         <section class="overlay-section server-control-section">
             <h2>Server Control</h2>
             <button class="stop-server-button" id="stop-server-btn">
@@ -85,6 +99,9 @@
             overlayGrid.innerHTML = '';
             
             for (const [overlayId, overlay] of Object.entries(currentConfig.overlays)) {
+                // Skip lap-timer - it's controlled by dropdown in options section
+                if (overlayId === 'lap-timer') continue;
+                
                 const button = document.createElement('button');
                 button.className = `overlay-button ${overlay.visible ? 'active' : ''}`;
                 button.dataset.overlayId = overlayId;
@@ -149,11 +166,31 @@
             forecastToggle.checked = weatherConfig.showForecast !== false;
         }
 
-        // Override renderOverlayButtons to also update weather options
+        // Lap timer visibility mode handling
+        const lapTimerVisibilityMode = document.getElementById('lap-timer-visibility-mode');
+        
+        lapTimerVisibilityMode.addEventListener('change', () => {
+            socket.emit('config_update', {
+                overlay: 'lap-timer',
+                property: 'visibilityMode',
+                value: lapTimerVisibilityMode.value
+            });
+        });
+
+        // Update lap timer options when config changes
+        function updateLapTimerOptions() {
+            if (!currentConfig || !currentConfig.overlays || !currentConfig.overlays['lap-timer']) return;
+            
+            const lapTimerConfig = currentConfig.overlays['lap-timer'];
+            lapTimerVisibilityMode.value = lapTimerConfig.visibilityMode || 'automatic';
+        }
+
+        // Override renderOverlayButtons to also update options
         const originalRender = renderOverlayButtons;
         renderOverlayButtons = function() {
             originalRender();
             updateWeatherOptions();
+            updateLapTimerOptions();
         };
 
         // Stop server button

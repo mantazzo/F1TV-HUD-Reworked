@@ -11,7 +11,8 @@
     },
     "lap-timer": {
       "visible": true,
-      "name": "Lap Timer"
+      "name": "Lap Timer",
+      "visibilityMode": "automatic"
     },
     "live-speed": {
       "visible": true,

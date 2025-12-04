@@ -77,10 +77,42 @@
         
         const overlayContainer = document.querySelector('.overlay-container');
         
-        // Handle overlay visibility from controller
+        // Visibility mode from controller
+        let visibilityMode = 'automatic'; // off, automatic, always-on
+        let isInitialConfigLoad = true; // Track first config load to prevent flash
+        
+        // Handle overlay visibility mode from controller
         socket.on('overlay_config', (config) => {
             if (config.overlays && config.overlays['lap-timer']) {
-                overlayContainer.style.display = config.overlays['lap-timer'].visible ? 'block' : 'none';
+                const newMode = config.overlays['lap-timer'].visibilityMode || 'automatic';
+                const modeChanged = newMode !== visibilityMode;
+                visibilityMode = newMode;
+                
+                // On initial load, set state without animation
+                if (isInitialConfigLoad) {
+                    isInitialConfigLoad = false;
+                    if (visibilityMode === 'off') {
+                        // Keep overlay hidden (already is)
+                        shouldShowOverlay = false;
+                    } else if (visibilityMode === 'always-on') {
+                        // Show immediately without animation
+                        overlayContainer.style.left = '0px';
+                        overlayContainer.style.width = '480px';
+                        overlayContainer.style.opacity = '1';
+                        shouldShowOverlay = true;
+                    }
+                    // For 'automatic', overlay stays hidden until game data says otherwise
+                } else if (modeChanged) {
+                    // Mode changed after initial load - animate the change
+                    if (visibilityMode === 'off') {
+                        animateOverlayVisibility(false);
+                        shouldShowOverlay = false;
+                    } else if (visibilityMode === 'always-on') {
+                        animateOverlayVisibility(true);
+                        shouldShowOverlay = true;
+                    }
+                    // For 'automatic', let existing logic determine visibility
+                }
             }
         });
         
@@ -779,6 +811,12 @@
          */
         function animateOverlayVisibility(show) {
             if (overlayAnimating) return; // Prevent overlapping animations
+            
+            // Check if already in target state to avoid unnecessary animation
+            const currentOpacity = parseFloat(overlayContainer.style.opacity) || 0;
+            const isCurrentlyVisible = currentOpacity > 0.5;
+            if (show === isCurrentlyVisible) return; // Already in target state
+            
             overlayAnimating = true;
 
             const duration = 200; // 0.2 seconds (inertia with changespersecond=5)
@@ -1039,14 +1077,18 @@
                     driverName = participantNames[playerCarIdx] || 'UNKNOWN';
                     
                     // === OVERLAY VISIBILITY CONTROL ===
-                    const driverStatus = lapData.m_driverStatus;
-                    const lapDistance = lapData.m_lapDistance;
-                    const newOverlayVisibility = calculateOverlayVisibility(driverStatus, lapDistance);
-                    
-                    if (newOverlayVisibility !== shouldShowOverlay) {
-                        shouldShowOverlay = newOverlayVisibility;
-                        animateOverlayVisibility(shouldShowOverlay);
+                    // Only apply automatic visibility if mode is 'automatic'
+                    if (visibilityMode === 'automatic') {
+                        const driverStatus = lapData.m_driverStatus;
+                        const lapDistance = lapData.m_lapDistance;
+                        const newOverlayVisibility = calculateOverlayVisibility(driverStatus, lapDistance);
+                        
+                        if (newOverlayVisibility !== shouldShowOverlay) {
+                            shouldShowOverlay = newOverlayVisibility;
+                            animateOverlayVisibility(shouldShowOverlay);
+                        }
                     }
+                    // For 'off' and 'always-on', visibility is controlled by config handler
                     
                     // === CURRENT LAP TIME DISPLAY ===
                     const newLapTime = lapData.m_currentLapTimeInMS;

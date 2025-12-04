@@ -30,6 +30,15 @@
     - Primary units change depending on the default temperature units set by the player
     - Also includes night icons for use at night tracks (needs some more testing)
     - Will be improved later in the future
+    
+## Overlay Controllers
+
+- Original Controller
+    - Not available currently
+- Controller Extended
+    - Self-made Controller, with primary aim of introducing more functions while keeping the setup relatively easy
+    - Limited functionality at the moment, but hey, it works!
+    - Also offers a simple "Shutdown" button
 
 ## Currently Working On
 
@@ -37,7 +46,7 @@
 
 ## Next Planned Overlay
 
-Control Dashboard (can't really progress any further without implementing it, but I want to implement an extended version of it as well)
+??? (Unsure where to go from here - there are still a few easier options that I can do, though... Decisions, decisions...)
 
 ## Not started
 
@@ -53,7 +62,7 @@ In no particular order:
 - Pit Windows
 - Session Info
 - Turn Indicator
-- Control Dashboard
+- Control Dashboard (original)
 
 ## Debatable
 
