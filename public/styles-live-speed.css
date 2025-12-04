@@ -14,13 +14,20 @@ body {
 .overlay-container {
     position: relative;
     width: 190px;
-    height: 224px;
-    opacity: 1;
-    transition: opacity 0.3s ease;
     overflow: hidden;
     /* Scale to match outer container: 310×365 */
     transform: scale(1.6316);
     transform-origin: left top;
+    /* Animation properties - start hidden until config loads */
+    transition: height 200ms ease-out, opacity 333ms ease-out;
+    height: 0;
+    opacity: 0;
+}
+
+/* Show container when .visible class is added */
+.overlay-container.visible {
+    height: 224px;
+    opacity: 1;
 }
 
 /* Base background */

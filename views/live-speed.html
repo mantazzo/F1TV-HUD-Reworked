@@ -58,10 +58,14 @@
         const aramcoContainer = document.querySelector('.aramco-container');
         const liveSpeedLabel = document.querySelector('.live-speed-label');
         
-        // Handle overlay visibility from controller
+        // Handle overlay visibility from controller with animation
         socket.on('overlay_config', (config) => {
             if (config.overlays && config.overlays['live-speed']) {
-                overlayContainer.style.display = config.overlays['live-speed'].visible ? 'block' : 'none';
+                if (config.overlays['live-speed'].visible) {
+                    overlayContainer.classList.add('visible');
+                } else {
+                    overlayContainer.classList.remove('visible');
+                }
             }
         });
         
