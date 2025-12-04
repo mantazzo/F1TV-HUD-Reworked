@@ -3,6 +3,14 @@
     width: 500px;
     height: 500px;
     background: transparent; /* For OBS transparency */
+    /* Animation properties - start hidden until config loads */
+    transition: opacity 200ms ease-out;
+    opacity: 0;
+}
+
+/* Show container when .visible class is added */
+.overlay-container.visible {
+    opacity: 1;
 }
 
 .background-layer {

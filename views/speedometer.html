@@ -34,10 +34,14 @@
         
         const overlayContainer = document.querySelector('.overlay-container');
         
-        // Handle overlay visibility from controller
+        // Handle overlay visibility from controller with animation
         socket.on('overlay_config', (config) => {
             if (config.overlays && config.overlays['speedometer']) {
-                overlayContainer.style.display = config.overlays['speedometer'].visible ? 'block' : 'none';
+                if (config.overlays['speedometer'].visible) {
+                    overlayContainer.classList.add('visible');
+                } else {
+                    overlayContainer.classList.remove('visible');
+                }
             }
         });
         
