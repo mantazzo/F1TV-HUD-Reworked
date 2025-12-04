@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Position Debug Overlay</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+        }
+        .debug-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .debug-row {
+            display: flex;
+            gap: 10px;
+        }
+        .debug-label {
+            color: #aaa;
+            min-width: 150px;
+        }
+        .debug-value {
+            color: #0f0;
+            font-weight: bold;
+        }
+        .large-value {
+            font-size: 32px;
+            color: #00ff00;
+            margin: 10px 0;
+        }
+        .turn-indicator {
+            font-size: 48px;
+            color: #ffff00;
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(255, 255, 0, 0.2);
+            border: 2px solid #ffff00;
+            text-align: center;
+            display: none;
+        }
+        .turn-indicator.active {
+            display: block;
+        }
+        .turn-details {
+            font-size: 16px;
+            color: #ffff00;
+            margin-top: 10px;
+        }
+    </style>
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <div class="debug-container">
+        <h2>Position Debug Overlay</h2>
+        <div class="debug-row">
+            <span class="debug-label">Track ID:</span>
+            <span class="debug-value" id="track-id">--</span>
+        </div>
+        <div class="debug-row">
+            <span class="debug-label">Track Name:</span>
+            <span class="debug-value" id="track-name">--</span>
+        </div>
+        <div class="debug-row">
+            <span class="debug-label">Track Length:</span>
+            <span class="debug-value" id="track-length">--</span>
+        </div>
+        <div class="large-value" id="lap-distance">-- m</div>
+        <div class="debug-row">
+            <span class="debug-label">Lap Distance %:</span>
+            <span class="debug-value" id="lap-distance-percent">--%</span>
+        </div>
+        <div class="debug-row">
+            <span class="debug-label">Current Lap:</span>
+            <span class="debug-value" id="current-lap">--</span>
+        </div>
+        
+        <div class="turn-indicator" id="turn-indicator">
+            <div>TURN <span id="turn-number">-</span></div>
+            <div class="turn-details" id="turn-details">-- / --</div>
+        </div>
+        
+        <div class="debug-row">
+            <span class="debug-label">Track Data:</span>
+            <span class="debug-value" id="track-data-status">Not Loaded</span>
+        </div>
+    </div>
+    
+    <script>
+        const socket = io();
+        socket.emit('identify', 'Position Debug');
+        
+        let trackLength = 0;
+        let trackId = -1;
+        let trackData = null;
+        let gameYear = null;
+        
+        // Track name mapping (from TRACKS constant)
+        const TRACKS = [
+            'Melbourne', 'Paul_Ricard', 'Shanghai', 'Sakhir', 'Catalunya',
+            'Monaco', 'Montreal', 'Silverstone', 'Hockenheim', 'Hungaroring',
+            'Spa', 'Monza', 'Singapore', 'Suzuka', 'Abu_Dhabi',
+            'Texas', 'Brazil', 'Austria', 'Sochi', 'Mexico',
+            'Baku', 'Sakhir_Short', 'Silverstone_Short', 'Texas_Short', 'Suzuka_Short',
+            'Hanoi', 'Zandvoort', 'Imola', 'Portimao', 'Jeddah',
+            'Miami', 'Las_Vegas', 'Losail', '33', '34',
+            '35', '36', '37', '38',
+            'Silverstone_Reverse', 'Austria_Reverse', 'Zandvoort_Reverse'
+        ];
+        
+        // Load track data
+        async function loadTrackData(trackId, year = null) {
+            const trackName = TRACKS[trackId];
+            if (!trackName) return null;
+            
+            // Try year-specific file first, then generic
+            const filenames = [];
+            if (year) {
+                filenames.push(`/data/tracks/${year}-${trackId}-${trackName}.json`);
+            }
+            filenames.push(`/data/tracks/${trackId}-${trackName}.json`);
+            
+            for (const filename of filenames) {
+                try {
+                    const response = await fetch(filename);
+                    if (response.ok) {
+                        const data = await response.json();
+                        console.log(`Loaded track data from: ${filename}`);
+                        document.getElementById('track-data-status').textContent = `Loaded (${data.year || 'generic'})`;
+                        return data;
+                    }
+                } catch (err) {
+                    console.log(`Failed to load ${filename}`);
+                }
+            }
+            
+            document.getElementById('track-data-status').textContent = 'Not Found';
+            return null;
+        }
+        
+        // Check if position is in any turn
+        function checkTurnPosition(lapDistance) {
+            if (!trackData || !trackData.turns) return null;
+            
+            for (const turn of trackData.turns) {
+                if (lapDistance >= turn.trigger && lapDistance <= turn.end) {
+                    return turn;
+                }
+            }
+            return null;
+        }
+        
+        // Listen for Session packet (packet 1)
+        socket.on('f1_data', (data) => {
+            if (data.m_header && data.m_header.m_packetId === 1) {
+                // Session packet
+                trackLength = data.m_trackLength || 0;
+                const newTrackId = data.m_trackId;
+                gameYear = data.m_gameYear || null;
+                
+                // Load track data if track changed
+                if (newTrackId !== trackId) {
+                    trackId = newTrackId;
+                    loadTrackData(trackId, gameYear).then(data => {
+                        trackData = data;
+                    });
+                }
+                
+                document.getElementById('track-id').textContent = trackId;
+                document.getElementById('track-name').textContent = TRACKS[trackId] || 'Unknown';
+                document.getElementById('track-length').textContent = trackLength + ' m';
+            }
+            
+            if (data.m_header && data.m_header.m_packetId === 2) {
+                // Lap Data packet
+                const playerIndex = data.m_header.m_playerCarIndex;
+                if (data.m_lapData && data.m_lapData[playerIndex]) {
+                    const lapDistance = data.m_lapData[playerIndex].m_lapDistance;
+                    const currentLap = data.m_lapData[playerIndex].m_currentLapNum;
+                    
+                    document.getElementById('lap-distance').textContent = Math.round(lapDistance) + ' m';
+                    document.getElementById('current-lap').textContent = currentLap;
+                    
+                    if (trackLength > 0) {
+                        const percentage = ((lapDistance / trackLength) * 100).toFixed(2);
+                        document.getElementById('lap-distance-percent').textContent = percentage + '%';
+                    }
+                    
+                    // Check for turn detection
+                    const currentTurn = checkTurnPosition(lapDistance);
+                    const turnIndicator = document.getElementById('turn-indicator');
+                    
+                    if (currentTurn) {
+                        turnIndicator.classList.add('active');
+                        document.getElementById('turn-number').textContent = currentTurn.number;
+                        document.getElementById('turn-details').textContent = 
+                            `${currentTurn.name || 'Turn ' + currentTurn.number} (${currentTurn.trigger}m - ${currentTurn.end}m)`;
+                    } else {
+                        turnIndicator.classList.remove('active');
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

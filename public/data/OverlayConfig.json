@@ -17,6 +17,10 @@
     "live-speed": {
       "visible": true,
       "name": "Live Speed"
+    },
+    "turn-indicator": {
+      "visible": true,
+      "name": "Turn Indicator"
     }
   }
 }

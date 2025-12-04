@@ -20,5 +20,11 @@ Use these overlays in recording software (e.g. OBS). Size is described in (Width
 - Weather
     - http://localhost:3000/weather
     - Size: 280 x 725
+- Turn Indicator
+    - http://localhost:3000/turn-indicator
+    - Size: 300 x 80
+- Position Debug **(DEBUG ONLY)**
+    - http://localhost:3000/position-Debug
+    - Debug only, useful for position setup
 
 Other overlays coming soon™.

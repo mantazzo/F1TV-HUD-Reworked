@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>F1 Turn Indicator Overlay</title>
+    <link rel="stylesheet" href="/fonts.css">
+    <link rel="stylesheet" href="/styles-turn-indicator.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <div class="turn-indicator-container">
+        <div class="turn-label" id="turn-label">TURN</div>
+        <div class="turn-number" id="turn-number">3</div>
+    </div>
+    
+    <script>
+        const socket = io();
+        socket.emit('identify', 'Turn Indicator');
+        
+        const turnIndicatorContainer = document.querySelector('.turn-indicator-container');
+        const turnLabel = document.getElementById('turn-label');
+        const turnNumber = document.getElementById('turn-number');
+        
+        let trackId = -1;
+        let trackData = null;
+        let currentTurnNumber = null;
+        let overlayVisible = true; // Track if overlay is enabled
+        
+        // Track name mapping (from TRACKS constant)
+        const TRACKS = [
+            'Melbourne', 'Paul_Ricard', 'Shanghai', 'Sakhir', 'Catalunya',
+            'Monaco', 'Montreal', 'Silverstone', 'Hockenheim', 'Hungaroring',
+            'Spa', 'Monza', 'Singapore', 'Suzuka', 'Abu_Dhabi',
+            'Texas', 'Brazil', 'Austria', 'Sochi', 'Mexico',
+            'Baku', 'Sakhir_Short', 'Silverstone_Short', 'Texas_Short', 'Suzuka_Short',
+            'Hanoi', 'Zandvoort', 'Imola', 'Portimao', 'Jeddah',
+            'Miami', 'Las_Vegas', 'Losail', '33', '34',
+            '35', '36', '37', '38',
+            'Silverstone_Reverse', 'Austria_Reverse', 'Zandvoort_Reverse'
+        ];
+        
+        // Handle overlay visibility from controller with animation
+        socket.on('overlay_config', (config) => {
+            if (config.overlays && config.overlays['turn-indicator']) {
+                overlayVisible = config.overlays['turn-indicator'].visible;
+                
+                if (overlayVisible) {
+                    turnIndicatorContainer.classList.add('visible');
+                } else {
+                    turnIndicatorContainer.classList.remove('visible');
+                    // Hide turn indicators immediately when overlay is disabled
+                    turnLabel.classList.remove('show');
+                    turnNumber.classList.remove('show');
+                    currentTurnNumber = null;
+                }
+            }
+        });
+        
+        // Load track data
+        async function loadTrackData(trackId, year = null) {
+            const trackName = TRACKS[trackId];
+            if (!trackName) return null;
+            
+            // Try year-specific file first, then generic
+            const filenames = [];
+            if (year) {
+                filenames.push(`/data/tracks/${year}-${trackId}-${trackName}.json`);
+            }
+            filenames.push(`/data/tracks/${trackId}-${trackName}.json`);
+            
+            for (const filename of filenames) {
+                try {
+                    const response = await fetch(filename);
+                    if (response.ok) {
+                        const data = await response.json();
+                        console.log(`Turn Indicator: Loaded track data from ${filename}`);
+                        return data;
+                    }
+                } catch (err) {
+                    // Silently continue to next file
+                }
+            }
+            
+            console.log(`Turn Indicator: No track data found for ${trackName}`);
+            return null;
+        }
+        
+        // Check if position is in any turn
+        function checkTurnPosition(lapDistance) {
+            if (!trackData || !trackData.turns) return null;
+            
+            for (const turn of trackData.turns) {
+                if (lapDistance >= turn.trigger && lapDistance <= turn.end) {
+                    return turn;
+                }
+            }
+            return null;
+        }
+        
+        // Listen for telemetry data
+        socket.on('f1_data', (data) => {
+            // Session packet - load track data when track changes
+            if (data.m_header && data.m_header.m_packetId === 1) {
+                const newTrackId = data.m_trackId;
+                const gameYear = data.m_gameYear || null;
+                
+                if (newTrackId !== trackId) {
+                    trackId = newTrackId;
+                    loadTrackData(trackId, gameYear).then(data => {
+                        trackData = data;
+                    });
+                }
+            }
+            
+            // Lap Data packet - check turn position
+            if (data.m_header && data.m_header.m_packetId === 2) {
+                const playerIndex = data.m_header.m_playerCarIndex;
+                if (data.m_lapData && data.m_lapData[playerIndex]) {
+                    const lapDistance = data.m_lapData[playerIndex].m_lapDistance;
+                    
+                    // Only process turn detection if overlay is enabled
+                    if (!overlayVisible) return;
+                    
+                    const currentTurn = checkTurnPosition(lapDistance);
+                    
+                    if (currentTurn && currentTurn.number !== currentTurnNumber) {
+                        // Entered a new turn
+                        currentTurnNumber = currentTurn.number;
+                        turnNumber.textContent = currentTurnNumber;
+                        
+                        // Animate in: fade to opacity 1
+                        turnLabel.classList.add('show');
+                        turnNumber.classList.add('show');
+                    } else if (!currentTurn && currentTurnNumber !== null) {
+                        // Exited turn zone
+                        currentTurnNumber = null;
+                        
+                        // Animate out: fade to opacity 0
+                        turnLabel.classList.remove('show');
+                        turnNumber.classList.remove('show');
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

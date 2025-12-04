@@ -1,0 +1,51 @@
+{
+  "trackId": 11,
+  "trackName": "Monza",
+  "year": 2024,
+  "trackLength": 5793,
+  "comment": "F1 2024 example - this will be prioritized if used with F1 24 (year prefix). Values in meters.",
+  "turns": [
+    {
+      "number": 1,
+      "trigger": 180,
+      "end": 371,
+      "name": "Rettifilo"
+    },
+    {
+      "number": 2,
+      "trigger": 782,
+      "end": 973,
+      "name": "Curva Grande"
+    },
+    {
+      "number": 3,
+      "trigger": 1275,
+      "end": 1420,
+      "name": "Variante della Roggia"
+    },
+    {
+      "number": 4,
+      "trigger": 1796,
+      "end": 1958,
+      "name": "Lesmo 1"
+    },
+    {
+      "number": 5,
+      "trigger": 2230,
+      "end": 2387,
+      "name": "Lesmo 2"
+    },
+    {
+      "number": 6,
+      "trigger": 2839,
+      "end": 3001,
+      "name": "Variante Ascari"
+    },
+    {
+      "number": 7,
+      "trigger": 3939,
+      "end": 4258,
+      "name": "Parabolica"
+    }
+  ]
+}

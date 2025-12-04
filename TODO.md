@@ -22,23 +22,38 @@
     - A little bit of animation, animating the "LIVE SPEED" header and the "sponsor" logo
     - Color changes accordingly as well for speed values - RED for speed over 200 KPH and LIME when DRS is active
 - Fastest Lap
+    - Fully remade
     - Small popup showing the fastest lap set, with laptime and driver name in team color
     - Works based on the received Event packet instead of cycling through data
     - Currently works in any session (might change it later)
 - Weather
+    - Fully remade
     - An overlay showing current weather and weather forecast for the next 5, 10, 15 and 30 minutes
+    - Forecast can be toggled using the Extended Controller
     - Primary units change depending on the default temperature units set by the player
     - Also includes night icons for use at night tracks (needs some more testing)
-    - Will be improved later in the future
-    
+- Turn Indicator
+    - Very simple, shows current Turn
+    - Needs data set up by user (example provided)
+    - Can use different data depending on game year (potential future backwards support)
+    - Needs data for all remaining tracks still
+
 ## Overlay Controllers
 
 - Original Controller
     - Not available currently
-- Controller Extended
+- Extended Controller
     - Self-made Controller, with primary aim of introducing more functions while keeping the setup relatively easy
-    - Limited functionality at the moment, but hey, it works!
+    - Somewhat limited functionality at the moment, but hey, it works!
     - Also offers a simple "Shutdown" button
+
+## Debug overlays
+
+- Position Debug
+    - Shows current position on track (meters)
+    - Shows active turn data (if set up)
+    - Shows track length
+    - Will help some of you to adjust/make accurate Turn Indicator positions (or might assist with other things)
 
 ## Currently Working On
 
@@ -46,7 +61,7 @@
 
 ## Next Planned Overlay
 
-??? (Unsure where to go from here - there are still a few easier options that I can do, though... Decisions, decisions...)
+??? (Unsure where to go from here...)
 
 ## Not started
 
@@ -61,7 +76,6 @@ In no particular order:
 - Mini Leaderboard
 - Pit Windows
 - Session Info
-- Turn Indicator
 - Control Dashboard (original)
 
 ## Debatable

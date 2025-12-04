@@ -29,7 +29,8 @@ function loadOverlayConfig() {
             'weather': { visible: true, name: 'Weather' },
             'speedometer': { visible: true, name: 'Speedometer' },
             'lap-timer': { visible: true, name: 'Lap Timer' },
-            'live-speed': { visible: true, name: 'Live Speed' }
+            'live-speed': { visible: true, name: 'Live Speed' },
+            'turn-indicator': { visible: true, name: 'Turn Indicator' }
         }
     };
 }
@@ -192,6 +193,8 @@ prompt.get(promptSchema, (err, result) => {
     app.get('/live-speed', (req, res) => res.sendFile(path.join(__dirname, 'views', 'live-speed.html')));
     app.get('/fastest-lap', (req, res) => res.sendFile(path.join(__dirname, 'views', 'fastest-lap.html')));
     app.get('/weather', (req, res) => res.sendFile(path.join(__dirname, 'views', 'weather.html')));
+    app.get('/turn-indicator', (req, res) => res.sendFile(path.join(__dirname, 'views', 'turn-indicator.html')));
+    app.get('/position-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'position-debug.html')));
     app.get('/controller-extended', (req, res) => res.sendFile(path.join(__dirname, 'views', 'controller-extended.html')));
     app.get('/', (req, res) => res.redirect('/speedometer'));
     

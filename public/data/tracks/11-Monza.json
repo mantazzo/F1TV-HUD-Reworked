@@ -1,0 +1,75 @@
+{
+  "trackId": 11,
+  "trackName": "Monza",
+  "year": null,
+  "trackLength": 5798,
+  "comment": "Generic default variant for Monza - works across multiple game versions unless specific year file exists. Values in meters.",
+  "turns": [
+    {
+      "number": 1,
+      "trigger": 830,
+      "end": 945,
+      "name": "Variante del Rettifilo"
+    },
+    {
+      "number": 2,
+      "trigger": 945,
+      "end": 1030,
+      "name": ""
+    },
+    {
+      "number": 3,
+      "trigger": 1250,
+      "end": 1900,
+      "name": "Curva Biassono"
+    },
+    {
+      "number": 4,
+      "trigger": 2075,
+      "end": 2165,
+      "name": "Variante della Roggia"
+    },
+    {
+      "number": 5,
+      "trigger": 2170,
+      "end": 2275,
+      "name": ""
+    },
+    {
+      "number": 6,
+      "trigger": 2425,
+      "end": 2700,
+      "name": "Curva di Lesmo 1"
+    },
+    {
+      "number": 7,
+      "trigger": 2775,
+      "end": 3000,
+      "name": "Curva di Lesmo 2"
+    },
+    {
+      "number": 8,
+      "trigger": 3850,
+      "end": 4000,
+      "name": ""
+    },
+    {
+      "number": 9,
+      "trigger": 4000,
+      "end": 4110,
+      "name": "Variante Ascari"
+    },
+    {
+      "number": 10,
+      "trigger": 4110,
+      "end": 4260,
+      "name": ""
+    },
+    {
+      "number": 11,
+      "trigger": 5030,
+      "end": 5515,
+      "name": "Curva Parabolica"
+    }
+  ]
+}
