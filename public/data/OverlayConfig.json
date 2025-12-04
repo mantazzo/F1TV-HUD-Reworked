@@ -1,0 +1,21 @@
+{
+  "overlays": {
+    "weather": {
+      "visible": true,
+      "name": "Weather",
+      "showForecast": true
+    },
+    "speedometer": {
+      "visible": true,
+      "name": "Speedometer"
+    },
+    "lap-timer": {
+      "visible": true,
+      "name": "Lap Timer"
+    },
+    "live-speed": {
+      "visible": true,
+      "name": "Live Speed"
+    }
+  }
+}

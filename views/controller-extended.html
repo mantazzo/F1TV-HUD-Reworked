@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F1 HUD Controller</title>
+    <link rel="stylesheet" href="/styles-controller.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <div class="controller-container">
+        <header class="controller-header">
+            <h1>F1 HUD Controller</h1>
+            <div class="connection-status" id="connection-status">
+                <span class="status-dot"></span>
+                <span class="status-text">Disconnected</span>
+            </div>
+        </header>
+
+        <section class="overlay-section">
+            <h2>Overlay Visibility</h2>
+            <div class="overlay-grid" id="overlay-grid">
+                <!-- Overlay buttons will be generated here -->
+            </div>
+        </section>
+
+        <section class="overlay-section" id="weather-options-section">
+            <h2>Weather Options</h2>
+            <div class="option-row">
+                <label class="toggle-label">
+                    <input type="checkbox" id="forecast-toggle" class="toggle-checkbox">
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-text">Show Forecast</span>
+                </label>
+            </div>
+        </section>
+
+        <section class="overlay-section server-control-section">
+            <h2>Server Control</h2>
+            <button class="stop-server-button" id="stop-server-btn">
+                <span class="stop-icon">⏹</span>
+                <span class="stop-text">Stop Server</span>
+            </button>
+            <p class="stop-warning">This will shut down all overlays and the server.</p>
+        </section>
+
+        <footer class="controller-footer">
+            <p>F1TV HUD Reworked - Extended Controller</p>
+        </footer>
+    </div>
+
+    <script>
+        const socket = io();
+        socket.emit('identify', 'Controller');
+        
+        const overlayGrid = document.getElementById('overlay-grid');
+        const connectionStatus = document.getElementById('connection-status');
+        
+        let currentConfig = null;
+
+        // Connection status handling
+        socket.on('connect', () => {
+            connectionStatus.classList.add('connected');
+            connectionStatus.querySelector('.status-text').textContent = 'Connected';
+            console.log('Connected to server');
+        });
+
+        socket.on('disconnect', () => {
+            connectionStatus.classList.remove('connected');
+            connectionStatus.querySelector('.status-text').textContent = 'Disconnected';
+            console.log('Disconnected from server');
+        });
+
+        // Receive initial config and updates
+        socket.on('overlay_config', (config) => {
+            console.log('Received config:', config);
+            currentConfig = config;
+            renderOverlayButtons();
+        });
+
+        // Render overlay toggle buttons
+        function renderOverlayButtons() {
+            if (!currentConfig || !currentConfig.overlays) return;
+
+            overlayGrid.innerHTML = '';
+            
+            for (const [overlayId, overlay] of Object.entries(currentConfig.overlays)) {
+                const button = document.createElement('button');
+                button.className = `overlay-button ${overlay.visible ? 'active' : ''}`;
+                button.dataset.overlayId = overlayId;
+                
+                button.innerHTML = `
+                    <span class="overlay-icon">${getOverlayIcon(overlayId)}</span>
+                    <span class="overlay-name">${overlay.name}</span>
+                    <span class="overlay-status">${overlay.visible ? 'ON' : 'OFF'}</span>
+                `;
+                
+                button.addEventListener('click', () => toggleOverlay(overlayId));
+                overlayGrid.appendChild(button);
+            }
+        }
+
+        // Get icon for each overlay type
+        function getOverlayIcon(overlayId) {
+            const icons = {
+                'weather': '🌤️',
+                'speedometer': '⏱️',
+                'lap-timer': '🏁',
+                'live-speed': '💨'
+            };
+            return icons[overlayId] || '📺';
+        }
+
+        // Toggle overlay visibility
+        function toggleOverlay(overlayId) {
+            if (!currentConfig || !currentConfig.overlays[overlayId]) return;
+            
+            const newVisibility = !currentConfig.overlays[overlayId].visible;
+            
+            // Send update to server
+            socket.emit('config_update', {
+                overlay: overlayId,
+                property: 'visible',
+                value: newVisibility
+            });
+            
+            // Optimistic UI update
+            currentConfig.overlays[overlayId].visible = newVisibility;
+            renderOverlayButtons();
+        }
+
+        // Forecast toggle handling
+        const forecastToggle = document.getElementById('forecast-toggle');
+        const weatherOptionsSection = document.getElementById('weather-options-section');
+        
+        forecastToggle.addEventListener('change', () => {
+            socket.emit('config_update', {
+                overlay: 'weather',
+                property: 'showForecast',
+                value: forecastToggle.checked
+            });
+        });
+
+        // Update forecast toggle state when config changes
+        function updateWeatherOptions() {
+            if (!currentConfig || !currentConfig.overlays || !currentConfig.overlays['weather']) return;
+            
+            const weatherConfig = currentConfig.overlays['weather'];
+            forecastToggle.checked = weatherConfig.showForecast !== false;
+        }
+
+        // Override renderOverlayButtons to also update weather options
+        const originalRender = renderOverlayButtons;
+        renderOverlayButtons = function() {
+            originalRender();
+            updateWeatherOptions();
+        };
+
+        // Stop server button
+        const stopServerBtn = document.getElementById('stop-server-btn');
+        stopServerBtn.addEventListener('click', () => {
+            if (confirm('Are you sure you want to stop the server? All overlays will be closed.')) {
+                socket.emit('shutdown_server');
+                stopServerBtn.disabled = true;
+                stopServerBtn.querySelector('.stop-text').textContent = 'Shutting down...';
+            }
+        });
+    </script>
+</body>
+</html>

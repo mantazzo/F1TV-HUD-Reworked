@@ -1,0 +1,282 @@
+/* Controller Extended Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    min-height: 100vh;
+    color: #ffffff;
+}
+
+.controller-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Header */
+.controller-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    margin-bottom: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.controller-header h1 {
+    font-size: 24px;
+    font-weight: 600;
+    background: linear-gradient(90deg, #e94560, #ff6b6b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Connection Status */
+.connection-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    font-size: 14px;
+}
+
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #ff4444;
+    transition: background 0.3s ease;
+}
+
+.connection-status.connected .status-dot {
+    background: #44ff44;
+    box-shadow: 0 0 10px rgba(68, 255, 68, 0.5);
+}
+
+.status-text {
+    color: #aaaaaa;
+    transition: color 0.3s ease;
+}
+
+.connection-status.connected .status-text {
+    color: #44ff44;
+}
+
+/* Sections */
+.overlay-section {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.overlay-section h2 {
+    font-size: 18px;
+    font-weight: 500;
+    color: #cccccc;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Overlay Grid */
+.overlay-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+}
+
+/* Overlay Button */
+.overlay-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 20px 16px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #888888;
+}
+
+.overlay-button:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.overlay-button.active {
+    background: rgba(233, 69, 96, 0.15);
+    border-color: #e94560;
+    color: #ffffff;
+}
+
+.overlay-button.active:hover {
+    background: rgba(233, 69, 96, 0.25);
+}
+
+.overlay-icon {
+    font-size: 32px;
+    line-height: 1;
+}
+
+.overlay-name {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.overlay-status {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    transition: all 0.2s ease;
+}
+
+.overlay-button.active .overlay-status {
+    background: #e94560;
+    color: #ffffff;
+}
+
+/* Option Row with Toggle */
+.option-row {
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+}
+
+.toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.toggle-checkbox {
+    display: none;
+}
+
+.toggle-slider {
+    position: relative;
+    width: 48px;
+    height: 26px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 13px;
+    transition: background 0.2s ease;
+}
+
+.toggle-slider::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    background: #888888;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.toggle-checkbox:checked + .toggle-slider {
+    background: rgba(233, 69, 96, 0.3);
+}
+
+.toggle-checkbox:checked + .toggle-slider::after {
+    left: 25px;
+    background: #e94560;
+}
+
+.toggle-text {
+    font-size: 14px;
+    color: #cccccc;
+}
+
+.toggle-checkbox:checked ~ .toggle-text {
+    color: #ffffff;
+}
+
+/* Server Control Section */
+.server-control-section {
+    border-color: rgba(255, 100, 100, 0.2);
+}
+
+.stop-server-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 14px 20px;
+    background: rgba(200, 50, 50, 0.15);
+    border: 2px solid rgba(200, 50, 50, 0.4);
+    border-radius: 8px;
+    color: #ff6b6b;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.stop-server-button:hover {
+    background: rgba(200, 50, 50, 0.25);
+    border-color: rgba(200, 50, 50, 0.6);
+    transform: translateY(-1px);
+}
+
+.stop-server-button:active {
+    transform: translateY(0);
+}
+
+.stop-server-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.stop-icon {
+    font-size: 18px;
+}
+
+.stop-warning {
+    margin-top: 12px;
+    font-size: 12px;
+    color: #888888;
+    text-align: center;
+}
+
+/* Footer */
+.controller-footer {
+    text-align: center;
+    padding: 20px;
+    color: #666666;
+    font-size: 12px;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .controller-header {
+        flex-direction: column;
+        gap: 16px;
+        text-align: center;
+    }
+    
+    .overlay-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}

@@ -45,6 +45,7 @@
 
     <script>
         const socket = io();
+        socket.emit('identify', 'Live Speed');
         
         // Element references
         const kmhValue = document.querySelector('.kmh-value');
@@ -56,6 +57,13 @@
         const teamColorLine = document.querySelector('.team-color-line');
         const aramcoContainer = document.querySelector('.aramco-container');
         const liveSpeedLabel = document.querySelector('.live-speed-label');
+        
+        // Handle overlay visibility from controller
+        socket.on('overlay_config', (config) => {
+            if (config.overlays && config.overlays['live-speed']) {
+                overlayContainer.style.display = config.overlays['live-speed'].visible ? 'block' : 'none';
+            }
+        });
         
         // State variables
         let currentSpeedKmh = 0;

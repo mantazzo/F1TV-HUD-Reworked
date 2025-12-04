@@ -30,6 +30,17 @@
     </div>
     <script>
         const socket = io();
+        socket.emit('identify', 'Speedometer');
+        
+        const overlayContainer = document.querySelector('.overlay-container');
+        
+        // Handle overlay visibility from controller
+        socket.on('overlay_config', (config) => {
+            if (config.overlays && config.overlays['speedometer']) {
+                overlayContainer.style.display = config.overlays['speedometer'].visible ? 'block' : 'none';
+            }
+        });
+        
         const throttleCanvas = document.getElementById('throttle-gauge');
         const throttleCtx = throttleCanvas.getContext('2d');
         const brakeCanvas = document.getElementById('brake-gauge');

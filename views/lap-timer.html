@@ -73,6 +73,17 @@
     </div>
     <script>
         const socket = io();
+        socket.emit('identify', 'Lap Timer');
+        
+        const overlayContainer = document.querySelector('.overlay-container');
+        
+        // Handle overlay visibility from controller
+        socket.on('overlay_config', (config) => {
+            if (config.overlays && config.overlays['lap-timer']) {
+                overlayContainer.style.display = config.overlays['lap-timer'].visible ? 'block' : 'none';
+            }
+        });
+        
         const lapTimeElement = document.getElementById('lap-time');
         const lastLapTimeElement = document.getElementById('last-lap-time');
         const lapTimeComparisonElement = document.getElementById('lap-time-comparison');
@@ -213,8 +224,6 @@
         // Timeout tracking for cleanup
         let sectorResetTimeouts = [null, null, null];
         let comparisonUpdateTimeout = null;
-
-        const overlayContainer = document.querySelector('.overlay-container');
 
         // Receive and process drivers data from server
         socket.on('drivers_data', (data) => {

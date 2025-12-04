@@ -46,6 +46,7 @@
 
     <script>
         const socket = io();
+        socket.emit('identify', 'Pit Timer');
 
         // Element references
         const positionElement = document.querySelector('.position-layer');

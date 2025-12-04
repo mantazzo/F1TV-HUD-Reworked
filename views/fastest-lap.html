@@ -49,6 +49,7 @@
     
     <script>
         const socket = io();
+        socket.emit('identify', 'Fastest Lap');
         const flContainer = document.querySelector('.fastest-lap-container');
         const strokeContainer = document.querySelector('.stroke-container');
         const flDriverName = document.querySelector('.fl-driver-name');

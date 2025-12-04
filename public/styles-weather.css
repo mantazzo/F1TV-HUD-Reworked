@@ -29,6 +29,37 @@ body {
     width: 280px;
     height: 90px;
     overflow: hidden;
+    /* Animation properties */
+    transition: opacity 333ms ease-out, transform 333ms ease-out;
+    /* Start hidden until config loads */
+    opacity: 0;
+    transform: translateY(30px);
+}
+
+/* Show header when container has .visible class */
+.weather-container.visible .header-section {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* ===== WEATHER CONTENT WRAPPER (current + forecast) ===== */
+.weather-content {
+    position: absolute;
+    top: 90px;
+    left: 0;
+    width: 280px;
+    overflow: hidden;
+    /* Animation properties */
+    transition: height 250ms ease-out, opacity 333ms ease-out;
+    /* Start hidden until config loads */
+    opacity: 0;
+    height: 0;
+}
+
+/* Show content when container has .visible class */
+.weather-container.visible .weather-content {
+    height: 635px;
+    opacity: 1;
 }
 
 .header-bg {
@@ -72,7 +103,7 @@ body {
 /* ===== CURRENT WEATHER SECTION ===== */
 .current-weather-section {
     position: absolute;
-    top: 90px;
+    top: 0;
     left: 0;
     width: 280px;
     height: 288px;
@@ -253,10 +284,19 @@ body {
 /* ===== FORECAST SECTION ===== */
 .forecast-section {
     position: absolute;
-    top: 378px;
+    top: 288px;
     left: 0;
     width: 280px;
     height: 345px;
+    overflow: hidden;
+    /* Animation properties */
+    transition: height 250ms ease-out, opacity 250ms ease-out;
+    opacity: 1;
+}
+
+.forecast-section.hidden {
+    height: 0;
+    opacity: 0;
 }
 
 .forecast-gradient {

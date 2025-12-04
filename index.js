@@ -4,11 +4,45 @@ const socketIo = require('socket.io');
 const { F1TelemetryClient, constants } = require('@deltazeroproduction/f1-udp-parser');
 const { PACKETS, DRIVERS, EVENT_CODES, WEATHER } = constants;
 const path = require('path');
+const fs = require('fs');
 const prompt = require('prompt');
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
+
+// Overlay config management
+const CONFIG_PATH = path.join(__dirname, 'public', 'data', 'OverlayConfig.json');
+
+function loadOverlayConfig() {
+    try {
+        if (fs.existsSync(CONFIG_PATH)) {
+            const data = fs.readFileSync(CONFIG_PATH, 'utf8');
+            return JSON.parse(data);
+        }
+    } catch (err) {
+        console.error('Error loading overlay config:', err);
+    }
+    // Default config if file doesn't exist or error
+    return {
+        overlays: {
+            'weather': { visible: true, name: 'Weather' },
+            'speedometer': { visible: true, name: 'Speedometer' },
+            'lap-timer': { visible: true, name: 'Lap Timer' },
+            'live-speed': { visible: true, name: 'Live Speed' }
+        }
+    };
+}
+
+function saveOverlayConfig(config) {
+    try {
+        fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
+    } catch (err) {
+        console.error('Error saving overlay config:', err);
+    }
+}
+
+let overlayConfig = loadOverlayConfig();
 
 // Prompt for port
 prompt.start();
@@ -36,15 +70,49 @@ prompt.get(promptSchema, (err, result) => {
 
     // Handle Socket.IO connections
     io.on('connection', (socket) => {
-        console.log('Client connected');
+        let overlayName = 'Unknown';
+        
+        // Handle overlay identification
+        socket.on('identify', (name) => {
+            overlayName = name;
+            console.log(`Overlay connected: ${overlayName}`);
+        });
         
         // Send constants to client
         socket.emit('drivers_data', DRIVERS);
         socket.emit('event_codes', EVENT_CODES);
         socket.emit('weather_data', WEATHER);
         
+        // Send current overlay config
+        socket.emit('overlay_config', overlayConfig);
+        
+        // Handle config updates from controller
+        socket.on('config_update', (update) => {
+            if (update.overlay && overlayConfig.overlays[update.overlay]) {
+                overlayConfig.overlays[update.overlay][update.property] = update.value;
+                saveOverlayConfig(overlayConfig);
+                // Broadcast to all clients (including overlays)
+                io.emit('overlay_config', overlayConfig);
+                console.log(`Config updated: ${update.overlay}.${update.property} = ${update.value}`);
+            }
+        });
+        
         socket.on('disconnect', () => {
-            console.log('Client disconnected');
+            console.log(`Overlay disconnected: ${overlayName}`);
+        });
+        
+        // Handle server shutdown request
+        socket.on('shutdown_server', () => {
+            console.log('Shutdown requested from Controller');
+            console.log('Shutting down server...');
+            
+            // Notify all clients
+            io.emit('server_shutdown');
+            
+            // Give clients a moment to receive the message, then exit
+            setTimeout(() => {
+                process.exit(0);
+            }, 500);
         });
     });
 
@@ -124,6 +192,7 @@ prompt.get(promptSchema, (err, result) => {
     app.get('/live-speed', (req, res) => res.sendFile(path.join(__dirname, 'views', 'live-speed.html')));
     app.get('/fastest-lap', (req, res) => res.sendFile(path.join(__dirname, 'views', 'fastest-lap.html')));
     app.get('/weather', (req, res) => res.sendFile(path.join(__dirname, 'views', 'weather.html')));
+    app.get('/controller-extended', (req, res) => res.sendFile(path.join(__dirname, 'views', 'controller-extended.html')));
     app.get('/', (req, res) => res.redirect('/speedometer'));
     
     server.listen(3000, () => console.log('Overlays at http://localhost:3000/speedometer'));

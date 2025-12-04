@@ -17,112 +17,140 @@
             </div>
         </div>
         
-        <!-- Current Weather Section -->
-        <div class="current-weather-section">
-            <div class="section-bg"></div>
-            
-            <!-- Gradient decoration at top -->
-            <div class="section-gradient"></div>
-            
-            <!-- Air Temperature -->
-            <div class="air-temp-row">
-                <div class="temp-label">AIR TEMP</div>
-                <div class="temp-line air-line"></div>
-            </div>
-            
-            <!-- Weather Icon + Air Temperatures -->
-            <div class="air-temp-values">
-                <div class="weather-icon-large" id="current-weather-icon"></div>
-                <div class="temp-celsius">
-                    <span class="temp-value-main" id="air-temp-primary">22</span>
-                    <span class="temp-unit" id="air-unit-primary">°C</span>
+        <!-- Content wrapper for current weather + forecast (animated together) -->
+        <div class="weather-content">
+            <!-- Current Weather Section -->
+            <div class="current-weather-section">
+                <div class="section-bg"></div>
+                
+                <!-- Gradient decoration at top -->
+                <div class="section-gradient"></div>
+                
+                <!-- Air Temperature -->
+                <div class="air-temp-row">
+                    <div class="temp-label">AIR TEMP</div>
+                    <div class="temp-line air-line"></div>
                 </div>
-                <div class="temp-fahrenheit">
-                    <span class="temp-value-secondary" id="air-temp-secondary">72</span>
-                    <span class="temp-unit-secondary" id="air-unit-secondary">°F</span>
+                
+                <!-- Weather Icon + Air Temperatures -->
+                <div class="air-temp-values">
+                    <div class="weather-icon-large" id="current-weather-icon"></div>
+                    <div class="temp-celsius">
+                        <span class="temp-value-main" id="air-temp-primary">22</span>
+                        <span class="temp-unit" id="air-unit-primary">°C</span>
+                    </div>
+                    <div class="temp-fahrenheit">
+                        <span class="temp-value-secondary" id="air-temp-secondary">72</span>
+                        <span class="temp-unit-secondary" id="air-unit-secondary">°F</span>
+                    </div>
+                </div>
+                
+                <!-- Track Temperature -->
+                <div class="track-temp-row">
+                    <div class="temp-label">TRACK TEMP</div>
+                    <div class="temp-line track-line"></div>
+                </div>
+                
+                <!-- Track Icon + Track Temperatures -->
+                <div class="track-temp-values">
+                    <div class="track-icon"></div>
+                    <div class="temp-celsius">
+                        <span class="temp-value-main" id="track-temp-primary">35</span>
+                        <span class="temp-unit" id="track-unit-primary">°C</span>
+                    </div>
+                    <div class="temp-fahrenheit">
+                        <span class="temp-value-secondary" id="track-temp-secondary">95</span>
+                        <span class="temp-unit-secondary" id="track-unit-secondary">°F</span>
+                    </div>
                 </div>
             </div>
             
-            <!-- Track Temperature -->
-            <div class="track-temp-row">
-                <div class="temp-label">TRACK TEMP</div>
-                <div class="temp-line track-line"></div>
-            </div>
-            
-            <!-- Track Icon + Track Temperatures -->
-            <div class="track-temp-values">
-                <div class="track-icon"></div>
-                <div class="temp-celsius">
-                    <span class="temp-value-main" id="track-temp-primary">35</span>
-                    <span class="temp-unit" id="track-unit-primary">°C</span>
+            <!-- Forecast Section -->
+            <div class="forecast-section">
+                <div class="section-bg"></div>
+                
+                <!-- Gradient decoration at top -->
+                <div class="section-gradient forecast-gradient"></div>
+                
+                <!-- Forecast Header -->
+                <div class="forecast-header-row">
+                    <div class="forecast-label">FORECAST</div>
+                    <div class="forecast-line"></div>
                 </div>
-                <div class="temp-fahrenheit">
-                    <span class="temp-value-secondary" id="track-temp-secondary">95</span>
-                    <span class="temp-unit-secondary" id="track-unit-secondary">°F</span>
+                
+                <!-- Forecast Row 1: +5m -->
+                <div class="forecast-row" id="forecast-row-1">
+                    <div class="forecast-icon" id="forecast-icon-1"></div>
+                    <div class="forecast-info">
+                        <div class="forecast-condition" id="forecast-condition-1">CLEAR</div>
+                        <div class="forecast-time">+5m</div>
+                    </div>
+                    <div class="forecast-chance" id="forecast-chance-1">0%</div>
+                    <div class="forecast-divider"></div>
+                </div>
+                
+                <!-- Forecast Row 2: +10m -->
+                <div class="forecast-row" id="forecast-row-2">
+                    <div class="forecast-icon" id="forecast-icon-2"></div>
+                    <div class="forecast-info">
+                        <div class="forecast-condition" id="forecast-condition-2">CLEAR</div>
+                        <div class="forecast-time">+10m</div>
+                    </div>
+                    <div class="forecast-chance" id="forecast-chance-2">0%</div>
+                    <div class="forecast-divider"></div>
+                </div>
+                
+                <!-- Forecast Row 3: +15m -->
+                <div class="forecast-row" id="forecast-row-3">
+                    <div class="forecast-icon" id="forecast-icon-3"></div>
+                    <div class="forecast-info">
+                        <div class="forecast-condition" id="forecast-condition-3">CLEAR</div>
+                        <div class="forecast-time">+15m</div>
+                    </div>
+                    <div class="forecast-chance" id="forecast-chance-3">0%</div>
+                    <div class="forecast-divider"></div>
+                </div>
+                
+                <!-- Forecast Row 4: +30m -->
+                <div class="forecast-row" id="forecast-row-4">
+                    <div class="forecast-icon" id="forecast-icon-4"></div>
+                    <div class="forecast-info">
+                        <div class="forecast-condition" id="forecast-condition-4">CLEAR</div>
+                        <div class="forecast-time">+30m</div>
+                    </div>
+                    <div class="forecast-chance" id="forecast-chance-4">0%</div>
                 </div>
             </div>
-        </div>
-        
-        <!-- Forecast Section -->
-        <div class="forecast-section">
-            <div class="section-bg"></div>
-            
-            <!-- Gradient decoration at top -->
-            <div class="section-gradient forecast-gradient"></div>
-            
-            <!-- Forecast Header -->
-            <div class="forecast-header-row">
-                <div class="forecast-label">FORECAST</div>
-                <div class="forecast-line"></div>
-            </div>
-            
-            <!-- Forecast Row 1: +5m -->
-            <div class="forecast-row" id="forecast-row-1">
-                <div class="forecast-icon" id="forecast-icon-1"></div>
-                <div class="forecast-info">
-                    <div class="forecast-condition" id="forecast-condition-1">CLEAR</div>
-                    <div class="forecast-time">+5m</div>
-                </div>
-                <div class="forecast-chance" id="forecast-chance-1">0%</div>
-                <div class="forecast-divider"></div>
-            </div>
-            
-            <!-- Forecast Row 2: +10m -->
-            <div class="forecast-row" id="forecast-row-2">
-                <div class="forecast-icon" id="forecast-icon-2"></div>
-                <div class="forecast-info">
-                    <div class="forecast-condition" id="forecast-condition-2">CLEAR</div>
-                    <div class="forecast-time">+10m</div>
-                </div>
-                <div class="forecast-chance" id="forecast-chance-2">0%</div>
-                <div class="forecast-divider"></div>
-            </div>
-            
-            <!-- Forecast Row 3: +15m -->
-            <div class="forecast-row" id="forecast-row-3">
-                <div class="forecast-icon" id="forecast-icon-3"></div>
-                <div class="forecast-info">
-                    <div class="forecast-condition" id="forecast-condition-3">CLEAR</div>
-                    <div class="forecast-time">+15m</div>
-                </div>
-                <div class="forecast-chance" id="forecast-chance-3">0%</div>
-                <div class="forecast-divider"></div>
-            </div>
-            
-            <!-- Forecast Row 4: +30m -->
-            <div class="forecast-row" id="forecast-row-4">
-                <div class="forecast-icon" id="forecast-icon-4"></div>
-                <div class="forecast-info">
-                    <div class="forecast-condition" id="forecast-condition-4">CLEAR</div>
-                    <div class="forecast-time">+30m</div>
-                </div>
-                <div class="forecast-chance" id="forecast-chance-4">0%</div>
-            </div>
-        </div>
+        </div><!-- End weather-content wrapper -->
     </div>
     
     <script>
         const socket = io();
+        socket.emit('identify', 'Weather');
+        
+        const weatherContainer = document.querySelector('.weather-container');
+        const forecastSection = document.querySelector('.forecast-section');
+        
+        // Handle overlay visibility from controller with animation
+        socket.on('overlay_config', (config) => {
+            if (config.overlays && config.overlays['weather']) {
+                const weatherConfig = config.overlays['weather'];
+                
+                // Main weather visibility - use .visible class (starts hidden by default)
+                if (weatherConfig.visible) {
+                    weatherContainer.classList.add('visible');
+                } else {
+                    weatherContainer.classList.remove('visible');
+                }
+                
+                // Forecast visibility (only matters if weather is visible)
+                if (weatherConfig.showForecast !== false) {
+                    forecastSection.classList.remove('hidden');
+                } else {
+                    forecastSection.classList.add('hidden');
+                }
+            }
+        });
         
         // Weather conditions - will be populated from server
         let weatherNames = ['Clear', 'Light Cloud', 'Overcast', 'Light Rain', 'Heavy Rain', 'Storm'];
