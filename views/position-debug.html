@@ -51,6 +51,23 @@
             color: #ffff00;
             margin-top: 10px;
         }
+        .reload-button {
+            padding: 10px 20px;
+            background: #0080ff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+        .reload-button:hover {
+            background: #0060cc;
+        }
+        .reload-button:active {
+            background: #004099;
+        }
     </style>
     <script src="/socket.io/socket.io.js"></script>
 </head>
@@ -88,6 +105,8 @@
             <span class="debug-label">Track Data:</span>
             <span class="debug-value" id="track-data-status">Not Loaded</span>
         </div>
+        
+        <button class="reload-button" id="reload-button">Reload Track Data</button>
     </div>
     
     <script>
@@ -113,7 +132,7 @@
         ];
         
         // Load track data
-        async function loadTrackData(trackId, year = null) {
+        async function loadTrackData(trackId, year = null, forceReload = false) {
             const trackName = TRACKS[trackId];
             if (!trackName) return null;
             
@@ -126,11 +145,14 @@
             
             for (const filename of filenames) {
                 try {
-                    const response = await fetch(filename);
+                    // Add cache buster when force reloading
+                    const url = forceReload ? `${filename}?t=${Date.now()}` : filename;
+                    const response = await fetch(url);
                     if (response.ok) {
                         const data = await response.json();
-                        console.log(`Loaded track data from: ${filename}`);
-                        document.getElementById('track-data-status').textContent = `Loaded (${data.year || 'generic'})`;
+                        const reloadText = forceReload ? ' [RELOADED]' : '';
+                        console.log(`Loaded track data from: ${filename}${reloadText}`);
+                        document.getElementById('track-data-status').textContent = `Loaded (${data.year || 'generic'})${reloadText}`;
                         return data;
                     }
                 } catch (err) {
@@ -141,6 +163,24 @@
             document.getElementById('track-data-status').textContent = 'Not Found';
             return null;
         }
+        
+        // Manual reload button handler
+        document.getElementById('reload-button').addEventListener('click', async () => {
+            if (trackId === -1) {
+                alert('No track loaded yet. Start a session first.');
+                return;
+            }
+            
+            console.log('Manually reloading track data...');
+            document.getElementById('track-data-status').textContent = 'Reloading...';
+            trackData = await loadTrackData(trackId, gameYear, true);
+            
+            if (trackData) {
+                console.log('Track data reloaded successfully!');
+            } else {
+                alert('Failed to reload track data.');
+            }
+        });
         
         // Check if position is in any turn
         function checkTurnPosition(lapDistance) {

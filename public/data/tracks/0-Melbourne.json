@@ -1,0 +1,119 @@
+{
+  "trackId": 0,
+  "trackName": "Melbourne Grand Prix Circuit",
+  "year": null,
+  "trackLength": 5276,
+  "comment": "Generic default variant for Australian GP - works across multiple game versions unless specific year file exists. Values in meters.",
+  "turns": [
+    {
+      "number": 1,
+      "trigger": 300,
+      "end": 425,
+      "name": ""
+    },
+    {
+      "number": 2,
+      "trigger": 425,
+      "end": 620,
+      "name": ""
+    },
+    {
+      "number": 3,
+      "trigger": 1000,
+      "end": 1180,
+      "name": ""
+    },
+    {
+      "number": 4,
+      "trigger": 1190,
+      "end": 1340,
+      "name": ""
+    },
+    {
+      "number": 5,
+      "trigger": 1400,
+      "end": 1565,
+      "name": ""
+    },
+    {
+      "number": 6,
+      "trigger": 1790,
+      "end": 1950,
+      "name": ""
+    },
+    {
+      "number": 7,
+      "trigger": 1950,
+      "end": 2055,
+      "name": ""
+    },
+    {
+      "number": 8,
+      "trigger": 2075,
+      "end": 2385,
+      "name": ""
+    },
+    {
+      "number": 9,
+      "trigger": 3220,
+      "end": 3380,
+      "name": ""
+    },
+    {
+      "number": 10,
+      "trigger": 3390,
+      "end": 3550,
+      "name": ""
+    },
+    {
+      "number": 11,
+      "trigger": 4050,
+      "end": 4230,
+      "name": ""
+    },
+    {
+      "number": 12,
+      "trigger": 4325,
+      "end": 4525,
+      "name": ""
+    },
+    {
+      "number": 13,
+      "trigger": 4570,
+      "end": 4720,
+      "name": ""
+    },
+    {
+      "number": 14,
+      "trigger": 4745,
+      "end": 4925,
+      "name": ""
+    }
+  ],
+  "drsZones":[
+    {
+      "zone": 1,
+      "start": 2550,
+      "end": 3264,
+      "comment": "Zone 1A - between turns 8 and 9"
+    },
+    {
+      "zone": 2,
+      "start": 3558,
+      "end": 4113,
+      "comment": "Zone 1B - between turns 10 and 11"
+    },
+    {
+      "zone": 3,
+      "start": 4890,
+      "end": 330,
+      "comment": "Zone 2A - main straight between turn 14 and turn 1"
+    },
+    {
+      "zone": 4,
+      "start": 586,
+      "end": 1056,
+      "comment": "Zone 2B - between turns 2 and 3"
+    }
+  ]
+}

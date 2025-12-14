@@ -3,7 +3,7 @@
   "trackName": "Monza",
   "year": null,
   "trackLength": 5798,
-  "comment": "Generic default variant for Monza - works across multiple game versions unless specific year file exists. Values in meters.",
+  "comment": "Generic default variant for Italian GP (Monza) - works across multiple game versions unless specific year file exists. Values in meters.",
   "turns": [
     {
       "number": 1,
@@ -70,6 +70,20 @@
       "trigger": 5030,
       "end": 5515,
       "name": "Curva Parabolica"
+    }
+  ],
+  "drsZones": [
+    {
+      "zone": 1,
+      "start": 3057,
+      "end": 3890,
+      "comment": "Zone 1 - after Lesmo 2 (turn 7) and before Ascari (turns 8-9-10)"
+    },
+    {
+      "zone": 2,
+      "start": 10,
+      "end": 882,
+      "comment": "Zone 2 - start/finish straight into Turn 1"
     }
   ]
 }

@@ -1,0 +1,119 @@
+{
+  "trackId": 2,
+  "trackName": "Shanghai International Circuit",
+  "year": null,
+  "trackLength": 5441,
+  "comment": "Generic default variant for Chinese GP - works across multiple game versions unless specific year file exists. Values in meters.",
+  "turns": [
+    {
+      "number": 1,
+      "trigger": 445,
+      "end": 715,
+      "name": ""
+    },
+    {
+      "number": 2,
+      "trigger": 715,
+      "end": 835,
+      "name": ""
+    },
+    {
+      "number": 3,
+      "trigger": 840,
+      "end": 970,
+      "name": ""
+    },
+    {
+      "number": 4,
+      "trigger": 975,
+      "end": 1125,
+      "name": ""
+    },
+    {
+      "number": 5,
+      "trigger": 1275,
+      "end": 1425,
+      "name": ""
+    },
+    {
+      "number": 6,
+      "trigger": 1480,
+      "end": 1700,
+      "name": ""
+    },
+    {
+      "number": 7,
+      "trigger": 1900,
+      "end": 2225,
+      "name": ""
+    },
+    {
+      "number": 8,
+      "trigger": 2250,
+      "end": 2480,
+      "name": ""
+    },
+    {
+      "number": 9,
+      "trigger": 2490,
+      "end": 2615,
+      "name": ""
+    },
+    {
+      "number": 10,
+      "trigger": 2620,
+      "end": 2775,
+      "name": ""
+    },
+    {
+      "number": 11,
+      "trigger": 3075,
+      "end": 3180,
+      "name": ""
+    },
+    {
+      "number": 12,
+      "trigger": 3180,
+      "end": 3300,
+      "name": ""
+    },
+    {
+      "number": 13,
+      "trigger": 3305,
+      "end": 3705,
+      "name": ""
+    },
+    {
+      "number": 14,
+      "trigger": 4680,
+      "end": 4840,
+      "name": ""
+    },
+    {
+      "number": 15,
+      "trigger": 4840,
+      "end": 4925,
+      "name": ""
+    },
+    {
+      "number": 16,
+      "trigger": 5080,
+      "end": 5260,
+      "name": ""
+    }
+  ],
+  "drsZones":[
+    {
+      "zone": 1,
+      "start": 4020,
+      "end": 4740,
+      "comment": "Zone 1 - Main Straight between Turns 13 and 14"
+    },
+    {
+      "zone": 2,
+      "start": 5283,
+      "end": 446,
+      "comment": "Zone 2 - Start/Finish Straight into Turn 1"
+    }
+  ]
+}
