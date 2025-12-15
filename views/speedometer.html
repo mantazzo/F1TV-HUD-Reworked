@@ -11,25 +11,25 @@
     <div class="overlay-container">
         <!-- Background layer -->
         <div class="layer background-layer">
-            <img src="/images/speedometer/F1TV_BG.png" alt="Background">
+            <img id="background-image" src="/images/speedometer/F1TV/F1TV_BG.png" alt="Background">
         </div>
         
         <!-- Value background layer -->
         <div class="layer gauge-layer">
-            <img src="/images/speedometer/F1TV_ValueBG.png" alt="Gauge Background">
+            <img id="gauge-background-image" src="/images/speedometer/F1TV/F1TV_ValueBG.png" alt="Gauge Background">
         </div>
         
         <!-- Gauge canvases layer -->
         <div class="layer gauges-layer">
-            <!-- Speed gauge - item_22r0 -->
+            <!-- Speed gauge -->
             <div class="dial-container speed-dial">
                 <canvas id="speed-gauge" width="497" height="496"></canvas>
             </div>
-            <!-- Brake gauge - item_23r0 -->
+            <!-- Brake gauge -->
             <div class="dial-container brake-dial">
                 <canvas id="brake-gauge" width="496.2" height="496.2"></canvas>
             </div>
-            <!-- Throttle gauge - item_24r0 -->
+            <!-- Throttle gauge -->
             <div class="dial-container throttle-dial">
                 <canvas id="throttle-gauge" width="496.2" height="496.2"></canvas>
             </div>
@@ -60,7 +60,8 @@
             
             <!-- DRS container -->
             <div class="drs-container">
-                <img src="/images/speedometer/drs.png" alt="DRS" class="drs-image">
+                <div class="drs-rectangle"></div>
+                <img src="/images/speedometer/F1TV/drs.png" alt="DRS" class="drs-image">
                 <div id="drs-label" class="drs-label">DRS</div>
             </div>
             
@@ -77,14 +78,33 @@
         
         const overlayContainer = document.querySelector('.overlay-container');
         
-        // Handle overlay visibility from controller with animation
+        // Store current config
+        let currentConfig = {
+            designMode: 'f1tv',
+            unitsMode: 'automatic'
+        };
+        
+        // Handle overlay visibility and config updates from controller
         socket.on('overlay_config', (config) => {
             if (config.overlays && config.overlays['speedometer']) {
-                if (config.overlays['speedometer'].visible) {
+                const speedometerConfig = config.overlays['speedometer'];
+                
+                // Handle visibility
+                if (speedometerConfig.visible) {
                     overlayContainer.classList.add('visible');
                 } else {
                     overlayContainer.classList.remove('visible');
                 }
+                
+                // Check if design mode changed
+                const newDesignMode = speedometerConfig.designMode || 'f1tv';
+                if (newDesignMode !== currentConfig.designMode) {
+                    currentConfig.designMode = newDesignMode;
+                    applyDesignMode(newDesignMode);
+                }
+                
+                // Update units mode
+                currentConfig.unitsMode = speedometerConfig.unitsMode || 'automatic';
             }
         });
         
@@ -98,17 +118,78 @@
         let brakeAngle = 0; // Start at 0 brake (57°)
         let speedAngle = 0; // Start at 0 speed (-237°)
         
+        // Get references to layer images
+        const backgroundImage = document.getElementById('background-image');
+        const gaugeBackgroundImage = document.getElementById('gauge-background-image');
+        
         // Load gauge images for canvas drawing
         const throttleImage = new Image();
-        throttleImage.src = '/images/speedometer/Throttle_1.png';
         const brakeImage = new Image();
-        brakeImage.src = '/images/speedometer/Brake_1.png';
         const speedImage = new Image();
-        speedImage.src = '/images/speedometer/Speed_1.png';
+        
+        // Function to apply design mode
+        function applyDesignMode(designMode) {
+            if (designMode === 'multiviewer') {
+                // Multiviewer design
+                backgroundImage.src = '/images/speedometer/Multiviewer/MV BG.png';
+                gaugeBackgroundImage.src = '/images/speedometer/Multiviewer/MV ValueBG.png';
+                throttleImage.src = '/images/speedometer/Multiviewer/Throttle.png';
+                brakeImage.src = '/images/speedometer/Multiviewer/Brake.png';
+                speedImage.src = '/images/speedometer/Multiviewer/Speed.png';
+                
+                // Resize canvases for Multiviewer (500x500)
+                throttleCanvas.width = 500;
+                throttleCanvas.height = 500;
+                brakeCanvas.width = 500;
+                brakeCanvas.height = 500;
+                speedCanvas.width = 500;
+                speedCanvas.height = 500;
+                
+                // Apply Multiviewer CSS class
+                overlayContainer.classList.add('multiviewer-mode');
+                overlayContainer.classList.remove('f1tv-mode');
+            } else {
+                // F1TV design (default)
+                backgroundImage.src = '/images/speedometer/F1TV/F1TV_BG.png';
+                gaugeBackgroundImage.src = '/images/speedometer/F1TV/F1TV_ValueBG.png';
+                throttleImage.src = '/images/speedometer/F1TV/Throttle.png';
+                brakeImage.src = '/images/speedometer/F1TV/Brake.png';
+                speedImage.src = '/images/speedometer/F1TV/Speed.png';
+                
+                // Resize canvases for F1TV
+                throttleCanvas.width = 496.2;
+                throttleCanvas.height = 496.2;
+                brakeCanvas.width = 496.2;
+                brakeCanvas.height = 496.2;
+                speedCanvas.width = 497;
+                speedCanvas.height = 496;
+                
+                // Apply F1TV CSS class
+                overlayContainer.classList.add('f1tv-mode');
+                overlayContainer.classList.remove('multiviewer-mode');
+            }
+            
+            // Redraw gauges with new images once they're loaded
+            Promise.all([
+                new Promise(resolve => throttleImage.onload = resolve),
+                new Promise(resolve => brakeImage.onload = resolve),
+                new Promise(resolve => speedImage.onload = resolve)
+            ]).then(() => {
+                drawThrottleSweep(throttleAngle);
+                drawBrakeSweep(brakeAngle);
+                drawSpeedSweep(speedAngle);
+            }).catch(error => {
+                console.error('Failed to load gauge images:', error);
+            });
+        }
+        
+        // Initialize with default F1TV design
+        applyDesignMode('f1tv');
         
         const kmhLayer = document.getElementById('kmh-layer');
         const drsLabel = document.getElementById('drs-label');
         const drsImage = document.querySelector('.drs-image');
+        const drsRectangle = document.querySelector('.drs-rectangle');
         const gearValue = document.getElementById('gear-value');
         const rpmValue = document.getElementById('rpm-value');
         const speedValue = document.getElementById('speed-value');
@@ -118,7 +199,7 @@
 
         // Initialize DRS blink animation once
         const drsBlinkAnimation = anime({
-            targets: drsImage,
+            targets: [drsImage, drsRectangle],
             opacity: [1, 0, 1], // From 100% to 0% to 100%
             duration: 950, // Total cycle time (0.5s per transition approximated)
             easing: 'easeInOutQuad', // Smooth transition
@@ -132,7 +213,64 @@
 
         function pauseAndResetDrsBlink() {
             drsBlinkAnimation.pause();
-            anime.set(drsImage, { opacity: 1 }); // Force opacity to 1 immediately
+            anime.set([drsImage, drsRectangle], { opacity: 1 }); // Force opacity to 1 immediately
+        }
+
+        // DRS State Management
+        let drsState = { m_drs: null, m_drsAllowed: null, m_drsActivationDistance: null };
+
+        // Helper function to determine DRS state
+        function determineDrsState() {
+            if (drsState.m_drs === 1) return 2; // Active
+            if (drsState.m_drsAllowed === 1) return 1; // Available
+            return 0; // Unavailable
+        }
+
+        // Function to update DRS display based on design mode and state
+        function updateDrsDisplay(state) {
+            const isMultiviewer = currentConfig.designMode === 'multiviewer';
+            
+            // Clean up all DRS rectangle classes first
+            drsRectangle.classList.remove('drs-unavailable', 'drs-available', 'drs-active');
+            
+            if (isMultiviewer) {
+                // Multiviewer mode: use rectangle with CSS classes
+                
+                if (state === 2) {
+                    // DRS Active - green background, stop blinking
+                    drsRectangle.classList.add('drs-active');
+                    pauseAndResetDrsBlink();
+                    drsLabel.style.textShadow = '3px 1px 0px black';
+                } else if (state === 1) {
+                    // DRS Available - white border, apply blinking
+                    drsRectangle.classList.add('drs-available');
+                    playDrsBlink();
+                    drsLabel.style.textShadow = '0px 0px 0px black';
+                } else {
+                    // DRS Unavailable - no styling, stop blinking
+                    drsRectangle.classList.add('drs-unavailable');
+                    pauseAndResetDrsBlink();
+                    drsLabel.style.textShadow = '0px 0px 0px black';
+                }
+            } else {
+                // F1TV mode: use images with blinking
+                if (state === 2) {
+                    // DRS Active - show drs1.png, stop blinking
+                    drsImage.src = '/images/speedometer/F1TV/drs1.png';
+                    pauseAndResetDrsBlink();
+                    drsLabel.style.textShadow = '3px 1px 0px black';
+                } else if (state === 1) {
+                    // DRS Available - show drs2.png, apply blinking
+                    drsImage.src = '/images/speedometer/F1TV/drs2.png';
+                    playDrsBlink();
+                    drsLabel.style.textShadow = '0px 0px 0px black';
+                } else {
+                    // DRS Unavailable - show drs.png, stop blinking
+                    drsImage.src = '/images/speedometer/F1TV/drs.png';
+                    pauseAndResetDrsBlink();
+                    drsLabel.style.textShadow = '0px 0px 0px black';
+                }
+            }
         }
 
         function drawThrottleSweep(angle) {
@@ -140,17 +278,25 @@
                 console.error('Throttle canvas context not available');
                 return;
             }
-            throttleCtx.clearRect(0, 0, 496.2, 496.2);
+            const w = throttleCanvas.width;
+            const h = throttleCanvas.height;
+            const centerX = w / 2;
+            const centerY = h / 2;
+            const radius = Math.min(centerX, centerY);
+            
+            throttleCtx.clearRect(0, 0, w, h);
             throttleCtx.save();
 
             // Apply the clip to include the full swept area
             throttleCtx.beginPath();
-            const startAngle = -237 * Math.PI / 180; // Updated start angle
-            const endAngle = startAngle + (angle * ((-46 - (-237)) * Math.PI / 180)); // Scale to -46°
-            throttleCtx.moveTo(248.1, 248.1); // Center for 496.2px canvas
-            throttleCtx.arc(248.1, 248.1, 248.1, startAngle, endAngle, false); // Clockwise sweep
+            const startAngle = -238 * Math.PI / 180;
+            // Adjust target angle based on design mode: F1TV uses -45°, Multiviewer uses -50°
+            const targetAngle = currentConfig.designMode === 'multiviewer' ? -50 : -45;
+            const endAngle = startAngle + (angle * ((targetAngle - (-238)) * Math.PI / 180));
+            throttleCtx.moveTo(centerX, centerY);
+            throttleCtx.arc(centerX, centerY, radius, startAngle, endAngle, false); // Clockwise sweep
             throttleCtx.clip();
-            throttleCtx.drawImage(throttleImage, 0, 0, 496.2, 496.2); // Scaled image
+            throttleCtx.drawImage(throttleImage, 0, 0, w, h);
             throttleCtx.restore();
         }
 
@@ -159,17 +305,25 @@
                 console.error('Brake canvas context not available');
                 return;
             }
-            brakeCtx.clearRect(0, 0, 496.2, 496.2);
+            const w = brakeCanvas.width;
+            const h = brakeCanvas.height;
+            const centerX = w / 2;
+            const centerY = h / 2;
+            const radius = Math.min(centerX, centerY);
+            
+            brakeCtx.clearRect(0, 0, w, h);
             brakeCtx.save();
 
             // Apply the clip to include the full swept area
             brakeCtx.beginPath();
-            const startAngle = 57 * Math.PI / 180; // Updated start angle
-            const endAngle = startAngle + (angle * ((-43 - 57) * Math.PI / 180)); // Scale to -43°, anti-clockwise
-            brakeCtx.moveTo(248.1, 248.1); // Center for 496.2px canvas
-            brakeCtx.arc(248.1, 248.1, 248.1, startAngle, endAngle, true); // Anti-clockwise sweep
+            const startAngle = 58 * Math.PI / 180;
+            // Adjust target angle based on design mode: F1TV uses -44°, Multiviewer uses -46°
+            const targetAngle = currentConfig.designMode === 'multiviewer' ? -46 : -44;
+            const endAngle = startAngle + (angle * ((targetAngle - 58) * Math.PI / 180));
+            brakeCtx.moveTo(centerX, centerY);
+            brakeCtx.arc(centerX, centerY, radius, startAngle, endAngle, true); // Anti-clockwise sweep
             brakeCtx.clip();
-            brakeCtx.drawImage(brakeImage, 0, 0, 496.2, 496.2); // Scaled image
+            brakeCtx.drawImage(brakeImage, 0, 0, w, h);
             brakeCtx.restore();
         }
 
@@ -178,26 +332,43 @@
                 console.error('Speed canvas context not available');
                 return;
             }
-            speedCtx.clearRect(0, 0, 497, 496);
+            const w = speedCanvas.width;
+            const h = speedCanvas.height;
+            const centerX = w / 2;
+            const centerY = h / 2;
+            const radius = Math.min(centerX, centerY);
+            
+            speedCtx.clearRect(0, 0, w, h);
             speedCtx.save();
 
             // Apply the clip to include the full swept area
-            const startAngle = -237 * Math.PI / 180; // Updated start angle
-            const maxAngle = 57 * Math.PI / 180; // Maximum angle
+            const startAngle = -238 * Math.PI / 180; // Updated start angle to match throttle start angle
+            const maxAngle = 58 * Math.PI / 180; // Maximum angle
             const endAngle = startAngle + (Math.min(angle, 1.0) * (maxAngle - startAngle)); // Cap at 1.0 (360 km/h)
             speedCtx.beginPath();
-            speedCtx.moveTo(248.5, 248); // Center for 497x496 canvas
-            speedCtx.arc(248.5, 248, 248, startAngle, endAngle, false); // Clockwise sweep
+            speedCtx.moveTo(centerX, centerY);
+            speedCtx.arc(centerX, centerY, radius, startAngle, endAngle, false); // Clockwise sweep
             speedCtx.clip();
-            speedCtx.drawImage(speedImage, 0, 0, 497, 496); // Scaled image
+            speedCtx.drawImage(speedImage, 0, 0, w, h);
             speedCtx.restore();
         }
 
         socket.on('f1_data', (data) => {
+            const playerIndex = data.m_header?.m_playerCarIndex || 0;
+            
             if (data.m_header.m_packetId === 1) { // Session Packet
-                const playerIndex = data.m_header.m_playerCarIndex;
                 const speedUnitsLeadPlayer = data.m_speedUnitsLeadPlayer || 0;
-                isMph = speedUnitsLeadPlayer === 0;
+                
+                // Apply units mode override
+                if (currentConfig.unitsMode === 'kmh') {
+                    isMph = false;
+                } else if (currentConfig.unitsMode === 'mph') {
+                    isMph = true;
+                } else {
+                    // Automatic mode - use game data
+                    isMph = speedUnitsLeadPlayer === 0;
+                }
+                
                 speedUnits.textContent = isMph ? 'MPH' : 'KMH';
                 kmhLayer.src = isMph ? '/images/speedometer/MPH.png' : '/images/speedometer/KMH.png';
             } else if (data.m_header.m_packetId === 6) { // Car Telemetry
@@ -261,56 +432,22 @@
                         drawSpeedSweep(speedAngle);
                     }
                 });
-            }
-        });
-
-        // DRS State Management
-        let drsState = { m_drs: null, m_drsAllowed: null, m_drsActivationDistance: null };
-
-        socket.on('f1_data', (data) => {
-            const playerIndex = data.m_header?.m_playerCarIndex || 0;
-
-            if (data.m_header?.m_packetId === 6) { // Car Telemetry
+                
+                // Handle DRS state from telemetry
                 const telemetryData = data.m_carTelemetryData?.[playerIndex];
                 if (telemetryData && telemetryData.hasOwnProperty('m_drs')) {
                     drsState.m_drs = telemetryData.m_drs;
                     
-                    // Determine the desired DRS display state: 0=unavailable, 1=available, 2=active
-                    let newDrsDisplayState;
-                    if (drsState.m_drs === 1) {
-                        newDrsDisplayState = 2; // Active
-                    } else if (drsState.m_drsAllowed === 1) {
-                        newDrsDisplayState = 1; // Available
-                    } else {
-                        newDrsDisplayState = 0; // Unavailable
-                    }
+                    const newDrsDisplayState = determineDrsState();
                     
                     // Only update if state has changed
                     if (newDrsDisplayState !== currentDrsDisplayState) {
                         currentDrsDisplayState = newDrsDisplayState;
-                        
-                        if (currentDrsDisplayState === 2) {
-                            // DRS Active - show drs1.png, stop blinking
-                            drsImage.src = '/images/speedometer/drs1.png';
-                            pauseAndResetDrsBlink();
-                            drsLabel.style.textShadow = '3px 1px 0px black';
-                        } else if (currentDrsDisplayState === 1) {
-                            // DRS Available - show drs2.png, apply blinking
-                            drsImage.src = '/images/speedometer/drs2.png';
-                            playDrsBlink();
-                            drsLabel.style.textShadow = '0px 0px 0px black';
-                        } else {
-                            // DRS Unavailable - show drs.png, stop blinking
-                            drsImage.src = '/images/speedometer/drs.png';
-                            pauseAndResetDrsBlink();
-                            drsLabel.style.textShadow = '0px 0px 0px black';
-                        }
+                        updateDrsDisplay(currentDrsDisplayState);
                     } else {
-                        // State hasn't changed, just update text shadow for active state
-                        if (drsState.m_drs === 1) {
+                        // State hasn't changed, just update text shadow for active state (F1TV mode only)
+                        if (drsState.m_drs === 1 && currentConfig.designMode === 'f1tv') {
                             drsLabel.style.textShadow = '3px 1px 0px black';
-                        } else {
-                            drsLabel.style.textShadow = '0px 0px 0px black';
                         }
                     }
                 }
@@ -320,33 +457,16 @@
                     drsState.m_drsAllowed = statusData.m_drsAllowed || null;
                     drsState.m_drsActivationDistance = statusData.m_drsActivationDistance || null;
                     
-                    // Determine the desired DRS display state: 0=unavailable, 1=available, 2=active
-                    let newDrsDisplayState;
-                    if (drsState.m_drs === 1) {
-                        newDrsDisplayState = 2; // Active
-                    } else if (drsState.m_drsAllowed === 1) {
-                        newDrsDisplayState = 1; // Available
-                    } else {
-                        newDrsDisplayState = 0; // Unavailable
-                    }
+                    const newDrsDisplayState = determineDrsState();
                     
                     // Only update if state has changed and DRS is not currently active
                     if (newDrsDisplayState !== currentDrsDisplayState && drsState.m_drs !== 1) {
                         currentDrsDisplayState = newDrsDisplayState;
-                        
-                        if (currentDrsDisplayState === 1) {
-                            // DRS Available - show drs2.png, apply blinking
-                            drsImage.src = '/images/speedometer/drs2.png';
-                            playDrsBlink();
-                        } else {
-                            // DRS Unavailable - show drs.png, stop blinking
-                            drsImage.src = '/images/speedometer/drs.png';
-                            pauseAndResetDrsBlink();
-                        }
+                        updateDrsDisplay(currentDrsDisplayState);
                     }
                 }
             }
-
+            
             // Update DRS text color, default to gray unless any value is non-zero
             const drs = drsState.m_drs === null ? 0 : drsState.m_drs;
             const drsAllowed = drsState.m_drsAllowed === null ? 0 : drsState.m_drsAllowed;

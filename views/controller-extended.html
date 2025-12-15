@@ -49,6 +49,29 @@
             </div>
         </section>
 
+        <section class="overlay-section" id="speedometer-options-section">
+            <h2>Speedometer Options</h2>
+            <div class="option-row">
+                <label class="select-label">
+                    <span class="select-text">Design Mode:</span>
+                    <select id="speedometer-design-mode" class="select-dropdown">
+                        <option value="f1tv">F1TV</option>
+                        <option value="multiviewer">Multiviewer</option>
+                    </select>
+                </label>
+            </div>
+            <div class="option-row">
+                <label class="select-label">
+                    <span class="select-text">Units Mode:</span>
+                    <select id="speedometer-units-mode" class="select-dropdown">
+                        <option value="automatic">Automatic</option>
+                        <option value="kmh">Always KMH</option>
+                        <option value="mph">Always MPH</option>
+                    </select>
+                </label>
+            </div>
+        </section>
+
         <section class="overlay-section server-control-section">
             <h2>Server Control</h2>
             <button class="stop-server-button" id="stop-server-btn">
@@ -177,6 +200,28 @@
             });
         });
 
+        // Speedometer design mode handling
+        const speedometerDesignMode = document.getElementById('speedometer-design-mode');
+        
+        speedometerDesignMode.addEventListener('change', () => {
+            socket.emit('config_update', {
+                overlay: 'speedometer',
+                property: 'designMode',
+                value: speedometerDesignMode.value
+            });
+        });
+
+        // Speedometer units mode handling
+        const speedometerUnitsMode = document.getElementById('speedometer-units-mode');
+        
+        speedometerUnitsMode.addEventListener('change', () => {
+            socket.emit('config_update', {
+                overlay: 'speedometer',
+                property: 'unitsMode',
+                value: speedometerUnitsMode.value
+            });
+        });
+
         // Update lap timer options when config changes
         function updateLapTimerOptions() {
             if (!currentConfig || !currentConfig.overlays || !currentConfig.overlays['lap-timer']) return;
@@ -185,12 +230,22 @@
             lapTimerVisibilityMode.value = lapTimerConfig.visibilityMode || 'automatic';
         }
 
+        // Update speedometer options when config changes
+        function updateSpeedometerOptions() {
+            if (!currentConfig || !currentConfig.overlays || !currentConfig.overlays['speedometer']) return;
+            
+            const speedometerConfig = currentConfig.overlays['speedometer'];
+            speedometerDesignMode.value = speedometerConfig.designMode || 'f1tv';
+            speedometerUnitsMode.value = speedometerConfig.unitsMode || 'automatic';
+        }
+
         // Override renderOverlayButtons to also update options
         const originalRender = renderOverlayButtons;
         renderOverlayButtons = function() {
             originalRender();
             updateWeatherOptions();
             updateLapTimerOptions();
+            updateSpeedometerOptions();
         };
 
         // Stop server button

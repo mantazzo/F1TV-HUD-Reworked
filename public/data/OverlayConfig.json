@@ -7,7 +7,9 @@
     },
     "speedometer": {
       "visible": true,
-      "name": "Speedometer"
+      "name": "Speedometer",
+      "designMode": "f1tv",
+      "unitsMode": "automatic"
     },
     "lap-timer": {
       "visible": true,

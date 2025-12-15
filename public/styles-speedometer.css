@@ -25,7 +25,8 @@
     z-index: 1;
 }
 
-.background-layer img {
+/* F1TV mode background */
+.f1tv-mode .background-layer img {
     width: 497px;
     height: 497px;
     position: absolute;
@@ -34,17 +35,38 @@
     opacity: 0.7;
 }
 
+/* Multiviewer mode background */
+.multiviewer-mode .background-layer img {
+    width: 500px;
+    height: 500px;
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    opacity: 0.7;
+}
+
 /* Gauge background layer */
 .gauge-layer {
     z-index: 2;
 }
 
-.gauge-layer img {
+/* F1TV mode gauge background */
+.f1tv-mode .gauge-layer img {
     width: 497px;
     height: 498px;
     position: absolute;
     left: 1.5px;
     top: -22px;
+    opacity: 1;
+}
+
+/* Multiviewer mode gauge background */
+.multiviewer-mode .gauge-layer img {
+    width: 500px;
+    height: 500px;
+    position: absolute;
+    left: 0px;
+    top: -25.5px;
     opacity: 1;
 }
 
@@ -58,28 +80,48 @@
     overflow: hidden;
 }
 
-/* Speed gauge */
-.speed-dial {
+/* F1TV mode gauges */
+.f1tv-mode .speed-dial {
     width: 497px;
     height: 496px;
     left: 1px;
     top: 1px;
 }
 
-/* Brake gauge */
-.brake-dial {
+.f1tv-mode .brake-dial {
     width: 496.2px;
     height: 496.2px;
     left: 1.9px;
     top: 1.9px;
 }
 
-/* Throttle gauge */
-.throttle-dial {
+.f1tv-mode .throttle-dial {
     width: 496.2px;
     height: 496.2px;
     left: 1.9px;
     top: 1.9px;
+}
+
+/* Multiviewer mode gauges */
+.multiviewer-mode .speed-dial {
+    width: 500px;
+    height: 500px;
+    left: 0px;
+    top: 0px;
+}
+
+.multiviewer-mode .brake-dial {
+    width: 500px;
+    height: 500px;
+    left: 0px;
+    top: 0px;
+}
+
+.multiviewer-mode .throttle-dial {
+    width: 500px;
+    height: 500px;
+    left: 0px;
+    top: 0px;
 }
 
 #throttle-gauge,
@@ -98,7 +140,7 @@
 }
 
 /* Text overlay - Throttle/Brake labels */
-.text-overlay {
+.f1tv-mode .text-overlay {
     position: absolute;
     width: 508px;
     height: 508px;
@@ -106,13 +148,29 @@
     top: -2.5px;
 }
 
+.multiviewer-mode .text-overlay {
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    left: 0px;
+    top: 0px;
+}
+
 /* Units overlay - KMH/MPH label */
-.units-overlay {
+.f1tv-mode .units-overlay {
     position: absolute;
     width: 514px;
     height: 514px;
     left: -7px;
     top: -7px;
+}
+
+.multiviewer-mode .units-overlay {
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    left: 0px;
+    top: 0px;
 }
 
 /* Text layer - contains all text and DRS elements */
@@ -121,13 +179,34 @@
 }
 
 /* Speed value */
-.speed-value {
+.f1tv-mode .speed-value {
     position: absolute;
     top: 135px;
     left: 140px;
     width: 220px;
     height: 95px;
     font-family: 'Formula1 Display';
+    font-weight: 400;
+    font-size: 90px;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    box-sizing: border-box;
+    white-space: pre;
+    padding: 0px 0px 3px;
+}
+
+.multiviewer-mode .speed-value {
+    position: absolute;
+    top: 135px;
+    left: 135px;
+    width: 220px;
+    height: 95px;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
     font-size: 90px;
     color: white;
     display: flex;
@@ -159,6 +238,17 @@
 }
 
 /* RPM value */
+.f1tv-mode .rpm-value {
+    font-family: 'Formula1 Display';
+    font-weight: 400;
+}
+
+.multiviewer-mode .rpm-value {
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+}
+
 .rpm-value {
     position: absolute;
     top: 275px;
@@ -204,6 +294,59 @@
     height: 45.3px;
 }
 
+/* F1TV mode: adjust container for image-based design */
+.f1tv-mode .drs-container {
+    width: 78px;
+    height: 45.3px;
+}
+
+/* Multiviewer mode: adjust container for rectangle-based design */
+.multiviewer-mode .drs-container {
+    left: 205px;
+    top: 370px;
+    width: 90px;
+    height: 50px;
+}
+
+/* DRS rectangle - only visible in Multiviewer mode */
+.drs-rectangle {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 10px;
+    box-sizing: border-box;
+    display: none;
+}
+
+/* F1TV mode: hide rectangle */
+.f1tv-mode .drs-rectangle {
+    display: none;
+}
+
+/* Multiviewer mode: show rectangle based on state */
+.multiviewer-mode .drs-rectangle {
+    display: block;
+}
+
+/* Multiviewer DRS states */
+.multiviewer-mode .drs-rectangle.drs-unavailable {
+    background: transparent;
+    border: none;
+}
+
+.multiviewer-mode .drs-rectangle.drs-available {
+    background: transparent;
+    border: 5px solid rgb(255, 255, 255);
+}
+
+.multiviewer-mode .drs-rectangle.drs-active {
+    background: lime;
+    border: none;
+}
+
+/* DRS image - only visible in F1TV mode */
 .drs-image {
     position: absolute;
     top: 0;
@@ -215,7 +358,18 @@
     image-rendering: crisp-edges;
 }
 
-.drs-label {
+/* F1TV mode: show image */
+.f1tv-mode .drs-image {
+    display: block;
+}
+
+/* Multiviewer mode: hide image */
+.multiviewer-mode .drs-image {
+    display: none;
+}
+
+/* DRS label */
+.f1tv-mode .drs-label {
     position: absolute;
     left: 3px;
     top: 6px;
@@ -233,7 +387,35 @@
     white-space: pre;
 }
 
+.multiviewer-mode .drs-label {
+    position: absolute;
+    left: 5px;
+    top: 10px;
+    width: 80px;
+    height: 29px;
+    font-family: 'Formula1 Display';
+    font-size: 25px;
+    font-weight: bold;
+    color: gray;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    box-sizing: border-box;
+    white-space: pre;
+}
+
 /* Gear label */
+.f1tv-mode .gear-label {
+    font-family: 'Formula1 TV';
+    font-weight: 400;
+}
+
+.multiviewer-mode .gear-label {
+    font-family: 'Formula1 Display';
+    font-weight: 700;
+}
+
 .gear-label {
     position: absolute;
     top: 443px;
@@ -252,6 +434,17 @@
 }
 
 /* Gear value */
+.f1tv-mode .gear-value {
+    font-family: 'Formula1 Display';
+    font-weight: 400;
+}
+
+.multiviewer-mode .gear-value {
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+}
+
 .gear-value {
     position: absolute;
     top: 420px;

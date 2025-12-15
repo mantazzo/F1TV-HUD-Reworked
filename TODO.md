@@ -3,15 +3,16 @@
 ## Available Overlays
 
 - Speedometer
-    - Fully animated and responsive
-    - Includes an automatic MPH toggle
-    - Might still require some tiny tweaks for the design (will come back to it afterwards)
+    - Fully remade, animated and responsive
+    - Includes an automatic MPH toggle (you can override it in Extended Controller to use the units you want)
+    - Includes F1TV style or Multiviewer style
 - Lap Timer
     - Remade with some personal adjustments
     - Shows your current time (if no reference time) or delta (if there is a reference time)
     - Dynamic comparison for Qualifying 1 and Qualifying 2 sessions (if in knockout positions)
     - Compare against your Personal Best in Race and in Time Trial (if set)
-    - Sector bar works and shows yellow, green and purple sectors (some game issues with packet 11, though)
+    - Sector bar works and shows yellow, green and purple sectors (some game issues with packet 11 in Time Trial, though)
+    - Might come back to it later to expand functionality even more
 - Pit Timer
     - Remade in full, uses Primary Color from the game, can be overwritten in JSON
     - Only shows up when in race and when in pitlane
