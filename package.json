@@ -14,6 +14,6 @@
     "@deltazeroproduction/f1-udp-parser": "^1.2.2",
     "express": "^5.2.1",
     "prompt": "^1.3.0",
-    "socket.io": "^4.8.1"
+    "socket.io": "^4.8.3"
   }
 }

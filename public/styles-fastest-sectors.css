@@ -1,0 +1,266 @@
+.overlay-container {
+    position: relative;
+    width: 310px;
+    height: 625px;
+    background: transparent;
+    transition: opacity 200ms ease-out;
+    opacity: 0;
+}
+
+.overlay-container.visible {
+    opacity: 1;
+}
+
+/* Header section - Top widget */
+.header-section {
+    position: absolute;
+    top: 225px;
+    left: 0;
+    width: 310px;
+    height: 111px;
+    transition: top 200ms ease-out;
+}
+
+.overlay-container.visible .header-section {
+    top: 80px;
+}
+
+.header-background {
+    position: absolute;
+    top: 5px;
+    left: 0;
+    width: 310px;
+    height: 105px;
+    background-color: rgb(0, 0, 0);
+    opacity: 0.95;
+}
+
+.header-title {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 310px;
+    height: 112px;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 38px;
+    color: rgb(128, 0, 128);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    white-space: pre-wrap;
+    box-sizing: border-box;
+}
+
+/* Main content section */
+.content-section {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 310px;
+    height: 625px;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 200ms ease-out;
+}
+
+.overlay-container.visible .content-section {
+    opacity: 1;
+}
+
+/* Background elements */
+.background-rectangle {
+    position: absolute;
+    top: 190px;
+    left: 0;
+    width: 310px;
+    height: 475px;
+    background-color: rgb(10, 10, 15);
+    z-index: 1;
+}
+
+.background-image {
+    position: absolute;
+    top: 190px;
+    left: 0;
+    width: 362.8px;
+    height: 758.2px;
+    background-image: url('/images/fastest-sectors/bg1.png');
+    background-size: 362.8px 758.2px;
+    opacity: 0.5;
+    overflow: hidden;
+    z-index: 2;
+}
+
+.gradient-s2 {
+    position: absolute;
+    top: 390px;
+    left: 0;
+    width: 310px;
+    height: 90px;
+    background-image: url('/images/fastest-sectors/Gradient.png');
+    background-size: 310px 90px;
+    opacity: 0.5;
+    z-index: 2;
+}
+
+.gradient-s3 {
+    position: absolute;
+    top: 535px;
+    left: 0;
+    width: 310px;
+    height: 90px;
+    background-image: url('/images/fastest-sectors/Gradient.png');
+    background-size: 310px 90px;
+    opacity: 0.5;
+    z-index: 2;
+}
+
+.gradient-s1 {
+    position: absolute;
+    top: 245px;
+    left: 0;
+    width: 310px;
+    height: 90px;
+    background-image: url('/images/fastest-sectors/Gradient.png');
+    background-size: 310px 90px;
+    opacity: 0.5;
+    z-index: 2;
+}
+
+/* Sector groups */
+.sector-group {
+    position: absolute;
+    width: 310px;
+    height: 145px;
+    z-index: 3;
+}
+
+.sector-1 {
+    top: 190px;
+}
+
+.sector-2 {
+    top: 335.2px;
+}
+
+.sector-3 {
+    top: 480px;
+}
+
+/* Sector background image */
+.sector-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 330px;
+    height: 55px;
+    object-fit: contain;
+}
+
+/* Sector label */
+.sector-label {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 44px;
+    height: 55px;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 23px;
+    color: rgb(0, 0, 0);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    white-space: pre;
+    box-sizing: border-box;
+    z-index: 2;
+}
+
+/* Sector time display */
+.sector-time {
+    position: absolute;
+    top: 50px;
+    left: 0;
+    width: 310px;
+    height: 95px;
+    font-family: 'Formula1 TV';
+    font-weight: 700;
+    font-style: italic;
+    font-size: 58px;
+    color: rgb(255, 255, 255);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    white-space: pre;
+    box-sizing: border-box;
+}
+
+/* Team logo */
+.team-logo {
+    position: absolute;
+    top: 0;
+    left: 45px;
+    width: 60px;
+    height: 55px;
+    object-fit: contain;
+    background-color: rgb(1, 26, 43);
+}
+
+/* Driver name */
+.driver-name {
+    position: absolute;
+    top: 0;
+    left: 110px;
+    width: 205px;
+    height: 55px;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 24px;
+    color: rgb(0, 0, 0);
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    text-align: left;
+    white-space: pre;
+    box-sizing: border-box;
+    padding-left: 5px;
+    z-index: 2;
+}
+
+/* Rolex widget (item_29) */
+.rolex-widget {
+    position: absolute;
+    top: 0;
+    left: 160px;
+    width: 150px;
+    height: 85px;
+    opacity: 0;
+    transition: opacity 200ms ease-out;
+    z-index: 10;
+}
+
+.rolex-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 150px;
+    height: 85px;
+    background-color: rgb(24, 94, 51);
+    border-radius: 5px;
+}
+
+#rolex-logo {
+    position: absolute;
+    top: 7.5px;
+    left: 12px;
+    width: 126px;
+    height: 70px;
+    object-fit: contain;
+}

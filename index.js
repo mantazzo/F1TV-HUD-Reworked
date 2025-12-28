@@ -50,7 +50,7 @@ prompt.start();
 const promptSchema = {
     properties: {
         port: {
-            description: 'Please enter the Game Port that you want to use (default: 20777)',
+            description: 'Please enter the Game Port that you want to use',
             type: 'integer',
             default: 20777,
             required: false
@@ -68,6 +68,7 @@ prompt.get(promptSchema, (err, result) => {
 
     // Set up F1 telemetry client with dynamic port
     const client = new F1TelemetryClient({ port: portNumber });
+    // Might add a UDP redirection option later as well
 
     // Handle Socket.IO connections
     io.on('connection', (socket) => {
@@ -194,8 +195,16 @@ prompt.get(promptSchema, (err, result) => {
     app.get('/fastest-lap', (req, res) => res.sendFile(path.join(__dirname, 'views', 'fastest-lap.html')));
     app.get('/weather', (req, res) => res.sendFile(path.join(__dirname, 'views', 'weather.html')));
     app.get('/turn-indicator', (req, res) => res.sendFile(path.join(__dirname, 'views', 'turn-indicator.html')));
-    app.get('/position-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'position-debug.html')));
     app.get('/controller-extended', (req, res) => res.sendFile(path.join(__dirname, 'views', 'controller-extended.html')));
+    app.get('/fastest-sectors', (req, res) => res.sendFile(path.join(__dirname, 'views', 'fastest-sectors.html')));
+
+    // Public Debug pages
+    app.get('/position-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'position-debug.html')));
+
+    // Local Debug only - not added in public source code (would prefer to only add these if these files exist)
+    app.get('/session-history-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'session-history-debug.html')));
+
+    // Default to speedometer overlay (for now)
     app.get('/', (req, res) => res.redirect('/speedometer'));
     
     server.listen(3000, () => console.log('Overlays at http://localhost:3000/speedometer'));

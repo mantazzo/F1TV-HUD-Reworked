@@ -23,6 +23,10 @@
     "turn-indicator": {
       "visible": true,
       "name": "Turn Indicator"
+    },
+    "fastest-sectors": {
+      "visible": true,
+      "name": "Fastest Sectors"
     }
   }
 }

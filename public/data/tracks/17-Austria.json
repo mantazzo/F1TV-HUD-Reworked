@@ -1,0 +1,89 @@
+{
+  "trackId": 17,
+  "trackName": "Red Bull Ring",
+  "year": null,
+  "trackLength": 4323,
+  "comment": "Generic default variant for Austrian GP (Red Bull Ring) - works across multiple game versions unless specific year file exists. Values in meters.",
+  "turns": [
+    {
+      "number": 1,
+      "trigger": 350,
+      "end": 560,
+      "name": ""
+    },
+    {
+      "number": 2,
+      "trigger": 1000,
+      "end": 1240,
+      "name": ""
+    },
+    {
+      "number": 3,
+      "trigger": 1270,
+      "end": 1490,
+      "name": ""
+    },
+    {
+      "number": 4,
+      "trigger": 2090,
+      "end": 2315,
+      "name": ""
+    },
+    {
+      "number": 5,
+      "trigger": 2320,
+      "end": 2560,
+      "name": ""
+    },
+    {
+      "number": 6,
+      "trigger": 2615,
+      "end": 2890,
+      "name": ""
+    },
+    {
+      "number": 7,
+      "trigger": 2940,
+      "end": 3155,
+      "name": ""
+    },
+    {
+      "number": 8,
+      "trigger": 3155,
+      "end": 3390,
+      "name": ""
+    },
+    {
+      "number": 9,
+      "trigger": 3680,
+      "end": 3905,
+      "name": ""
+    },
+    {
+      "number": 10,
+      "trigger": 3940,
+      "end": 4140,
+      "name": ""
+    }
+  ],
+  "drsZones": [
+    {
+      "zone": 1,
+      "start": 566,
+      "end": 1291,
+      "comment": "Zone 1 - from Turn 1 to Turn 3"
+    },
+    {
+      "zone": 2,
+      "start": 1523,
+      "end": 2155,
+      "comment": "Zone 2 - between Turns 3 and 4"
+    },
+    {
+      "zone": 3,
+      "start": 4142,
+      "end": 343,
+      "comment": "Zone 3 - start/finish straight"
+    }
+  ]
+}

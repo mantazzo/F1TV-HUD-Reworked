@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>F1 Fastest Sectors Overlay</title>
+    <link rel="stylesheet" href="/fonts.css">
+    <link rel="stylesheet" href="/styles-fastest-sectors.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <div class="overlay-container">
+        <!-- Main content area -->
+        <div class="content-section">
+            <!-- Header section -->
+            <div class="header-section">
+                <div class="header-background"></div>
+                <div class="header-title">FASTEST SECTORS</div>
+            </div>
+            <!-- Background elements -->
+            <div class="background-rectangle"></div>
+            <div class="background-image"></div>
+            <div class="gradient-s2"></div>
+            <div class="gradient-s3"></div>
+            <div class="gradient-s1"></div>
+            
+            <!-- Sector 1 -->
+            <div class="sector-group sector-1">
+                <img src="/images/fastest-sectors/PlayerInd.png" class="sector-background">
+                <div class="sector-label">S1</div>
+                <div class="sector-time"></div>
+                <img src="/images/team-logos/red_bull_racing.png" class="team-logo">
+                <div class="driver-name">NO DATA</div>
+            </div>
+            
+            <!-- Sector 2 -->
+            <div class="sector-group sector-2">
+                <img src="/images/fastest-sectors/PlayerInd.png" class="sector-background">
+                <div class="sector-label">S2</div>
+                <div class="sector-time"></div>
+                <img src="/images/team-logos/red_bull_racing.png" class="team-logo">
+                <div class="driver-name">NO DATA</div>
+            </div>
+            
+            <!-- Sector 3 -->
+            <div class="sector-group sector-3">
+                <img src="/images/fastest-sectors/PlayerInd.png" class="sector-background">
+                <div class="sector-label">S3</div>
+                <div class="sector-time"></div>
+                <img src="/images/team-logos/red_bull_racing.png" class="team-logo">
+                <div class="driver-name">NO DATA</div>
+            </div>
+        </div>
+        
+        <!-- Rolex widget -->
+        <div id="rolex-widget" class="rolex-widget">
+            <div class="rolex-background"></div>
+            <img id="rolex-logo" src="/images/other-logos/Rolex.png" alt="Rolex">
+        </div>
+    </div>
+    
+    <script>
+        const socket = io();
+        socket.emit('identify', 'Fastest Sectors');
+        
+        const overlayContainer = document.querySelector('.overlay-container');
+        
+        // Element references
+        const sectorElements = {
+            s1: {
+                driverName: document.querySelector('.sector-1 .driver-name'),
+                sectorTime: document.querySelector('.sector-1 .sector-time'),
+                teamLogo: document.querySelector('.sector-1 .team-logo')
+            },
+            s2: {
+                driverName: document.querySelector('.sector-2 .driver-name'),
+                sectorTime: document.querySelector('.sector-2 .sector-time'),
+                teamLogo: document.querySelector('.sector-2 .team-logo')
+            },
+            s3: {
+                driverName: document.querySelector('.sector-3 .driver-name'),
+                sectorTime: document.querySelector('.sector-3 .sector-time'),
+                teamLogo: document.querySelector('.sector-3 .team-logo')
+            }
+        };
+        
+        // State variables
+        let participantNames = {};
+        let participantTeamIds = {};
+        let teamNames = {};
+        let customDrivers = [];
+        let aiDrivers = {};
+        let formulaType = 0;
+        let numActiveCars = 20;
+        
+        // Session history tracking
+        const sessionHistoryByCarIdx = {};
+        
+        // Overall fastest sectors across all cars
+        const overallFastestSectors = {
+            s1: { carIdx: -1, time: Infinity },
+            s2: { carIdx: -1, time: Infinity },
+            s3: { carIdx: -1, time: Infinity }
+        };
+        
+        // Rolex widget references
+        const rolexWidget = document.getElementById('rolex-widget');
+        let rolexTimeout = null;
+        
+        // Handle overlay visibility from controller
+        socket.on('overlay_config', (config) => {
+            if (config.overlays && config.overlays['fastest-sectors']) {
+                const sectorsConfig = config.overlays['fastest-sectors'];
+                
+                // Handle visibility
+                if (sectorsConfig.visible) {
+                    overlayContainer.classList.add('visible');
+                    
+                    // Show Rolex widget
+                    rolexWidget.style.opacity = '1';
+                    
+                    // Clear any existing timeout
+                    if (rolexTimeout) {
+                        clearTimeout(rolexTimeout);
+                    }
+                    
+                    // Hide Rolex widget after 4 seconds
+                    rolexTimeout = setTimeout(() => {
+                        rolexWidget.style.opacity = '0';
+                    }, 4000);
+                } else {
+                    overlayContainer.classList.remove('visible');
+                    
+                    // Hide Rolex widget immediately when overlay is hidden
+                    rolexWidget.style.opacity = '0';
+                    
+                    // Clear timeout if overlay is hidden
+                    if (rolexTimeout) {
+                        clearTimeout(rolexTimeout);
+                        rolexTimeout = null;
+                    }
+                }
+            }
+        });
+        
+        // Receive and process drivers data from server
+        socket.on('drivers_data', (data) => {
+            aiDrivers = data;
+            console.log('AI drivers updated from server:', aiDrivers);
+        });
+        
+        // Load team and driver data
+        async function loadJsonFiles() {
+            try {
+                const promises = [
+                    fetch('/data/DefaultTeams.json')
+                ];
+                if (formulaType === 0) {
+                    promises.push(fetch('/data/CustomF1Drivers.json'));
+                } else if (formulaType === 2) {
+                    promises.push(fetch('/data/CustomF2Drivers.json'));
+                }
+                const responses = await Promise.all(promises.map(p => p.catch(() => null)));
+                teamNames = responses[0] ? await responses[0].json() : {};
+                if (responses[1]) {
+                    const customDriversData = await responses[1].json();
+                    customDrivers = Array.isArray(customDriversData) ? customDriversData : [];
+                    console.log(`Custom drivers loaded for ${formulaType === 0 ? 'F1' : formulaType === 2 ? 'F2' : 'Unknown Formula'} (${customDrivers.length} drivers):`, customDrivers);
+                }
+            } catch (error) {
+                console.error('Error loading JSON files:', error);
+                teamNames = {};
+                customDrivers = [];
+            }
+        }
+        
+        // Match custom driver name
+        function matchCustomDriver(participant) {
+            const raceNumber = participant.m_raceNumber;
+            const name = participant.m_name;
+            const teamId = participant.m_teamId;
+            const team = teamNames[teamId] ? teamNames[teamId].ShortName : `Team_${teamId}`;
+
+            // Priority 1: Exact name match (MatchName field)
+            for (let driver of customDrivers) {
+                if (driver.MatchName && driver.MatchName.toUpperCase() === name.toUpperCase()) {
+                    return driver.LastName || driver.DisplayName || '';
+                }
+            }
+
+            // Priority 2: Number + Team match
+            for (let driver of customDrivers) {
+                if (driver.RaceNumber && driver.Team && driver.RaceNumber === raceNumber && driver.Team === team) {
+                    return driver.LastName || driver.DisplayName || '';
+                }
+            }
+
+            // Priority 3: Number only match
+            for (let driver of customDrivers) {
+                if (driver.RaceNumber && driver.RaceNumber === raceNumber) {
+                    return driver.LastName || driver.DisplayName || '';
+                }
+            }
+
+            // No match - return fallback
+            return `${team} #${raceNumber}`;
+        }
+        
+        // Update team logo for a sector
+        function updateTeamLogo(teamLogoElement, teamId) {
+            const teamData = teamNames[teamId];
+            
+            if (teamData && teamData.Logo) {
+                const logoPath = `/images/team-logos/${teamData.Logo}`;
+                const img = new Image();
+                
+                img.onload = () => {
+                    teamLogoElement.src = logoPath;
+                    teamLogoElement.style.display = 'block';
+                };
+                
+                img.onerror = () => {
+                    teamLogoElement.style.display = 'none';
+                };
+                
+                img.src = logoPath;
+            } else {
+                teamLogoElement.style.display = 'none';
+            }
+        }
+        
+        // Handle Session packet (ID: 1)
+        function handleSessionPacket(data) {
+            const newFormulaType = data.m_formula;
+            
+            // Only reload custom drivers if formula type changed or first load
+            if (formulaType !== newFormulaType || !customDrivers.length) {
+                formulaType = newFormulaType;
+                loadJsonFiles();
+            }
+        }
+        
+        // Handle Participants packet (ID: 4)
+        function handleParticipantsPacket(data) {
+            numActiveCars = data.m_participants.length;
+            participantNames = {};
+            participantTeamIds = {};
+            
+            for (let i = 0; i < numActiveCars && i < data.m_participants.length; i++) {
+                const participant = data.m_participants[i];
+                const index = participant.m_participantIndex !== undefined ? participant.m_participantIndex : i;
+                const driverId = participant.m_driverId;
+                
+                // Store team ID
+                participantTeamIds[index] = participant.m_teamId;
+                
+                if (driverId === 255) {
+                    // Human player - use custom driver match
+                    participantNames[index] = matchCustomDriver(participant);
+                } else {
+                    // AI driver - use lastName from driversData
+                    const aiDriver = aiDrivers[driverId];
+                    participantNames[index] = aiDriver ? aiDriver.lastName.toUpperCase() : 'UNKNOWN_AI';
+                }
+            }
+        }
+        
+        // Store session history data for a car
+        function storeSessionHistory(data) {
+            sessionHistoryByCarIdx[data.m_carIdx] = {
+                numLaps: data.m_numLaps,
+                bestSector1LapNum: data.m_bestSector1LapNum,
+                bestSector2LapNum: data.m_bestSector2LapNum,
+                bestSector3LapNum: data.m_bestSector3LapNum,
+                lapHistory: data.m_lapHistoryData
+            };
+        }
+        
+        // Calculate sector time in milliseconds
+        function calculateSectorTime(minutesPart, msPart) {
+            return minutesPart * 60000 + msPart;
+        }
+        
+        // Format time for display
+        function formatTime(milliseconds) {
+            if (milliseconds === Infinity || milliseconds <= 0) return '--:--.---';
+            
+            const minutes = Math.floor(milliseconds / 60000);
+            const seconds = Math.floor((milliseconds % 60000) / 1000);
+            const ms = milliseconds % 1000;
+            
+            if (minutes > 0) {
+                return `${minutes}:${String(seconds).padStart(2, '0')}.${String(ms).padStart(3, '0')}`;
+            } else {
+                return `${seconds}.${String(ms).padStart(3, '0')}`;
+            }
+        }
+        
+        // Adjust driver name styling based on length
+        function updateDriverNameStyling(nameElement, name) {
+            const nameLength = name.length;
+            
+            if (nameLength <= 10) {
+                nameElement.style.fontSize = '24px';
+                nameElement.style.fontStretch = 'normal';
+            } else if (nameLength <= 12) {
+                nameElement.style.fontSize = '22px';
+                nameElement.style.fontStretch = 'condensed';
+            } else if (nameLength === 13) {
+                nameElement.style.fontSize = '20px';
+                nameElement.style.fontStretch = 'condensed';
+            } else if (nameLength === 14) {
+                nameElement.style.fontSize = '18px';
+                nameElement.style.fontStretch = 'condensed';
+            } else if (nameLength === 15) {
+                nameElement.style.fontSize = '17px';
+                nameElement.style.fontStretch = 'condensed';
+            } else {
+                nameElement.style.fontSize = '16px';
+                nameElement.style.fontStretch = 'extra-condensed';
+            }
+        }
+        
+        // Update overall fastest sectors across all cars
+        function updateOverallFastestSectors() {
+            let updated = false;
+            
+            for (let carIdx in sessionHistoryByCarIdx) {
+                const history = sessionHistoryByCarIdx[carIdx];
+                
+                // Check Sector 1
+                if (history.bestSector1LapNum > 0 && history.bestSector1LapNum <= history.numLaps) {
+                    const lap = history.lapHistory[history.bestSector1LapNum - 1];
+                    if (lap) {
+                        const s1Time = calculateSectorTime(lap.m_sector1TimeMinutesPart, lap.m_sector1TimeMSPart);
+                        if (s1Time > 0 && s1Time < overallFastestSectors.s1.time) {
+                            overallFastestSectors.s1 = { carIdx: parseInt(carIdx), time: s1Time };
+                            updated = true;
+                        }
+                    }
+                }
+                
+                // Check Sector 2
+                if (history.bestSector2LapNum > 0 && history.bestSector2LapNum <= history.numLaps) {
+                    const lap = history.lapHistory[history.bestSector2LapNum - 1];
+                    if (lap) {
+                        const s2Time = calculateSectorTime(lap.m_sector2TimeMinutesPart, lap.m_sector2TimeMSPart);
+                        if (s2Time > 0 && s2Time < overallFastestSectors.s2.time) {
+                            overallFastestSectors.s2 = { carIdx: parseInt(carIdx), time: s2Time };
+                            updated = true;
+                        }
+                    }
+                }
+                
+                // Check Sector 3
+                if (history.bestSector3LapNum > 0 && history.bestSector3LapNum <= history.numLaps) {
+                    const lap = history.lapHistory[history.bestSector3LapNum - 1];
+                    if (lap) {
+                        const s3Time = calculateSectorTime(lap.m_sector3TimeMinutesPart, lap.m_sector3TimeMSPart);
+                        if (s3Time > 0 && s3Time < overallFastestSectors.s3.time) {
+                            overallFastestSectors.s3 = { carIdx: parseInt(carIdx), time: s3Time };
+                            updated = true;
+                        }
+                    }
+                }
+            }
+            
+            if (updated) {
+                updateDisplay();
+            }
+        }
+        
+        // Update the display with current fastest sectors
+        function updateDisplay() {
+            // Update Sector 1
+            if (overallFastestSectors.s1.carIdx >= 0) {
+                const carIdx = overallFastestSectors.s1.carIdx;
+                const driverName = participantNames[carIdx] || 'UNKNOWN';
+                sectorElements.s1.driverName.textContent = driverName.toUpperCase();
+                updateDriverNameStyling(sectorElements.s1.driverName, driverName);
+                sectorElements.s1.sectorTime.textContent = formatTime(overallFastestSectors.s1.time);
+                updateTeamLogo(sectorElements.s1.teamLogo, participantTeamIds[carIdx]);
+            }
+            
+            // Update Sector 2
+            if (overallFastestSectors.s2.carIdx >= 0) {
+                const carIdx = overallFastestSectors.s2.carIdx;
+                const driverName = participantNames[carIdx] || 'UNKNOWN';
+                sectorElements.s2.driverName.textContent = driverName.toUpperCase();
+                updateDriverNameStyling(sectorElements.s2.driverName, driverName);
+                sectorElements.s2.sectorTime.textContent = formatTime(overallFastestSectors.s2.time);
+                updateTeamLogo(sectorElements.s2.teamLogo, participantTeamIds[carIdx]);
+            }
+            
+            // Update Sector 3
+            if (overallFastestSectors.s3.carIdx >= 0) {
+                const carIdx = overallFastestSectors.s3.carIdx;
+                const driverName = participantNames[carIdx] || 'UNKNOWN';
+                sectorElements.s3.driverName.textContent = driverName.toUpperCase();
+                updateDriverNameStyling(sectorElements.s3.driverName, driverName);
+                sectorElements.s3.sectorTime.textContent = formatTime(overallFastestSectors.s3.time);
+                updateTeamLogo(sectorElements.s3.teamLogo, participantTeamIds[carIdx]);
+            }
+        }
+        
+        // Handle Session History packet (ID: 11)
+        function handleSessionHistoryPacket(data) {
+            // Store the session history for this car
+            storeSessionHistory(data);
+            
+            // Update overall fastest sectors
+            updateOverallFastestSectors();
+        }
+        
+        // Socket listener for F1 data
+        socket.on('f1_data', (data) => {
+            const packetId = data.m_header.m_packetId;
+            
+            if (packetId === 1) {
+                handleSessionPacket(data);
+            } else if (packetId === 4) {
+                handleParticipantsPacket(data);
+            } else if (packetId === 11) {
+                handleSessionHistoryPacket(data);
+            }
+        });
+        
+        // Initialize
+        loadJsonFiles();
+    </script>
+</body>
+</html>

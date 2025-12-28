@@ -23,6 +23,9 @@ Use these overlays in recording software (e.g. OBS). Size is described in (Width
 - Turn Indicator
     - http://localhost:3000/turn-indicator
     - Size: 300 x 80
+- Fastest Sectors
+    - http://localhost:3000/fastest-sectors
+    - Size: 310 x 625
 - Position Debug **(DEBUG ONLY)**
     - http://localhost:3000/position-Debug
     - Debug only, useful for position setup
