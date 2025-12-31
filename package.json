@@ -7,7 +7,7 @@
     "start": "bun index.js",
     "start:node": "node index.js"
   },
-  "keywords": [],
+  "keywords": ["formula 1", "f1tv", "hud", "mod", "f1 25", "codemasters", "f1 game"],
   "author": "Mantazzo",
   "license": "GPL-3.0-or-later",
   "dependencies": {
