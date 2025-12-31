@@ -1,4 +1,7 @@
 # F1TV-HUD-Reworked
+
+![GitHub package.json version](https://img.shields.io/github/package-json/v/mantazzo/F1TV-HUD-Reworked) ![GitHub last commit](https://img.shields.io/github/last-commit/mantazzo/F1TV-HUD-Reworked?style=flat-square) ![GitHub License](https://img.shields.io/github/license/mantazzo/F1TV-HUD-Reworked?style=flat-square)
+
 F1TV HUD mod for latest Codemasters games, reworked and improved
 
 [Originally created by MISS1LE](https://www.overtake.gg/downloads/f1tv-tv-style-hud.70701/) (check out his original mod on Overtake.gg), reworked for F1 25 by Mantazzo 
@@ -10,16 +13,16 @@ This project is worked on with Windows systems in mind - it may work on Linux as
 ## Installation
 
 1. **Install Bun or Node.js on Windows.**  
-   At the moment, I currently recommend using [Bun](https://bun.sh/) Framework as it is more performative with virtually no differences to the classic Node.js.
+   At the moment, I currently recommend using [Bun](https://bun.sh/) Framework as it is considered to be more performative with virtually no differences to the classic Node.js.
    Setting it up on Windows systems is also easy - just run `irm bun.sh/install.ps1 | iex` in Powershell or Terminal and wait a little for it to install.
 
    If you prefer to use the classic Node.js framework, I would recommend using tools like [Nodist](https://github.com/nodists/nodist) or [NVM for Windows](https://github.com/coreybutler/nvm-windows) for easier version management.  
    I used the latest LTS version (v22.19.0 at the time of writing) when setting up, but most recent versions should work.
 
 2. **Clone the repository or download the latest version.**  
-   You can clone with `git clone https://github.com/mantazzo/F1TV-HUD-Reworked.git` or download the ZIP file [here](https://github.com/mantazzo/F1TV-HUD-Reworked/archive/refs/heads/main.zip).
+   You can clone with `git clone https://github.com/mantazzo/F1TV-HUD-Reworked.git` or download the ZIP file [by clicking on the text here](https://github.com/mantazzo/F1TV-HUD-Reworked/archive/refs/heads/main.zip).
 
-3. **Extract the files** to any location on your computer.
+3. **Extract the files** to any location on your computer (if you have downloaded the ZIP file).
 
 4. **Navigate to the main folder.**  
    You should see `index.js`, `package.json`, and folders like `views/`, `public/`, and `images/`.  
@@ -38,12 +41,12 @@ This project is worked on with Windows systems in mind - it may work on Linux as
 
 ## Configuration
 - Ensure telemetry is enabled in F1 25 and set to port you entered in the Terminal.
-- If the overlay doesn't work, check the Terminal for error messages and/or verify telemetry settings.
+- If the overlays don't work, check the Terminal for error messages and/or verify telemetry settings.
 
 ## Future Improvements
 - Adding pictures and more detailed setup guides.
-- Easier port configuration (if possible).
-- Setting up the rest of the overlays (Timer, Leaderboard, Driver Info, etc).
+- Easier port configuration (if possible to improve upon it).
+- Setting up the rest of the overlays (Leaderboard, Driver Info, etc - [check TODO.md for more details](https://github.com/mantazzo/F1TV-HUD-Reworked/blob/main/TODO.md)).
 
 ## License & Contributions
 This project is licensed under GNU GPLv3. Check the [LICENSE](https://github.com/mantazzo/F1TV-HUD-Reworked/blob/main/LICENSE) for more info.

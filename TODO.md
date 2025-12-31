@@ -5,7 +5,7 @@
 - Speedometer
     - Fully remade, animated and responsive
     - Includes an automatic MPH toggle (you can override it in Extended Controller to use the units you want)
-    - Includes F1TV style or Multiviewer style
+    - Includes F1TV style and Multiviewer style
 - Lap Timer
     - Remade with some personal adjustments
     - Shows your current time (if no reference time) or delta (if there is a reference time)
@@ -19,7 +19,7 @@
     - Holds the pit stop values for 6 seconds when exiting pits, then hides
 - Live Speed
     - Remade in full, uses Primary Color from the game or the overwrite from JSON
-    - Dynamic layout change depending on whether you use KPH or MPH as primary units in the game
+    - Dynamic units change depending on whether you use KPH or MPH as primary units in the game
     - A little bit of animation, animating the "LIVE SPEED" header and the "sponsor" logo
     - Color changes accordingly as well for speed values - RED for speed over 200 KPH and LIME when DRS is active
 - Fastest Lap
@@ -32,20 +32,25 @@
     - An overlay showing current weather and weather forecast for the next 5, 10, 15 and 30 minutes
     - Forecast can be toggled using the Extended Controller
     - Primary units change depending on the default temperature units set by the player
-    - Also includes night icons for use at night tracks (needs some more testing)
+    - Also includes night icons for potential use at night tracks (needs some more testing)
 - Turn Indicator
     - Very simple, shows current Turn
-    - Needs data set up by user (example provided)
+    - Needs data set up by user (examples provided)
     - Can use different data depending on game year (potential future backwards support)
     - Needs data for all remaining tracks still
+- Fastest Sectors
+    - Fully remade
+    - Shows the current fastest sector times and driver names
+    - Overlay visibility can be toggled in the Extended Controller
+    - Might need a few extra tweaks for data updates
 
 ## Overlay Controllers
 
 - Original Controller
-    - Not available currently
+    - Not available currently, will probably be done once I get most overlays working
 - Extended Controller
     - Self-made Controller, with primary aim of introducing more functions while keeping the setup relatively easy
-    - Somewhat limited functionality at the moment, but hey, it works!
+    - Somewhat limited functionality at the moment, but hey, it works, and it's pretty easy to expand!
     - Also offers a simple "Shutdown" button
 
 ## Debug overlays
@@ -58,11 +63,11 @@
 
 ## Currently Working On
 
-???
+Minor fixes and improvements in existing overlays
 
 ## Next Planned Overlay
 
-??? (Unsure where to go from here...)
+FIA Stewards Message Box (likely one of the first bigger ones, but at this point it's necessary to start with the bigger ones as well)
 
 ## Not started
 
@@ -71,7 +76,6 @@ In no particular order:
 - Car Damage
 - Driver Ahead and Behind
 - Driver Name
-- Fastest Sectors
 - FIA Stewards (Message Box)
 - Leaderboard (Last Name version is much older and will likely need to be reworked to an extent)
 - Mini Leaderboard
