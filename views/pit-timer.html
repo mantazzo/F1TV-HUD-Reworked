@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="/styles-pit-timer.css">
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/textfit@2.4.0/textFit.min.js"></script>
 </head>
 <body>
     <div class="overlay-container">
@@ -182,26 +183,28 @@
             }
         }
 
-        // Update driver name styling
+        // Update driver name styling using textFit
         function updateDriverNameStyling(name) {
             const nameLength = name.length;
             
+            // Apply font-weight and font-stretch based on name length
             if (nameLength <= 10) {
                 driverNameElement.style.fontWeight = "700";
-                driverNameElement.style.fontStyle = "oblique";
-                driverNameElement.style.fontSize = "26px";
                 driverNameElement.style.fontStretch = "normal";
-            } else if (nameLength <= 12) {
-                driverNameElement.style.fontSize = "26px";
-                driverNameElement.style.fontWeight = "400";
-                driverNameElement.style.fontStyle = "oblique";
-                driverNameElement.style.fontStretch = "condensed";
             } else {
-                driverNameElement.style.fontSize = "24px";
                 driverNameElement.style.fontWeight = "400";
-                driverNameElement.style.fontStyle = "oblique";
                 driverNameElement.style.fontStretch = "condensed";
             }
+            
+            // Use textFit to auto-resize font to fit container
+            textFit(driverNameElement, {
+                minFontSize: 20,
+                maxFontSize: 26,
+                multiLine: false,
+                alignHoriz: true,
+                alignVert: false,
+                widthOnly: true
+            });
         }
 
         // Update display
