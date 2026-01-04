@@ -5,6 +5,7 @@
     <link rel="stylesheet" href="/fonts.css">
     <link rel="stylesheet" href="/styles-weather.css">
     <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/textfit@2.4.0/textFit.min.js"></script>
 </head>
 <body>
     <div class="weather-container">
@@ -270,7 +271,7 @@
             setWeatherIcon(currentWeatherIcon, weatherId);
         }
         
-        // Update forecast row with dynamic font sizing for long weather names
+        // Update forecast row with dynamic font sizing using textFit
         function updateForecastRow(index, weatherId, rainChance) {
             const row = forecastRows[index];
             if (row) {
@@ -281,14 +282,15 @@
                 const weatherName = getWeatherName(weatherId);
                 row.condition.textContent = weatherName;
                 
-                // Reduce font size for longer weather names to fit on one line
-                if (weatherName.length > 10) {
-                    row.condition.style.fontSize = '14px';
-                } else if (weatherName.length > 8) {
-                    row.condition.style.fontSize = '16px';
-                } else {
-                    row.condition.style.fontSize = '20px';
-                }
+                // Use textFit to auto-resize font to fit container
+                textFit(row.condition, {
+                    minFontSize: 14,
+                    maxFontSize: 20,
+                    multiLine: false,
+                    alignHoriz: true,
+                    alignVert: false,
+                    widthOnly: true
+                });
                 
                 row.chance.textContent = `${Math.round(rainChance)}%`;
             }
