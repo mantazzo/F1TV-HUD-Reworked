@@ -193,6 +193,15 @@
     font-display: swap;
 }
 
+@font-face {
+    font-family: 'F1TV-2022-Logos';
+    src: url('/fonts/woff2/F1TV-2022-Logos.woff2') format('woff2'),
+         url('/fonts/F1TV-2022-Logos.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
 /* Legacy/Other fonts */
 @font-face {
     font-family: 'F1TVnumbers';

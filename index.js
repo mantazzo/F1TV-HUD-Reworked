@@ -197,6 +197,7 @@ prompt.get(promptSchema, (err, result) => {
     app.get('/turn-indicator', (req, res) => res.sendFile(path.join(__dirname, 'views', 'turn-indicator.html')));
     app.get('/controller-extended', (req, res) => res.sendFile(path.join(__dirname, 'views', 'controller-extended.html')));
     app.get('/fastest-sectors', (req, res) => res.sendFile(path.join(__dirname, 'views', 'fastest-sectors.html')));
+    app.get('/message-box', (req, res) => res.sendFile(path.join(__dirname, 'views', 'message-box.html')));
 
     // Public Debug pages
     app.get('/position-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'position-debug.html')));

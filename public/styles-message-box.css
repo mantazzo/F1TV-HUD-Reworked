@@ -1,0 +1,365 @@
+/* F1 Message Box Overlay - Base Structure */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: transparent;
+}
+
+/* Main container - FULLY VISIBLE FOR DEVELOPMENT */
+.message-box-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 710px;
+    height: 115px;
+    opacity: 1;
+    z-index: 1000;
+    overflow: hidden;
+}
+
+/* ===== item_1_1: Top Stripe (1250x15px) ===== */
+.top-stripe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1250px;
+    height: 15px;
+    background: transparent;
+    overflow: hidden;
+    opacity: 0.5;
+}
+
+/* item_1_1_1: Base white rectangle */
+.stripe-base {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1250px;
+    height: 15px;
+    background-color: rgb(255, 255, 255);
+    opacity: 0.05;
+}
+
+/* item_1_1_2: Diagonal stripes layer container */
+.diagonal-stripes-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1250px;
+    height: 15px;
+    opacity: 0.1;
+}
+
+/* layer-repetition wrappers for stripes */
+.layer-repetition {
+    position: absolute;
+    top: 0;
+    width: 100px;
+    height: 15px;
+}
+
+/* item_1_1_3r0 to item_1_1_3r152: Individual diagonal stripes */
+.diagonal-stripe {
+    position: absolute;
+    left: -40px;
+    top: -5px;
+    width: 100px;
+    height: 2px;
+    background-color: rgb(255, 255, 255);
+    transform: rotate(-45deg);
+}
+
+/* item_1_1_4: Blur effect rectangle */
+.stripe-blur {
+    position: absolute;
+    left: 0;
+    top: 6px;
+    width: 1250px;
+    height: 10px;
+    border-style: solid;
+    border-width: 0 0 8px 0;
+    border-color: rgb(0, 0, 0);
+    opacity: 0.3;
+    filter: blur(3px);
+}
+
+/* item_1_1_5 & item_1_1_6: Gradient images */
+.stripe-gradient {
+    position: absolute;
+    top: 0;
+    width: 10000px;
+    height: 12px;
+    object-fit: none;
+    object-position: left top;
+}
+
+.stripe-gradient-1 {
+    left: -1000px;
+}
+
+.stripe-gradient-2 {
+    left: -1000px;
+}
+
+/* CSS class for gradient background (from SimHub) */
+.imgo7796v3wl {
+    background-size: 10000px 12px;
+}
+
+/* ===== item_1_2: Main Penalties Container ===== */
+.penalties-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 710px;
+    height: 115px;
+}
+
+/* item_1_3r0: Blue rectangle background (710x100px) */
+.blue-background {
+    position: absolute;
+    top: 15px;
+    left: 0;
+    width: 710px;
+    height: 100px;
+    background-color: rgb(8, 35, 67);
+    z-index: 1;
+}
+
+/* item_1_4r0: White nameplate section (575x100px) */
+.nameplate-section {
+    position: absolute;
+    top: 15px;
+    left: 135px;
+    width: 575px;
+    height: 100px;
+    overflow: hidden;
+    z-index: 2;
+}
+
+/* item_1_4r0_1: White background */
+.nameplate-background {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 800px;
+    height: 100px;
+    background-color: rgb(255, 255, 255);
+}
+
+/* item_1_4r0_2: Nameplate diagonal stripes layer */
+.nameplate-stripes-layer {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 800px;
+    height: 100px;
+    opacity: 0.05;
+}
+
+/* nameplate-layer-repetition wrappers for stripes */
+.nameplate-layer-repetition {
+    position: absolute;
+    top: 0;
+    width: 355px;
+    height: 100px;
+}
+
+/* item_1_4r0_3r0 to item_1_4r0_3r14: Individual diagonal stripes */
+.nameplate-diagonal-stripe {
+    position: absolute;
+    left: -225.917px;
+    top: 35.5825px;
+    width: 355px;
+    height: 20px;
+    background-color: rgb(0, 0, 0);
+    transform: rotate(-45deg);
+}
+
+/* item_1_5r0 (was item_1_16r0): FIA logo section (135x100px) */
+.fia-logo-section {
+    position: absolute;
+    top: 15px;
+    left: 0;
+    width: 135px;
+    height: 100px;
+    background-color: rgb(8, 35, 67);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 3;
+}
+
+/* FIA logo using F1TV-2022-Logos font */
+.fia-logo {
+    font-family: 'F1TV-2022-Logos', sans-serif;
+    font-size: 75px;
+    font-weight: 400;
+    color: rgb(255, 255, 255);
+    line-height: 1;
+}
+
+/* ===== item_1_12r0: Penalty Popup Layer ===== */
+.penalty-popup-layer {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 710px;
+    height: 115px;
+    opacity: 1;
+    pointer-events: none;
+    z-index: 10;
+}
+
+/* item_1_13r0r0: Blue background for penalty message */
+.penalty-background {
+    position: absolute;
+    left: 375px;
+    top: 15px;
+    width: 335px;
+    height: 100px;
+    background-color: rgb(8, 35, 67);
+    opacity: 1;
+}
+
+/* item_1_14r0r0: White bordered box for PENALTY text */
+.penalty-box {
+    position: absolute;
+    left: 29px;
+    top: 20px;
+    width: 280px;
+    height: 60px;
+    opacity: 1;
+    background-color: rgb(8, 35, 67);
+    border-radius: 8px;
+    border: 4px solid rgb(255, 255, 255);
+    box-sizing: border-box;
+}
+
+/* item_1_15r0r0: PENALTY text */
+.penalty-text {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 1;
+    font-family: 'F1TV-2022', sans-serif;
+    font-size: 43px;
+    font-weight: 700;
+    color: rgb(255, 255, 255);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    white-space: pre;
+    box-sizing: border-box;
+}
+
+/* ===== item_1_9r0: Time Penalty Layer ===== */
+.time-penalty-layer {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 710px;
+    height: 115px;
+    display: none;
+    z-index: 11;
+}
+
+/* item_1_10r0r0: Penalty value (e.g., +3, +5) */
+.penalty-value {
+    position: absolute;
+    left: -6px;
+    top: 0;
+    width: 108px;
+    height: 100px;
+    font-family: 'F1TV-2022', sans-serif;
+    font-size: 55px;
+    font-weight: 700;
+    color: rgb(255, 255, 255);
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    text-align: right;
+    white-space: pre;
+    box-sizing: border-box;
+}
+
+/* item_1_11r0r0: SECONDS text */
+.penalty-seconds {
+    position: absolute;
+    left: 111px;
+    top: 0;
+    width: 216px;
+    height: 100px;
+    font-family: 'F1TV-2022', sans-serif;
+    font-size: 32px;
+    font-weight: 700;
+    color: rgb(255, 255, 255);
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    text-align: left;
+    white-space: pre;
+    box-sizing: border-box;
+}
+
+/* ===== item_1_17r0: Name Layer ===== */
+.name-layer {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 710px;
+    height: 115px;
+    display: block;
+    z-index: 11;
+}
+
+/* item_1_18r0r0: First name */
+.driver-first-name {
+    position: absolute;
+    left: 146px;
+    top: 34px;
+    width: 216px;
+    height: 36px;
+    font-family: 'F1TV-2022', sans-serif;
+    font-size: 27px;
+    font-weight: 400;
+    font-style: oblique;
+    color: rgb(8, 35, 67);
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    text-align: left;
+    white-space: pre;
+    box-sizing: border-box;
+}
+
+/* item_1_19r0r0: Last name */
+.driver-last-name {
+    position: absolute;
+    left: 144px;
+    top: 61px;
+    width: 225px;
+    height: 36px;
+    font-family: 'F1TV-2022', sans-serif;
+    font-size: 31px;
+    font-weight: 700;
+    font-style: oblique;
+    color: rgb(8, 35, 67);
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    text-align: left;
+    white-space: pre;
+    box-sizing: border-box;
+}
