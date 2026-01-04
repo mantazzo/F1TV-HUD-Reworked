@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="/styles-fastest-lap.css">
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/textfit@2.4.0/textFit.min.js"></script>
 </head>
 <body>
     <div class="fastest-lap-container">
@@ -169,6 +170,30 @@
             return 'rgb(255, 255, 255)';
         }
 
+        // Update driver name styling with textFit
+        function updateDriverNameStyling(name) {
+            const nameLength = name.length;
+            
+            // Apply font-weight and font-stretch based on name length
+            if (nameLength <= 10) {
+                flDriverName.style.fontWeight = '700';
+                flDriverName.style.fontStretch = 'normal';
+            } else {
+                flDriverName.style.fontWeight = '400';
+                flDriverName.style.fontStretch = 'condensed';
+            }
+            
+            // Use textFit to auto-resize font to fit container
+            textFit(flDriverName, {
+                minFontSize: 28,
+                maxFontSize: 42,
+                multiLine: false,
+                alignHoriz: true,
+                alignVert: false,
+                widthOnly: true
+            });
+        }
+
         function showFastestLapNotification(driverName, lapTime, teamId, vehicleIdx) {
             if (isAnimating) return;
             isAnimating = true;
@@ -189,7 +214,11 @@
                 left: [460, 0],
                 width: [0, 920],
                 duration: ANIMATION_DURATION.SLIDE,
-                easing: 'easeOutQuad'
+                easing: 'easeOutQuad',
+                complete: () => {
+                    // Apply textFit after animation completes and container is fully expanded
+                    updateDriverNameStyling(driverName.toUpperCase());
+                }
             });
             
             anime({

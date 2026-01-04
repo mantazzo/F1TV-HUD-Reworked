@@ -254,6 +254,8 @@ body {
     text-transform: uppercase;
     text-shadow: 1.41421px 1.41421px 2px rgb(0, 0, 0);
     white-space: pre;
+    box-sizing: border-box;
+    padding-right: 10px;
 }
 
 /* Lap time section - right side */
