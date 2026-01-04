@@ -197,6 +197,8 @@ body {
     font-weight: 700;
     font-style: oblique;
     color: white;
+    box-sizing: border-box;
+    padding-right: 10px;
     transition: font-size 0.3s ease, font-family 0.3s ease;
 }
 

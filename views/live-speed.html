@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/fonts.css">
     <link rel="stylesheet" href="/styles-live-speed.css">
     <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/textfit@2.4.0/textFit.min.js"></script>
 </head>
 <body>
     <div class="overlay-container">
@@ -272,34 +273,31 @@
             }
         }
         
-        // Update driver name with dynamic font based on length
+        // Update driver name with dynamic font based on length using textFit
         function updateDriverName(name) {
             if (!name) return;
             
             driverName.textContent = name;
             const nameLength = name.length;
             
-            // Switch to condensed font for names > 10 characters
+            // Apply font-weight and font-stretch based on name length
             if (nameLength > 10) {
                 driverName.style.fontWeight = '400';
-                driverName.style.fontStyle = 'oblique';
                 driverName.style.fontStretch = 'condensed';
-                // Progressive size reduction based on length
-                if (nameLength > 13) {
-                    driverName.style.fontSize = '16px';
-                } else if (nameLength > 12) {
-                    driverName.style.fontSize = '18px';
-                } else if (nameLength > 11) {
-                    driverName.style.fontSize = '20px';
-                } else {
-                    driverName.style.fontSize = '22px';
-                }
             } else {
-                driverName.style.fontSize = '22px';
                 driverName.style.fontWeight = '700';
-                driverName.style.fontStyle = 'oblique';
                 driverName.style.fontStretch = 'normal';
             }
+            
+            // Use textFit to auto-resize font to fit container
+            textFit(driverName, {
+                minFontSize: 14,
+                maxFontSize: 22,
+                multiLine: false,
+                alignHoriz: true,
+                alignVert: false,
+                widthOnly: true
+            });
         }
         
         // Socket.IO event handlers
