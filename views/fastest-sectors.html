@@ -5,6 +5,7 @@
     <link rel="stylesheet" href="/fonts.css">
     <link rel="stylesheet" href="/styles-fastest-sectors.css">
     <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/textfit@2.4.0/textFit.min.js"></script>
 </head>
 <body>
     <div class="overlay-container">
@@ -294,29 +295,26 @@
             }
         }
         
-        // Adjust driver name styling based on length
+        // Adjust driver name styling based on length using textFit
         function updateDriverNameStyling(nameElement, name) {
             const nameLength = name.length;
             
+            // Apply font-stretch for longer names
             if (nameLength <= 10) {
-                nameElement.style.fontSize = '24px';
                 nameElement.style.fontStretch = 'normal';
-            } else if (nameLength <= 12) {
-                nameElement.style.fontSize = '22px';
-                nameElement.style.fontStretch = 'condensed';
-            } else if (nameLength === 13) {
-                nameElement.style.fontSize = '20px';
-                nameElement.style.fontStretch = 'condensed';
-            } else if (nameLength === 14) {
-                nameElement.style.fontSize = '18px';
-                nameElement.style.fontStretch = 'condensed';
-            } else if (nameLength === 15) {
-                nameElement.style.fontSize = '17px';
-                nameElement.style.fontStretch = 'condensed';
             } else {
-                nameElement.style.fontSize = '16px';
-                nameElement.style.fontStretch = 'extra-condensed';
+                nameElement.style.fontStretch = 'condensed';
             }
+            
+            // Use textFit to auto-resize font to fit container
+            textFit(nameElement, {
+                minFontSize: 14,
+                maxFontSize: 24,
+                multiLine: false,
+                alignHoriz: true,
+                alignVert: false,
+                widthOnly: true
+            });
         }
         
         // Update overall fastest sectors across all cars
