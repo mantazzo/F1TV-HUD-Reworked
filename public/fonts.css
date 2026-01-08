@@ -35,6 +35,15 @@
     font-display: swap;
 }
 
+@font-face {
+    font-family: 'Formula1 Display'; /* Black */
+    src: url('/fonts/woff2/Formula1-Black.woff2') format('woff2'),
+         url('/fonts/Formula1-Black.ttf') format('truetype');
+    font-weight: 900;
+    font-style: normal;
+    font-display: swap;
+}
+
 /* Formula1 TV fonts */
 @font-face {
     font-family: 'Formula1 TV'; /* Regular */

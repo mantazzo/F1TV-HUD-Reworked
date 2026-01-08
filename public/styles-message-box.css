@@ -395,3 +395,206 @@ body {
     font-weight: 700;
     font-size: 22px;
 }
+
+/* ===== item_1_20r0: Transition Lines Layer ===== */
+.transition-lines-layer {
+    position: absolute;
+    left: -240px;
+    top: 15px;
+    width: 0;
+    height: 100px;
+    opacity: 0; /* Visible for development */
+    z-index: 12;
+}
+
+/* Transition lines container */
+.transition-lines-container {
+    position: relative;
+    width: 711px;
+    height: 117px;
+    overflow: hidden;
+}
+
+/* ===== Formation Lap Box (separate from message-box-container) ===== */
+/* item_2: Formation Lap Container */
+.formation-lap-container {
+    position: absolute;
+    top: 0;
+    left: 87.5px;
+    width: 535px;
+    height: 90px;
+    overflow: hidden;
+    display: none;
+    z-index: 1100;
+}
+
+/* item_2_2r0: Formation Lap Box Background */
+.formation-lap-box {
+    position: absolute;
+    top: 15px;
+    left: 0;
+    width: 535px;
+    height: 88px;
+    background-color: rgb(18, 20, 26);
+    overflow: hidden;
+}
+
+/* item_2_2r0_2r0: Formation Lap Text */
+.formation-lap-text {
+    position: absolute;
+    top: 0;
+    left: 32px;
+    width: 470px;
+    height: 78px;
+    font-family: 'Formula1 Display', sans-serif;
+    font-weight: 950;
+    font-size: 44px;
+    color: rgb(255, 255, 255);
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: pre;
+}
+
+/* item_2_2r0_3r0: Red Line */
+.formation-lap-red-line {
+    position: absolute;
+    top: 8px;
+    left: 0;
+    width: 535px;
+    height: 3px;
+    background-color: rgb(255, 0, 0);
+}
+
+/* ===== item_2_3r0: Formation Lap Stroke (Top Stripe Pattern) ===== */
+.formation-lap-stroke {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1250px;
+    height: 15px;
+    opacity: 0.5;
+}
+
+/* item_2_3r0_1: Stroke Base Rectangle */
+.formation-stroke-base {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1250px;
+    height: 15px;
+    background-color: rgb(255, 255, 255);
+    opacity: 0.05;
+}
+
+/* item_2_3r0_2: Stroke Diagonal Layer */
+.formation-stroke-diagonal-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1250px;
+    height: 15px;
+    opacity: 0.1;
+}
+
+/* Formation Lap stroke diagonal stripe wrappers */
+.formation-stroke-layer-repetition {
+    position: absolute;
+    top: 0;
+}
+
+/* Formation Lap stroke diagonal stripe element */
+.formation-stroke-diagonal-stripe {
+    position: absolute;
+    top: -5px;
+    left: -40px;
+    width: 100px;
+    height: 2px;
+    background-color: rgb(255, 255, 255);
+    transform: rotate(-45deg);
+}
+
+/* item_2_3r0_4: Stroke Blur Effect */
+.formation-stroke-blur {
+    position: absolute;
+    top: 6px;
+    left: 0;
+    width: 1250px;
+    height: 10px;
+    border-style: solid;
+    border-width: 0 0 8px 0;
+    border-color: rgb(0, 0, 0);
+    opacity: 0.3;
+    filter: blur(3px);
+}
+
+/* item_2_3r0_5 & item_2_3r0_6: Stroke Gradient Images */
+.formation-stroke-gradient {
+    position: absolute;
+    top: 0;
+    left: -1000px;
+    width: 10000px;
+    height: 12px;
+    object-fit: cover;
+}
+
+.formation-stroke-gradient-1 {
+    z-index: 1;
+}
+
+.formation-stroke-gradient-2 {
+    z-index: 2;
+}
+
+/* Base styling for all transition lines */
+.transition-line {
+    position: absolute;
+    opacity: 0.8;
+    transform: rotate(45deg);
+}
+
+/* item_1_20r0_1 */
+.transition-line-1 {
+    left: 342px;
+    top: -95px;
+    width: 66px;
+    height: 325px;
+    background-color: rgb(95, 104, 122);
+}
+
+/* item_1_20r0_2 */
+.transition-line-2 {
+    left: 491px;
+    top: -90px;
+    width: 46px;
+    height: 325px;
+    background-color: rgb(140, 143, 154);
+}
+
+/* item_1_20r0_3 */
+.transition-line-3 {
+    left: 411px;
+    top: -75px;
+    width: 46px;
+    height: 325px;
+    background-color: rgb(114, 120, 134);
+}
+
+/* item_1_20r0_4 */
+.transition-line-4 {
+    left: 222px;
+    top: -105px;
+    width: 97px;
+    height: 325px;
+    background-color: rgb(128, 136, 148);
+}
+
+/* item_1_20r0_5 */
+.transition-line-5 {
+    left: 100px;
+    top: -120px;
+    width: 97px;
+    height: 325px;
+    background-color: rgb(156, 166, 180);
+}

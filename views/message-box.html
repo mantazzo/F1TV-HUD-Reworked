@@ -87,8 +87,42 @@
                 </div>
             </div>
             
+            <!-- item_1_20r0: Transition lines -->
+            <div class="transition-lines-layer">
+                <div class="transition-lines-container">
+                    <!-- item_1_20r0_1 -->
+                    <div class="transition-line transition-line-1"></div>
+                    <!-- item_1_20r0_2 -->
+                    <div class="transition-line transition-line-2"></div>
+                    <!-- item_1_20r0_3 -->
+                    <div class="transition-line transition-line-3"></div>
+                    <!-- item_1_20r0_4 -->
+                    <div class="transition-line transition-line-4"></div>
+                    <!-- item_1_20r0_5 -->
+                    <div class="transition-line transition-line-5"></div>
+                </div>
+            </div>
+            
         </div>
         
+    </div>
+
+    <!-- Formation Lap Box (separate from main container) -->
+    <div class="formation-lap-container">
+        <!-- Formation Lap Box Background -->
+        <div class="formation-lap-box">
+            <div class="formation-lap-text">FORMATION LAP</div>
+            <div class="formation-lap-red-line"></div>
+        </div>
+        
+        <!-- Formation Lap Stroke (top stripe) -->
+        <div class="formation-lap-stroke">
+            <div class="formation-stroke-base"></div>
+            <div class="formation-stroke-diagonal-layer" id="formationStrokeDiagonalLayer"></div>
+            <div class="formation-stroke-blur"></div>
+            <img src="/images/message-box/Gradient.png" class="formation-stroke-gradient formation-stroke-gradient-1" alt="">
+            <img src="/images/message-box/Gradient.png" class="formation-stroke-gradient formation-stroke-gradient-2" alt="">
+        </div>
     </div>
     
     <script>
@@ -148,9 +182,37 @@
             console.log('[MessageBox] Generated 15 diagonal stripes for nameplate');
         }
         
+        // Generate Formation Lap stroke diagonal stripes
+        function generateFormationStrokeDiagonalStripes() {
+            const layer = document.getElementById('formationStrokeDiagonalLayer');
+            
+            // item_2_3r0_3r0: First stripe (no wrapper)
+            const firstStripe = document.createElement('div');
+            firstStripe.className = 'formation-stroke-diagonal-stripe';
+            firstStripe.id = 'formation-stroke-stripe-0';
+            layer.appendChild(firstStripe);
+            
+            // item_2_3r0_3r1 to item_2_3r0_3r152: Stripes with wrappers
+            for (let i = 1; i <= 152; i++) {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'formation-stroke-layer-repetition';
+                wrapper.style.left = (i * 9) + 'px';
+                
+                const stripe = document.createElement('div');
+                stripe.className = 'formation-stroke-diagonal-stripe';
+                stripe.id = `formation-stroke-stripe-${i}`;
+                
+                wrapper.appendChild(stripe);
+                layer.appendChild(wrapper);
+            }
+            
+            console.log('[MessageBox] Generated 153 diagonal stripes for Formation Lap stroke');
+        }
+        
         // Generate stripes immediately
         generateDiagonalStripes();
         generateNameplateStripes();
+        generateFormationStrokeDiagonalStripes();
         
         // Basic setup - no logic yet, just structure
         console.log('[MessageBox] Overlay loaded');
