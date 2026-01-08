@@ -221,36 +221,243 @@
         const messageBoxLayer = document.querySelector('.message-box-layer');
         const messageText = document.querySelector('.message-text');
         
+        // Driver data storage
+        let participantRaceNumbers = {};
+        let participantAbbreviations = {};
+        let aiDrivers = {};
+        let customDrivers = [];
+        let eventCodes = {};
+        let teamNames = {};
+        let formulaType = 0;
+        
+        // Listen for drivers data from server
+        socket.on('drivers_data', (data) => {
+            aiDrivers = data;
+            console.log('[MessageBox] AI drivers updated from server:', Object.keys(aiDrivers).length, 'drivers');
+        });
+        
+        // Listen for event codes from server
+        socket.on('event_codes', (data) => {
+            eventCodes = data;
+            console.log('[MessageBox] Event codes received:', Object.keys(eventCodes).length, 'codes');
+        });
+        
+        // Load JSON files (teams and custom drivers)
+        async function loadJsonFiles() {
+            try {
+                const promises = [fetch('/data/DefaultTeams.json')];
+                if (formulaType === 0) {
+                    promises.push(fetch('/data/CustomF1Drivers.json'));
+                } else if (formulaType === 2) {
+                    promises.push(fetch('/data/CustomF2Drivers.json'));
+                }
+                const responses = await Promise.all(promises.map(p => p.catch(() => null)));
+                teamNames = responses[0] ? await responses[0].json() : {};
+                if (responses[1]) {
+                    const customDriversData = await responses[1].json();
+                    customDrivers = Array.isArray(customDriversData) ? customDriversData : [];
+                }
+                console.log('[MessageBox] Loaded team data and', customDrivers.length, 'custom drivers');
+            } catch (error) {
+                console.error('[MessageBox] Error loading JSON files:', error);
+                teamNames = {};
+                customDrivers = [];
+            }
+        }
+        
+        // Match custom driver based on participant data
+        function matchCustomDriver(participant, showOnlineNames) {
+            const raceNumber = participant.m_raceNumber;
+            const name = participant.m_name;
+            const teamId = participant.m_teamId;
+            const team = teamNames[teamId] ? teamNames[teamId].ShortName : `Team_${teamId}`;
+
+            // Priority 1: Exact name match (only if showOnlineNames is 1)
+            // Skip name matching if showOnlineNames is 0 (player shows as "PLAYER")
+            if (showOnlineNames === 1) {
+                for (let driver of customDrivers) {
+                    if (driver.MatchName && driver.MatchName.toUpperCase() === name.toUpperCase()) {
+                        return driver;
+                    }
+                }
+            }
+
+            // Priority 2: Number + Team match
+            for (let driver of customDrivers) {
+                if (driver.RaceNumber && driver.Team && driver.RaceNumber === raceNumber && driver.Team === team) {
+                    return driver;
+                }
+            }
+
+            // Priority 3: Number only match
+            for (let driver of customDrivers) {
+                if (driver.RaceNumber && driver.RaceNumber === raceNumber) {
+                    return driver;
+                }
+            }
+
+            return null;
+        }
+        
+        // Load JSON files on startup
+        loadJsonFiles();
+        
         // Listen for F1 data packets
         socket.on('f1_data', (data) => {
-            // Filter for Event packets (packet ID 3)
-            if (!data.m_header || data.m_header.m_packetId !== 3) {
+            const packetId = data.m_header ? data.m_header.m_packetId : -1;
+            
+            // Handle Participants packet (packet ID 4)
+            if (packetId === 4) {
+                participantRaceNumbers = {};
+                participantAbbreviations = {};
+                const numActiveCars = data.m_participants.length;
+                
+                for (let i = 0; i < numActiveCars; i++) {
+                    const participant = data.m_participants[i];
+                    const index = participant.m_participantIndex !== undefined ? participant.m_participantIndex : i;
+                    const driverId = participant.m_driverId;
+                    const showOnlineNames = participant.m_showOnlineNames;
+                    const raceNumber = participant.m_raceNumber;
+                    const teamId = participant.m_teamId;
+                    
+                    // Store race number
+                    participantRaceNumbers[index] = raceNumber || 0;
+                    
+                    // Get abbreviation
+                    if (driverId === 255) {
+                        // Custom driver
+                        const customDriver = matchCustomDriver(participant, showOnlineNames);
+                        if (customDriver) {
+                            participantAbbreviations[index] = customDriver.Abbreviation || customDriver.abbreviation || 'XXX';
+                        } else {
+                            // Fallback: Use team name
+                            const team = teamNames[teamId];
+                            if (team && team.ShortName) {
+                                participantAbbreviations[index] = team.ShortName.substring(0, 3).toUpperCase();
+                            } else {
+                                participantAbbreviations[index] = 'XXX';
+                            }
+                        }
+                    } else {
+                        // AI driver
+                        const aiDriver = aiDrivers[driverId];
+                        if (aiDriver && aiDriver.abbreviation) {
+                            participantAbbreviations[index] = aiDriver.abbreviation.toUpperCase();
+                        } else {
+                            // Fallback: Use team name
+                            const team = teamNames[teamId];
+                            if (team && team.ShortName) {
+                                participantAbbreviations[index] = team.ShortName.substring(0, 3).toUpperCase();
+                            } else {
+                                participantAbbreviations[index] = 'XXX';
+                            }
+                        }
+                    }
+                }
+                
+                console.log('[MessageBox] Updated participant data for', numActiveCars, 'drivers');
                 return;
             }
             
-            const eventCode = data.m_eventStringCode;
-            
-            // Handle DRS Enabled event
-            if (eventCode === 'DRSE') {
-                showMessage('RACE CONTROL:', 'DRS ENABLED');
-            }
-            
-            // Handle DRS Disabled event
-            if (eventCode === 'DRSD') {
-                const eventDetails = data.m_eventDetails || {};
-                const reason = eventDetails.reason !== undefined ? eventDetails.reason : -1;
+            // Handle Event packets (packet ID 3)
+            if (packetId === 3) {
+                const eventCode = data.m_eventStringCode;
                 
-                // If reason is 0 (wet track/weather), show weather message
-                if (reason === 0) {
-                    showMessage('RACE CONTROL:', 'DRS DISABLED DUE TO WEATHER');
-                } else {
-                    showMessage('RACE CONTROL:', 'DRS DISABLED');
+                // Handle DRS Enabled event
+                if (eventCode === eventCodes.DRSEnabled) {
+                    showMessage('RACE CONTROL:', 'DRS ENABLED');
                 }
-            }
-            
-            // Handle Red Flag event
-            if (eventCode === 'RDFL') {
-                showMessage('RACE CONTROL:', 'SESSION STOPPED - RED FLAG');
+                
+                // Handle DRS Disabled event
+                if (eventCode === eventCodes.DRSDisabled) {
+                    const eventDetails = data.m_eventDetails || {};
+                    const reason = eventDetails.reason !== undefined ? eventDetails.reason : -1;
+                    
+                    // If reason is 0 (wet track/weather), show weather message
+                    if (reason === 0) {
+                        showMessage('RACE CONTROL:', 'DRS DISABLED DUE TO WEATHER');
+                    } else {
+                        showMessage('RACE CONTROL:', 'DRS DISABLED');
+                    }
+                }
+                
+                // Handle Red Flag event
+                if (eventCode === eventCodes.RedFlag) {
+                    showMessage('RACE CONTROL:', 'SESSION STOPPED - RED FLAG');
+                }
+                
+                // Handle Retirement event
+                if (eventCode === eventCodes.Retirement) {
+                    const eventDetails = data.m_eventDetails || {};
+                    const vehicleIdx = eventDetails.vehicleIdx !== undefined ? eventDetails.vehicleIdx : -1;
+                    const reason = eventDetails.reason !== undefined ? eventDetails.reason : -1;
+                    
+                    // Only show message for specific retirement reasons (1, 3, 6, 8)
+                    if (vehicleIdx >= 0 && (reason === 1 || reason === 3 || reason === 6 || reason === 8)) {
+                        const raceNumber = participantRaceNumbers[vehicleIdx] || 0;
+                        const abbreviation = participantAbbreviations[vehicleIdx] || null;
+                        
+                        // Build message: "CAR XX (ABC) HAS RETIRED"
+                        let messageText = `CAR ${raceNumber}`;
+                        if (abbreviation) {
+                            messageText += ` (${abbreviation})`;
+                        }
+                        messageText += ' HAS RETIRED';
+                        
+                        // Add reason suffix
+                        if (reason === 3) {
+                            messageText += ' - TERMINAL DAMAGE';
+                        } else if (reason === 6) {
+                            messageText += ' - DISQUALIFIED';
+                        } else if (reason === 8) {
+                            messageText += ' - MECHANICAL FAILURE';
+                        }
+                        
+                        showMessage('RACE CONTROL:', messageText);
+                        console.log('[MessageBox] Retirement - Car', raceNumber, abbreviation || '', 'Reason:', reason);
+                    }
+                }
+                
+                // Handle Safety Car event
+                if (eventCode === eventCodes.SafetyCar) {
+                    const eventDetails = data.m_eventDetails || {};
+                    const safetyCarType = eventDetails.safetyCarType !== undefined ? eventDetails.safetyCarType : -1;
+                    const eventType = eventDetails.eventType !== undefined ? eventDetails.eventType : -1;
+                    
+                    // Safety Car
+                    if (safetyCarType === 1) {
+                        if (eventType === 0) {
+                            showMessage('RACE CONTROL:', 'SAFETY CAR DEPLOYED');
+                        } else if (eventType === 1) {
+                            showMessage('RACE CONTROL:', 'SAFETY CAR IN THIS LAP');
+                        }
+                    }
+                    // Virtual Safety Car
+                    else if (safetyCarType === 2) {
+                        if (eventType === 0) {
+                            showMessage('RACE CONTROL:', 'VSC DEPLOYED');
+                        } else if (eventType === 1) {
+                            showMessage('RACE CONTROL:', 'VSC ENDING');
+                        }
+                    }
+                    // Formation Lap
+                    else if (safetyCarType === 3) {
+                        const formationLapContainer = document.querySelector('.formation-lap-container');
+                        if (eventType === 0) {
+                            // Formation lap starting - show container
+                            if (formationLapContainer) {
+                                formationLapContainer.style.display = 'block';
+                                console.log('[MessageBox] Formation lap started');
+                            }
+                        } else if (eventType === 3) {
+                            // Formation lap ending - hide container
+                            if (formationLapContainer) {
+                                formationLapContainer.style.display = 'none';
+                                console.log('[MessageBox] Formation lap ended');
+                            }
+                        }
+                    }
+                }
             }
         });
         
