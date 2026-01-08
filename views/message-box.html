@@ -214,7 +214,67 @@
         generateNameplateStripes();
         generateFormationStrokeDiagonalStripes();
         
-        // Basic setup - no logic yet, just structure
+        // Identify to server
+        socket.emit('identify', 'Message Box');
+        
+        // Get DOM elements
+        const messageBoxLayer = document.querySelector('.message-box-layer');
+        const messageText = document.querySelector('.message-text');
+        
+        // Listen for F1 data packets
+        socket.on('f1_data', (data) => {
+            // Filter for Event packets (packet ID 3)
+            if (!data.m_header || data.m_header.m_packetId !== 3) {
+                return;
+            }
+            
+            const eventCode = data.m_eventStringCode;
+            
+            // Handle DRS Enabled event
+            if (eventCode === 'DRSE') {
+                showMessage('RACE CONTROL:', 'DRS ENABLED');
+            }
+            
+            // Handle DRS Disabled event
+            if (eventCode === 'DRSD') {
+                const eventDetails = data.m_eventDetails || {};
+                const reason = eventDetails.reason !== undefined ? eventDetails.reason : -1;
+                
+                // If reason is 0 (wet track/weather), show weather message
+                if (reason === 0) {
+                    showMessage('RACE CONTROL:', 'DRS DISABLED DUE TO WEATHER');
+                } else {
+                    showMessage('RACE CONTROL:', 'DRS DISABLED');
+                }
+            }
+            
+            // Handle Red Flag event
+            if (eventCode === 'RDFL') {
+                showMessage('RACE CONTROL:', 'SESSION STOPPED - RED FLAG');
+            }
+        });
+        
+        // Function to display a message
+        function showMessage(prefix, text) {
+            // Build message with prefix (if provided)
+            if (prefix) {
+                messageText.innerHTML = `<div><span class="message-prefix">${prefix.toUpperCase()}</span> ${text.toUpperCase()}</div>`;
+            } else {
+                messageText.innerHTML = `<div>${text.toUpperCase()}</div>`;
+            }
+            
+            // Show message box
+            messageBoxLayer.style.display = 'block';
+            
+            console.log('[MessageBox] Showing message:', text);
+        }
+        
+        // Function to hide message
+        function hideMessage() {
+            messageBoxLayer.style.display = 'none';
+            console.log('[MessageBox] Message hidden');
+        }
+        
         console.log('[MessageBox] Overlay loaded');
         
     </script>
