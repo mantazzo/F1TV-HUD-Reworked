@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="/styles-message-box.css">
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/textfit@2.4.0/textFit.min.js"></script>
 </head>
 <body>
     <!-- Main overlay container -->
@@ -220,10 +221,15 @@
         // Get DOM elements
         const messageBoxLayer = document.querySelector('.message-box-layer');
         const messageText = document.querySelector('.message-text');
+        const penaltyTextElement = document.querySelector('.penalty-text');
+        const penaltyValueElement = document.querySelector('.penalty-value');
+        const penaltySecondsElement = document.querySelector('.penalty-seconds');
+        const driverFirstNameElement = document.querySelector('.driver-first-name');
+        const driverLastNameElement = document.querySelector('.driver-last-name');
         
         // Driver data storage
-        let participantRaceNumbers = {};
         let participantAbbreviations = {};
+        let participantData = {};  // Store full participant data
         let aiDrivers = {};
         let customDrivers = [];
         let eventCodes = {};
@@ -322,8 +328,8 @@
             
             // Handle Participants packet (packet ID 4)
             if (packetId === 4) {
-                participantRaceNumbers = {};
                 participantAbbreviations = {};
+                participantData = {};  // Reset participant data
                 const numActiveCars = data.m_participants.length;
                 
                 for (let i = 0; i < numActiveCars; i++) {
@@ -334,8 +340,8 @@
                     const raceNumber = participant.m_raceNumber;
                     const teamId = participant.m_teamId;
                     
-                    // Store race number
-                    participantRaceNumbers[index] = raceNumber || 0;
+                    // Store full participant data
+                    participantData[index] = participant;
                     
                     // Get abbreviation
                     if (driverId === 255) {
@@ -408,7 +414,8 @@
                     
                     // Only show message for specific retirement reasons (1, 3, 6, 8)
                     if (vehicleIdx >= 0 && (reason === 1 || reason === 3 || reason === 6 || reason === 8)) {
-                        const raceNumber = participantRaceNumbers[vehicleIdx] || 0;
+                        const participant = participantData[vehicleIdx];
+                        const raceNumber = participant ? participant.m_raceNumber : 0;
                         const abbreviation = participantAbbreviations[vehicleIdx] || null;
                         
                         // Build message: "CAR XX (ABC) HAS RETIRED"
@@ -485,11 +492,12 @@
                     
                     // Only handle specific penalty types: 0 (Drive through), 1 (Stop Go), 4 (Time penalty), 5 (Warning), 6 (Disqualified)
                     if (vehicleIdx >= 0 && (penaltyType === 0 || penaltyType === 1 || penaltyType === 4 || penaltyType === 5 || penaltyType === 6)) {
-                        const raceNumber = participantRaceNumbers[vehicleIdx] || 0;
+                        const participant = participantData[vehicleIdx];
+                        const raceNumber = participant ? participant.m_raceNumber : 0;
                         const abbreviation = participantAbbreviations[vehicleIdx] || null;
                         
                         // Get penalty name and infringement text
-                        const penaltyName = penalties[penaltyType] || 'PENALTY';
+                        const penaltyName = penalties[penaltyType] || 'PENALTY'; // Not really used, though...
                         const infringementText = getInfringementMessage(infringementType);
                         
                         let messageText = '';
@@ -497,16 +505,36 @@
                         // Build message based on penalty type
                         if (penaltyType === 4) {
                             // Time penalty - show time if available
+                            if (penaltyTextElement) {
+                                penaltyTextElement.textContent = 'PENALTY';
+                            }
                             if (time !== 255) {
                                 messageText = `${time} SECOND${time !== 1 ? 'S' : ''} TIME PENALTY FOR CAR ${raceNumber}`;
+                                if (penaltyValueElement) {
+                                    penaltyValueElement.textContent = `+${time}`;
+                                    // Adjust position for 2-digit numbers
+                                    if (time >= 10) {
+                                        penaltyValueElement.style.left = '14px';
+                                        penaltySecondsElement.style.left = '131px';
+                                    } else {
+                                        penaltyValueElement.style.left = '-6px';
+                                        penaltySecondsElement.style.left = '111px';
+                                    }
+                                }
                             } else {
                                 messageText = `TIME PENALTY FOR CAR ${raceNumber}`;
                             }
                         } else if (penaltyType === 5) {
                             // Warning
+                            if (penaltyTextElement) {
+                                penaltyTextElement.textContent = 'WARNING';
+                            }
                             messageText = `WARNING FOR CAR ${raceNumber}`;
                         } else if (penaltyType === 6) {
                             // Disqualified
+                            if (penaltyTextElement) {
+                                penaltyTextElement.textContent = 'PENALTY'; // Probably won't be used here as I intend to not show the penalty-popup for the DSQ
+                            }
                             messageText = `CAR ${raceNumber}`;
                             if (abbreviation) {
                                 messageText += ` (${abbreviation})`;
@@ -514,13 +542,30 @@
                             messageText += ' HAS BEEN DISQUALIFIED';
                         } else if (penaltyType === 1) {
                             // Stop-go - show time if available
+                            if (penaltyTextElement) {
+                                penaltyTextElement.textContent = 'PENALTY';
+                            }
                             if (time !== 255) {
                                 messageText = `${time} SECOND${time !== 1 ? 'S' : ''} STOP/GO TIME PENALTY FOR CAR ${raceNumber}`;
+                                if (penaltyValueElement) {
+                                    penaltyValueElement.textContent = `+${time}`;
+                                    // Adjust position for 2-digit numbers
+                                    if (time >= 10) {
+                                        penaltyValueElement.style.left = '14px';
+                                        penaltySecondsElement.style.left = '131px';
+                                    } else {
+                                        penaltyValueElement.style.left = '-6px';
+                                        penaltySecondsElement.style.left = '111px';
+                                    }
+                                }
                             } else {
                                 messageText = `STOP/GO PENALTY FOR CAR ${raceNumber}`;
                             }
                         } else if (penaltyType === 0) {
                             // Drive through
+                            if (penaltyTextElement) {
+                                penaltyTextElement.textContent = 'PENALTY';
+                            }
                             messageText = `DRIVE THROUGH PENALTY FOR CAR ${raceNumber}`;
                         }
                         
@@ -534,7 +579,8 @@
 
                         // Add involved vehicle (if available)
                         if (otherVehicleIdx >= 0 && otherVehicleIdx !== 255) {
-                            const otherRaceNumber = participantRaceNumbers[otherVehicleIdx] || 0;
+                            const otherParticipant = participantData[otherVehicleIdx];
+                            const otherRaceNumber = otherParticipant ? otherParticipant.m_raceNumber : 0;
                             const otherAbbreviation = participantAbbreviations[otherVehicleIdx] || null;
                             messageText += ` WITH CAR ${otherRaceNumber} (${otherAbbreviation})`;
                         }
@@ -544,7 +590,64 @@
                             messageText += ` - GAINED ${placesGained} POSITION${placesGained !== 1 ? 'S' : ''}`;
                         }
                         
+                        // Update driver name display
+                        if (participant) {
+                            const driverId = participant.m_driverId;
+                            let firstName = '';
+                            let lastName = '';
+                            
+                            if (driverId === 255) {
+                                // Custom driver
+                                const customDriver = matchCustomDriver(participant, participant.m_showOnlineNames);
+                                if (customDriver) {
+                                    firstName = customDriver.FirstName || '';
+                                    lastName = customDriver.LastName || customDriver.DisplayName || 'PLAYER';
+                                } else {
+                                    // Fallback to participant name
+                                    const fullName = participant.m_name || 'PLAYER';
+                                    const nameParts = fullName.split(' ');
+                                    if (nameParts.length > 1) {
+                                        firstName = nameParts[0];
+                                        lastName = nameParts.slice(1).join(' ');
+                                    } else {
+                                        lastName = fullName;
+                                    }
+                                }
+                            } else {
+                                // AI driver
+                                const aiDriver = aiDrivers[driverId];
+                                if (aiDriver) {
+                                    firstName = aiDriver.firstName || '';
+                                    lastName = aiDriver.lastName || '';
+                                }
+                            }
+                            
+                            if (driverFirstNameElement) {
+                                driverFirstNameElement.textContent = firstName.toUpperCase();
+                                textFit(driverFirstNameElement, {
+                                    minFontSize: 14,
+                                    maxFontSize: 27,
+                                    multiLine: false,
+                                    alignHoriz: true,
+                                    alignVert: false,
+                                    widthOnly: true
+                                });
+                            }
+                            if (driverLastNameElement) {
+                                driverLastNameElement.textContent = lastName.toUpperCase();
+                                textFit(driverLastNameElement, {
+                                    minFontSize: 14,
+                                    maxFontSize: 31,
+                                    multiLine: false,
+                                    alignHoriz: true,
+                                    alignVert: false,
+                                    widthOnly: true
+                                });
+                            }
+                        }
+                        
                         showMessage('FIA STEWARDS:', messageText);
+                        //TODO: Set up animations for the popup display and also set up the transition effect for next time I work on this
                         console.log('[MessageBox] Penalty - Car', raceNumber, abbreviation || '', 'Type:', penaltyName, 'Infringement:', infringementText);
                     }
                 }
@@ -556,7 +659,8 @@
                     const stopTime = eventDetails.stopTime !== undefined ? eventDetails.stopTime : 0;
                     
                     if (vehicleIdx >= 0) {
-                        const raceNumber = participantRaceNumbers[vehicleIdx] || 0;
+                        const participant = participantData[vehicleIdx];
+                        const raceNumber = participant ? participant.m_raceNumber : 0;
                         const abbreviation = participantAbbreviations[vehicleIdx] || null;
                         
                         // Build message: "PENALTY SERVED - X SECONDS STOP/GO TIME PENALTY FOR CAR XX (ABC)"
@@ -577,7 +681,8 @@
                     const vehicleIdx = eventDetails.vehicleIdx !== undefined ? eventDetails.vehicleIdx : -1;
                     
                     if (vehicleIdx >= 0) {
-                        const raceNumber = participantRaceNumbers[vehicleIdx] || 0;
+                        const participant = participantData[vehicleIdx];
+                        const raceNumber = participant ? participant.m_raceNumber : 0;
                         const abbreviation = participantAbbreviations[vehicleIdx] || null;
                         
                         // Build message: "PENALTY SERVED - DRIVE THROUGH PENALTY FOR CAR XX (ABC)"
@@ -591,6 +696,8 @@
                         console.log('[MessageBox] Drive Through Served - Car', raceNumber, abbreviation || '');
                     }
                 }
+
+                //TODO: Set up a "FIFO" logic to queue events if multiple happen during the display of one message
             }
         });
         
@@ -600,7 +707,7 @@
                 return 'UNKNOWN INFRINGEMENT';
             }
             
-            // Map similar infringements to consolidated messages
+            // Map similar infringements to consolidated messages (or rename some of them instead)
             const infringementMappings = {
                 3: 'CAUSING A COLLISION',  // Big Collision
                 4: 'CAUSING A COLLISION',  // Small Collision

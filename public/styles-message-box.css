@@ -311,10 +311,10 @@ body {
 /* ===== item_1_17r0: Name Layer ===== */
 .name-layer {
     position: absolute;
-    left: 0;
-    top: 0;
-    width: 710px;
-    height: 115px;
+    left: 135px;
+    top: 15px;
+    width: 240px;
+    height: 100px;
     display: block;
     z-index: 11;
 }
@@ -322,9 +322,9 @@ body {
 /* item_1_18r0r0: First name */
 .driver-first-name {
     position: absolute;
-    left: 146px;
-    top: 34px;
-    width: 216px;
+    left: 10px;
+    top: 19px;
+    width: 230px;
     height: 36px;
     font-family: 'F1TV-2022', sans-serif;
     font-size: 27px;
@@ -337,14 +337,15 @@ body {
     text-align: left;
     white-space: pre;
     box-sizing: border-box;
+    padding-right: 5px;
 }
 
 /* item_1_19r0r0: Last name */
 .driver-last-name {
     position: absolute;
-    left: 144px;
-    top: 61px;
-    width: 225px;
+    left: 10px;
+    top: 46px;
+    width: 230px;
     height: 36px;
     font-family: 'F1TV-2022', sans-serif;
     font-size: 31px;
@@ -357,6 +358,7 @@ body {
     text-align: left;
     white-space: pre;
     box-sizing: border-box;
+    padding-right: 5px;
 }
 
 /* ===== item_1_21: Generic Message Box Layer ===== */
