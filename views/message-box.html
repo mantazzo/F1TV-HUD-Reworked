@@ -490,7 +490,7 @@
                         
                         // Get penalty name and infringement text
                         const penaltyName = penalties[penaltyType] || 'PENALTY';
-                        const infringementText = infringements[infringementType] || 'INFRINGEMENT';
+                        const infringementText = getInfringementMessage(infringementType);
                         
                         let messageText = '';
                         
@@ -511,17 +511,17 @@
                             if (abbreviation) {
                                 messageText += ` (${abbreviation})`;
                             }
-                            messageText += ' DISQUALIFIED';
+                            messageText += ' HAS BEEN DISQUALIFIED';
                         } else if (penaltyType === 1) {
                             // Stop-go - show time if available
                             if (time !== 255) {
-                                messageText = `${time} SECOND${time !== 1 ? 'S' : ''} STOP GO FOR CAR ${raceNumber}`;
+                                messageText = `${time} SECOND${time !== 1 ? 'S' : ''} STOP/GO TIME PENALTY FOR CAR ${raceNumber}`;
                             } else {
-                                messageText = `STOP GO FOR CAR ${raceNumber}`;
+                                messageText = `STOP/GO PENALTY FOR CAR ${raceNumber}`;
                             }
                         } else if (penaltyType === 0) {
                             // Drive through
-                            messageText = `DRIVE THROUGH FOR CAR ${raceNumber}`;
+                            messageText = `DRIVE THROUGH PENALTY FOR CAR ${raceNumber}`;
                         }
                         
                         // Add abbreviation for non-disqualification penalties
@@ -530,7 +530,19 @@
                         }
                         
                         // Add infringement reason
-                        messageText += ` - ${infringementText.toUpperCase()}`;
+                        messageText += ` - ${infringementText}`;
+
+                        // Add involved vehicle (if available)
+                        if (otherVehicleIdx >= 0 && otherVehicleIdx !== 255) {
+                            const otherRaceNumber = participantRaceNumbers[otherVehicleIdx] || 0;
+                            const otherAbbreviation = participantAbbreviations[otherVehicleIdx] || null;
+                            messageText += ` WITH CAR ${otherRaceNumber} (${otherAbbreviation})`;
+                        }
+
+                        // Add positions gained (if applicable)
+                        if (placesGained > 0) {
+                            messageText += ` - GAINED ${placesGained} POSITION${placesGained !== 1 ? 'S' : ''}`;
+                        }
                         
                         showMessage('FIA STEWARDS:', messageText);
                         console.log('[MessageBox] Penalty - Car', raceNumber, abbreviation || '', 'Type:', penaltyName, 'Infringement:', infringementText);
@@ -547,8 +559,8 @@
                         const raceNumber = participantRaceNumbers[vehicleIdx] || 0;
                         const abbreviation = participantAbbreviations[vehicleIdx] || null;
                         
-                        // Build message: "PENALTY SERVED - X SECONDS STOP GO FOR CAR XX (ABC)"
-                        let messageText = `PENALTY SERVED - ${stopTime} SECOND${stopTime !== 1 ? 'S' : ''} STOP GO FOR CAR ${raceNumber}`;
+                        // Build message: "PENALTY SERVED - X SECONDS STOP/GO TIME PENALTY FOR CAR XX (ABC)"
+                        let messageText = `PENALTY SERVED - ${stopTime} SECOND${stopTime !== 1 ? 'S' : ''} STOP/GO TIME PENALTY FOR CAR ${raceNumber}`;
                         
                         if (abbreviation) {
                             messageText += ` (${abbreviation})`;
@@ -581,6 +593,41 @@
                 }
             }
         });
+        
+        // Function to get a cleaner infringement message
+        function getInfringementMessage(infringementType) {
+            if (!infringements || infringementType >= infringements.length) {
+                return 'UNKNOWN INFRINGEMENT';
+            }
+            
+            // Map similar infringements to consolidated messages
+            const infringementMappings = {
+                3: 'CAUSING A COLLISION',  // Big Collision
+                4: 'CAUSING A COLLISION',  // Small Collision
+                5: 'ILLEGAL OVERTAKE',     // Collision failed to hand back position single
+                6: 'ILLEGAL OVERTAKE',     // Collision failed to hand back position multiple
+                7: 'TRACK LIMITS',         // Corner cutting gained time
+                8: 'ILLEGAL OVERTAKE',     // Corner cutting overtake single
+                9: 'ILLEGAL OVERTAKE',     // Corner cutting overtake multiple
+                17: 'SPEEDING IN THE PITLANE', // Pit lane speeding
+                27: 'TRACK LIMITS',        // Corner cutting ran wide gained time minor
+                28: 'TRACK LIMITS',        // Corner cutting ran wide gained time significant
+                29: 'TRACK LIMITS',        // Corner cutting ran wide gained time extreme
+                35: 'COLLISION WITH SC',   // Safety car to car collision
+                36: 'ILLEGAL OVERTAKE',    // Safety car illegal overtake
+                37: 'SPEEDING UNDER SC',   // Safety car exceeding allowed pace
+                38: 'SPEEDING UNDER VSC',  // Virtual safety car exceeding allowed pace
+                43: 'SAFETY CAR INFRINGEMENT', // Safety car falling too far back
+                45: 'UNSERVED STOP/GO TIME PENALTY', // Unserved stop go penalty
+            };
+            
+            // Return mapped message if exists, otherwise use original from array
+            if (infringementMappings[infringementType]) {
+                return infringementMappings[infringementType];
+            }
+            
+            return infringements[infringementType].toUpperCase();
+        }
         
         // Function to display a message
         function showMessage(prefix, text) {
