@@ -2,7 +2,7 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const { F1TelemetryClient, constants } = require('@deltazeroproduction/f1-udp-parser');
-const { PACKETS, DRIVERS, EVENT_CODES, WEATHER } = constants;
+const { PACKETS, DRIVERS, EVENT_CODES, WEATHER, PENALTIES, INFRINGEMENTS } = constants;
 const path = require('path');
 const fs = require('fs');
 const prompt = require('prompt');
@@ -84,7 +84,8 @@ prompt.get(promptSchema, (err, result) => {
         socket.emit('drivers_data', DRIVERS);
         socket.emit('event_codes', EVENT_CODES);
         socket.emit('weather_data', WEATHER);
-        
+        socket.emit('penalties_data', PENALTIES);
+        socket.emit('infringements_data', INFRINGEMENTS);
         // Send current overlay config
         socket.emit('overlay_config', overlayConfig);
         
@@ -201,6 +202,7 @@ prompt.get(promptSchema, (err, result) => {
 
     // Public Debug pages
     app.get('/position-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'position-debug.html')));
+    app.get('/event-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'event-debug.html')));
 
     // Local Debug only - not added in public source code (would prefer to only add these if these files exist)
     app.get('/session-history-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'session-history-debug.html')));

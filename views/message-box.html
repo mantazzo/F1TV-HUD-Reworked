@@ -227,6 +227,8 @@
         let aiDrivers = {};
         let customDrivers = [];
         let eventCodes = {};
+        let penalties = [];
+        let infringements = [];
         let teamNames = {};
         let formulaType = 0;
         
@@ -240,6 +242,18 @@
         socket.on('event_codes', (data) => {
             eventCodes = data;
             console.log('[MessageBox] Event codes received:', Object.keys(eventCodes).length, 'codes');
+        });
+        
+        // Listen for penalties from server
+        socket.on('penalties_data', (data) => {
+            penalties = data;
+            console.log('[MessageBox] Penalties received:', penalties.length, 'types');
+        });
+        
+        // Listen for infringements from server
+        socket.on('infringements_data', (data) => {
+            infringements = data;
+            console.log('[MessageBox] Infringements received:', infringements.length, 'types');
         });
         
         // Load JSON files (teams and custom drivers)
@@ -456,6 +470,113 @@
                                 console.log('[MessageBox] Formation lap ended');
                             }
                         }
+                    }
+                }
+                
+                // Handle Penalty event
+                if (eventCode === eventCodes.PenaltyIssued) {
+                    const eventDetails = data.m_eventDetails || {};
+                    const vehicleIdx = eventDetails.vehicleIdx !== undefined ? eventDetails.vehicleIdx : -1;
+                    const otherVehicleIdx = eventDetails.otherVehicleIdx !== undefined ? eventDetails.otherVehicleIdx : 255;
+                    const penaltyType = eventDetails.penaltyType !== undefined ? eventDetails.penaltyType : -1;
+                    const infringementType = eventDetails.infringementType !== undefined ? eventDetails.infringementType : -1;
+                    const time = eventDetails.time !== undefined ? eventDetails.time : 255;
+                    const placesGained = eventDetails.placesGained !== undefined ? eventDetails.placesGained : 0;
+                    
+                    // Only handle specific penalty types: 0 (Drive through), 1 (Stop Go), 4 (Time penalty), 5 (Warning), 6 (Disqualified)
+                    if (vehicleIdx >= 0 && (penaltyType === 0 || penaltyType === 1 || penaltyType === 4 || penaltyType === 5 || penaltyType === 6)) {
+                        const raceNumber = participantRaceNumbers[vehicleIdx] || 0;
+                        const abbreviation = participantAbbreviations[vehicleIdx] || null;
+                        
+                        // Get penalty name and infringement text
+                        const penaltyName = penalties[penaltyType] || 'PENALTY';
+                        const infringementText = infringements[infringementType] || 'INFRINGEMENT';
+                        
+                        let messageText = '';
+                        
+                        // Build message based on penalty type
+                        if (penaltyType === 4) {
+                            // Time penalty - show time if available
+                            if (time !== 255) {
+                                messageText = `${time} SECOND${time !== 1 ? 'S' : ''} TIME PENALTY FOR CAR ${raceNumber}`;
+                            } else {
+                                messageText = `TIME PENALTY FOR CAR ${raceNumber}`;
+                            }
+                        } else if (penaltyType === 5) {
+                            // Warning
+                            messageText = `WARNING FOR CAR ${raceNumber}`;
+                        } else if (penaltyType === 6) {
+                            // Disqualified
+                            messageText = `CAR ${raceNumber}`;
+                            if (abbreviation) {
+                                messageText += ` (${abbreviation})`;
+                            }
+                            messageText += ' DISQUALIFIED';
+                        } else if (penaltyType === 1) {
+                            // Stop-go - show time if available
+                            if (time !== 255) {
+                                messageText = `${time} SECOND${time !== 1 ? 'S' : ''} STOP GO FOR CAR ${raceNumber}`;
+                            } else {
+                                messageText = `STOP GO FOR CAR ${raceNumber}`;
+                            }
+                        } else if (penaltyType === 0) {
+                            // Drive through
+                            messageText = `DRIVE THROUGH FOR CAR ${raceNumber}`;
+                        }
+                        
+                        // Add abbreviation for non-disqualification penalties
+                        if (penaltyType !== 6 && abbreviation) {
+                            messageText += ` (${abbreviation})`;
+                        }
+                        
+                        // Add infringement reason
+                        messageText += ` - ${infringementText.toUpperCase()}`;
+                        
+                        showMessage('FIA STEWARDS:', messageText);
+                        console.log('[MessageBox] Penalty - Car', raceNumber, abbreviation || '', 'Type:', penaltyName, 'Infringement:', infringementText);
+                    }
+                }
+                
+                // Handle Stop Go Served event
+                if (eventCode === eventCodes.StopGoServed) {
+                    const eventDetails = data.m_eventDetails || {};
+                    const vehicleIdx = eventDetails.vehicleIdx !== undefined ? eventDetails.vehicleIdx : -1;
+                    const stopTime = eventDetails.stopTime !== undefined ? eventDetails.stopTime : 0;
+                    
+                    if (vehicleIdx >= 0) {
+                        const raceNumber = participantRaceNumbers[vehicleIdx] || 0;
+                        const abbreviation = participantAbbreviations[vehicleIdx] || null;
+                        
+                        // Build message: "PENALTY SERVED - X SECONDS STOP GO FOR CAR XX (ABC)"
+                        let messageText = `PENALTY SERVED - ${stopTime} SECOND${stopTime !== 1 ? 'S' : ''} STOP GO FOR CAR ${raceNumber}`;
+                        
+                        if (abbreviation) {
+                            messageText += ` (${abbreviation})`;
+                        }
+                        
+                        showMessage('FIA STEWARDS:', messageText);
+                        console.log('[MessageBox] Stop Go Served - Car', raceNumber, abbreviation || '', 'Stop time:', stopTime);
+                    }
+                }
+                
+                // Handle Drive Through Served event
+                if (eventCode === eventCodes.DriveThroughServed) {
+                    const eventDetails = data.m_eventDetails || {};
+                    const vehicleIdx = eventDetails.vehicleIdx !== undefined ? eventDetails.vehicleIdx : -1;
+                    
+                    if (vehicleIdx >= 0) {
+                        const raceNumber = participantRaceNumbers[vehicleIdx] || 0;
+                        const abbreviation = participantAbbreviations[vehicleIdx] || null;
+                        
+                        // Build message: "PENALTY SERVED - DRIVE THROUGH PENALTY FOR CAR XX (ABC)"
+                        let messageText = `PENALTY SERVED - DRIVE THROUGH PENALTY FOR CAR ${raceNumber}`;
+                        
+                        if (abbreviation) {
+                            messageText += ` (${abbreviation})`;
+                        }
+                        
+                        showMessage('FIA STEWARDS:', messageText);
+                        console.log('[MessageBox] Drive Through Served - Car', raceNumber, abbreviation || '');
                     }
                 }
             }
