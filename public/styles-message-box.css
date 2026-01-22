@@ -13,16 +13,17 @@ body {
     background: transparent;
 }
 
-/* Main container - FULLY VISIBLE FOR DEVELOPMENT */
+/* Main container - Animated slide-in from right */
 .message-box-container {
     position: absolute;
     top: 0;
-    left: 0;
-    width: 710px;
+    left: 355px;
+    width: 0px;
     height: 115px;
-    opacity: 1;
+    opacity: 0;
     z-index: 1000;
     overflow: hidden;
+    transition: left 333ms ease-out, width 333ms ease-out, opacity 333ms ease-out;
 }
 
 /* ===== item_1_1: Top Stripe (1250x15px) ===== */
@@ -405,8 +406,9 @@ body {
     top: 15px;
     width: 0;
     height: 100px;
-    opacity: 0; /* Visible for development */
+    opacity: 0;
     z-index: 12;
+    transition: left 666ms ease-out, width 333ms ease-out, opacity 200ms ease-out;
 }
 
 /* Transition lines container */
@@ -426,7 +428,8 @@ body {
     width: 535px;
     height: 90px;
     overflow: hidden;
-    display: none;
+    opacity: 0;
+    transition: opacity 333ms ease-out;
     z-index: 1100;
 }
 

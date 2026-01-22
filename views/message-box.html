@@ -219,13 +219,18 @@
         socket.emit('identify', 'Message Box');
         
         // Get DOM elements
+        const messageBoxContainer = document.querySelector('.message-box-container');
         const messageBoxLayer = document.querySelector('.message-box-layer');
         const messageText = document.querySelector('.message-text');
+        const transitionLinesLayer = document.querySelector('.transition-lines-layer');
         const penaltyTextElement = document.querySelector('.penalty-text');
         const penaltyValueElement = document.querySelector('.penalty-value');
         const penaltySecondsElement = document.querySelector('.penalty-seconds');
         const driverFirstNameElement = document.querySelector('.driver-first-name');
         const driverLastNameElement = document.querySelector('.driver-last-name');
+        
+        // Animation state
+        let hideTimeout = null;
         
         // Driver data storage
         let participantAbbreviations = {};
@@ -385,7 +390,7 @@
                 
                 // Handle DRS Enabled event
                 if (eventCode === eventCodes.DRSEnabled) {
-                    showMessage('RACE CONTROL:', 'DRS ENABLED');
+                    showMessage('RACE CONTROL:', 'DRS ENABLED', 8000);
                 }
                 
                 // Handle DRS Disabled event
@@ -395,15 +400,15 @@
                     
                     // If reason is 0 (wet track/weather), show weather message
                     if (reason === 0) {
-                        showMessage('RACE CONTROL:', 'DRS DISABLED DUE TO WEATHER');
+                        showMessage('RACE CONTROL:', 'DRS DISABLED DUE TO WEATHER', 8000);
                     } else {
-                        showMessage('RACE CONTROL:', 'DRS DISABLED');
+                        showMessage('RACE CONTROL:', 'DRS DISABLED', 8000);
                     }
                 }
                 
                 // Handle Red Flag event
                 if (eventCode === eventCodes.RedFlag) {
-                    showMessage('RACE CONTROL:', 'SESSION STOPPED - RED FLAG');
+                    showMessage('RACE CONTROL:', 'SESSION STOPPED - RED FLAG', 16000);
                 }
                 
                 // Handle Retirement event
@@ -434,7 +439,7 @@
                             messageText += ' - MECHANICAL FAILURE';
                         }
                         
-                        showMessage('RACE CONTROL:', messageText);
+                        showMessage('RACE CONTROL:', messageText, 8000);
                         console.log('[MessageBox] Retirement - Car', raceNumber, abbreviation || '', 'Reason:', reason);
                     }
                 }
@@ -448,17 +453,17 @@
                     // Safety Car
                     if (safetyCarType === 1) {
                         if (eventType === 0) {
-                            showMessage('RACE CONTROL:', 'SAFETY CAR DEPLOYED');
+                            showMessage('RACE CONTROL:', 'SAFETY CAR DEPLOYED', 8000);
                         } else if (eventType === 1) {
-                            showMessage('RACE CONTROL:', 'SAFETY CAR IN THIS LAP');
+                            showMessage('RACE CONTROL:', 'SAFETY CAR IN THIS LAP', 8000);
                         }
                     }
                     // Virtual Safety Car
                     else if (safetyCarType === 2) {
                         if (eventType === 0) {
-                            showMessage('RACE CONTROL:', 'VSC DEPLOYED');
+                            showMessage('RACE CONTROL:', 'VSC DEPLOYED', 8000);
                         } else if (eventType === 1) {
-                            showMessage('RACE CONTROL:', 'VSC ENDING');
+                            showMessage('RACE CONTROL:', 'VSC ENDING', 8000);
                         }
                     }
                     // Formation Lap
@@ -467,13 +472,13 @@
                         if (eventType === 0) {
                             // Formation lap starting - show container
                             if (formationLapContainer) {
-                                formationLapContainer.style.display = 'block';
+                                formationLapContainer.style.opacity = '1';
                                 console.log('[MessageBox] Formation lap started');
                             }
                         } else if (eventType === 3) {
                             // Formation lap ending - hide container
                             if (formationLapContainer) {
-                                formationLapContainer.style.display = 'none';
+                                formationLapContainer.style.opacity = '0';
                                 console.log('[MessageBox] Formation lap ended');
                             }
                         }
@@ -646,8 +651,7 @@
                             }
                         }
                         
-                        showMessage('FIA STEWARDS:', messageText);
-                        //TODO: Set up animations for the popup display and also set up the transition effect for next time I work on this
+                        showMessage('FIA STEWARDS:', messageText, 16000);
                         console.log('[MessageBox] Penalty - Car', raceNumber, abbreviation || '', 'Type:', penaltyName, 'Infringement:', infringementText);
                     }
                 }
@@ -670,7 +674,7 @@
                             messageText += ` (${abbreviation})`;
                         }
                         
-                        showMessage('FIA STEWARDS:', messageText);
+                        showMessage('FIA STEWARDS:', messageText, 8000);
                         console.log('[MessageBox] Stop Go Served - Car', raceNumber, abbreviation || '', 'Stop time:', stopTime);
                     }
                 }
@@ -692,7 +696,7 @@
                             messageText += ` (${abbreviation})`;
                         }
                         
-                        showMessage('FIA STEWARDS:', messageText);
+                        showMessage('FIA STEWARDS:', messageText, 8000);
                         console.log('[MessageBox] Drive Through Served - Car', raceNumber, abbreviation || '');
                     }
                 }
@@ -737,7 +741,7 @@
         }
         
         // Function to display a message
-        function showMessage(prefix, text) {
+        function showMessage(prefix, text, duration = 16000) {
             // Build message with prefix (if provided)
             if (prefix) {
                 messageText.innerHTML = `<div><span class="message-prefix">${prefix.toUpperCase()}</span> ${text.toUpperCase()}</div>`;
@@ -745,15 +749,53 @@
                 messageText.innerHTML = `<div>${text.toUpperCase()}</div>`;
             }
             
-            // Show message box
+            // Show message box layer
             messageBoxLayer.style.display = 'block';
             
+            // Clear any existing hide timeout
+            if (hideTimeout) {
+                clearTimeout(hideTimeout);
+            }
+            
+            // Trigger animation - slide in from right
+            messageBoxContainer.style.left = '0px';
+            messageBoxContainer.style.width = '710px';
+            messageBoxContainer.style.opacity = '1';
+            
+            // Animate transition lines
+            if (transitionLinesLayer) {
+                transitionLinesLayer.style.left = '710px';
+                transitionLinesLayer.style.width = '710px';
+                transitionLinesLayer.style.opacity = '0.6';
+            }
+            
             console.log('[MessageBox] Showing message:', text);
+            
+            // Auto-hide after duration
+            hideTimeout = setTimeout(() => {
+                hideMessage();
+            }, duration);
         }
         
         // Function to hide message
         function hideMessage() {
-            messageBoxLayer.style.display = 'none';
+            // Trigger animation - slide out to right
+            messageBoxContainer.style.left = '355px';
+            messageBoxContainer.style.width = '0px';
+            messageBoxContainer.style.opacity = '0';
+            
+            // Reset transition lines
+            if (transitionLinesLayer) {
+                transitionLinesLayer.style.left = '-240px';
+                transitionLinesLayer.style.width = '0px';
+                transitionLinesLayer.style.opacity = '0';
+            }
+            
+            // Hide message box layer after animation completes
+            setTimeout(() => {
+                messageBoxLayer.style.display = 'none';
+            }, 333);
+            
             console.log('[MessageBox] Message hidden');
         }
         
