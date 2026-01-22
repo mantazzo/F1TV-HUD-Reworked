@@ -26,6 +26,9 @@ Use these overlays in recording software (e.g. OBS). Size is described in (Width
 - Fastest Sectors
     - http://localhost:3000/fastest-sectors
     - Size: 310 x 625
+- Message Box (FIA Stewards)
+    - http://localhost:3000/message-box
+    - Size: 710 x 115
 - Position Debug **(DEBUG ONLY)**
     - http://localhost:3000/position-Debug
     - Debug only, useful for position setup

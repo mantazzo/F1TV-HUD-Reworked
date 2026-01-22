@@ -184,7 +184,7 @@ prompt.get(promptSchema, (err, result) => {
         console.error('Failed to start UDP client:', err);
     }
 
-    // Serve static files (images, CSS)
+    // Serve static files (images, CSS, fonts...)
     app.use(express.static(path.join(__dirname, 'public')));
     app.use('/images', express.static(path.join(__dirname, 'images')));
 
@@ -202,13 +202,13 @@ prompt.get(promptSchema, (err, result) => {
 
     // Public Debug pages
     app.get('/position-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'position-debug.html')));
-    app.get('/event-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'event-debug.html')));
 
-    // Local Debug only - not added in public source code (would prefer to only add these if these files exist)
+    // Local Debug only - not added in public source code (at least at the moment)
     app.get('/session-history-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'session-history-debug.html')));
+    app.get('/event-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'event-debug.html')));
 
     // Default to speedometer overlay (for now)
     app.get('/', (req, res) => res.redirect('/speedometer'));
     
-    server.listen(3000, () => console.log('Overlays at http://localhost:3000/speedometer'));
+    server.listen(3000, () => console.log('Overlays at http://localhost:3000/ (For example, http://localhost:3000/speedometer)\nController available at http://localhost:3000/controller-extended\nReminder - you can press Ctrl+C to stop the system manually.'));
 });

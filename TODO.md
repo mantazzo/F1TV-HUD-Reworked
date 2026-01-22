@@ -43,6 +43,12 @@
     - Shows the current fastest sector times and driver names
     - Overlay visibility can be toggled in the Extended Controller
     - Might need a few extra tweaks for data updates
+- Message Box (FIA Stewards)
+    - Fully remade and improved
+    - A popup which shows various events - Retirements, DRS switches (enabled/disabled), Penalties/Warnings, Red Flag, SC/VSC, Served Penalties
+    - Uses a "FIFO" (First In, First Out) queue system so all events will be shown properly
+    - FORMATION LAP box also works as intended and uses the in-game event trigger instead
+    - Potential improvement in the future with more supported events (if there's interest) and possibly "custom" message setup
 
 ## Overlay Controllers
 
@@ -63,11 +69,11 @@
 
 ## Currently Working On
 
-Minor fixes and improvements in existing overlays
+Message Box (finishing up)
 
 ## Next Planned Overlay
 
-FIA Stewards Message Box (likely one of the first bigger ones, but at this point it's necessary to start with the bigger ones as well)
+??? (I'll have to decide since most of the overlays will require quite a bit of work)
 
 ## Not started
 
@@ -76,7 +82,6 @@ In no particular order:
 - Car Damage
 - Driver Ahead and Behind
 - Driver Name
-- FIA Stewards (Message Box)
 - Leaderboard (Last Name version is much older and will likely need to be reworked to an extent)
 - Mini Leaderboard
 - Pit Windows

@@ -26,7 +26,7 @@ body {
     transition: left 333ms ease-out, width 333ms ease-out, opacity 333ms ease-out;
 }
 
-/* ===== item_1_1: Top Stripe (1250x15px) ===== */
+/* ===== Top Stripe ===== */
 .top-stripe {
     position: absolute;
     top: 0;
@@ -38,7 +38,7 @@ body {
     opacity: 0.5;
 }
 
-/* item_1_1_1: Base white rectangle */
+/* Base white rectangle */
 .stripe-base {
     position: absolute;
     top: 0;
@@ -49,7 +49,7 @@ body {
     opacity: 0.05;
 }
 
-/* item_1_1_2: Diagonal stripes layer container */
+/* Diagonal stripes layer container */
 .diagonal-stripes-layer {
     position: absolute;
     top: 0;
@@ -67,7 +67,7 @@ body {
     height: 15px;
 }
 
-/* item_1_1_3r0 to item_1_1_3r152: Individual diagonal stripes */
+/* Individual diagonal stripes */
 .diagonal-stripe {
     position: absolute;
     left: -40px;
@@ -78,7 +78,7 @@ body {
     transform: rotate(-45deg);
 }
 
-/* item_1_1_4: Blur effect rectangle */
+/* Blur effect rectangle */
 .stripe-blur {
     position: absolute;
     left: 0;
@@ -92,7 +92,7 @@ body {
     filter: blur(3px);
 }
 
-/* item_1_1_5 & item_1_1_6: Gradient images */
+/* Gradient images */
 .stripe-gradient {
     position: absolute;
     top: 0;
@@ -110,7 +110,7 @@ body {
     left: -1000px;
 }
 
-/* ===== item_1_2: Main Penalties Container ===== */
+/* ===== Main Penalties Container ===== */
 .penalties-container {
     position: absolute;
     top: 0;
@@ -119,7 +119,7 @@ body {
     height: 115px;
 }
 
-/* item_1_3r0: Blue rectangle background (710x100px) */
+/* Blue rectangle background */
 .blue-background {
     position: absolute;
     top: 15px;
@@ -130,7 +130,7 @@ body {
     z-index: 1;
 }
 
-/* item_1_4r0: White nameplate section (575x100px) */
+/* White nameplate section */
 .nameplate-section {
     position: absolute;
     top: 15px;
@@ -141,7 +141,7 @@ body {
     z-index: 2;
 }
 
-/* item_1_4r0_1: White background */
+/* White background */
 .nameplate-background {
     position: absolute;
     left: 0;
@@ -151,7 +151,7 @@ body {
     background-color: rgb(255, 255, 255);
 }
 
-/* item_1_4r0_2: Nameplate diagonal stripes layer */
+/* Nameplate diagonal stripes layer */
 .nameplate-stripes-layer {
     position: absolute;
     left: 0;
@@ -169,7 +169,7 @@ body {
     height: 100px;
 }
 
-/* item_1_4r0_3r0 to item_1_4r0_3r14: Individual diagonal stripes */
+/* Individual diagonal stripes */
 .nameplate-diagonal-stripe {
     position: absolute;
     left: -225.917px;
@@ -180,7 +180,7 @@ body {
     transform: rotate(-45deg);
 }
 
-/* item_1_5r0 (was item_1_16r0): FIA logo section (135x100px) */
+/* FIA logo section */
 .fia-logo-section {
     position: absolute;
     top: 15px;
@@ -203,7 +203,7 @@ body {
     line-height: 1;
 }
 
-/* ===== item_1_12r0: Penalty Popup Layer ===== */
+/* ===== Penalty Popup Layer ===== */
 .penalty-popup-layer {
     position: absolute;
     left: 0;
@@ -226,7 +226,7 @@ body {
     animation: blink 1000ms ease-in-out infinite;
 }
 
-/* item_1_13r0r0: Blue background for penalty message */
+/* Blue background for penalty message */
 .penalty-background {
     position: absolute;
     left: 375px;
@@ -237,7 +237,7 @@ body {
     opacity: 1;
 }
 
-/* item_1_14r0r0: White bordered box for PENALTY text */
+/* White bordered box for PENALTY text */
 .penalty-box {
     position: absolute;
     left: 29px;
@@ -252,7 +252,7 @@ body {
     transition: opacity 200ms ease-out;
 }
 
-/* item_1_15r0r0: PENALTY text */
+/* PENALTY text */
 .penalty-text {
     position: absolute;
     left: 0;
@@ -272,7 +272,7 @@ body {
     box-sizing: border-box;
 }
 
-/* ===== item_1_9r0: Time Penalty Layer ===== */
+/* ===== Time Penalty Layer ===== */
 .time-penalty-layer {
     position: absolute;
     left: 0;
@@ -284,7 +284,7 @@ body {
     z-index: 11;
 }
 
-/* item_1_10r0r0: Penalty value (e.g., +3, +5) */
+/* Penalty value (e.g., +3, +5) */
 .penalty-value {
     position: absolute;
     left: -6px;
@@ -303,7 +303,7 @@ body {
     box-sizing: border-box;
 }
 
-/* item_1_11r0r0: SECONDS text */
+/* SECONDS text */
 .penalty-seconds {
     position: absolute;
     left: 111px;
@@ -322,7 +322,7 @@ body {
     box-sizing: border-box;
 }
 
-/* ===== item_1_17r0: Name Layer ===== */
+/* ===== Name Layer ===== */
 .name-layer {
     position: absolute;
     left: 135px;
@@ -333,7 +333,7 @@ body {
     z-index: 11;
 }
 
-/* item_1_18r0r0: First name */
+/* First name */
 .driver-first-name {
     position: absolute;
     left: 10px;
@@ -354,7 +354,7 @@ body {
     padding-right: 5px;
 }
 
-/* item_1_19r0r0: Last name */
+/* Last name */
 .driver-last-name {
     position: absolute;
     left: 10px;
@@ -375,7 +375,7 @@ body {
     padding-right: 5px;
 }
 
-/* ===== item_1_21: Generic Message Box Layer ===== */
+/* ===== Generic Message Box Layer ===== */
 .message-box-layer {
     position: absolute;
     left: 0;
@@ -414,7 +414,7 @@ body {
     font-size: 22px;
 }
 
-/* ===== item_1_20r0: Transition Lines Layer ===== */
+/* ===== Transition Lines Layer ===== */
 .transition-lines-layer {
     position: absolute;
     left: -240px;
@@ -435,7 +435,7 @@ body {
 }
 
 /* ===== Formation Lap Box (separate from message-box-container) ===== */
-/* item_2: Formation Lap Container */
+/* Formation Lap Container */
 .formation-lap-container {
     position: absolute;
     top: 0;
@@ -448,7 +448,7 @@ body {
     z-index: 1100;
 }
 
-/* item_2_2r0: Formation Lap Box Background */
+/* Formation Lap Box Background */
 .formation-lap-box {
     position: absolute;
     top: 15px;
@@ -459,7 +459,7 @@ body {
     overflow: hidden;
 }
 
-/* item_2_2r0_2r0: Formation Lap Text */
+/* Formation Lap Text */
 .formation-lap-text {
     position: absolute;
     top: 0;
@@ -477,7 +477,7 @@ body {
     white-space: pre;
 }
 
-/* item_2_2r0_3r0: Red Line */
+/* Red Line */
 .formation-lap-red-line {
     position: absolute;
     top: 8px;
@@ -487,7 +487,7 @@ body {
     background-color: rgb(255, 0, 0);
 }
 
-/* ===== item_2_3r0: Formation Lap Stroke (Top Stripe Pattern) ===== */
+/* ===== Formation Lap Stroke (Top Stripe Pattern) ===== */
 .formation-lap-stroke {
     position: absolute;
     top: 0;
@@ -497,7 +497,7 @@ body {
     opacity: 0.5;
 }
 
-/* item_2_3r0_1: Stroke Base Rectangle */
+/* Stroke Base Rectangle */
 .formation-stroke-base {
     position: absolute;
     top: 0;
@@ -508,7 +508,7 @@ body {
     opacity: 0.05;
 }
 
-/* item_2_3r0_2: Stroke Diagonal Layer */
+/* Stroke Diagonal Layer */
 .formation-stroke-diagonal-layer {
     position: absolute;
     top: 0;
@@ -535,7 +535,7 @@ body {
     transform: rotate(-45deg);
 }
 
-/* item_2_3r0_4: Stroke Blur Effect */
+/* Stroke Blur Effect */
 .formation-stroke-blur {
     position: absolute;
     top: 6px;
@@ -549,7 +549,7 @@ body {
     filter: blur(3px);
 }
 
-/* item_2_3r0_5 & item_2_3r0_6: Stroke Gradient Images */
+/* Stroke Gradient Images */
 .formation-stroke-gradient {
     position: absolute;
     top: 0;
@@ -574,7 +574,6 @@ body {
     transform: rotate(45deg);
 }
 
-/* item_1_20r0_1 */
 .transition-line-1 {
     left: 342px;
     top: -95px;
@@ -583,7 +582,6 @@ body {
     background-color: rgb(95, 104, 122);
 }
 
-/* item_1_20r0_2 */
 .transition-line-2 {
     left: 491px;
     top: -90px;
@@ -592,7 +590,6 @@ body {
     background-color: rgb(140, 143, 154);
 }
 
-/* item_1_20r0_3 */
 .transition-line-3 {
     left: 411px;
     top: -75px;
@@ -601,7 +598,6 @@ body {
     background-color: rgb(114, 120, 134);
 }
 
-/* item_1_20r0_4 */
 .transition-line-4 {
     left: 222px;
     top: -105px;
@@ -610,7 +606,6 @@ body {
     background-color: rgb(128, 136, 148);
 }
 
-/* item_1_20r0_5 */
 .transition-line-5 {
     left: 100px;
     top: -120px;

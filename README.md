@@ -1,14 +1,14 @@
 # F1TV-HUD-Reworked
 
-![GitHub package.json version](https://img.shields.io/github/package-json/v/mantazzo/F1TV-HUD-Reworked) ![GitHub last commit](https://img.shields.io/github/last-commit/mantazzo/F1TV-HUD-Reworked?style=flat-square) ![GitHub License](https://img.shields.io/github/license/mantazzo/F1TV-HUD-Reworked?style=flat-square)
+![GitHub package.json version](https://img.shields.io/github/package-json/v/mantazzo/F1TV-HUD-Reworked?style=flat-square) ![GitHub last commit](https://img.shields.io/github/last-commit/mantazzo/F1TV-HUD-Reworked?style=flat-square) ![GitHub License](https://img.shields.io/github/license/mantazzo/F1TV-HUD-Reworked?style=flat-square)
 
 F1TV HUD mod for latest Codemasters games, reworked and improved
 
-[Originally created by MISS1LE](https://www.overtake.gg/downloads/f1tv-tv-style-hud.70701/) (check out his original mod on Overtake.gg), reworked for F1 25 by Mantazzo 
+[Originally created by MISS1LE](https://www.overtake.gg/downloads/f1tv-tv-style-hud.70701/) (check out his original mod on Overtake.gg), reworked for Codemasters F1 25 by Mantazzo 
 
-Mod is being reworked with the help of AI
+Mod is being reworked with the assistance of AI
 
-This project is worked on with Windows systems in mind - it may work on Linux as well, but, since F1 25 is only available on Windows systems, the primary setup is for Windows.
+This project is worked on with Windows systems in mind - it may work on other systems as well, but, since F1 25 is only available on Windows systems, the primary setup is for Windows.
 
 ## Installation
 
