@@ -128,13 +128,13 @@
         function generateDiagonalStripes() {
             const layer = document.getElementById('diagonalStripesLayer');
             
-            // item_1_1_3r0: First stripe (no wrapper)
+            // First stripe (no wrapper)
             const firstStripe = document.createElement('div');
             firstStripe.className = 'diagonal-stripe';
             firstStripe.id = 'stripe-0';
             layer.appendChild(firstStripe);
             
-            // item_1_1_3r1 to item_1_1_3r152: Stripes with wrappers
+            // Stripes with wrappers
             for (let i = 1; i <= 152; i++) {
                 const wrapper = document.createElement('div');
                 wrapper.className = 'layer-repetition';
@@ -240,7 +240,6 @@
         let aiDrivers = {};
         let customDrivers = [];
         let eventCodes = {};
-        let penalties = [];
         let infringements = [];
         let teamNames = {};
         let formulaType = 0;
@@ -255,12 +254,6 @@
         socket.on('event_codes', (data) => {
             eventCodes = data;
             console.log('[MessageBox] Event codes received:', Object.keys(eventCodes).length, 'codes');
-        });
-        
-        // Listen for penalties from server
-        socket.on('penalties_data', (data) => {
-            penalties = data;
-            console.log('[MessageBox] Penalties received:', penalties.length, 'types');
         });
         
         // Listen for infringements from server
@@ -539,8 +532,7 @@
                         const raceNumber = participant ? participant.m_raceNumber : 0;
                         const abbreviation = participantAbbreviations[vehicleIdx] || null;
                         
-                        // Get penalty name and infringement text
-                        const penaltyName = penalties[penaltyType] || 'PENALTY'; // Not really used, though...
+                        // Get infringement text
                         const infringementText = getInfringementMessage(infringementType);
                         
                         let messageText = '';
