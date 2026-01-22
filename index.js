@@ -2,7 +2,7 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const { F1TelemetryClient, constants } = require('@deltazeroproduction/f1-udp-parser');
-const { PACKETS, DRIVERS, EVENT_CODES, WEATHER, PENALTIES, INFRINGEMENTS } = constants;
+const { PACKETS, DRIVERS, EVENT_CODES, WEATHER, INFRINGEMENTS } = constants;
 const path = require('path');
 const fs = require('fs');
 const prompt = require('prompt');
@@ -84,7 +84,7 @@ prompt.get(promptSchema, (err, result) => {
         socket.emit('drivers_data', DRIVERS);
         socket.emit('event_codes', EVENT_CODES);
         socket.emit('weather_data', WEATHER);
-        socket.emit('penalties_data', PENALTIES);
+        // socket.emit('penalties_data', PENALTIES); // We don't need it in the end, but keeping it in case it's useful later
         socket.emit('infringements_data', INFRINGEMENTS);
         // Send current overlay config
         socket.emit('overlay_config', overlayConfig);
@@ -188,7 +188,7 @@ prompt.get(promptSchema, (err, result) => {
     app.use(express.static(path.join(__dirname, 'public')));
     app.use('/images', express.static(path.join(__dirname, 'images')));
 
-    // Routes
+    // Overlays
     app.get('/speedometer', (req, res) => res.sendFile(path.join(__dirname, 'views', 'speedometer.html')));
     app.get('/lap-timer', (req, res) => res.sendFile(path.join(__dirname, 'views', 'lap-timer.html')));
     app.get('/pit-timer', (req, res) => res.sendFile(path.join(__dirname, 'views', 'pit-timer.html')));
@@ -196,19 +196,21 @@ prompt.get(promptSchema, (err, result) => {
     app.get('/fastest-lap', (req, res) => res.sendFile(path.join(__dirname, 'views', 'fastest-lap.html')));
     app.get('/weather', (req, res) => res.sendFile(path.join(__dirname, 'views', 'weather.html')));
     app.get('/turn-indicator', (req, res) => res.sendFile(path.join(__dirname, 'views', 'turn-indicator.html')));
-    app.get('/controller-extended', (req, res) => res.sendFile(path.join(__dirname, 'views', 'controller-extended.html')));
     app.get('/fastest-sectors', (req, res) => res.sendFile(path.join(__dirname, 'views', 'fastest-sectors.html')));
     app.get('/message-box', (req, res) => res.sendFile(path.join(__dirname, 'views', 'message-box.html')));
 
+    // Controllers
+    app.get('/controller/controller-extended', (req, res) => res.sendFile(path.join(__dirname, 'views', 'controller', 'controller-extended.html'))); 
+
     // Public Debug pages
-    app.get('/position-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'position-debug.html')));
+    app.get('/debug/position-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'position-debug.html')));
 
     // Local Debug only - not added in public source code (at least at the moment)
-    app.get('/session-history-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'session-history-debug.html')));
-    app.get('/event-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'event-debug.html')));
+    app.get('/debug/session-history-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'session-history-debug.html')));
+    app.get('/debug/event-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'event-debug.html')));
 
     // Default to speedometer overlay (for now)
     app.get('/', (req, res) => res.redirect('/speedometer'));
     
-    server.listen(3000, () => console.log('Overlays at http://localhost:3000/ (For example, http://localhost:3000/speedometer)\nController available at http://localhost:3000/controller-extended\nReminder - you can press Ctrl+C to stop the system manually.'));
+    server.listen(3000, () => console.log('Overlays at http://localhost:3000/ (For example, http://localhost:3000/speedometer)\nController available at http://localhost:3000/controller/controller-extended\nReminder - you can press Ctrl+C to stop the system manually.'));
 });
