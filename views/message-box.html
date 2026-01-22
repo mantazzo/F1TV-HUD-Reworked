@@ -223,6 +223,9 @@
         const messageBoxLayer = document.querySelector('.message-box-layer');
         const messageText = document.querySelector('.message-text');
         const transitionLinesLayer = document.querySelector('.transition-lines-layer');
+        const penaltyPopupLayer = document.querySelector('.penalty-popup-layer');
+        const penaltyBox = document.querySelector('.penalty-box');
+        const timePenaltyLayer = document.querySelector('.time-penalty-layer');
         const penaltyTextElement = document.querySelector('.penalty-text');
         const penaltyValueElement = document.querySelector('.penalty-value');
         const penaltySecondsElement = document.querySelector('.penalty-seconds');
@@ -651,7 +654,8 @@
                             }
                         }
                         
-                        showMessage('FIA STEWARDS:', messageText, 16000);
+                        // Show penalty popup first (8 seconds), then message layer (8 seconds)
+                        showPenaltyPopup(time, messageText);
                         console.log('[MessageBox] Penalty - Car', raceNumber, abbreviation || '', 'Type:', penaltyName, 'Infringement:', infringementText);
                     }
                 }
@@ -740,6 +744,84 @@
             return infringements[infringementType].toUpperCase();
         }
         
+        // Function to show penalty popup (two-phase display)
+        function showPenaltyPopup(time, fullMessageText) {
+            // Clear any existing timeout
+            if (hideTimeout) {
+                clearTimeout(hideTimeout);
+            }
+            
+            // First, show the message box container and transition lines
+            messageBoxContainer.style.left = '0px';
+            messageBoxContainer.style.width = '710px';
+            messageBoxContainer.style.opacity = '1';
+            
+            if (transitionLinesLayer) {
+                transitionLinesLayer.style.left = '710px';
+                transitionLinesLayer.style.width = '710px';
+                transitionLinesLayer.style.opacity = '0.6';
+            }
+            
+            // Phase 1: Show penalty-popup-layer with penalty-box
+            if (penaltyPopupLayer) {
+                penaltyPopupLayer.style.opacity = '1';
+            }
+            if (penaltyBox) {
+                penaltyBox.style.opacity = '1';
+            }
+            
+            // Start blinking animation
+            if (penaltyTextElement) {
+                penaltyTextElement.classList.add('blinking');
+            }
+            
+            console.log('[MessageBox] Phase 1: Showing penalty popup with blinking text');
+            
+            // After 4 seconds: Stop blinking and switch display
+            setTimeout(() => {
+                // Stop blinking
+                if (penaltyTextElement) {
+                    penaltyTextElement.classList.remove('blinking');
+                }
+                
+                // If time penalty, show time-penalty-layer, otherwise keep penalty-box
+                if (time !== 255 && timePenaltyLayer && penaltyBox) {
+                    penaltyBox.style.opacity = '0';
+                    timePenaltyLayer.style.opacity = '1';
+                    console.log('[MessageBox] Phase 2: Showing time penalty layer');
+                } else {
+                    console.log('[MessageBox] Phase 2: Keeping penalty box (no time)');
+                }
+            }, 4000);
+            
+            // After 8 seconds: Hide penalty popup and show message layer
+            setTimeout(() => {
+                // Hide penalty popup
+                if (penaltyPopupLayer) {
+                    penaltyPopupLayer.style.opacity = '0';
+                }
+                if (penaltyBox) {
+                    penaltyBox.style.opacity = '0';
+                }
+                if (timePenaltyLayer) {
+                    timePenaltyLayer.style.opacity = '0';
+                }
+                
+                console.log('[MessageBox] Phase 3: Showing message layer');
+                
+                // Show message layer (just the text, container is already visible)
+                if (messageText) {
+                    messageText.innerHTML = `<div><span class="message-prefix">FIA STEWARDS:</span> ${fullMessageText.toUpperCase()}</div>`;
+                }
+                messageBoxLayer.style.opacity = '1';
+                
+                // Hide everything after 8 more seconds
+                hideTimeout = setTimeout(() => {
+                    hideMessage();
+                }, 8000);
+            }, 8000);
+        }
+        
         // Function to display a message
         function showMessage(prefix, text, duration = 16000) {
             // Build message with prefix (if provided)
@@ -750,7 +832,7 @@
             }
             
             // Show message box layer
-            messageBoxLayer.style.display = 'block';
+            messageBoxLayer.style.opacity = '1';
             
             // Clear any existing hide timeout
             if (hideTimeout) {
@@ -791,10 +873,8 @@
                 transitionLinesLayer.style.opacity = '0';
             }
             
-            // Hide message box layer after animation completes
-            setTimeout(() => {
-                messageBoxLayer.style.display = 'none';
-            }, 333);
+            // Hide message box layer
+            messageBoxLayer.style.opacity = '0';
             
             console.log('[MessageBox] Message hidden');
         }

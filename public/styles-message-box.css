@@ -213,6 +213,17 @@ body {
     opacity: 0;
     pointer-events: none;
     z-index: 10;
+    transition: opacity 200ms ease-out;
+}
+
+/* Blinking animation for penalty text - smooth fade in/out */
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+.penalty-text.blinking {
+    animation: blink 1000ms ease-in-out infinite;
 }
 
 /* item_1_13r0r0: Blue background for penalty message */
@@ -233,11 +244,12 @@ body {
     top: 20px;
     width: 280px;
     height: 60px;
-    opacity: 1;
+    opacity: 0;
     background-color: rgb(8, 35, 67);
     border-radius: 8px;
     border: 4px solid rgb(255, 255, 255);
     box-sizing: border-box;
+    transition: opacity 200ms ease-out;
 }
 
 /* item_1_15r0r0: PENALTY text */
@@ -267,7 +279,8 @@ body {
     top: 0;
     width: 710px;
     height: 115px;
-    display: none;
+    opacity: 0;
+    transition: opacity 200ms ease-out;
     z-index: 11;
 }
 
@@ -370,9 +383,11 @@ body {
     width: 710px;
     height: 115px;
     display: block;
+    opacity: 0;
     z-index: 9;
     padding: 10px 10px 0px 150px;
     box-sizing: border-box;
+    transition: opacity 200ms ease-out;
 }
 
 /* Message text container */
