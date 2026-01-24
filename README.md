@@ -12,12 +12,11 @@ This project is worked on with Windows systems in mind - it may work on other sy
 
 ## Installation
 
-1. **Install Bun or Node.js on Windows.**  
-   At the moment, I currently recommend using [Bun](https://bun.sh/) Framework as it is considered to be more performative with virtually no differences to the classic Node.js.
-   Setting it up on Windows systems is also easy - just run `irm bun.sh/install.ps1 | iex` in Powershell or Terminal and wait a little for it to install.
+1. **Install Node.js on Windows.**  
+   I would recommend using tools like [Nodist](https://github.com/nodists/nodist) (used personally) or [NVM for Windows](https://github.com/coreybutler/nvm-windows) for easier installation and version management. Any option works, as long as you can run commands like `node` or `npm`.  
+   I used the latest LTS version (v24.13.0 at the time of writing) when setting up, but most recent versions should work.
 
-   If you prefer to use the classic Node.js framework, I would recommend using tools like [Nodist](https://github.com/nodists/nodist) or [NVM for Windows](https://github.com/coreybutler/nvm-windows) for easier version management.  
-   I used the latest LTS version (v22.19.0 at the time of writing) when setting up, but most recent versions should work.
+   Previously, [Bun Runtime](https://bun.sh/) was used as well, however, there are some issues that make certain overlays unusable after some time (at least at the moment). It might be revisited if there are any updates to the parser, however, for the time being, it is now considered unsupported.
 
 2. **Clone the repository or download the latest version.**  
    You can clone with `git clone https://github.com/mantazzo/F1TV-HUD-Reworked.git` or download the ZIP file [by clicking on the text here](https://github.com/mantazzo/F1TV-HUD-Reworked/archive/refs/heads/main.zip).
@@ -29,12 +28,11 @@ This project is worked on with Windows systems in mind - it may work on other sy
    Open Windows Terminal in this folder by right-clicking an empty space and selecting "Open in Terminal" (or hold `Shift` and right-click for this option). If unavailable, open Terminal (e.g., PowerShell or Command Prompt) and navigate manually with `cd path/to/folder`.
 
 5. **Install dependencies.**  
-   Run `bun install` in the Terminal. This will download and set up the required packages.
-   If you want to use Node.js framework, run `npm install` in the Terminal instead.
+   Run `npm install` in the Terminal. This will download and set up the required packages.
 
 6. **Start the server.**  
-   Run `bun index.js` or `bun start`. This will start the Overlay system. If you want to use Node.js, run `node index.js` instead.
-   Enter a port when prompted and press `Enter`. By default, if you don't enter anything, it will use port 20777. Wait for a message confirming the server is running (e.g., "Overlays at http://localhost:3000/speedometer").
+   Run `node index.js` or `npm start`. This will start the Overlay system.
+   Enter a port when prompted and press `Enter`. By default, if you don't enter anything, it will use port 20777. Wait for a message confirming the server is running (e.g., "Overlays at http://localhost:3000/").
 
 7. **Access the overlays.**  
    Open a browser and go to `http://localhost:3000` to see the default page (Speedometer overlay). Check the [Available Overlays](https://github.com/mantazzo/F1TV-HUD-Reworked/blob/main/AVAILABLE_OVERLAYS.md) page for all currently available overlays that can be used, with size references. You can use these in tools like OBS to enhance your streams or recordings.

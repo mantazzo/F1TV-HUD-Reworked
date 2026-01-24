@@ -82,7 +82,7 @@ In no particular order:
 - Car Damage
 - Driver Ahead and Behind
 - Driver Name
-- Leaderboard (Last Name version is much older and will likely need to be reworked to an extent)
+- Leaderboard (Last Name version is much older and might need to be reworked to an extent)
 - Mini Leaderboard
 - Pit Windows
 - Session Info

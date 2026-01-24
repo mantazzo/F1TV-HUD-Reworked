@@ -84,7 +84,7 @@ prompt.get(promptSchema, (err, result) => {
         socket.emit('drivers_data', DRIVERS);
         socket.emit('event_codes', EVENT_CODES);
         socket.emit('weather_data', WEATHER);
-        // socket.emit('penalties_data', PENALTIES); // We don't need it in the end, but keeping it in case it's useful later
+        // socket.emit('penalties_data', PENALTIES); // We don't need it in the end, but keeping this in case it's useful later
         socket.emit('infringements_data', INFRINGEMENTS);
         // Send current overlay config
         socket.emit('overlay_config', overlayConfig);
