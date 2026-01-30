@@ -16,9 +16,10 @@ body {
     left: 0;
     top: 0;
     width: 320px;
-    height: 220px;
+    height: 250px;
     opacity: 0;
     transition: opacity 333ms ease-out;
+    overflow: hidden;
 }
 
 .overlay-container.visible {
@@ -26,7 +27,7 @@ body {
 }
 
 /* Background */
-/* Leaderboard Container (mimics SimHub item_1_1) */
+/* Leaderboard Container */
 .leaderboard-container {
     position: absolute;
     left: 0;
@@ -63,6 +64,16 @@ body {
     background-color: rgb(10, 10, 15);
 }
 
+/* Decoration Animation */
+@keyframes decorationScroll {
+    from {
+        top: -500px;
+    }
+    to {
+        top: -37px;
+    }
+}
+
 /* Decorations */
 .decoration-left,
 .decoration-right {
@@ -71,6 +82,7 @@ body {
     height: 765px;
     top: -500px;
     opacity: 0.6;
+    animation: decorationScroll 4s linear infinite;
 }
 
 .decoration-left {
@@ -84,15 +96,15 @@ body {
 /* Sponsor */
 .sponsor {
     position: absolute;
-    left: 0;
+    left: 155px;
     top: 0;
-    width: 320px;
+    width: 165px;
     height: 80px;
 }
 
 .sponsor-rectangle {
     position: absolute;
-    left: 155px;
+    left: 0px;
     top: 5px;
     width: 165px;
     height: 75px;
@@ -102,7 +114,7 @@ body {
 
 .sponsor-text-qatar {
     position: absolute;
-    left: 155px;
+    left: 0px;
     top: 10px;
     width: 165px;
     height: 45px;
@@ -117,7 +129,7 @@ body {
 
 .sponsor-text-airways {
     position: absolute;
-    left: 190px;
+    left: 35px;
     top: 50px;
     width: 130px;
     height: 30px;
@@ -208,6 +220,20 @@ body {
     border-right: 2px solid rgb(0, 0, 0);
 }
 
+.driver-behind .position-number {
+    position: absolute;
+    left: 5px;
+    top: 0;
+    width: 35px;
+    height: 50px;
+    font-family: 'F1TV-2022', sans-serif;
+    font-size: 24px;
+    font-weight: 400;
+    color: rgb(192, 192, 192);
+    justify-content: flex-end;
+    border: none;
+}
+
 /* Position stroke (border separator) */
 .position-stroke {
     position: absolute;
@@ -254,7 +280,7 @@ body {
     position: absolute;
     left: 65px;
     top: 0;
-    width: 240px;
+    width: 225px;
     height: 50px;
     padding-left: 0;
     font-family: 'F1TV-2022', sans-serif;
@@ -263,35 +289,8 @@ body {
     font-style: oblique;
     color: rgb(128, 128, 128);
     justify-content: flex-start;
-}
-.driver-behind .position-number {
-    position: absolute;
-    left: 5px;
-    top: 0;
-    width: 35px;
-    height: 50px;
-    font-family: 'F1TV-2022', sans-serif;
-    font-size: 24px;
-    font-weight: 400;
-    color: rgb(192, 192, 192);
-    justify-content: flex-end;
-    border: none;
 }
 
-.driver-behind .driver-name {
-    position: absolute;
-    left: 65px;
-    top: 0;
-    width: 240px;
-    height: 50px;
-    padding-left: 0;
-    font-family: 'F1TV-2022', sans-serif;
-    font-size: 24px;
-    font-weight: 700;
-    font-style: oblique;
-    color: rgb(128, 128, 128);
-    justify-content: flex-start;
-}
 .driver-current .driver-name {
     position: absolute;
     left: 70px;
@@ -306,4 +305,19 @@ body {
     color: rgb(0, 0, 0);
     justify-content: flex-start;
     text-transform: uppercase;
+}
+
+.driver-behind .driver-name {
+    position: absolute;
+    left: 65px;
+    top: 0;
+    width: 225px;
+    height: 50px;
+    padding-left: 0;
+    font-family: 'F1TV-2022', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    font-style: oblique;
+    color: rgb(128, 128, 128);
+    justify-content: flex-start;
 }

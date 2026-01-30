@@ -29,8 +29,11 @@ Use these overlays in recording software (e.g. OBS). Size is described in (Width
 - Message Box (FIA Stewards)
     - http://localhost:3000/message-box
     - Size: 710 x 115
+- Mini Leaderboard
+    - http://localhost:3000/mini-leaderboard
+    - Size: 320 x 250
 - Position Debug **(DEBUG ONLY)**
     - http://localhost:3000/position-Debug
-    - Debug only, useful for position setup
+    - Debug only, useful for turn position setup
 
 Other overlays coming soon™.

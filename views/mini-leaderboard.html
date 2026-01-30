@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="/fonts.css">
     <link rel="stylesheet" href="/styles-mini-leaderboard.css">
     <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/textfit@2.4.0/textFit.min.js"></script>
 </head>
 <body>
     <div class="overlay-container">
@@ -17,7 +19,7 @@
             <div class="sponsor-text-airways">AIRWAYS</div>
         </div>
 
-        <!-- Leaderboard Container (mimics SimHub item_1_1) -->
+        <!-- Leaderboard Container -->
         <div class="leaderboard-container">
             <!-- Background -->
             <div class="background">
@@ -62,6 +64,7 @@
         
         // Element references
         const overlayContainer = document.querySelector('.overlay-container');
+        const sponsorElement = document.querySelector('.sponsor');
         const positionAheadEl = document.getElementById('position-ahead');
         const nameAheadEl = document.getElementById('name-ahead');
         const positionCurrentEl = document.getElementById('position-current');
@@ -70,6 +73,10 @@
         const nameBehindEl = document.getElementById('name-behind');
         const driverAheadRow = document.querySelector('.driver-ahead');
         const driverBehindRow = document.querySelector('.driver-behind');
+        
+        // Sponsor animation control
+        let sponsorAnimation = null;
+        let sponsorTimeout = null;
         
         // Data storage
         let aiDrivers = {};
@@ -81,13 +88,46 @@
         let numActiveCars = 0;
         let formulaType = null;
         
+        // Sponsor animation functions
+        function startSponsorAnimation() {
+            // Cancel any existing animation/timeout
+            if (sponsorAnimation) sponsorAnimation.pause();
+            if (sponsorTimeout) clearTimeout(sponsorTimeout);
+            
+            // Reset sponsor to visible
+            sponsorElement.style.opacity = '1';
+            
+            // Start 6-second countdown to fade out
+            sponsorTimeout = setTimeout(() => {
+                sponsorAnimation = anime({
+                    targets: sponsorElement,
+                    opacity: 0,
+                    duration: 200,
+                    easing: 'easeOutQuad'
+                });
+            }, 6000);
+        }
+        
+        function stopSponsorAnimation() {
+            // Cancel any ongoing animation/timeout
+            if (sponsorAnimation) sponsorAnimation.pause();
+            if (sponsorTimeout) clearTimeout(sponsorTimeout);
+            
+            // Reset sponsor opacity after overlay transition completes (333ms + buffer)
+            setTimeout(() => {
+                sponsorElement.style.opacity = '1';
+            }, 350);
+        }
+        
         // Handle overlay visibility from controller
         socket.on('overlay_config', (config) => {
             if (config.overlays && config.overlays['mini-leaderboard']) {
                 if (config.overlays['mini-leaderboard'].visible) {
                     overlayContainer.classList.add('visible');
+                    startSponsorAnimation();
                 } else {
                     overlayContainer.classList.remove('visible');
+                    stopSponsorAnimation();
                 }
             }
         });
@@ -201,6 +241,14 @@
                 // Update current player
                 positionCurrentEl.textContent = currentPosition;
                 nameCurrentEl.textContent = participantLastNames[playerIndex] || '';
+                textFit(nameCurrentEl, {
+                    minFontSize: 17,
+                    maxFontSize: 27,
+                    multiLine: false,
+                    alignHoriz: true,
+                    alignVert: false,
+                    widthOnly: true
+                });
                 
                 // Update driver ahead
                 if (positionAhead >= 1) {
@@ -209,6 +257,14 @@
                         driverAheadRow.style.display = 'flex';
                         positionAheadEl.textContent = positionAhead;
                         nameAheadEl.textContent = participantLastNames[aheadIdx] || '';
+                        textFit(nameAheadEl, {
+                            minFontSize: 14,
+                            maxFontSize: 24,
+                            multiLine: false,
+                            alignHoriz: true,
+                            alignVert: false,
+                            widthOnly: true
+                        });
                     } else {
                         driverAheadRow.style.display = 'none';
                     }
@@ -223,6 +279,14 @@
                         driverBehindRow.style.display = 'flex';
                         positionBehindEl.textContent = positionBehind;
                         nameBehindEl.textContent = participantLastNames[behindIdx] || '';
+                        textFit(nameBehindEl, {
+                            minFontSize: 14,
+                            maxFontSize: 24,
+                            multiLine: false,
+                            alignHoriz: true,
+                            alignVert: false,
+                            widthOnly: true
+                        });
                     } else {
                         driverBehindRow.style.display = 'none';
                     }

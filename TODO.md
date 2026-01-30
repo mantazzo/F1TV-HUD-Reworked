@@ -69,7 +69,7 @@
 
 ## Currently Working On
 
-Mini Leaderboard (a warmup before the main leaderboard, perhaps...)
+Mini Leaderboard (final touches)
 
 ## Next Planned Overlay
 
@@ -83,9 +83,8 @@ In no particular order:
 - Driver Ahead and Behind (the three versions of the overlay)
 - Driver Name (and relevant info extensions like fastest lap and stuff)
 - Leaderboard (Last Name version is much older and might need to be reworked to an extent; probably most difficult overlay to do)
-- Mini Leaderboard (simplified version so it should be easier to make)
 - Pit Windows (sounds easy but there is some weird logic there)
-- Session Info (another case of "sounds easy, but really isn't, since this will involve country flag display and session names)
+- Session Info (another case of "sounds easy, but really isn't", since this will involve country flag display and session names)
 - Control Dashboard (original version, likely saved for last)
 
 ## Debatable

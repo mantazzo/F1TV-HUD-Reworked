@@ -16,7 +16,7 @@ This project is worked on with Windows systems in mind - it may work on other sy
    I would recommend using tools like [Nodist](https://github.com/nodists/nodist) (used personally) or [NVM for Windows](https://github.com/coreybutler/nvm-windows) for easier installation and version management. Any option works, as long as you can run commands like `node` or `npm`.  
    I used the latest LTS version (v24.13.0 at the time of writing) when setting up, but most recent versions should work.
 
-   Previously, [Bun Runtime](https://bun.sh/) was used as well, however, there are some issues that make certain overlays unusable after some time (at least at the moment). It might be revisited if there are any updates to the parser, however, for the time being, it is now considered unsupported.
+   Previously, [Bun Runtime](https://bun.sh/) was used as well, however, there are some issues that make certain overlays unusable after some time (at least at the moment). It might be revisited if there are any updates to the parser and/or Runtime, however, for the time being, it is now considered unsupported.
 
 2. **Clone the repository or download the latest version.**  
    You can clone with `git clone https://github.com/mantazzo/F1TV-HUD-Reworked.git` or download the ZIP file [by clicking on the text here](https://github.com/mantazzo/F1TV-HUD-Reworked/archive/refs/heads/main.zip).
