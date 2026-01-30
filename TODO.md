@@ -69,24 +69,24 @@
 
 ## Currently Working On
 
-Message Box (finishing up)
+Mini Leaderboard (a warmup before the main leaderboard, perhaps...)
 
 ## Next Planned Overlay
 
-??? (I'll have to decide since most of the overlays will require quite a bit of work)
+Session Info (shouldn't be TOO difficult, I hope?)
 
 ## Not started
 
 In no particular order:
-- Battery Level (from older version)
-- Car Damage
-- Driver Ahead and Behind
-- Driver Name
-- Leaderboard (Last Name version is much older and might need to be reworked to an extent)
-- Mini Leaderboard
-- Pit Windows
-- Session Info
-- Control Dashboard (original)
+- Battery Level (from older version, so might need some extra work)
+- Car Damage (car damage, tyre wear, etc)
+- Driver Ahead and Behind (the three versions of the overlay)
+- Driver Name (and relevant info extensions like fastest lap and stuff)
+- Leaderboard (Last Name version is much older and might need to be reworked to an extent; probably most difficult overlay to do)
+- Mini Leaderboard (simplified version so it should be easier to make)
+- Pit Windows (sounds easy but there is some weird logic there)
+- Session Info (another case of "sounds easy, but really isn't, since this will involve country flag display and session names)
+- Control Dashboard (original version, likely saved for last)
 
 ## Debatable
 

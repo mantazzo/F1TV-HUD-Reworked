@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F1 Mini Leaderboard Overlay</title>
+    <link rel="stylesheet" href="/fonts.css">
+    <link rel="stylesheet" href="/styles-mini-leaderboard.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <div class="overlay-container">
+        <!-- Sponsor -->
+        <div class="sponsor">
+            <div class="sponsor-rectangle"></div>
+            <div class="sponsor-text-qatar">QATAR</div>
+            <div class="sponsor-text-airways">AIRWAYS</div>
+        </div>
+
+        <!-- Leaderboard Container (mimics SimHub item_1_1) -->
+        <div class="leaderboard-container">
+            <!-- Background -->
+            <div class="background">
+                <!-- Main Rectangle -->
+                <div class="background-rectangle-main"></div>
+                <!-- Divider Rectangle -->
+                <div class="background-rectangle-divider"></div>
+                <!-- Decorations -->
+                <img src="/images/mini-leaderboard/DecorationLeft.png" class="decoration-left" alt="">
+                <img src="/images/mini-leaderboard/DecorationRight.png" class="decoration-right" alt="">
+            </div>
+
+            <!-- Driver Ahead -->
+            <div class="driver-row driver-ahead">
+                <div class="driver-name" id="name-ahead">PEREZ</div>
+                <img src="/images/mini-leaderboard/Knockout.png" class="knockout-overlay" alt="">
+                <div class="position-number" id="position-ahead">1</div>
+                <div class="position-stroke"></div>
+            </div>
+
+            <!-- Current Player (Highlighted) -->
+            <div class="driver-row driver-current">
+                <img src="/images/mini-leaderboard/PlayerIndicator.png" class="player-indicator" alt="">
+                <div class="driver-name" id="name-current">VERSTAPPEN</div>
+                <img src="/images/mini-leaderboard/Knockout.png" class="knockout-overlay" alt="">
+                <div class="position-number" id="position-current">2</div>
+            </div>
+
+            <!-- Driver Behind -->
+            <div class="driver-row driver-behind">
+                <div class="driver-name" id="name-behind">LECLERC</div>
+                <img src="/images/mini-leaderboard/Knockout.png" class="knockout-overlay" alt="">
+                <div class="position-number" id="position-behind">3</div>
+                <div class="position-stroke"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        socket.emit('identify', 'Mini Leaderboard');
+        
+        // Element references
+        const overlayContainer = document.querySelector('.overlay-container');
+        const positionAheadEl = document.getElementById('position-ahead');
+        const nameAheadEl = document.getElementById('name-ahead');
+        const positionCurrentEl = document.getElementById('position-current');
+        const nameCurrentEl = document.getElementById('name-current');
+        const positionBehindEl = document.getElementById('position-behind');
+        const nameBehindEl = document.getElementById('name-behind');
+        const driverAheadRow = document.querySelector('.driver-ahead');
+        const driverBehindRow = document.querySelector('.driver-behind');
+        
+        // Data storage
+        let aiDrivers = {};
+        let customDrivers = [];
+        let teamNames = {};
+        let participantData = {};
+        let participantLastNames = {};
+        let playerIndex = null;
+        let numActiveCars = 0;
+        let formulaType = null;
+        
+        // Handle overlay visibility from controller
+        socket.on('overlay_config', (config) => {
+            if (config.overlays && config.overlays['mini-leaderboard']) {
+                if (config.overlays['mini-leaderboard'].visible) {
+                    overlayContainer.classList.add('visible');
+                } else {
+                    overlayContainer.classList.remove('visible');
+                }
+            }
+        });
+        
+        // Load JSON files
+        async function loadJsonFiles() {
+            try {
+                const [teamsResponse, customDriversResponse] = await Promise.all([
+                    fetch('/data/DefaultTeams.json'),
+                    formulaType === 0 ? fetch('/data/CustomF1Drivers.json') : 
+                    formulaType === 1 ? fetch('/data/CustomF2Drivers.json') : 
+                    Promise.resolve({ json: () => [] })
+                ]);
+                
+                teamNames = await teamsResponse.json();
+                customDrivers = await customDriversResponse.json();
+                console.log('[Mini Leaderboard] JSON files loaded');
+            } catch (error) {
+                console.error('[Mini Leaderboard] Error loading JSON files:', error);
+            }
+        }
+        
+        // Match custom driver
+        function matchCustomDriver(participant) {
+            if (!Array.isArray(customDrivers) || customDrivers.length === 0 || participant.m_driverId !== 255) {
+                return null;
+            }
+            
+            const raceNumber = participant.m_raceNumber;
+            const teamId = participant.m_teamId;
+            const name = participant.m_name;
+            
+            // Priority 1: Exact name match
+            let match = customDrivers.find(d => d.MatchName && d.MatchName === name);
+            if (match) return match;
+            
+            // Priority 2: Race number + team match
+            const teamData = teamNames[teamId];
+            const teamName = teamData?.Name || '';
+            if (teamName) {
+                match = customDrivers.find(d => 
+                    d.RaceNumber === raceNumber && 
+                    d.Team && d.Team.toLowerCase() === teamName.toLowerCase()
+                );
+                if (match) return match;
+            }
+            
+            // Priority 3: Race number only
+            match = customDrivers.find(d => d.RaceNumber === raceNumber);
+            if (match) return match;
+            
+            return null;
+        }
+        
+        // Socket listeners
+        socket.on('drivers_data', (data) => {
+            aiDrivers = data;
+            console.log('[Mini Leaderboard] AI Drivers loaded:', Object.keys(aiDrivers).length);
+        });
+        
+        socket.on('f1_data', (data) => {
+            const packetId = data.m_header?.m_packetId;
+            
+            // Session packet (ID 1) - Get player index and formula type
+            if (packetId === 1) {
+                playerIndex = data.m_header.m_playerCarIndex;
+                
+                if (data.m_formula !== undefined && data.m_formula !== formulaType) {
+                    formulaType = data.m_formula;
+                    loadJsonFiles();
+                }
+            }
+            
+            // Participants packet (ID 4) - Get driver names
+            if (packetId === 4) {
+                numActiveCars = data.m_numActiveCars || 0;
+                
+                if (Array.isArray(data.m_participants)) {
+                    data.m_participants.forEach((participant, idx) => {
+                        participantData[idx] = participant;
+                        
+                        if (participant.m_driverId === 255) {
+                            // Custom driver
+                            const customMatch = matchCustomDriver(participant);
+                            if (customMatch) {
+                                participantLastNames[idx] = customMatch.LastName || customMatch.DisplayName || 'PLAYER';
+                            } else {
+                                participantLastNames[idx] = participant.m_name || 'PLAYER';
+                            }
+                        } else if (aiDrivers && aiDrivers[participant.m_driverId]) {
+                            // AI driver
+                            participantLastNames[idx] = aiDrivers[participant.m_driverId].lastName || 'UNKNOWN';
+                        } else {
+                            participantLastNames[idx] = 'UNKNOWN';
+                        }
+                    });
+                }
+            }
+            
+            // Lap Data packet (ID 2) - Update positions
+            if (packetId === 2 && playerIndex !== null && Array.isArray(data.m_lapData)) {
+                const playerLapData = data.m_lapData[playerIndex];
+                if (!playerLapData) return;
+                
+                const currentPosition = playerLapData.m_carPosition;
+                
+                // Calculate ahead and behind positions
+                const positionAhead = currentPosition - 1;
+                const positionBehind = currentPosition + 1;
+                
+                // Update current player
+                positionCurrentEl.textContent = currentPosition;
+                nameCurrentEl.textContent = participantLastNames[playerIndex] || '';
+                
+                // Update driver ahead
+                if (positionAhead >= 1) {
+                    const aheadIdx = findDriverByPosition(data.m_lapData, positionAhead);
+                    if (aheadIdx !== -1) {
+                        driverAheadRow.style.display = 'flex';
+                        positionAheadEl.textContent = positionAhead;
+                        nameAheadEl.textContent = participantLastNames[aheadIdx] || '';
+                    } else {
+                        driverAheadRow.style.display = 'none';
+                    }
+                } else {
+                    driverAheadRow.style.display = 'none';
+                }
+                
+                // Update driver behind
+                if (positionBehind <= numActiveCars) {
+                    const behindIdx = findDriverByPosition(data.m_lapData, positionBehind);
+                    if (behindIdx !== -1) {
+                        driverBehindRow.style.display = 'flex';
+                        positionBehindEl.textContent = positionBehind;
+                        nameBehindEl.textContent = participantLastNames[behindIdx] || '';
+                    } else {
+                        driverBehindRow.style.display = 'none';
+                    }
+                } else {
+                    driverBehindRow.style.display = 'none';
+                }
+            }
+        });
+        
+        // Helper function to find driver index by position
+        function findDriverByPosition(lapData, targetPosition) {
+            return lapData.findIndex(lap => lap.m_carPosition === targetPosition);
+        }
+        
+        console.log('[Mini Leaderboard] Overlay loaded');
+    </script>
+</body>
+</html>

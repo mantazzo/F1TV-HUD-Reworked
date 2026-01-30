@@ -27,6 +27,10 @@
     "fastest-sectors": {
       "visible": true,
       "name": "Fastest Sectors"
+    },
+    "mini-leaderboard": {
+      "visible": true,
+      "name": "Mini Leaderboard"
     }
   }
 }

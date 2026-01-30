@@ -4,8 +4,8 @@
   "description": "F1TV HUD mod for F1 25 Game by Codemasters, reworked and improved",
   "main": "index.js",
   "scripts": {
-    "start": "bun index.js",
-    "start:node": "node index.js"
+    "start": "node index.js",
+    "start:bun": "bun index.js"
   },
   "keywords": ["formula 1", "f1tv", "hud", "mod", "f1 25", "codemasters", "f1 game"],
   "author": "Mantazzo",

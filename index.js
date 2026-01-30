@@ -198,6 +198,7 @@ prompt.get(promptSchema, (err, result) => {
     app.get('/turn-indicator', (req, res) => res.sendFile(path.join(__dirname, 'views', 'turn-indicator.html')));
     app.get('/fastest-sectors', (req, res) => res.sendFile(path.join(__dirname, 'views', 'fastest-sectors.html')));
     app.get('/message-box', (req, res) => res.sendFile(path.join(__dirname, 'views', 'message-box.html')));
+    app.get('/mini-leaderboard', (req, res) => res.sendFile(path.join(__dirname, 'views', 'mini-leaderboard.html')));
 
     // Controllers
     app.get('/controller/controller-extended', (req, res) => res.sendFile(path.join(__dirname, 'views', 'controller', 'controller-extended.html'))); 
@@ -206,6 +207,7 @@ prompt.get(promptSchema, (err, result) => {
     app.get('/debug/position-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'position-debug.html')));
 
     // Local Debug only - not added in public source code (at least at the moment)
+    // DEBATE: Should I add these pages to public source code or not?..
     app.get('/debug/session-history-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'session-history-debug.html')));
     app.get('/debug/event-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'event-debug.html')));
 
