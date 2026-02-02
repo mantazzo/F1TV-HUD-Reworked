@@ -62,7 +62,7 @@
     position: relative;
     width: var(--overlay-width);
     height: var(--overlay-height);
-    background-image: url('/images/lap-timer/PlayerIndicator.png'), url('/images/lap-timer/PlayerIndicator.png'), url('/images/lap-timer/Gradient.png');
+    background-image: url('/images/common/PlayerIndicator.png'), url('/images/common/PlayerIndicator.png'), url('/images/common/Gradient.png');
     background-repeat: no-repeat, no-repeat, no-repeat;
     background-position: -1px var(--player-indicator-top), 311px var(--player-indicator-top), -5px 140px;
     background-size: 318px var(--player-indicator-height), 318px var(--player-indicator-height), 485px 15px;
@@ -396,7 +396,7 @@
     left: -1px;
     width: var(--player-indicator-height);
     height: var(--player-indicator-height);
-    background-image: url('/images/lap-timer/Knockout.png');
+    background-image: url('/images/common/Knockout.png');
     background-size: cover;
     background-position: center;
     display: none;

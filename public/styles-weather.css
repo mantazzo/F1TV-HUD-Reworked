@@ -69,7 +69,7 @@ body {
     width: 280px;
     height: 90px;
     background-color: rgb(10, 10, 15);
-    background-image: url('/images/weather/Gradient.png');
+    background-image: url('/images/common/Gradient.png');
     background-size: 280px 90px;
     background-repeat: no-repeat;
 }
@@ -125,7 +125,7 @@ body {
     left: -2px;
     width: 283px;
     height: 50px;
-    background-image: url('/images/weather/Gradient.png');
+    background-image: url('/images/common/Gradient.png');
     background-size: 283px 50px;
     background-repeat: no-repeat;
     z-index: 0;

@@ -69,7 +69,7 @@
 
 ## Currently Working On
 
-Mini Leaderboard (final touches)
+Slight restructuring (to hopefully improve workflow in the future)
 
 ## Next Planned Overlay
 

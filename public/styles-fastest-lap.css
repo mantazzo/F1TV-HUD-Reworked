@@ -86,7 +86,7 @@ body {
     left: -1000px;
     width: 10000px;
     height: 12px;
-    background-image: url('../images/fastest-lap/Gradient.png');
+    background-image: url('../images/common/Gradient.png');
     background-repeat: repeat-x;
     background-size: auto 12px;
     z-index: 4;
@@ -98,7 +98,7 @@ body {
     left: -1000px;
     width: 10000px;
     height: 12px;
-    background-image: url('../images/fastest-lap/Gradient.png');
+    background-image: url('../images/common/Gradient.png');
     background-repeat: repeat-x;
     background-size: auto 12px;
     z-index: 5;

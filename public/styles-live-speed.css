@@ -80,7 +80,7 @@ body {
     top: 67px;
     width: 190px;
     height: 90px;
-    background-image: url('/images/live-speed/Gradient.png');
+    background-image: url('/images/common/Gradient.png');
     background-size: 190px 90px;
 }
 
@@ -92,7 +92,7 @@ body {
     width: 190px;
     height: 60px;
     border-top: 1px solid rgba(255, 255, 255, 0.22);
-    background-image: url('/images/live-speed/Gradient.png');
+    background-image: url('/images/common/Gradient.png');
     background-size: 190px 60px;
 }
 
