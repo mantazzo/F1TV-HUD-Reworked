@@ -1,0 +1,113 @@
+{
+  "trackId": 16,
+  "trackName": "Autodromo Jose Carlos Pace",
+  "year": null,
+  "trackLength": 4294,
+  "comment": "Generic default variant for Sao Paulo GP (Autodromo Jose Carlos Pace) - works across multiple game versions unless specific year file exists. Values in meters.",
+  "turns": [
+    {
+      "number": 1,
+      "trigger": 250,
+      "end": 440,
+      "name": "‘S’ do Senna"
+    },
+    {
+      "number": 2,
+      "trigger": 440,
+      "end": 540,
+      "name": "‘S’ do Senna"
+    },
+    {
+      "number": 3,
+      "trigger": 550,
+      "end": 875,
+      "name": "Curva do Sol"
+    },
+    {
+      "number": 4,
+      "trigger": 1310,
+      "end": 1510,
+      "name": "Descida do Lago"
+    },
+    {
+      "number": 5,
+      "trigger": 1520,
+      "end": 1760,
+      "name": "Descida do Lago"
+    },
+    {
+      "number": 6,
+      "trigger": 1970,
+      "end": 2100,
+      "name": "Ferradura"
+    },
+    {
+      "number": 7,
+      "trigger": 2100,
+      "end": 2265,
+      "name": "Ferradura"
+    },
+    {
+      "number": 8,
+      "trigger": 2280,
+      "end": 2410,
+      "name": "Laranjinha"
+    },
+    {
+      "number": 9,
+      "trigger": 2415,
+      "end": 2600,
+      "name": "Pinheirinho"
+    },
+    {
+      "number": 10,
+      "trigger": 2690,
+      "end": 2850,
+      "name": "Bico de Pato"
+    },
+    {
+      "number": 11,
+      "trigger": 2870,
+      "end": 3140,
+      "name": "Mergulho"
+    },
+    {
+      "number": 12,
+      "trigger": 3190,
+      "end": 3350,
+      "name": "Junção"
+    },
+    {
+      "number": 13,
+      "trigger": 3370,
+      "end": 3450,
+      "name": "Café"
+    },
+    {
+      "number": 14,
+      "trigger": 3590,
+      "end": 3790,
+      "name": "Subida dos Boxes"
+    },
+    {
+      "number": 15,
+      "trigger": 3920,
+      "end": 4160,
+      "name": "Arquibancadas"
+    }
+  ],
+  "drsZones": [
+    {
+      "zone": 1,
+      "start": 825,
+      "end": 1349,
+      "comment": "Zone 1 - from Turn 3 to Turn 4"
+    },
+    {
+      "zone": 2,
+      "start": 3830,
+      "end": 285,
+      "comment": "Zone 2 - through Turn 15 up to Turn 1"
+    }
+  ]
+}
