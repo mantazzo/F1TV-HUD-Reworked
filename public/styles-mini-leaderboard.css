@@ -15,14 +15,15 @@ body {
     position: absolute;
     left: 0;
     top: 0;
-    width: 320px;
+    width: 0;
     height: 250px;
     opacity: 0;
-    transition: opacity 333ms ease-out;
+    transition: opacity 200ms ease-out, width 250ms ease-out;
     overflow: hidden;
 }
 
 .overlay-container.visible {
+    width: 320px;
     opacity: 1;
 }
 
@@ -70,7 +71,7 @@ body {
         top: -500px;
     }
     to {
-        top: -37px;
+        top: -37px;  /* hand-matched to loop seamlessly */
     }
 }
 
@@ -205,6 +206,7 @@ body {
     color: rgb(192, 192, 192);
     justify-content: flex-end;
     border: none;
+    z-index: 2;
 }
 
 .driver-current .position-number {
@@ -218,6 +220,7 @@ body {
     font-weight: 400;
     color: rgb(0, 0, 0);
     border-right: 2px solid rgb(0, 0, 0);
+    z-index: 2;
 }
 
 .driver-behind .position-number {
@@ -232,6 +235,7 @@ body {
     color: rgb(192, 192, 192);
     justify-content: flex-end;
     border: none;
+    z-index: 2;
 }
 
 /* Position stroke (border separator) */

@@ -73,10 +73,28 @@
         const nameBehindEl = document.getElementById('name-behind');
         const driverAheadRow = document.querySelector('.driver-ahead');
         const driverBehindRow = document.querySelector('.driver-behind');
+        const knockoutOverlayAhead = driverAheadRow.querySelector('.knockout-overlay');
+        const knockoutOverlayCurrent = document.querySelector('.driver-current .knockout-overlay');
+        const knockoutOverlayBehind = driverBehindRow.querySelector('.knockout-overlay');
         
         // Sponsor animation control
         let sponsorAnimation = null;
         let sponsorTimeout = null;
+        
+        // Session type constants
+        const SESSION_TYPE = {
+            QUALIFYING_1: 5,
+            QUALIFYING_2: 6,
+            SPRINT_SHOOTOUT_1: 10,
+            SPRINT_SHOOTOUT_2: 11
+        };
+        
+        // Knockout zone position thresholds
+        const KNOCKOUT_ZONE_POSITIONS = {
+            Q1_20_CARS: 15,  // Positions 16-20 are knockout zone
+            Q1_22_CARS: 16,  // Positions 17-22 are knockout zone
+            Q2: 10           // Positions 11+ are knockout zone
+        };
         
         // Data storage
         let aiDrivers = {};
@@ -87,6 +105,7 @@
         let playerIndex = null;
         let numActiveCars = 0;
         let formulaType = null;
+        let sessionType = null;
         
         // Sponsor animation functions
         function startSponsorAnimation() {
@@ -182,6 +201,21 @@
             return null;
         }
         
+        // Function to check if position is in knockout zone
+        function isInKnockoutZone(position) {
+            const isQ1 = [SESSION_TYPE.QUALIFYING_1, SESSION_TYPE.SPRINT_SHOOTOUT_1].includes(sessionType);
+            const isQ2 = [SESSION_TYPE.QUALIFYING_2, SESSION_TYPE.SPRINT_SHOOTOUT_2].includes(sessionType);
+            
+            if (isQ1) {
+                const threshold = numActiveCars === 20 ? KNOCKOUT_ZONE_POSITIONS.Q1_20_CARS : KNOCKOUT_ZONE_POSITIONS.Q1_22_CARS;
+                return position > threshold;
+            } else if (isQ2) {
+                return position > KNOCKOUT_ZONE_POSITIONS.Q2;
+            }
+            
+            return false;
+        }
+        
         // Socket listeners
         socket.on('drivers_data', (data) => {
             aiDrivers = data;
@@ -191,9 +225,10 @@
         socket.on('f1_data', (data) => {
             const packetId = data.m_header?.m_packetId;
             
-            // Session packet (ID 1) - Get player index and formula type
+            // Session packet (ID 1) - Get player index, formula type, and session type
             if (packetId === 1) {
                 playerIndex = data.m_header.m_playerCarIndex;
+                sessionType = data.m_sessionType;
                 
                 if (data.m_formula !== undefined && data.m_formula !== formulaType) {
                     formulaType = data.m_formula;
@@ -250,6 +285,11 @@
                     widthOnly: true
                 });
                 
+                // Update knockout overlay visibility for current player
+                const isCurrentKnockout = isInKnockoutZone(currentPosition);
+                knockoutOverlayCurrent.style.display = isCurrentKnockout ? 'block' : 'none';
+                positionCurrentEl.style.color = isCurrentKnockout ? 'rgb(255, 255, 255)' : 'rgb(0, 0, 0)';
+                
                 // Update driver ahead
                 if (positionAhead >= 1) {
                     const aheadIdx = findDriverByPosition(data.m_lapData, positionAhead);
@@ -265,6 +305,9 @@
                             alignVert: false,
                             widthOnly: true
                         });
+                        
+                        // Update knockout overlay visibility
+                        knockoutOverlayAhead.style.display = isInKnockoutZone(positionAhead) ? 'block' : 'none';
                     } else {
                         driverAheadRow.style.display = 'none';
                     }
@@ -287,6 +330,9 @@
                             alignVert: false,
                             widthOnly: true
                         });
+                        
+                        // Update knockout overlay visibility
+                        knockoutOverlayBehind.style.display = isInKnockoutZone(positionBehind) ? 'block' : 'none';
                     } else {
                         driverBehindRow.style.display = 'none';
                     }
