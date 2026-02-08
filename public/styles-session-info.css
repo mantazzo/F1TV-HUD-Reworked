@@ -1,0 +1,203 @@
+/* Session Info Overlay Styles */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: transparent;
+    font-family: 'Formula1 Display', 'Formula1-Bold', sans-serif;
+}
+
+.session-info-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 810px;
+    height: 135px;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+    overflow: hidden;
+}
+
+.session-info-container.visible {
+    opacity: 1;
+}
+
+/* Background pattern */
+.background-pattern {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 810px;
+    height: 120px;
+    background: rgba(18, 20, 26, 0.7);
+    overflow: hidden;
+    z-index: 0;
+}
+
+.bg-image {
+    position: absolute;
+    width: 362.8px;
+    height: 758.2px;
+    background-image: url('/images/session-info/bg1.png');
+    background-size: 362.8px 758.2px;
+    background-repeat: no-repeat;
+    transform: rotate(90deg);
+}
+
+.bg-image-1 {
+    left: 197.6px;
+    top: -198px;
+}
+
+.bg-image-2 {
+    left: 948px;
+    top: -198px;
+}
+
+/* Track flag */
+.track-flag {
+    position: absolute;
+    left: 0;
+    top: -5px;
+    width: 399px;
+    height: 125px;
+    background-size: 100% 100%; /* Stretch to fill entire container (warps aspect ratio) */
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0.25;
+    filter: blur(1.5px);
+    z-index: 1;
+}
+
+/* Gradient Overlay - Top gradient effect */
+.gradient-overlay {
+    position: absolute;
+    left: -1px;
+    top: 0;
+    width: 812px;
+    height: 90px;
+    background-image: url('/images/common/Gradient.png');
+    background-size: 812px 90px;
+    background-position: center;
+    background-repeat: no-repeat;
+    z-index: 2;
+}
+
+
+/* Bottom stroke decoration */
+.session-info-container::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 120px;
+    width: 810px;
+    height: 15px;
+    opacity: 0.5;
+    background: 
+        linear-gradient(to top, transparent 0px, transparent 7px, rgba(0, 0, 0, 0.1) 7px, rgba(0, 0, 0, 0.1) 15px),
+        repeating-linear-gradient(
+            -45deg,
+            transparent,
+            transparent 7px,
+            rgba(0, 0, 0, 0.2) 7px,
+            rgba(0, 0, 0, 0.2) 9px
+        ),
+        rgba(255, 255, 255, 0.15);
+    filter: blur(0.5px);
+}
+
+/* Event Name - Top Left */
+.event-name {
+    position: absolute;
+    left: 15px;
+    top: 3px;
+    width: 340px;
+    height: 90px;
+    font-family: 'F1TV-2022', sans-serif;
+    font-size: 25px;
+    font-weight: 900;
+    color: #ffffff;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    text-transform: uppercase;
+    line-height: 1.2;
+    z-index: 1;
+}
+
+/* Session Year - Bottom Left */
+.session-year {
+    position: absolute;
+    left: 15px;
+    top: 93px;
+    width: 80px;
+    height: 25px;
+    font-family: 'F1YEAR', sans-serif;
+    font-size: 24px;
+    font-weight: 900;
+    color: rgb(255, 0, 0);
+    text-align: left;
+    display: flex;
+    align-items: center;
+    z-index: 1;
+}
+
+/* Separator - Vertical line between left and right sections */
+.separator {
+    position: absolute;
+    left: 397px;
+    top: 25px;
+    width: 1px;
+    height: 70px;
+    background-color: rgb(255, 255, 255);
+    opacity: 0.4;
+    z-index: 1;
+}
+
+/* Session Type - Top Right */
+.session-type {
+    position: absolute;
+    left: 400px;
+    top: 25px;
+    width: 410px;
+    height: 30px;
+    font-family: 'F1TV-2022', sans-serif;
+    font-size: 30px;
+    font-weight: 950;
+    color: #ffffff;
+    opacity: 0.6;
+    text-align: center;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+}
+
+/* Location - Bottom Right */
+.location {
+    position: absolute;
+    left: 395px;
+    top: 65px;
+    width: 415px;
+    height: 30px;
+    font-family: 'F1TV-2022', sans-serif;
+    font-size: 22px;
+    font-weight: 600;
+    font-style: oblique;
+    color: #ffffff;
+    opacity: 0.9;
+    text-align: center;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+}

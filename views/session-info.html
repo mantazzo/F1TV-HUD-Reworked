@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>F1 Session Info Overlay</title>
+    <link rel="stylesheet" href="/fonts.css">
+    <link rel="stylesheet" href="/styles-session-info.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/textfit@2.4.0/textFit.min.js"></script>
+    <script src="/utils/driver-utils.js"></script>
+</head>
+<body>
+    <div class="session-info-container visible">
+        <div class="background-pattern">
+            <div class="bg-image bg-image-1"></div>
+            <div class="bg-image bg-image-2"></div>
+        </div>
+        <div class="gradient-overlay"></div>
+        <div class="track-flag" id="track-flag"></div>
+        <div class="event-name" id="event-name">FORMULA 1 ROLEX GROSSER PREIS VON ÖSTERREICH</div>
+        <div class="session-year" id="session-year">2023</div>
+        <div class="separator"></div>
+        <div class="session-type" id="session-type">PRACTICE 1</div>
+        <div class="location" id="location">SPIELBERG, AUSTRIA</div>
+    </div>
+    
+    <script>
+        const socket = io();
+        socket.emit('identify', 'Session Info');
+        
+        // DOM elements
+        const sessionInfoContainer = document.querySelector('.session-info-container');
+        const trackFlagElement = document.getElementById('track-flag');
+        const eventNameElement = document.getElementById('event-name');
+        const sessionYearElement = document.getElementById('session-year');
+        const sessionTypeElement = document.getElementById('session-type');
+        const locationElement = document.getElementById('location');
+        
+        // State variables
+        let trackId = -1;
+        let trackData = null;
+        let currentFormula = null;
+        let currentSessionType = null;
+        let currentYear = null;
+        let overlayVisible = true;
+        
+        // Track name mapping (from TRACKS constant)
+        const TRACKS = [
+            'Melbourne', 'Paul_Ricard', 'Shanghai', 'Sakhir', 'Catalunya',
+            'Monaco', 'Montreal', 'Silverstone', 'Hockenheim', 'Hungaroring',
+            'Spa', 'Monza', 'Singapore', 'Suzuka', 'Abu_Dhabi',
+            'Texas', 'Brazil', 'Austria', 'Sochi', 'Mexico',
+            'Baku', 'Sakhir_Short', 'Silverstone_Short', 'Texas_Short', 'Suzuka_Short',
+            'Hanoi', 'Zandvoort', 'Imola', 'Portimao', 'Jeddah',
+            'Miami', 'Las_Vegas', 'Losail', '33', '34',
+            '35', '36', '37', '38',
+            'Silverstone_Reverse', 'Austria_Reverse', 'Zandvoort_Reverse'
+        ];
+        
+        // Session type name mapping
+        const SESSION_TYPE_NAMES = {
+            0: 'UNKNOWN',
+            1: 'PRACTICE 1',
+            2: 'PRACTICE 2',
+            3: 'PRACTICE 3',
+            4: 'SHORT PRACTICE',
+            5: 'QUALIFYING 1',
+            6: 'QUALIFYING 2',
+            7: 'QUALIFYING 3',
+            8: 'SHORT QUALIFYING',
+            9: 'ONE SHOT QUALIFYING',
+            10: 'SPRINT SHOOTOUT 1',
+            11: 'SPRINT SHOOTOUT 2',
+            12: 'SPRINT SHOOTOUT 3',
+            13: 'SHORT SPRINT SHOOTOUT',
+            14: 'ONE SHOT SPRINT SHOOTOUT',
+            15: 'RACE',
+            16: 'RACE 2',
+            17: 'RACE 3',
+            18: 'TIME TRIAL'
+        };
+        
+        // Handle overlay visibility from controller
+        socket.on('overlay_config', (config) => {
+            if (config.overlays && config.overlays['session-info']) {
+                overlayVisible = config.overlays['session-info'].visible;
+                
+                if (overlayVisible) {
+                    sessionInfoContainer.classList.add('visible');
+                } else {
+                    sessionInfoContainer.classList.remove('visible');
+                }
+            }
+        });
+        
+        // Load track data
+        async function loadTrackData(trackId, year = null) {
+            const trackName = TRACKS[trackId];
+            if (!trackName) {
+                console.log(`Session Info: Invalid track ID ${trackId}`);
+                return null;
+            }
+            
+            // Try year-specific file first, then generic
+            const filenames = [];
+            if (year) {
+                filenames.push(`/data/tracks/${year}-${trackId}-${trackName}.json`);
+            }
+            filenames.push(`/data/tracks/${trackId}-${trackName}.json`);
+            
+            for (const filename of filenames) {
+                try {
+                    const response = await fetch(filename);
+                    if (response.ok) {
+                        const data = await response.json();
+                        console.log(`Session Info: Loaded track data from ${filename}`);
+                        return data;
+                    }
+                } catch (err) {
+                    // Silently continue to next file
+                }
+            }
+            
+            console.log(`Session Info: No track data found for ${trackName}`);
+            return null;
+        }
+        
+        // Get event name based on formula type
+        function getEventName(trackData, formulaType) {
+            if (!trackData) {
+                return formulaType === DriverUtils.FORMULA_TYPE.F2 
+                    ? '<F2 EVENT NAME MISSING>' 
+                    : '<F1 EVENT NAME MISSING>';
+            }
+            
+            // For F2, try eventName_F2 first, fallback to eventName
+            if (formulaType === DriverUtils.FORMULA_TYPE.F2) {
+                return trackData.eventName_F2 || trackData.eventName || '<F2 EVENT NAME MISSING>';
+            }
+            
+            // For F1 and others
+            return trackData.eventName || '<F1 EVENT NAME MISSING>';
+        }
+        
+        // Get location from track data
+        function getLocation(trackData) {
+            if (!trackData || !trackData.location) {
+                return '<LOCATION MISSING>';
+            }
+            return trackData.location.toUpperCase();
+        }
+        
+        // Get year to display
+        function getDisplayYear(trackData, gameYear) {
+            // Priority: track file year → game year
+            if (trackData && trackData.year !== null && trackData.year !== undefined) {
+                return trackData.year;
+            }
+            
+            if (gameYear !== null && gameYear !== undefined) {
+                // m_gameYear is 2-digit, convert to 4-digit
+                // Assuming years 00-50 are 2000-2050, 51-99 are 1951-1999
+                if (gameYear < 100) {
+                    return gameYear <= 50 ? 2000 + gameYear : 1900 + gameYear;
+                }
+                return gameYear;
+            }
+            
+            return null;
+        }
+        
+        // Get session type name
+        function getSessionTypeName(sessionType) {
+            return SESSION_TYPE_NAMES[sessionType] || 'UNKNOWN';
+        }
+        
+        // Update display
+        function updateDisplay() {
+            const eventName = getEventName(trackData, currentFormula);
+            const location = getLocation(trackData);
+            const year = getDisplayYear(trackData, currentYear);
+            const sessionTypeName = getSessionTypeName(currentSessionType);
+            
+            eventNameElement.textContent = eventName;
+            textFit(eventNameElement, {
+                minFontSize: 20,
+                maxFontSize: 25,
+                multiLine: true,
+                alignHoriz: false,
+                alignVert: true,
+                widthOnly: false
+            });
+            locationElement.textContent = location;
+            sessionTypeElement.textContent = sessionTypeName;
+            
+            // Load track flag image
+            if (trackId !== -1 && TRACKS[trackId]) {
+                const trackName = TRACKS[trackId];
+                trackFlagElement.style.backgroundImage = `url('/images/session-info/${trackId}-${trackName}.png')`;
+            }
+            
+            if (year !== null) {
+                sessionYearElement.textContent = year;
+                sessionYearElement.style.display = 'block';
+            } else {
+                console.error('Session Info: No year available to display, is the game outputting the m_gameYear field in the header?');
+                sessionYearElement.style.display = 'none';
+            }
+        }
+        
+        // Listen for telemetry data
+        socket.on('f1_data', (data) => {
+            // Session packet - load track data and get session info
+            if (data.m_header && data.m_header.m_packetId === 1) {
+                const newTrackId = data.m_trackId;
+                const gameYear = data.m_header.m_gameYear !== undefined ? data.m_header.m_gameYear : null;
+                const sessionType = data.m_sessionType !== undefined ? data.m_sessionType : null;
+                const formula = data.m_formula !== undefined ? data.m_formula : null;
+                
+                // Update current values
+                currentYear = gameYear;
+                currentSessionType = sessionType;
+                currentFormula = formula;
+                
+                // Load track data if track changed
+                if (newTrackId !== trackId) {
+                    trackId = newTrackId;
+                    loadTrackData(trackId, gameYear).then(data => {
+                        trackData = data;
+                        updateDisplay();
+                    });
+                } else {
+                    updateDisplay();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

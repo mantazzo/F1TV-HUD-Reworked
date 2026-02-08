@@ -1,6 +1,9 @@
 {
   "trackId": 17,
   "trackName": "Red Bull Ring",
+  "eventName": "FORMULA 1 MSC CRUISES AUSTRIAN GRAND PRIX",
+  "eventName_F2": "FIA FORMULA 2 AUSTRIAN GRAND PRIX",
+  "location": "Spielberg, Austria",
   "year": null,
   "trackLength": 4323,
   "comment": "Generic default variant for Austrian GP (Red Bull Ring) - works across multiple game versions unless specific year file exists. Values in meters.",

@@ -231,6 +231,14 @@
 }
 
 @font-face {
+    font-family: 'F1YEAR';
+    src: url('/fonts/woff2/F1YEARRegular.woff2') format('woff2'),
+         url('/fonts/F1YEARRegular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;}
+
+@font-face {
     font-family: 'Optima';
     src: url('fonts/woff2/OptimaLTPro-Roman.woff2') format('woff2'),
          url('fonts/OptimaLTPro-Roman.ttf') format('truetype');

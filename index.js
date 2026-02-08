@@ -199,6 +199,7 @@ prompt.get(promptSchema, (err, result) => {
     app.get('/fastest-sectors', (req, res) => res.sendFile(path.join(__dirname, 'views', 'fastest-sectors.html')));
     app.get('/message-box', (req, res) => res.sendFile(path.join(__dirname, 'views', 'message-box.html')));
     app.get('/mini-leaderboard', (req, res) => res.sendFile(path.join(__dirname, 'views', 'mini-leaderboard.html')));
+    app.get('/session-info', (req, res) => res.sendFile(path.join(__dirname, 'views', 'session-info.html')));
 
     // Controllers
     app.get('/controller/controller-extended', (req, res) => res.sendFile(path.join(__dirname, 'views', 'controller', 'controller-extended.html'))); 
