@@ -7,6 +7,7 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/textfit@2.4.0/textFit.min.js"></script>
+    <script src="/utils/driver-utils.js"></script>
 </head>
 <body>
     <!-- Main overlay container -->
@@ -242,7 +243,7 @@
         let eventCodes = {};
         let infringements = [];
         let teamNames = {};
-        let formulaType = 0;
+        let formulaType = DriverUtils.FORMULA_TYPE.F1_MODERN;
         
         // Listen for drivers data from server
         socket.on('drivers_data', (data) => {
@@ -262,69 +263,36 @@
             console.log('[MessageBox] Infringements received:', infringements.length, 'types');
         });
         
-        // Load JSON files (teams and custom drivers)
-        async function loadJsonFiles() {
+        // Load driver data using DriverUtils
+        async function loadDriverData() {
             try {
-                const promises = [fetch('/data/DefaultTeams.json')];
-                if (formulaType === 0) {
-                    promises.push(fetch('/data/CustomF1Drivers.json'));
-                } else if (formulaType === 2) {
-                    promises.push(fetch('/data/CustomF2Drivers.json'));
-                }
-                const responses = await Promise.all(promises.map(p => p.catch(() => null)));
-                teamNames = responses[0] ? await responses[0].json() : {};
-                if (responses[1]) {
-                    const customDriversData = await responses[1].json();
-                    customDrivers = Array.isArray(customDriversData) ? customDriversData : [];
-                }
-                console.log('[MessageBox] Loaded team data and', customDrivers.length, 'custom drivers');
+                const data = await DriverUtils.loadDriverData(formulaType);
+                customDrivers = data.customDrivers;
+                teamNames = data.teamNames;
+                console.log('[MessageBox] Loaded driver data:', customDrivers.length, 'custom drivers');
             } catch (error) {
-                console.error('[MessageBox] Error loading JSON files:', error);
+                console.error('[MessageBox] Error loading driver data:', error);
                 teamNames = {};
                 customDrivers = [];
             }
         }
         
-        // Match custom driver based on participant data
-        function matchCustomDriver(participant, showOnlineNames) {
-            const raceNumber = participant.m_raceNumber;
-            const name = participant.m_name;
-            const teamId = participant.m_teamId;
-            const team = teamNames[teamId] ? teamNames[teamId].ShortName : `Team_${teamId}`;
-
-            // Priority 1: Exact name match (only if showOnlineNames is 1)
-            // Skip name matching if showOnlineNames is 0 (player shows as "PLAYER")
-            if (showOnlineNames === 1) {
-                for (let driver of customDrivers) {
-                    if (driver.MatchName && driver.MatchName.toUpperCase() === name.toUpperCase()) {
-                        return driver;
-                    }
-                }
-            }
-
-            // Priority 2: Number + Team match
-            for (let driver of customDrivers) {
-                if (driver.RaceNumber && driver.Team && driver.RaceNumber === raceNumber && driver.Team === team) {
-                    return driver;
-                }
-            }
-
-            // Priority 3: Number only match
-            for (let driver of customDrivers) {
-                if (driver.RaceNumber && driver.RaceNumber === raceNumber) {
-                    return driver;
-                }
-            }
-
-            return null;
-        }
-        
-        // Load JSON files on startup
-        loadJsonFiles();
+        // Load driver data on startup
+        loadDriverData();
         
         // Listen for F1 data packets
         socket.on('f1_data', (data) => {
             const packetId = data.m_header ? data.m_header.m_packetId : -1;
+            
+            // Handle Session packet (packet ID 1) - track formula type
+            if (packetId === 1) {
+                const newFormulaType = data.m_formula;
+                if (newFormulaType !== undefined && newFormulaType !== formulaType) {
+                    formulaType = newFormulaType;
+                    console.log('[MessageBox] Formula type:', formulaType);
+                    loadDriverData();
+                }
+            }
             
             // Handle Participants packet (packet ID 4)
             if (packetId === 4) {
@@ -335,44 +303,18 @@
                 for (let i = 0; i < numActiveCars; i++) {
                     const participant = data.m_participants[i];
                     const index = participant.m_participantIndex !== undefined ? participant.m_participantIndex : i;
-                    const driverId = participant.m_driverId;
-                    const showOnlineNames = participant.m_showOnlineNames;
-                    const raceNumber = participant.m_raceNumber;
-                    const teamId = participant.m_teamId;
                     
                     // Store full participant data
                     participantData[index] = participant;
                     
-                    // Get abbreviation
-                    if (driverId === 255) {
-                        // Custom driver
-                        const customDriver = matchCustomDriver(participant, showOnlineNames);
-                        if (customDriver) {
-                            participantAbbreviations[index] = customDriver.Abbreviation || customDriver.abbreviation || 'XXX';
-                        } else {
-                            // Fallback: Use team name
-                            const team = teamNames[teamId];
-                            if (team && team.ShortName) {
-                                participantAbbreviations[index] = team.ShortName.substring(0, 3).toUpperCase();
-                            } else {
-                                participantAbbreviations[index] = 'XXX';
-                            }
-                        }
-                    } else {
-                        // AI driver
-                        const aiDriver = aiDrivers[driverId];
-                        if (aiDriver && aiDriver.abbreviation) {
-                            participantAbbreviations[index] = aiDriver.abbreviation.toUpperCase();
-                        } else {
-                            // Fallback: Use team name
-                            const team = teamNames[teamId];
-                            if (team && team.ShortName) {
-                                participantAbbreviations[index] = team.ShortName.substring(0, 3).toUpperCase();
-                            } else {
-                                participantAbbreviations[index] = 'XXX';
-                            }
-                        }
-                    }
+                    // Get abbreviation using DriverUtils
+                    const abbreviation = DriverUtils.getDriverAbbreviation(
+                        participant,
+                        aiDrivers,
+                        customDrivers,
+                        teamNames
+                    );
+                    participantAbbreviations[index] = abbreviation;
                 }
                 
                 console.log('[MessageBox] Updated participant data for', numActiveCars, 'drivers');
@@ -588,37 +530,22 @@
                             messageText += ` - GAINED ${placesGained} POSITION${placesGained !== 1 ? 'S' : ''}`;
                         }
                         
-                        // Extract driver name data for penalty popup
+                        // Extract driver name data for penalty popup using DriverUtils
                         let firstName = '';
                         let lastName = '';
                         if (participant) {
-                            const driverId = participant.m_driverId;
-                            
-                            if (driverId === 255) {
-                                // Custom driver
-                                const customDriver = matchCustomDriver(participant, participant.m_showOnlineNames);
-                                if (customDriver) {
-                                    firstName = customDriver.FirstName || '';
-                                    lastName = customDriver.LastName || customDriver.DisplayName || 'PLAYER';
-                                } else {
-                                    // Fallback to participant name
-                                    const fullName = participant.m_name || 'PLAYER';
-                                    const nameParts = fullName.split(' ');
-                                    if (nameParts.length > 1) {
-                                        firstName = nameParts[0];
-                                        lastName = nameParts.slice(1).join(' ');
-                                    } else {
-                                        lastName = fullName;
-                                    }
-                                }
-                            } else {
-                                // AI driver
-                                const aiDriver = aiDrivers[driverId];
-                                if (aiDriver) {
-                                    firstName = aiDriver.firstName || '';
-                                    lastName = aiDriver.lastName || '';
-                                }
-                            }
+                            firstName = DriverUtils.getDriverFirstName(
+                                participant,
+                                aiDrivers,
+                                customDrivers,
+                                teamNames
+                            );
+                            lastName = DriverUtils.getDriverLastName(
+                                participant,
+                                aiDrivers,
+                                customDrivers,
+                                teamNames
+                            );
                         }
                         
                         // Determine penalty text type for display

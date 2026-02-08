@@ -7,6 +7,7 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/textfit@2.4.0/textFit.min.js"></script>
+    <script src="/utils/driver-utils.js"></script>
 </head>
 <body>
     <div class="overlay-container">
@@ -185,13 +186,6 @@
             UNKNOWN: { code: '?', color: '#808080' } // Compound is unknown
         };
 
-        const KNOCKOUT_ZONE_POSITIONS = {
-            Q1_20_CARS: 15,  // 20 car grid
-            Q1_22_CARS: 16,  // 22 car grid (F2 or MyTeam)
-            Q2: 10,
-            Q3: 0  // No knockout in Q3
-        };
-
         const SECTOR_COLORS = {
             FASTER: 'lime',      // Faster than reference
             SLOWER: '#FDD30A',   // Slower than reference (yellow)
@@ -226,12 +220,13 @@
         let driverName = 'PLAYER';
         let tyreCompound = 'S';
         let sessionType = 0;
-        let formulaType = 0;
+        let formulaType = DriverUtils.FORMULA_TYPE.F1_MODERN;
         let leaderCarIdx = -1;
         let targetCarIdx = -1;
         let numActiveCars = 20;
         let currentLapNum = 0;
         let playerCarIdx = -1;
+        let participants = []; // Store full participant data
         let participantNames = {};
         let teamNames = {};
         let customDrivers = [];
@@ -264,59 +259,18 @@
             console.log('AI drivers updated from server:', aiDrivers);
         });
 
-        async function loadJsonFiles() {
+        // Load driver data using DriverUtils
+        async function loadDriverData() {
             try {
-                const promises = [
-                    fetch('/data/DefaultTeams.json')
-                ];
-                if (formulaType === 0) {
-                    promises.push(fetch('/data/CustomF1Drivers.json'));
-                } else if (formulaType === 2) {
-                    promises.push(fetch('/data/CustomF2Drivers.json'));
-                }
-                const responses = await Promise.all(promises.map(p => p.catch(() => null)));
-                teamNames = responses[0] ? await responses[0].json() : {};
-                if (responses[1]) {
-                    const customDriversData = await responses[1].json();
-                    customDrivers = Array.isArray(customDriversData) ? customDriversData : [];
-                    console.log(`Custom drivers loaded for ${formulaType === 0 ? 'F1' : formulaType === 2 ? 'F2' : 'Unknown Formula'} (${customDrivers.length} drivers):`, customDrivers);
-                }
+                const data = await DriverUtils.loadDriverData(formulaType);
+                customDrivers = data.customDrivers;
+                teamNames = data.teamNames;
+                console.log('[LapTimer] Loaded driver data:', customDrivers.length, 'custom drivers');
             } catch (error) {
-                console.error('Error loading JSON files:', error);
+                console.error('[LapTimer] Error loading driver data:', error);
                 teamNames = {};
                 customDrivers = [];
             }
-        }
-
-        function matchCustomDriver(participant) {
-            const raceNumber = participant.m_raceNumber;
-            const name = participant.m_name;
-            const teamId = participant.m_teamId;
-            const team = teamNames[teamId] ? teamNames[teamId].ShortName : `Team_${teamId}`;
-
-            // Priority 1: Exact name match (MatchName field)
-            for (let driver of customDrivers) {
-                if (driver.MatchName && driver.MatchName.toUpperCase() === name.toUpperCase()) {
-                    return driver.LastName || driver.DisplayName || '';
-                }
-            }
-
-            // Priority 2: Number + Team match
-            for (let driver of customDrivers) {
-                if (driver.RaceNumber && driver.Team && driver.RaceNumber === raceNumber && driver.Team === team) {
-                    return driver.LastName || driver.DisplayName || '';
-                }
-            }
-
-            // Priority 3: Number only match
-            for (let driver of customDrivers) {
-                if (driver.RaceNumber && driver.RaceNumber === raceNumber) {
-                    return driver.LastName || driver.DisplayName || '';
-                }
-            }
-
-            // No match - return fallback
-            return `${team} #${raceNumber}`;
         }
 
         function formatTime(milliseconds) {
@@ -522,11 +476,12 @@
             trackLength = data.m_trackLength || -1;
             safetyCarStatus = data.m_safetyCarStatus || 0;
             
-            // Only reload custom drivers if formula type changed or first load
-            if (formulaType !== newFormulaType || !customDrivers.length) {
+            // Only reload custom drivers if formula type changed
+            if (formulaType !== newFormulaType) {
                 sessionType = newSessionType;
                 formulaType = newFormulaType;
-                loadJsonFiles();
+                console.log('[LapTimer] Formula type:', formulaType);
+                loadDriverData();
             } else {
                 sessionType = newSessionType;
                 formulaType = newFormulaType;
@@ -535,31 +490,30 @@
 
         /**
          * Handle Participants packet (ID: 4)
-         * Updates driver names for all participants in the session
+         * Updates driver names for all participants in the session using DriverUtils
          */
         function handleParticipantsPacket(data) {
             numActiveCars = data.m_participants.length;
+            participants = data.m_participants;
             participantNames = {};
             
-            for (let i = 0; i < numActiveCars && i < data.m_participants.length; i++) {
-                const participant = data.m_participants[i];
+            participants.forEach((participant, i) => {
                 const index = participant.m_participantIndex !== undefined ? participant.m_participantIndex : i;
-                const driverId = participant.m_driverId;
                 
-                if (driverId === 255) {
-                    // Human player - use custom driver match
-                    participantNames[index] = matchCustomDriver(participant);
-                } else {
-                    // AI driver - use lastName from driversData
-                    const aiDriver = aiDrivers[driverId];
-                    participantNames[index] = aiDriver ? aiDriver.lastName.toUpperCase() : 'UNKNOWN_AI';
-                }
+                // Get driver name using DriverUtils
+                const driverName = DriverUtils.getDriverLastName(
+                    participant,
+                    aiDrivers,
+                    customDrivers,
+                    teamNames
+                );
+                participantNames[index] = driverName.toUpperCase();
                 
                 // Update team logo if this is the player
                 if (i === playerCarIdx) {
                     updateTeamLogo(participant.m_teamId);
                 }
-            }
+            });
             
             updateLapDisplay();
         }
@@ -721,7 +675,7 @@
             
             // Q1/Sprint Shootout 1 - compare to knockout threshold
             if ([SESSION_TYPE.QUALIFYING_1, SESSION_TYPE.SPRINT_SHOOTOUT_1].includes(sessionType)) {
-                const threshold = numActiveCars === 20 ? KNOCKOUT_ZONE_POSITIONS.Q1_20_CARS : KNOCKOUT_ZONE_POSITIONS.Q1_22_CARS;
+                const threshold = numActiveCars === 20 ? DriverUtils.KNOCKOUT_ZONE_POSITIONS.Q1_20_CARS : DriverUtils.KNOCKOUT_ZONE_POSITIONS.Q1_22_CARS;
                 if (currentPosition > threshold) {
                     for (let i = 0; i < allLapData.length; i++) {
                         if (allLapData[i].m_carPosition === threshold) {
@@ -736,9 +690,9 @@
             }
             // Q2/Sprint Shootout 2 - compare to P10
             else if ([SESSION_TYPE.QUALIFYING_2, SESSION_TYPE.SPRINT_SHOOTOUT_2].includes(sessionType)) {
-                if (currentPosition > KNOCKOUT_ZONE_POSITIONS.Q2) {
+                if (currentPosition > DriverUtils.KNOCKOUT_ZONE_POSITIONS.Q2) {
                     for (let i = 0; i < allLapData.length; i++) {
-                        if (allLapData[i].m_carPosition === KNOCKOUT_ZONE_POSITIONS.Q2) {
+                        if (allLapData[i].m_carPosition === DriverUtils.KNOCKOUT_ZONE_POSITIONS.Q2) {
                             targetCarIdx = i;
                             if (sessionHistoryByCarIdx[targetCarIdx]?.bestLapNum < 1) {
                                 targetCarIdx = leaderCarIdx;
@@ -1144,15 +1098,7 @@
                     updateTargetCar(data.m_lapData, position);
                     
                     // === KNOCKOUT INDICATOR ===
-                    const isQ1 = [SESSION_TYPE.QUALIFYING_1, SESSION_TYPE.SPRINT_SHOOTOUT_1].includes(sessionType);
-                    const isQ2 = [SESSION_TYPE.QUALIFYING_2, SESSION_TYPE.SPRINT_SHOOTOUT_2].includes(sessionType);
-                    
-                    let isKnockoutVisible = false;
-                    if ((isQ1 && ((numActiveCars === 20 && position > KNOCKOUT_ZONE_POSITIONS.Q1_20_CARS) || 
-                                  (numActiveCars === 22 && position > KNOCKOUT_ZONE_POSITIONS.Q1_22_CARS))) ||
-                        (isQ2 && position > KNOCKOUT_ZONE_POSITIONS.Q2)) {
-                        isKnockoutVisible = true;
-                    }
+                const isKnockoutVisible = DriverUtils.isInKnockoutZone(position, sessionType, numActiveCars);
                     knockoutIndicator.style.display = isKnockoutVisible ? 'block' : 'none';
                     
                     // === POSITION CHANGE ANIMATIONS ===
@@ -1196,7 +1142,7 @@
         
         createStrokeBar();
         updateLapDisplay();
-        loadJsonFiles();
+        loadDriverData();
     </script>
 </body>
 </html>

@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="/styles-fastest-sectors.css">
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/textfit@2.4.0/textFit.min.js"></script>
+    <script src="/utils/driver-utils.js"></script>
 </head>
 <body>
     <div class="overlay-container">
@@ -84,12 +85,13 @@
         };
         
         // State variables
+        let participants = []; // Store full participant data
         let participantNames = {};
         let participantTeamIds = {};
         let teamNames = {};
         let customDrivers = [];
         let aiDrivers = {};
-        let formulaType = 0;
+        let formulaType = DriverUtils.FORMULA_TYPE.F1_MODERN;
         let numActiveCars = 20;
         
         // Session history tracking
@@ -148,61 +150,18 @@
             console.log('AI drivers updated from server:', aiDrivers);
         });
         
-        // Load team and driver data
-        async function loadJsonFiles() {
+        // Load driver data using DriverUtils
+        async function loadDriverData() {
             try {
-                const promises = [
-                    fetch('/data/DefaultTeams.json')
-                ];
-                if (formulaType === 0) {
-                    promises.push(fetch('/data/CustomF1Drivers.json'));
-                } else if (formulaType === 2) {
-                    promises.push(fetch('/data/CustomF2Drivers.json'));
-                }
-                const responses = await Promise.all(promises.map(p => p.catch(() => null)));
-                teamNames = responses[0] ? await responses[0].json() : {};
-                if (responses[1]) {
-                    const customDriversData = await responses[1].json();
-                    customDrivers = Array.isArray(customDriversData) ? customDriversData : [];
-                    console.log(`Custom drivers loaded for ${formulaType === 0 ? 'F1' : formulaType === 2 ? 'F2' : 'Unknown Formula'} (${customDrivers.length} drivers):`, customDrivers);
-                }
+                const data = await DriverUtils.loadDriverData(formulaType);
+                customDrivers = data.customDrivers;
+                teamNames = data.teamNames;
+                console.log('[FastestSectors] Loaded driver data:', customDrivers.length, 'custom drivers');
             } catch (error) {
-                console.error('Error loading JSON files:', error);
+                console.error('[FastestSectors] Error loading driver data:', error);
                 teamNames = {};
                 customDrivers = [];
             }
-        }
-        
-        // Match custom driver name
-        function matchCustomDriver(participant) {
-            const raceNumber = participant.m_raceNumber;
-            const name = participant.m_name;
-            const teamId = participant.m_teamId;
-            const team = teamNames[teamId] ? teamNames[teamId].ShortName : `Team_${teamId}`;
-
-            // Priority 1: Exact name match (MatchName field)
-            for (let driver of customDrivers) {
-                if (driver.MatchName && driver.MatchName.toUpperCase() === name.toUpperCase()) {
-                    return driver.LastName || driver.DisplayName || '';
-                }
-            }
-
-            // Priority 2: Number + Team match
-            for (let driver of customDrivers) {
-                if (driver.RaceNumber && driver.Team && driver.RaceNumber === raceNumber && driver.Team === team) {
-                    return driver.LastName || driver.DisplayName || '';
-                }
-            }
-
-            // Priority 3: Number only match
-            for (let driver of customDrivers) {
-                if (driver.RaceNumber && driver.RaceNumber === raceNumber) {
-                    return driver.LastName || driver.DisplayName || '';
-                }
-            }
-
-            // No match - return fallback
-            return `${team} #${raceNumber}`;
         }
         
         // Update team logo for a sector
@@ -232,36 +191,36 @@
         function handleSessionPacket(data) {
             const newFormulaType = data.m_formula;
             
-            // Only reload custom drivers if formula type changed or first load
-            if (formulaType !== newFormulaType || !customDrivers.length) {
+            // Only reload custom drivers if formula type changed
+            if (formulaType !== newFormulaType) {
                 formulaType = newFormulaType;
-                loadJsonFiles();
+                console.log('[FastestSectors] Formula type:', formulaType);
+                loadDriverData();
             }
         }
         
-        // Handle Participants packet (ID: 4)
+        // Handle Participants packet (ID: 4) - using DriverUtils
         function handleParticipantsPacket(data) {
             numActiveCars = data.m_participants.length;
+            participants = data.m_participants;
             participantNames = {};
             participantTeamIds = {};
             
-            for (let i = 0; i < numActiveCars && i < data.m_participants.length; i++) {
-                const participant = data.m_participants[i];
+            participants.forEach((participant, i) => {
                 const index = participant.m_participantIndex !== undefined ? participant.m_participantIndex : i;
-                const driverId = participant.m_driverId;
                 
                 // Store team ID
                 participantTeamIds[index] = participant.m_teamId;
                 
-                if (driverId === 255) {
-                    // Human player - use custom driver match
-                    participantNames[index] = matchCustomDriver(participant);
-                } else {
-                    // AI driver - use lastName from driversData
-                    const aiDriver = aiDrivers[driverId];
-                    participantNames[index] = aiDriver ? aiDriver.lastName.toUpperCase() : 'UNKNOWN_AI';
-                }
-            }
+                // Get driver name using DriverUtils
+                const driverName = DriverUtils.getDriverLastName(
+                    participant,
+                    aiDrivers,
+                    customDrivers,
+                    teamNames
+                );
+                participantNames[index] = driverName.toUpperCase();
+            });
         }
         
         // Store session history data for a car
@@ -422,7 +381,7 @@
         });
         
         // Initialize
-        loadJsonFiles();
+        loadDriverData();
     </script>
 </body>
 </html>

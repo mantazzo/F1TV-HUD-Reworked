@@ -7,6 +7,7 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/textfit@2.4.0/textFit.min.js"></script>
+    <script src="/utils/driver-utils.js"></script>
 </head>
 <body>
     <div class="overlay-container">
@@ -87,59 +88,19 @@
         // Team and driver data
         let teamNames = {};
         let driversData = {};
-        let customF1Drivers = [];
+        let customDrivers = [];
+        let formulaType = DriverUtils.FORMULA_TYPE.F1_MODERN;
 
-        // Load team and custom driver data
-        async function loadJsonFiles() {
+        // Load driver data using DriverUtils
+        async function loadDriverData() {
             try {
-                const [teamsResponse, customDriversResponse] = await Promise.all([
-                    fetch('/data/DefaultTeams.json'),
-                    fetch('/data/CustomF1Drivers.json')
-                ]);
-                teamNames = await teamsResponse.json();
-                customF1Drivers = await customDriversResponse.json();
-                console.debug('[PitTimer] Loaded custom F1 drivers:', customF1Drivers.length);
+                const data = await DriverUtils.loadDriverData(formulaType);
+                customDrivers = data.customDrivers;
+                teamNames = data.teamNames;
+                console.debug('[PitTimer] Loaded driver data:', customDrivers.length, 'custom drivers');
             } catch (error) {
-                console.error('Error loading data files:', error);
+                console.error('[PitTimer] Error loading driver data:', error);
             }
-        }
-
-        // Match custom driver with priority: MatchName > Number+Team > Number only
-        function matchCustomDriver(playerName, raceNumber, teamId) {
-            if (!Array.isArray(customF1Drivers) || customF1Drivers.length === 0) {
-                return null;
-            }
-
-            const teamData = teamNames[teamId];
-            const teamName = teamData?.Name || '';
-
-            // Priority 1: Exact MatchName match
-            let match = customF1Drivers.find(d => d.MatchName && d.MatchName === playerName);
-            if (match) {
-                console.debug('[PitTimer] Matched by MatchName:', playerName);
-                return match;
-            }
-
-            // Priority 2: Number + Team match
-            if (teamName) {
-                match = customF1Drivers.find(d => 
-                    d.RaceNumber === raceNumber && 
-                    d.Team && d.Team.toLowerCase() === teamName.toLowerCase()
-                );
-                if (match) {
-                    console.debug('[PitTimer] Matched by Number+Team:', raceNumber, teamName);
-                    return match;
-                }
-            }
-
-            // Priority 3: Number only match
-            match = customF1Drivers.find(d => d.RaceNumber === raceNumber);
-            if (match) {
-                console.debug('[PitTimer] Matched by Number only:', raceNumber);
-                return match;
-            }
-
-            return null;
         }
 
         // Update team logo
@@ -325,6 +286,15 @@
         socket.on('f1_data', (data) => {
             try {
                 const playerIdx = data?.m_header?.m_playerCarIndex;
+                
+                // Session packet - track formula type
+                if (data?.m_header?.m_packetId === 1) {
+                    if (typeof data.m_formula === 'number' && data.m_formula !== formulaType) {
+                        formulaType = data.m_formula;
+                        console.debug('[PitTimer] Formula type:', formulaType);
+                        loadDriverData();
+                    }
+                }
 
                 if (data?.m_header?.m_packetId === 2) { // Lap Data
                     const lapData = Array.isArray(data.m_lapData) ? data.m_lapData[playerIdx] : undefined;
@@ -429,45 +399,18 @@
                             }
                         }
 
-                        // Update driver name
-                        const driverId = participantData.m_driverId;
-                        if (typeof driverId === 'number' && driverId !== 255) {
-                            // AI driver - lookup from driversData
-                            const aiDriver = driversData[driverId];
-                            if (aiDriver && aiDriver.lastName) {
-                                const newName = aiDriver.lastName;
-                                if (newName !== driverName) {
-                                    driverName = newName;
-                                    console.debug('[PitTimer] AI Driver ID:', driverId, 'name:', driverName);
-                                    updateDisplay();
-                                }
-                            }
-                        } else if (driverId === 255) {
-                            // Human player - match from CustomF1Drivers
-                            const playerName = participantData.m_name || '';
-                            const raceNumber = participantData.m_raceNumber || 0;
-                            
-                            const customDriver = matchCustomDriver(playerName, raceNumber, teamId);
-                            if (customDriver) {
-                                // Use LastName if available, otherwise fall back to DisplayName
-                                const newName = customDriver.LastName || customDriver.DisplayName || '';
-                                if (newName && newName !== driverName) {
-                                    driverName = newName;
-                                    const field = customDriver.LastName ? 'LastName' : 'DisplayName';
-                                    console.debug('[PitTimer] Human player matched:', playerName, '->', field + ':', driverName);
-                                    updateDisplay();
-                                }
-                            } else {
-                                // No match found - use team name + number as fallback
-                                const teamData = teamNames[teamId];
-                                const teamName = teamData?.ShortName || 'UNKNOWN';
-                                const fallbackName = `${teamName} #${raceNumber}`;
-                                if (fallbackName !== driverName) {
-                                    driverName = fallbackName;
-                                    console.debug('[PitTimer] Human player not matched, using fallback:', driverName);
-                                    updateDisplay();
-                                }
-                            }
+                        // Update driver name using DriverUtils
+                        const newName = DriverUtils.getDriverLastName(
+                            participantData,
+                            driversData,
+                            customDrivers,
+                            teamNames
+                        );
+                        
+                        if (newName && newName !== driverName) {
+                            driverName = newName;
+                            console.debug('[PitTimer] Driver name updated:', driverName);
+                            updateDisplay();
                         }
                     }
                 }
@@ -477,7 +420,7 @@
         });
 
         // Initialize
-        loadJsonFiles();
+        loadDriverData();
         toggleOverlay(); // Start hidden (will show when entering pit lane during race)
     </script>
 </body>

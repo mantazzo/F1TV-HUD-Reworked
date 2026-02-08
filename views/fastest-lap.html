@@ -7,6 +7,7 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/textfit@2.4.0/textFit.min.js"></script>
+    <script src="/utils/driver-utils.js"></script>
 </head>
 <body>
     <div class="fastest-lap-container">
@@ -59,15 +60,15 @@
         const flGradient4 = document.querySelector('.fl-bg-gradient-4');
         const flGradient5 = document.querySelector('.fl-bg-gradient-5');
 
+        let participants = []; // Store full participant data
         let participantNames = {};
         let participantTeams = {};
-        let participantShowOnlineNames = {};
         let participantPrimaryColors = {};
         let teamNames = {};
         let customDrivers = [];
         let aiDrivers = {};
         let eventCodes = {};
-        let formulaType = 0;
+        let formulaType = DriverUtils.FORMULA_TYPE.F1_MODERN;
         let isAnimating = false;
 
         // Animation constants
@@ -88,58 +89,18 @@
             console.log('Event codes received:', eventCodes);
         });
 
-        async function loadJsonFiles() {
+        // Load driver data using DriverUtils
+        async function loadDriverData() {
             try {
-                const promises = [fetch('/data/DefaultTeams.json')];
-                if (formulaType === 0) {
-                    promises.push(fetch('/data/CustomF1Drivers.json'));
-                } else if (formulaType === 2) {
-                    promises.push(fetch('/data/CustomF2Drivers.json'));
-                }
-                const responses = await Promise.all(promises.map(p => p.catch(() => null)));
-                teamNames = responses[0] ? await responses[0].json() : {};
-                if (responses[1]) {
-                    const customDriversData = await responses[1].json();
-                    customDrivers = Array.isArray(customDriversData) ? customDriversData : [];
-                }
+                const data = await DriverUtils.loadDriverData(formulaType);
+                customDrivers = data.customDrivers;
+                teamNames = data.teamNames;
+                console.log('[FastestLap] Loaded driver data:', customDrivers.length, 'custom drivers');
             } catch (error) {
-                console.error('Error loading JSON files:', error);
+                console.error('[FastestLap] Error loading driver data:', error);
                 teamNames = {};
                 customDrivers = [];
             }
-        }
-
-        function matchCustomDriver(participant, showOnlineNames) {
-            const raceNumber = participant.m_raceNumber;
-            const name = participant.m_name;
-            const teamId = participant.m_teamId;
-            const team = teamNames[teamId] ? teamNames[teamId].ShortName : `Team_${teamId}`;
-
-            // Priority 1: Exact name match (only if showOnlineNames is 1)
-            // Skip name matching if showOnlineNames is 0 (player shows as "PLAYER")
-            if (showOnlineNames === 1) {
-                for (let driver of customDrivers) {
-                    if (driver.MatchName && driver.MatchName.toUpperCase() === name.toUpperCase()) {
-                        return driver.LastName || driver.DisplayName || '';
-                    }
-                }
-            }
-
-            // Priority 2: Number + Team match
-            for (let driver of customDrivers) {
-                if (driver.RaceNumber && driver.Team && driver.RaceNumber === raceNumber && driver.Team === team) {
-                    return driver.LastName || driver.DisplayName || '';
-                }
-            }
-
-            // Priority 3: Number only match
-            for (let driver of customDrivers) {
-                if (driver.RaceNumber && driver.RaceNumber === raceNumber) {
-                    return driver.LastName || driver.DisplayName || '';
-                }
-            }
-
-            return `${team} #${raceNumber}`;
         }
 
         function formatLapTime(milliseconds) {
@@ -331,9 +292,10 @@
 
             if (packetId === 1) {
                 // Session packet - update formula type
-                formulaType = data.m_formula;
-                if (!customDrivers.length) {
-                    loadJsonFiles();
+                if (typeof data.m_formula === 'number' && data.m_formula !== formulaType) {
+                    formulaType = data.m_formula;
+                    console.log('[FastestLap] Formula type:', formulaType);
+                    loadDriverData();
                 }
             } else if (packetId === 3) {
                 // Event packet - check for fastest lap event
@@ -353,22 +315,18 @@
                     showFastestLapNotification(driverName, lapTimeMS, teamId, vehicleIdx);
                 }
             } else if (packetId === 4) {
-                // Participants packet - update driver names and team IDs
+                // Participants packet - update driver names and team IDs using DriverUtils
+                participants = data.m_participants || [];
                 participantNames = {};
                 participantTeams = {};
                 participantPrimaryColors = {};
-                const numActiveCars = data.m_participants.length;
                 
-                for (let i = 0; i < numActiveCars; i++) {
-                    const participant = data.m_participants[i];
+                participants.forEach((participant, i) => {
                     const index = participant.m_participantIndex !== undefined ? participant.m_participantIndex : i;
-                    const driverId = participant.m_driverId;
                     const teamId = participant.m_teamId;
-                    const showOnlineNames = participant.m_showOnlineNames;
                     
-                    // Store team ID and showOnlineNames flag
+                    // Store team ID
                     participantTeams[index] = teamId;
-                    participantShowOnlineNames[index] = showOnlineNames;
                     
                     // Store primary livery color
                     if (participant.m_liveryColour && Array.isArray(participant.m_liveryColour) && participant.m_liveryColour.length > 0) {
@@ -378,19 +336,21 @@
                         }
                     }
                     
-                    if (driverId === 255) {
-                        participantNames[index] = matchCustomDriver(participant, showOnlineNames);
-                    } else {
-                        const aiDriver = aiDrivers[driverId];
-                        participantNames[index] = aiDriver ? aiDriver.lastName.toUpperCase() : 'UNKNOWN_AI';
-                    }
-                }
+                    // Get driver name using DriverUtils
+                    const driverName = DriverUtils.getDriverLastName(
+                        participant,
+                        aiDrivers,
+                        customDrivers,
+                        teamNames
+                    );
+                    participantNames[index] = driverName.toUpperCase();
+                });
             }
         });
 
         // Initialize
         createStrokeDiagonalBar();
-        loadJsonFiles();
+        loadDriverData();
     </script>
 </body>
 </html>
