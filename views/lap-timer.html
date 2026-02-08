@@ -493,7 +493,7 @@
          * Updates driver names for all participants in the session using DriverUtils
          */
         function handleParticipantsPacket(data) {
-            numActiveCars = data.m_participants.length;
+            numActiveCars = data.m_numActiveCars || 0;
             participants = data.m_participants;
             participantNames = {};
             
