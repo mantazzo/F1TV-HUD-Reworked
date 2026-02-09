@@ -232,8 +232,8 @@
 
 @font-face {
     font-family: 'F1YEAR';
-    src: url('/fonts/woff2/F1YEARRegular.woff2') format('woff2'),
-         url('/fonts/F1YEARRegular.ttf') format('truetype');
+    src: url('/fonts/woff2/F1YEAR.woff2') format('woff2'),
+         url('/fonts/F1YEAR.ttf') format('truetype');
     font-weight: 400;
     font-style: normal;
     font-display: swap;}
