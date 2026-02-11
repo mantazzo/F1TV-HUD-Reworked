@@ -1,6 +1,6 @@
 {
   "name": "f1tv-hud-reworked",
-  "version": "0.4.0",
+  "version": "0.4.5",
   "description": "F1TV HUD mod for F1 25 Game by Codemasters, reworked and improved",
   "main": "index.js",
   "scripts": {
