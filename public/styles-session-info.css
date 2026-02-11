@@ -21,7 +21,7 @@ body {
     width: 810px;
     height: 135px;
     opacity: 0;
-    transition: opacity 0.3s ease-in-out;
+    transition: opacity 0.33s ease-in-out;
     overflow: hidden;
 }
 
@@ -184,9 +184,9 @@ body {
 /* Location - Bottom Right */
 .location {
     position: absolute;
-    left: 395px;
+    left: 400px;
     top: 65px;
-    width: 415px;
+    width: 410px;
     height: 30px;
     font-family: 'F1TV-2022', sans-serif;
     font-size: 22px;

@@ -9,18 +9,18 @@
     <script src="/utils/driver-utils.js"></script>
 </head>
 <body>
-    <div class="session-info-container visible">
+    <div class="session-info-container">
         <div class="background-pattern">
             <div class="bg-image bg-image-1"></div>
             <div class="bg-image bg-image-2"></div>
         </div>
         <div class="gradient-overlay"></div>
         <div class="track-flag" id="track-flag"></div>
-        <div class="event-name" id="event-name">FORMULA 1 ROLEX GROSSER PREIS VON ÖSTERREICH</div>
-        <div class="session-year" id="session-year">2023</div>
+        <div class="event-name" id="event-name">WAITING FOR TRACK DATA...</div>
+        <div class="session-year" id="session-year">2025</div>
         <div class="separator"></div>
-        <div class="session-type" id="session-type">PRACTICE 1</div>
-        <div class="location" id="location">SPIELBERG, AUSTRIA</div>
+        <div class="session-type" id="session-type">WAITING...</div>
+        <div class="location" id="location">WAITING...</div>
     </div>
     
     <script>
@@ -42,6 +42,8 @@
         let currentSessionType = null;
         let currentYear = null;
         let overlayVisible = true;
+        let visibilityMode = 'toggle'; // 'toggle', 'automatic', 'controlled'
+        let hideTimer = null;
         
         // Track name mapping (from TRACKS constant)
         const TRACKS = [
@@ -62,17 +64,17 @@
             1: 'PRACTICE 1',
             2: 'PRACTICE 2',
             3: 'PRACTICE 3',
-            4: 'SHORT PRACTICE',
+            4: 'PRACTICE (SHORT)',
             5: 'QUALIFYING 1',
             6: 'QUALIFYING 2',
             7: 'QUALIFYING 3',
-            8: 'SHORT QUALIFYING',
-            9: 'ONE SHOT QUALIFYING',
+            8: 'QUALIFYING (SHORT)',
+            9: 'QUALIFYING (ONE SHOT)',
             10: 'SPRINT SHOOTOUT 1',
             11: 'SPRINT SHOOTOUT 2',
             12: 'SPRINT SHOOTOUT 3',
-            13: 'SHORT SPRINT SHOOTOUT',
-            14: 'ONE SHOT SPRINT SHOOTOUT',
+            13: 'SPRINT SHOOTOUT (SHORT)',
+            14: 'SPRINT SHOOTOUT (ONE SHOT)',
             15: 'RACE',
             16: 'RACE 2',
             17: 'RACE 3',
@@ -82,12 +84,42 @@
         // Handle overlay visibility from controller
         socket.on('overlay_config', (config) => {
             if (config.overlays && config.overlays['session-info']) {
-                overlayVisible = config.overlays['session-info'].visible;
+                const newVisible = config.overlays['session-info'].visible;
+                const newMode = config.overlays['session-info'].visibilityMode || 'toggle';
                 
-                if (overlayVisible) {
-                    sessionInfoContainer.classList.add('visible');
-                } else {
-                    sessionInfoContainer.classList.remove('visible');
+                overlayVisible = newVisible;
+                visibilityMode = newMode;
+                
+                // Clear any existing timer
+                if (hideTimer) {
+                    clearTimeout(hideTimer);
+                    hideTimer = null;
+                }
+                
+                if (visibilityMode === 'toggle') {
+                    // Simple on/off toggle
+                    if (overlayVisible) {
+                        sessionInfoContainer.classList.add('visible');
+                    } else {
+                        sessionInfoContainer.classList.remove('visible');
+                    }
+                } else if (visibilityMode === 'automatic') {
+                    // Show for 10 seconds when enabled
+                    if (overlayVisible) {
+                        sessionInfoContainer.classList.add('visible');
+                        hideTimer = setTimeout(() => {
+                            sessionInfoContainer.classList.remove('visible');
+                        }, 10000);
+                    } else {
+                        sessionInfoContainer.classList.remove('visible');
+                    }
+                } else if (visibilityMode === 'controlled') {
+                    // Controlled by SSTA event - don't show immediately
+                    // Will be shown when SSTA event is received
+                    if (!overlayVisible) {
+                        sessionInfoContainer.classList.remove('visible');
+                    }
+                    // If overlay was just enabled, wait for SSTA event
                 }
             }
         });
@@ -190,7 +222,23 @@
                 widthOnly: false
             });
             locationElement.textContent = location;
+            textFit(locationElement, {
+                minFontSize: 16,
+                maxFontSize: 22,
+                multiLine: false,
+                alignHoriz: true,
+                alignVert: false,
+                widthOnly: true
+            });
             sessionTypeElement.textContent = sessionTypeName;
+            textFit(sessionTypeElement, {
+                minFontSize: 20,
+                maxFontSize: 30,
+                multiLine: false,
+                alignHoriz: true,
+                alignVert: false,
+                widthOnly: true
+            });
             
             // Load track flag image
             if (trackId !== -1 && TRACKS[trackId]) {
@@ -230,6 +278,30 @@
                     });
                 } else {
                     updateDisplay();
+                }
+            }
+            
+            // Event packet - detect Session Started (SSTA) event
+            if (data.m_header && data.m_header.m_packetId === 3) {
+                // Check if this is a Session Started event
+                if (data.m_eventStringCode === 'SSTA' || 
+                    (data.m_eventStringCode && data.m_eventStringCode.toString() === 'SSTA')) {
+                    
+                    // Only show if overlay is enabled and in 'controlled' mode
+                    if (overlayVisible && visibilityMode === 'controlled') {
+                        // Clear any existing timer
+                        if (hideTimer) {
+                            clearTimeout(hideTimer);
+                        }
+                        
+                        // Show overlay
+                        sessionInfoContainer.classList.add('visible');
+                        
+                        // Hide after 10 seconds
+                        hideTimer = setTimeout(() => {
+                            sessionInfoContainer.classList.remove('visible');
+                        }, 10000);
+                    }
                 }
             }
         });

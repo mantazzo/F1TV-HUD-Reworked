@@ -31,6 +31,11 @@
     "mini-leaderboard": {
       "visible": true,
       "name": "Mini Leaderboard"
+    },
+    "session-info": {
+      "visible": true,
+      "name": "Session Info",
+      "visibilityMode": "toggle"
     }
   }
 }

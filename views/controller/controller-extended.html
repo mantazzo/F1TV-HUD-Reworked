@@ -72,6 +72,20 @@
             </div>
         </section>
 
+        <section class="overlay-section" id="session-info-options-section">
+            <h2>Session Info Options</h2>
+            <div class="option-row">
+                <label class="select-label">
+                    <span class="select-text">Visibility Mode:</span>
+                    <select id="session-info-visibility-mode" class="select-dropdown">
+                        <option value="toggle">Toggle</option>
+                        <option value="automatic">Automatic</option>
+                        <option value="controlled">Controlled</option>
+                    </select>
+                </label>
+            </div>
+        </section>
+
         <section class="overlay-section server-control-section">
             <h2>Server Control</h2>
             <button class="stop-server-button" id="stop-server-btn">
@@ -145,9 +159,9 @@
             const icons = {
                 'weather': '🌤️',
                 'speedometer': '⏱️',
-                'lap-timer': '🏁',
                 'live-speed': '💨',
-                'mini-leaderboard': '🏆'
+                'mini-leaderboard': '🏆',
+                'session-info': 'ℹ️'
             };
             return icons[overlayId] || '📺';
         }
@@ -223,6 +237,17 @@
             });
         });
 
+        // Session info visibility mode handling
+        const sessionInfoVisibilityMode = document.getElementById('session-info-visibility-mode');
+        
+        sessionInfoVisibilityMode.addEventListener('change', () => {
+            socket.emit('config_update', {
+                overlay: 'session-info',
+                property: 'visibilityMode',
+                value: sessionInfoVisibilityMode.value
+            });
+        });
+
         // Update lap timer options when config changes
         function updateLapTimerOptions() {
             if (!currentConfig || !currentConfig.overlays || !currentConfig.overlays['lap-timer']) return;
@@ -240,6 +265,14 @@
             speedometerUnitsMode.value = speedometerConfig.unitsMode || 'automatic';
         }
 
+        // Update session info options when config changes
+        function updateSessionInfoOptions() {
+            if (!currentConfig || !currentConfig.overlays || !currentConfig.overlays['session-info']) return;
+            
+            const sessionInfoConfig = currentConfig.overlays['session-info'];
+            sessionInfoVisibilityMode.value = sessionInfoConfig.visibilityMode || 'toggle';
+        }
+
         // Override renderOverlayButtons to also update options
         const originalRender = renderOverlayButtons;
         renderOverlayButtons = function() {
@@ -247,6 +280,7 @@
             updateWeatherOptions();
             updateLapTimerOptions();
             updateSpeedometerOptions();
+            updateSessionInfoOptions();
         };
 
         // Stop server button
