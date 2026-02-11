@@ -32,8 +32,11 @@ Use these overlays in recording software (e.g. OBS). Size is described in (Width
 - Mini Leaderboard
     - http://localhost:3000/mini-leaderboard
     - Size: 320 x 250
+- Session Info
+    - http://localhost:3000/session-info
+    - Size: 810 x 135
 - Position Debug **(DEBUG ONLY)**
-    - http://localhost:3000/position-Debug
+    - http://localhost:3000/debug/position-debug
     - Debug only, useful for turn position setup
 
 Other overlays coming soon™.

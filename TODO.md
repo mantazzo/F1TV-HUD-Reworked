@@ -4,8 +4,10 @@
 
 - Speedometer
     - Fully remade, animated and responsive
-    - Includes an automatic MPH toggle (you can override it in Extended Controller to use the units you want)
+    - Includes an automatic MPH units toggle
+        - Can override it in Extended Controller to use the units you want instead
     - Includes F1TV style and Multiviewer style
+    - Likely the first fully finished overlay
 - Lap Timer
     - Remade with some personal adjustments
     - Shows your current time (if no reference time) or delta (if there is a reference time)
@@ -17,6 +19,7 @@
     - Remade in full, uses Primary Color from the game, can be overwritten in JSON
     - Only shows up when in race and when in pitlane
     - Holds the pit stop values for 6 seconds when exiting pits, then hides
+    - Currently does not show if the penalty is being served (might change that in the future)
 - Live Speed
     - Remade in full, uses Primary Color from the game or the overwrite from JSON
     - Dynamic units change depending on whether you use KPH or MPH as primary units in the game
@@ -27,11 +30,13 @@
     - Small popup showing the fastest lap set, with laptime and driver name in team color
     - Works based on the received Event packet instead of cycling through data
     - Currently works in any session (might change it later)
+    - Might need a "FIFO" (First In, First Out) queue system implemententation in the future
 - Weather
     - Fully remade
     - An overlay showing current weather and weather forecast for the next 5, 10, 15 and 30 minutes
     - Forecast can be toggled using the Extended Controller
     - Primary units change depending on the default temperature units set by the player
+        - Might add an override for primary temperature units in the future
     - Also includes night icons for potential use at night tracks (needs some more testing)
 - Turn Indicator
     - Very simple, shows current Turn
@@ -49,6 +54,22 @@
     - Uses a "FIFO" (First In, First Out) queue system so all events will be shown properly
     - FORMATION LAP box also works as intended and uses the in-game event trigger instead
     - Potential improvement in the future with more supported events (if there's interest) and possibly "custom" message setup
+- Mini Leaderboard
+    - Remade with some adjustments
+    - Shows the Current Driver Last Name in the middle, with Driver Ahead at the top and Driver Behind at the bottom
+        - If there is no driver ahead or behind, the row will be empty instead
+        - Might change it in the future to show two places ahead (if you're last) or two places behind (if you're first)
+    - Decorations on the sides are now infinitely animated
+    - Also supports the Knockout Zone indicator for Qualifying
+- Session Info
+    - Fully remade, with some improvements
+    - Shows Event Name, Year, Current Session and Location
+        - Event Name and Location are set by the track's JSON data file (same file as with Turn Indicator)
+        - F2 can use a different Event Name
+        - Year can be set by JSON file or it will use game's year by default
+    - Can be set to just be a toggle, or have automatic hiding (after 10 seconds)
+        - Also has the ability to show up for 10 seconds after every session start as well
+    - Includes "alt" background flags for certain tracks
 
 ## Overlay Controllers
 
@@ -69,11 +90,11 @@
 
 ## Currently Working On
 
-Slight restructuring (to hopefully improve workflow in the future)
+Session Info (finished)
 
 ## Next Planned Overlay
 
-Session Info (shouldn't be TOO difficult, I hope?)
+??? (likely Pit Window overlay next, haven't decided yet)
 
 ## Not started
 
@@ -84,7 +105,6 @@ In no particular order:
 - Driver Name (and relevant info extensions like fastest lap and stuff)
 - Leaderboard (Last Name version is much older and might need to be reworked to an extent; probably most difficult overlay to do)
 - Pit Windows (sounds easy but there is some weird logic there)
-- Session Info (another case of "sounds easy, but really isn't", since this will involve country flag display and session names)
 - Control Dashboard (original version, likely saved for last)
 
 ## Debatable
