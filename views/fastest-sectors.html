@@ -201,7 +201,7 @@
         
         // Handle Participants packet (ID: 4) - using DriverUtils
         function handleParticipantsPacket(data) {
-            numActiveCars = data.m_participants.length;
+            numActiveCars = data.m_numActiveCars;
             participants = data.m_participants;
             participantNames = {};
             participantTeamIds = {};
@@ -325,6 +325,34 @@
             }
         }
         
+        // Reset all fastest sectors to initial state
+        function resetFastestSectors() {
+            // Clear all stored session history data
+            for (let carIdx in sessionHistoryByCarIdx) {
+                delete sessionHistoryByCarIdx[carIdx];
+            }
+            
+            // Reset the data
+            overallFastestSectors.s1 = { carIdx: -1, time: Infinity };
+            overallFastestSectors.s2 = { carIdx: -1, time: Infinity };
+            overallFastestSectors.s3 = { carIdx: -1, time: Infinity };
+            
+            // Reset the display to placeholder state
+            sectorElements.s1.driverName.textContent = 'NO DATA';
+            sectorElements.s1.sectorTime.textContent = '';
+            sectorElements.s1.teamLogo.style.display = 'none';
+            
+            sectorElements.s2.driverName.textContent = 'NO DATA';
+            sectorElements.s2.sectorTime.textContent = '';
+            sectorElements.s2.teamLogo.style.display = 'none';
+            
+            sectorElements.s3.driverName.textContent = 'NO DATA';
+            sectorElements.s3.sectorTime.textContent = '';
+            sectorElements.s3.teamLogo.style.display = 'none';
+            
+            console.log('[FastestSectors] Reset all fastest sectors and session history');
+        }
+        
         // Update the display with current fastest sectors
         function updateDisplay() {
             // Update Sector 1
@@ -377,6 +405,13 @@
                 handleParticipantsPacket(data);
             } else if (packetId === 11) {
                 handleSessionHistoryPacket(data);
+            } else if (packetId === 3) {
+                // Event packet - detect Session Started (SSTA) event
+                if (data.m_eventStringCode === 'SSTA' || 
+                    (data.m_eventStringCode && data.m_eventStringCode.toString() === 'SSTA')) {
+                    console.log('[FastestSectors] New Session Started - resetting the overlay');
+                    resetFastestSectors();
+                }
             }
         });
         
