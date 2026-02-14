@@ -30,7 +30,7 @@
     - Small popup showing the fastest lap set, with laptime and driver name in team color
     - Works based on the received Event packet instead of cycling through data
     - Currently works in any session (might change it later)
-    - Might need a "FIFO" (First In, First Out) queue system implemententation in the future
+    - Might need a "FIFO" (First In, First Out) queue system implementation in the future
 - Weather
     - Fully remade
     - An overlay showing current weather and weather forecast for the next 5, 10, 15 and 30 minutes
@@ -80,7 +80,7 @@
     - Somewhat limited functionality at the moment, but hey, it works, and it's pretty easy to expand!
     - Also offers a simple "Shutdown" button
 
-## Debug overlays
+## Debug overlays (for public use)
 
 - Position Debug
     - Shows current position on track (meters)
