@@ -60,13 +60,27 @@
         const aramcoContainer = document.querySelector('.aramco-container');
         const liveSpeedLabel = document.querySelector('.live-speed-label');
         
+        // Config state
+        let useTeamColor = true;
+        
         // Handle overlay visibility from controller with animation
         socket.on('overlay_config', (config) => {
             if (config.overlays && config.overlays['live-speed']) {
-                if (config.overlays['live-speed'].visible) {
+                const liveSpeedConfig = config.overlays['live-speed'];
+                
+                if (liveSpeedConfig.visible) {
                     overlayContainer.classList.add('visible');
                 } else {
                     overlayContainer.classList.remove('visible');
+                }
+                
+                // Update team color usage preference
+                if (liveSpeedConfig.useTeamColor !== undefined) {
+                    const newUseTeamColor = liveSpeedConfig.useTeamColor;
+                    if (newUseTeamColor !== useTeamColor) {
+                        useTeamColor = newUseTeamColor;
+                        updateTeamColors(); // Refresh colors with new setting
+                    }
                 }
             }
         });
@@ -220,17 +234,23 @@
         
         // Update team colors for driver name and team color line
         function updateTeamColors() {
-            // Check if team has override color
-            if (currentTeamId !== null && teamNames && teamNames[currentTeamId] && teamNames[currentTeamId].OverridePrimaryColor) {
-                const overrideColor = teamNames[currentTeamId].OverridePrimaryColor;
-                driverName.style.color = overrideColor;
-                teamColorLine.style.backgroundColor = overrideColor;
-                console.debug('[LiveSpeed] Using override color:', overrideColor);
-            } else if (primaryColor) {
-                // Use livery color from game
-                driverName.style.color = primaryColor;
-                teamColorLine.style.backgroundColor = primaryColor;
-                console.debug('[LiveSpeed] Using livery color:', primaryColor);
+            if (!useTeamColor) {
+                // Use white for driver name and team color line when team color is disabled
+                driverName.style.color = '#ffffff';
+                teamColorLine.style.backgroundColor = '#ffffff';
+            } else {
+                // Check if team has override color
+                if (currentTeamId !== null && teamNames && teamNames[currentTeamId] && teamNames[currentTeamId].OverridePrimaryColor) {
+                    const overrideColor = teamNames[currentTeamId].OverridePrimaryColor;
+                    driverName.style.color = overrideColor;
+                    teamColorLine.style.backgroundColor = overrideColor;
+                    console.debug('[LiveSpeed] Using override color:', overrideColor);
+                } else if (primaryColor) {
+                    // Use livery color from game
+                    driverName.style.color = primaryColor;
+                    teamColorLine.style.backgroundColor = primaryColor;
+                    console.debug('[LiveSpeed] Using livery color:', primaryColor);
+                }
             }
         }
         

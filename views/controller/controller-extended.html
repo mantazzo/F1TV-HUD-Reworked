@@ -27,10 +27,31 @@
         <section class="overlay-section" id="weather-options-section">
             <h2>Weather Options</h2>
             <div class="option-row">
+                <label class="select-label">
+                    <span class="select-text">Temperature Units:</span>
+                    <select id="weather-temperature-units" class="select-dropdown">
+                        <option value="automatic">Automatic</option>
+                        <option value="celsius">Celsius</option>
+                        <option value="fahrenheit">Fahrenheit</option>
+                    </select>
+                </label>
+            </div>
+            <div class="option-row">
                 <label class="toggle-label">
                     <input type="checkbox" id="forecast-toggle" class="toggle-checkbox">
                     <span class="toggle-slider"></span>
                     <span class="toggle-text">Show Forecast</span>
+                </label>
+            </div>
+        </section>
+
+        <section class="overlay-section" id="live-speed-options-section">
+            <h2>Live Speed Options</h2>
+            <div class="option-row">
+                <label class="toggle-label">
+                    <input type="checkbox" id="live-speed-team-color-toggle" class="toggle-checkbox">
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-text">Use Team Color</span>
                 </label>
             </div>
         </section>
@@ -53,7 +74,7 @@
             <h2>Speedometer Options</h2>
             <div class="option-row">
                 <label class="select-label">
-                    <span class="select-text">Design Mode:</span>
+                    <span class="select-text">Design:</span>
                     <select id="speedometer-design-mode" class="select-dropdown">
                         <option value="f1tv">F1TV</option>
                         <option value="multiviewer">Multiviewer</option>
@@ -62,7 +83,7 @@
             </div>
             <div class="option-row">
                 <label class="select-label">
-                    <span class="select-text">Units Mode:</span>
+                    <span class="select-text">Units:</span>
                     <select id="speedometer-units-mode" class="select-dropdown">
                         <option value="automatic">Automatic</option>
                         <option value="kmh">Always KMH</option>
@@ -160,6 +181,7 @@
                 'weather': '🌤️',
                 'speedometer': '⏱️',
                 'live-speed': '💨',
+                'turn-indicator': '⤴️',
                 'mini-leaderboard': '🏆',
                 'session-info': 'ℹ️'
             };
@@ -186,6 +208,7 @@
 
         // Forecast toggle handling
         const forecastToggle = document.getElementById('forecast-toggle');
+        const weatherTemperatureUnits = document.getElementById('weather-temperature-units');
         const weatherOptionsSection = document.getElementById('weather-options-section');
         
         forecastToggle.addEventListener('change', () => {
@@ -196,12 +219,40 @@
             });
         });
 
+        weatherTemperatureUnits.addEventListener('change', () => {
+            socket.emit('config_update', {
+                overlay: 'weather',
+                property: 'temperatureUnitsMode',
+                value: weatherTemperatureUnits.value
+            });
+        });
+
         // Update forecast toggle state when config changes
         function updateWeatherOptions() {
             if (!currentConfig || !currentConfig.overlays || !currentConfig.overlays['weather']) return;
             
             const weatherConfig = currentConfig.overlays['weather'];
             forecastToggle.checked = weatherConfig.showForecast !== false;
+            weatherTemperatureUnits.value = weatherConfig.temperatureUnitsMode || 'automatic';
+        }
+
+        // Live speed team color toggle handling
+        const liveSpeedTeamColorToggle = document.getElementById('live-speed-team-color-toggle');
+        
+        liveSpeedTeamColorToggle.addEventListener('change', () => {
+            socket.emit('config_update', {
+                overlay: 'live-speed',
+                property: 'useTeamColor',
+                value: liveSpeedTeamColorToggle.checked
+            });
+        });
+
+        // Update live speed options when config changes
+        function updateLiveSpeedOptions() {
+            if (!currentConfig || !currentConfig.overlays || !currentConfig.overlays['live-speed']) return;
+            
+            const liveSpeedConfig = currentConfig.overlays['live-speed'];
+            liveSpeedTeamColorToggle.checked = liveSpeedConfig.useTeamColor !== false;
         }
 
         // Lap timer visibility mode handling
@@ -278,6 +329,7 @@
         renderOverlayButtons = function() {
             originalRender();
             updateWeatherOptions();
+            updateLiveSpeedOptions();
             updateLapTimerOptions();
             updateSpeedometerOptions();
             updateSessionInfoOptions();

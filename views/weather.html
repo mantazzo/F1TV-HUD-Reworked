@@ -150,6 +150,24 @@
                 } else {
                     forecastSection.classList.add('hidden');
                 }
+                
+                // Temperature units mode
+                if (weatherConfig.temperatureUnitsMode !== undefined) {
+                    const newMode = weatherConfig.temperatureUnitsMode;
+                    if (newMode !== temperatureUnitsMode) {
+                        temperatureUnitsMode = newMode;
+                        
+                        // Apply manual temperature unit override if set
+                        if (temperatureUnitsMode === 'celsius') {
+                            temperatureUnits = 0;
+                            updateCurrentWeather(currentAirTemp, currentTrackTemp, currentWeatherId);
+                        } else if (temperatureUnitsMode === 'fahrenheit') {
+                            temperatureUnits = 1;
+                            updateCurrentWeather(currentAirTemp, currentTrackTemp, currentWeatherId);
+                        }
+                        // If 'automatic', will be handled by session packet
+                    }
+                }
             }
         });
         
@@ -189,6 +207,8 @@
         
         // Temperature unit preference: 0 = Celsius primary, 1 = Fahrenheit primary
         let temperatureUnits = 0;
+        // Temperature units mode: 'automatic', 'celsius', 'fahrenheit'
+        let temperatureUnitsMode = 'automatic';
         
         // Store current temperatures for re-display when units change
         let currentAirTemp = 22;
@@ -330,8 +350,8 @@
                         }
                     }
                     
-                    // Check for temperature unit preference change
-                    if (typeof data.m_temperatureUnitsLeadPlayer === 'number') {
+                    // Check for temperature unit preference change (only in automatic mode)
+                    if (temperatureUnitsMode === 'automatic' && typeof data.m_temperatureUnitsLeadPlayer === 'number') {
                         const newUnits = data.m_temperatureUnitsLeadPlayer;
                         if (newUnits !== temperatureUnits) {
                             temperatureUnits = newUnits;

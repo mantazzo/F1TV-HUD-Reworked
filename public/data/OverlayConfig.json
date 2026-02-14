@@ -3,7 +3,8 @@
     "weather": {
       "visible": true,
       "name": "Weather",
-      "showForecast": true
+      "temperatureUnitsMode": "automatic",
+      "showForecast": true      
     },
     "speedometer": {
       "visible": true,
@@ -18,7 +19,8 @@
     },
     "live-speed": {
       "visible": true,
-      "name": "Live Speed"
+      "name": "Live Speed",
+      "useTeamColor": true
     },
     "turn-indicator": {
       "visible": true,
