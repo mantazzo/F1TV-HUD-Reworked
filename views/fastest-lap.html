@@ -70,6 +70,8 @@
         let eventCodes = {};
         let formulaType = DriverUtils.FORMULA_TYPE.F1_MODERN;
         let isAnimating = false;
+        let hideTimeout = null;
+        let queuedFastestLap = null;
 
         // Animation constants
         const ANIMATION_DURATION = {
@@ -155,8 +157,74 @@
             });
         }
 
+        // Immediately trigger hide animation and optionally show queued lap after
+        function hideOverlay(showQueuedAfter = false) {
+            // Clear any scheduled hide
+            if (hideTimeout) {
+                clearTimeout(hideTimeout);
+                hideTimeout = null;
+            }
+            
+            // Animate out
+            anime.remove([flContainer, strokeContainer]);
+            
+            anime({
+                targets: flContainer,
+                left: [0, 460],
+                width: [920, 0],
+                duration: ANIMATION_DURATION.SLIDE,
+                easing: 'easeInQuad'
+            });
+            
+            anime({
+                targets: flContainer,
+                opacity: [1, 0],
+                duration: ANIMATION_DURATION.SLIDE_SHORT,
+                easing: 'linear'
+            });
+            
+            anime({
+                targets: strokeContainer,
+                left: [0, 460],
+                width: [920, 0],
+                duration: ANIMATION_DURATION.SLIDE,
+                easing: 'easeInQuad',
+                complete: () => {
+                    isAnimating = false;
+                    
+                    // Reset gradient positions and hide them
+                    flGradient3.style.left = '0px';
+                    flGradient4.style.left = '100px';
+                    flGradient5.style.left = '200px';
+                    flGradient3.style.display = 'none';
+                    flGradient4.style.display = 'none';
+                    flGradient5.style.display = 'none';
+                    
+                    // Show queued fastest lap if requested
+                    if (showQueuedAfter && queuedFastestLap) {
+                        const queued = queuedFastestLap;
+                        queuedFastestLap = null;
+                        showFastestLapNotification(queued.driverName, queued.lapTime, queued.teamId, queued.vehicleIdx);
+                    }
+                }
+            });
+            
+            anime({
+                targets: strokeContainer,
+                opacity: [0.5, 0],
+                duration: ANIMATION_DURATION.SLIDE_SHORT,
+                easing: 'linear'
+            });
+        }
+
         function showFastestLapNotification(driverName, lapTime, teamId, vehicleIdx) {
-            if (isAnimating) return;
+            // If already animating, queue this lap and trigger immediate hide
+            if (isAnimating) {
+                queuedFastestLap = { driverName, lapTime, teamId, vehicleIdx };
+                hideOverlay(true);
+                return;
+            }
+            
             isAnimating = true;
 
             console.log(`Fastest Lap: ${driverName} - ${formatLapTime(lapTime)} - Team ${teamId}`);
@@ -232,48 +300,9 @@
                 });
             }, 100); // Small delay so gradients animate after container starts expanding
 
-            // Slide out after display duration
-            setTimeout(() => {
-                anime({
-                    targets: flContainer,
-                    left: [0, 460],
-                    width: [920, 0],
-                    duration: ANIMATION_DURATION.SLIDE,
-                    easing: 'easeInQuad'
-                });
-                
-                anime({
-                    targets: flContainer,
-                    opacity: [1, 0],
-                    duration: ANIMATION_DURATION.SLIDE_SHORT,
-                    easing: 'linear'
-                });
-                
-                anime({
-                    targets: strokeContainer,
-                    left: [0, 460],
-                    width: [920, 0],
-                    duration: ANIMATION_DURATION.SLIDE,
-                    easing: 'easeInQuad',
-                    complete: () => {
-                        isAnimating = false;
-                        
-                        // Reset gradient positions and hide them
-                        flGradient3.style.left = '0px';
-                        flGradient4.style.left = '100px';
-                        flGradient5.style.left = '200px';
-                        flGradient3.style.display = 'none';
-                        flGradient4.style.display = 'none';
-                        flGradient5.style.display = 'none';
-                    }
-                });
-                
-                anime({
-                    targets: strokeContainer,
-                    opacity: [0.5, 0],
-                    duration: ANIMATION_DURATION.SLIDE_SHORT,
-                    easing: 'linear'
-                });
+            // Schedule hide after display duration
+            hideTimeout = setTimeout(() => {
+                hideOverlay(false);
             }, ANIMATION_DURATION.DISPLAY);
         }
 
