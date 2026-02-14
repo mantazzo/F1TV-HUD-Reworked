@@ -1,0 +1,70 @@
+name: Create Release on Version Update
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'package.json'
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Extract version from package.json
+        id: package_version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Detected version: v$VERSION"
+      
+      - name: Check if tag already exists
+        id: check_tag
+        run: |
+          if git rev-parse "v${{ steps.package_version.outputs.version }}" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Tag v${{ steps.package_version.outputs.version }} already exists"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "Tag v${{ steps.package_version.outputs.version }} does not exist"
+          fi
+      
+      - name: Create tag
+        if: steps.check_tag.outputs.exists == 'false'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "v${{ steps.package_version.outputs.version }}" -m "Release v${{ steps.package_version.outputs.version }}"
+          git push origin "v${{ steps.package_version.outputs.version }}"
+      
+      - name: Create GitHub Release
+        if: steps.check_tag.outputs.exists == 'false'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.package_version.outputs.version }}
+          name: Release v${{ steps.package_version.outputs.version }}
+          body: |
+            ## F1TV HUD Reworked v${{ steps.package_version.outputs.version }}
+            
+            Automatic release created from package.json version update.
+            
+            ### Download
+            Download the source code (zip or tar.gz) below to get this version.
+            
+            ### Installation
+            1. Extract the archive
+            2. Run `npm install` to install dependencies
+            3. Run `npm start` to start the server
+            
+            See [README.md](https://github.com/mantazzo/F1TV-HUD-Reworked#readme) for full documentation.
+          draft: false
+          prerelease: false
+          generate_release_notes: true
