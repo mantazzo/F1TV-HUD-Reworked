@@ -1,0 +1,277 @@
+/* Pit Window Overlay Styles */
+body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: transparent;
+}
+
+.overlay-container {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 310px;
+    height: 340px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    overflow: hidden;
+}
+
+.overlay-container.visible {
+    opacity: 1;
+}
+
+/* Background */
+.pw-background {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 310px;
+    height: 285px;
+    background-color: rgb(18, 20, 26);
+}
+
+/* Compound Section */
+.compound-section {
+    position: absolute;
+    left: 19px;
+    top: 15px;
+    width: 272px;
+    height: 67px;
+}
+
+.compound-oval {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 272px;
+    height: 67px;
+    background-size: 272px 67px;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.compound-name {
+    position: absolute;
+    left: 1px;
+    top: 0;
+    width: 270px;
+    height: 69px;
+    font-family: 'F1TV-2022';
+    font-size: 43px;
+    font-weight: 700;
+    color: rgb(0, 0, 0);
+    font-style: oblique;
+    text-align: center;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 7px;
+    box-sizing: border-box;
+}
+
+.compound-decoration {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 272px;
+    height: 67px;
+    border-radius: 31px;
+    border-style: solid;
+    border-width: 6px;
+    border-color: rgb(255, 215, 0);
+    box-sizing: border-box;
+    pointer-events: none;
+}
+
+/* Current Tyre Labels */
+.current-label {
+    position: absolute;
+    left: -31px;
+    top: 85px;
+    width: 215px;
+    height: 45px;
+    font-family: 'F1TV-2022-Logos';
+    font-size: 25px;
+    font-weight: 300;
+    color: rgb(255, 255, 255);
+    text-align: right;
+    padding: 6px 0 0 0;
+    box-sizing: border-box;
+    letter-spacing: 4px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.tyre-label {
+    position: absolute;
+    left: 192px;
+    top: 85px;
+    width: 95px;
+    height: 45px;
+    font-family: 'F1TV-2022-Logos';
+    font-size: 25px;
+    font-weight: 300;
+    color: rgb(255, 255, 255);
+    text-align: left;
+    padding: 6px 0 0 0;
+    box-sizing: border-box;
+    letter-spacing: 4px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+/* Pit Window Section */
+.pit-window-section {
+    position: absolute;
+    left: 25px;
+    top: 145px;
+    width: 260px;
+    height: 115px;
+}
+
+.pit-window-background {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 260px;
+    height: 115px;
+    background-image: url('/images/pit-window/square.png');
+    background-size: 260px 115px;
+    background-repeat: no-repeat;
+}
+
+.pit-window-borders {
+    position: relative;
+    width: 260px;
+    height: 115px;
+}
+
+.border-top-right {
+    position: absolute;
+    right: -10px;
+    top: -10px;
+    width: 50px;
+    height: 50px;
+    border-top: 3px solid rgb(255, 215, 0);
+    border-right: 3px solid rgb(255, 215, 0);
+}
+
+.border-bottom-left {
+    position: absolute;
+    left: -10px;
+    bottom: -10px;
+    width: 50px;
+    height: 50px;
+    border-bottom: 3px solid rgb(255, 215, 0);
+    border-left: 3px solid rgb(255, 215, 0);
+}
+
+.pit-window-label {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 260px;
+    height: 45px;
+    font-family: 'F1TV-2022';
+    font-size: 30px;
+    font-weight: 700;
+    font-style: oblique;
+    color: rgb(255, 223, 0);
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-top: 7px;
+    box-sizing: border-box;
+}
+
+.pit-window-content {
+    position: absolute;
+    left: 0;
+    top: 50px;
+    width: 260px;
+    height: 65px;
+}
+
+.lap-label {
+    position: absolute;
+    left: 0px;
+    top: 10px;
+    width: 85px;
+    height: 40px;
+    font-family: 'F1TV-2022';
+    font-size: 29px;
+    font-weight: 700;
+    font-style: oblique;
+    color: rgb(255, 255, 255);
+    display: flex;
+    justify-content: flex-end;
+    text-align: right;
+    align-items: center;
+}
+
+.lap-values {
+    position: absolute;
+    left: 85px;
+    top: 0;
+    width: 165px;
+    height: 60px;
+    font-family: 'F1TV-2022';
+    font-size: 47px;
+    font-weight: 700;
+    font-style: oblique;
+    color: rgb(255, 223, 0);
+    display: flex;
+    justify-content: center;
+    text-align: center;
+    align-items: center;
+    padding-bottom: 6px;
+    box-sizing: border-box;
+}
+
+/* Top Gradient */
+.top-gradient {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 310px;
+    height: 60px;
+    background-image: url('/images/common/Gradient.png');
+    background-size: 310px 60px;
+    background-repeat: no-repeat;
+    pointer-events: none;
+}
+
+/* AWS Banner */
+.aws-banner {
+    position: absolute;
+    left: 0;
+    top: 285px;
+    width: 460px;
+    height: 55px;
+}
+
+.aws-background {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 460px;
+    height: 55px;
+    background-image: url('/images/other-logos/AWSbg.png');
+    background-size: 460px 55px;
+    background-repeat: no-repeat;
+}
+
+.aws-text {
+    position: absolute;
+    left: 43px;
+    top: 9px;
+    width: 225px;
+    height: 39px;
+    background-image: url('/images/other-logos/pbaws.png');
+    background-size: 225px 39px;
+    background-repeat: no-repeat;
+}

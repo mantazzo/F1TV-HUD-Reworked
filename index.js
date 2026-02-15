@@ -192,6 +192,7 @@ prompt.get(promptSchema, (err, result) => {
     app.get('/speedometer', (req, res) => res.sendFile(path.join(__dirname, 'views', 'speedometer.html')));
     app.get('/lap-timer', (req, res) => res.sendFile(path.join(__dirname, 'views', 'lap-timer.html')));
     app.get('/pit-timer', (req, res) => res.sendFile(path.join(__dirname, 'views', 'pit-timer.html')));
+    app.get('/pit-window', (req, res) => res.sendFile(path.join(__dirname, 'views', 'pit-window.html')));
     app.get('/live-speed', (req, res) => res.sendFile(path.join(__dirname, 'views', 'live-speed.html')));
     app.get('/fastest-lap', (req, res) => res.sendFile(path.join(__dirname, 'views', 'fastest-lap.html')));
     app.get('/weather', (req, res) => res.sendFile(path.join(__dirname, 'views', 'weather.html')));

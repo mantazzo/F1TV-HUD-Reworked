@@ -43,6 +43,10 @@
       "visible": true,
       "name": "Pit Timer",
       "useTeamColor": true
+    },
+    "pit-window": {
+      "visible": true,
+      "name": "Pit Window"
     }
   }
 }

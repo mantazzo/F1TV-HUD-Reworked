@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>F1 Pit Window Overlay</title>
+    <link rel="stylesheet" href="/fonts.css">
+    <link rel="stylesheet" href="/styles-pit-window.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <div class="overlay-container">
+        <!-- Background -->
+        <div class="pw-background"></div>
+        
+        <!-- Compound Section -->
+        <div class="compound-section">
+            <div class="compound-oval"></div>
+            <div class="compound-name">MEDIUM</div>
+            <div class="compound-decoration"></div>
+        </div>
+        
+        <!-- Current Tyre Labels -->
+        <div class="current-label">CURRENT</div>
+        <div class="tyre-label">TYRE</div>
+        
+        <!-- Pit Window Section -->
+        <div class="pit-window-section">
+            <div class="pit-window-background"></div>
+            <div class="pit-window-borders">
+                <div class="border-top-right"></div>
+                <div class="border-bottom-left"></div>
+            </div>
+            <div class="pit-window-label">PIT WINDOW</div>
+            <div class="pit-window-content">
+                <div class="lap-label">LAP</div>
+                <div class="lap-values">14-20</div>
+            </div>
+        </div>
+        
+        <!-- Top Gradient -->
+        <div class="top-gradient"></div>
+        
+        <!-- AWS Banner -->
+        <div class="aws-banner">
+            <div class="aws-background"></div>
+            <div class="aws-text"></div>
+        </div>
+    </div>
+    
+    <script>
+        const socket = io();
+        socket.emit('identify', 'Pit Window');
+        
+        const overlayContainer = document.querySelector('.overlay-container');
+        const compoundOval = document.querySelector('.compound-oval');
+        const compoundName = document.querySelector('.compound-name');
+        const compoundDecoration = document.querySelector('.compound-decoration');
+        const lapValues = document.querySelector('.lap-values');
+        
+        // State variables
+        let currentCompound = '';
+        let pitWindowIdeal = 0;
+        let pitWindowLatest = 0;
+        
+        // Compound mapping for visual tyres
+        const COMPOUND_VISUAL = {
+            16: 'SOFT',
+            17: 'MEDIUM',
+            18: 'HARD',
+            7: 'INTER',
+            8: 'WET'
+        };
+        
+        // Compound colors for decoration border
+        const COMPOUND_COLORS = {
+            'SOFT': 'rgb(255, 50, 50)',
+            'MEDIUM': 'rgb(255, 215, 0)',
+            'HARD': 'rgb(255, 255, 255)',
+            'INTER': 'rgb(0, 200, 100)',
+            'WET': 'rgb(0, 150, 255)'
+        };
+        
+        // Handle overlay visibility from controller
+        socket.on('overlay_config', (config) => {
+            if (config.overlays && config.overlays['pit-window']) {
+                const pitWindowConfig = config.overlays['pit-window'];
+                
+                // Handle visibility
+                if (pitWindowConfig.visible) {
+                    overlayContainer.classList.add('visible');
+                } else {
+                    overlayContainer.classList.remove('visible');
+                }
+            }
+        });
+        
+        // Update compound display
+        function updateCompound(visualCompound) {
+            const compound = COMPOUND_VISUAL[visualCompound] || 'MEDIUM';
+            
+            if (currentCompound !== compound) {
+                currentCompound = compound;
+                
+                // Update text
+                compoundName.textContent = compound;
+                
+                // Update oval background image
+                const imagePath = `/images/pit-window/${compound === 'INTER' ? 'Inter' : compound.charAt(0) + compound.slice(1).toLowerCase()}.png`;
+                compoundOval.style.backgroundImage = `url('${imagePath}')`;
+                
+                // Update decoration border color
+                const borderColor = COMPOUND_COLORS[compound] || 'rgb(255, 215, 0)';
+                compoundDecoration.style.borderColor = borderColor;
+                
+                console.log('[PitWindow] Compound updated:', compound);
+            }
+        }
+        
+        // Update pit window display
+        function updatePitWindow(idealLap, latestLap) {
+            if (idealLap === 0 && latestLap === 0) {
+                lapValues.textContent = 'N/A';
+            } else {
+                lapValues.textContent = `${idealLap}-${latestLap}`;
+            }
+        }
+        
+        // Handle F1 data packets
+        socket.on('f1_data', (data) => {
+            const packetId = data.m_header.m_packetId;
+            
+            if (packetId === 1) {
+                // Session packet - pit window data
+                const idealLap = data.m_pitStopWindowIdealLap || 0;
+                const latestLap = data.m_pitStopWindowLatestLap || 0;
+                
+                if (pitWindowIdeal !== idealLap || pitWindowLatest !== latestLap) {
+                    pitWindowIdeal = idealLap;
+                    pitWindowLatest = latestLap;
+                    updatePitWindow(idealLap, latestLap);
+                }
+            } else if (packetId === 7) {
+                // Car Status packet - get player's tyre compound
+                const playerIdx = data.m_header.m_playerCarIndex;
+                
+                if (data.m_carStatusData && data.m_carStatusData[playerIdx]) {
+                    const visualCompound = data.m_carStatusData[playerIdx].m_visualTyreCompound;
+                    updateCompound(visualCompound);
+                }
+            }
+        });
+        
+        // Initialize with placeholder
+        updatePitWindow(0, 0);
+        updateCompound(17); // Default to MEDIUM
+    </script>
+</body>
+</html>
