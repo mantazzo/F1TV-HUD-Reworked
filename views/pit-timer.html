@@ -90,6 +90,7 @@
         let driversData = {};
         let customDrivers = [];
         let formulaType = DriverUtils.FORMULA_TYPE.F1_MODERN;
+        let useTeamColor = true;
 
         // Load driver data using DriverUtils
         async function loadDriverData() {
@@ -131,6 +132,12 @@
         // Update stop time color
         function updateStopTimeColor() {
             if (!stopTimeValue) return;
+            
+            // If team color is disabled, use white
+            if (!useTeamColor) {
+                stopTimeValue.style.color = '#ffffff';
+                return;
+            }
             
             // Check if team has override color
             if (teamId !== null && teamNames && teamNames[teamId] && teamNames[teamId].OverridePrimaryColor) {
@@ -281,6 +288,22 @@
         socket.on('drivers_data', (drivers) => {
             driversData = drivers;
             console.debug('[PitTimer] Received drivers data:', Object.keys(driversData).length, 'drivers');
+        });
+
+        // Handle overlay config updates
+        socket.on('overlay_config', (config) => {
+            if (config.overlays && config.overlays['pit-timer']) {
+                const pitTimerConfig = config.overlays['pit-timer'];
+                
+                // Update team color setting
+                if (pitTimerConfig.useTeamColor !== undefined) {
+                    useTeamColor = pitTimerConfig.useTeamColor;
+                    console.debug('[PitTimer] Team color setting updated:', useTeamColor);
+                    
+                    // Refresh stop time color with new setting
+                    updateStopTimeColor();
+                }
+            }
         });
 
         socket.on('f1_data', (data) => {

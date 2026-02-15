@@ -56,6 +56,17 @@
             </div>
         </section>
 
+        <section class="overlay-section" id="pit-timer-options-section">
+            <h2>Pit Timer Options</h2>
+            <div class="option-row">
+                <label class="toggle-label">
+                    <input type="checkbox" id="pit-timer-team-color-toggle" class="toggle-checkbox">
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-text">Use Team Color</span>
+                </label>
+            </div>
+        </section>
+
         <section class="overlay-section" id="lap-timer-options-section">
             <h2>Lap Timer Options</h2>
             <div class="option-row">
@@ -255,6 +266,25 @@
             liveSpeedTeamColorToggle.checked = liveSpeedConfig.useTeamColor !== false;
         }
 
+        // Pit timer team color toggle handling
+        const pitTimerTeamColorToggle = document.getElementById('pit-timer-team-color-toggle');
+        
+        pitTimerTeamColorToggle.addEventListener('change', () => {
+            socket.emit('config_update', {
+                overlay: 'pit-timer',
+                property: 'useTeamColor',
+                value: pitTimerTeamColorToggle.checked
+            });
+        });
+
+        // Update pit timer options when config changes
+        function updatePitTimerOptions() {
+            if (!currentConfig || !currentConfig.overlays || !currentConfig.overlays['pit-timer']) return;
+            
+            const pitTimerConfig = currentConfig.overlays['pit-timer'];
+            pitTimerTeamColorToggle.checked = pitTimerConfig.useTeamColor !== false;
+        }
+
         // Lap timer visibility mode handling
         const lapTimerVisibilityMode = document.getElementById('lap-timer-visibility-mode');
         
@@ -330,6 +360,7 @@
             originalRender();
             updateWeatherOptions();
             updateLiveSpeedOptions();
+            updatePitTimerOptions();
             updateLapTimerOptions();
             updateSpeedometerOptions();
             updateSessionInfoOptions();
