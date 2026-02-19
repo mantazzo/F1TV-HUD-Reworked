@@ -35,6 +35,9 @@ Use these overlays in recording software (e.g. OBS). Size is described in (Width
 - Session Info
     - http://localhost:3000/session-info
     - Size: 810 x 135
+- Pit Window
+    - http://localhost:3000/pit-window
+    - Size: 310 x 340
 - Position Debug **(DEBUG ONLY)**
     - http://localhost:3000/debug/position-debug
     - Debug only, useful for turn position setup

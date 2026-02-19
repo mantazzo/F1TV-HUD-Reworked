@@ -237,6 +237,8 @@
                     pitWindowLatest = latestLap;
                     updatePitWindow(idealLap, latestLap);
                 }
+                // TODO: Session tracking? The pit window values only work in race sessions, so maybe it would be best to make sure we don't show the overlay at all in sessions other than race?
+                // But then again, we already show "N/A" when the lap values are 0, so this could remain as showing the current tyre compound instead in other sessions
             } else if (packetId === 2) {
                 // Lap Data packet - track player's current lap
                 if (playerIndex === null) {

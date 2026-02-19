@@ -24,6 +24,7 @@ function loadOverlayConfig() {
         console.error('Error loading overlay config:', err);
     }
     // Default config if file doesn't exist or error
+    // TODO: Since the systems are expanding - need to update this default config in the future to represent the new options as well
     return {
         overlays: {
             'weather': { visible: true, name: 'Weather' },
