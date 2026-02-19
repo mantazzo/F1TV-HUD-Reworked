@@ -64,6 +64,17 @@
         let currentCompound = '';
         let pitWindowIdeal = 0;
         let pitWindowLatest = 0;
+        let currentLap = 0;
+        let playerIndex = null;
+        
+        // Auto display configuration
+        let autoDisplayEnabled = false;
+        let autoMode = 'none';
+        let autoDuration = 15000; // Defaults to 15 seconds, can be changed manually in OverlayConfig.json
+        let autoHideTimer = null;
+        let lastAutoShowLap = -1; // Track which lap triggered auto-show to avoid repeated triggers
+        let previousVisibility = false; // Track previous visibility state
+        let previousAutoDisplay = false; // Track previous auto display state
         
         // Compound mapping for visual tyres
         const COMPOUND_VISUAL = {
@@ -83,25 +94,74 @@
             'WET': '#0073AD'  // Blue/Turquoise
         };
         
+        // Helper function to show overlay with animation
+        function showOverlay() {
+            overlayContainer.classList.add('visible');
+            
+            // Trigger blinking animation
+            pitWindowContent.classList.remove('blink-active');
+            void pitWindowContent.offsetWidth; // Force reflow
+            pitWindowContent.classList.add('blink-active');
+            setTimeout(() => {
+                pitWindowContent.classList.remove('blink-active');
+            }, 2000);
+        }
+        
+        // Helper function to hide overlay
+        function hideOverlay() {
+            overlayContainer.classList.remove('visible');
+            
+            // Clear any pending auto-hide timer
+            if (autoHideTimer) {
+                clearTimeout(autoHideTimer);
+                autoHideTimer = null;
+            }
+        }
+        
         // Handle overlay visibility from controller
         socket.on('overlay_config', (config) => {
             if (config.overlays && config.overlays['pit-window']) {
                 const pitWindowConfig = config.overlays['pit-window'];
                 
-                // Handle visibility
-                if (pitWindowConfig.visible) {
-                    overlayContainer.classList.add('visible');
+                // Update auto display settings
+                const newAutoDisplay = pitWindowConfig.autoDisplay === true;
+                autoMode = pitWindowConfig.autoMode || 'none';
+                autoDuration = pitWindowConfig.autoDuration || 15000;
+                
+                // Handle manual visibility toggle - only trigger show/hide if visibility actually changed
+                const newVisibility = pitWindowConfig.visible === true;
+                
+                if (newVisibility !== previousVisibility) {
+                    previousVisibility = newVisibility;
                     
-                    // Trigger blinking animation when overlay becomes visible
-                    pitWindowContent.classList.remove('blink-active');
-                    void pitWindowContent.offsetWidth; // Force reflow
-                    pitWindowContent.classList.add('blink-active');
-                    setTimeout(() => {
-                        pitWindowContent.classList.remove('blink-active');
-                    }, 2000); // Animation duration: 5 cycles × 400ms
-                } else {
-                    overlayContainer.classList.remove('visible');
+                    if (newVisibility) {
+                        showOverlay();
+                        
+                        // If auto display is enabled, start auto-hide timer
+                        if (newAutoDisplay) {
+                            if (autoHideTimer) clearTimeout(autoHideTimer);
+                            autoHideTimer = setTimeout(() => {
+                                hideOverlay();
+                                // Note: Don't update previousVisibility here - keep it true
+                                // so that changing settings doesn't re-trigger the overlay
+                            }, autoDuration);
+                        }
+                    } else {
+                        hideOverlay();
+                    }
+                } 
+                // Handle edge case: auto display was just enabled while overlay is already visible
+                else if (newAutoDisplay !== previousAutoDisplay && newAutoDisplay === true && previousVisibility === true) {
+                    // Start auto-hide timer since overlay is showing but timer wasn't running
+                    if (autoHideTimer) clearTimeout(autoHideTimer);
+                    autoHideTimer = setTimeout(() => {
+                        hideOverlay();
+                    }, autoDuration);
                 }
+                
+                // Update auto display state tracking
+                autoDisplayEnabled = newAutoDisplay;
+                previousAutoDisplay = newAutoDisplay;
             }
         });
         
@@ -176,6 +236,49 @@
                     pitWindowIdeal = idealLap;
                     pitWindowLatest = latestLap;
                     updatePitWindow(idealLap, latestLap);
+                }
+            } else if (packetId === 2) {
+                // Lap Data packet - track player's current lap
+                if (playerIndex === null) {
+                    playerIndex = data.m_header.m_playerCarIndex;
+                }
+                
+                if (data.m_lapData && data.m_lapData[playerIndex]) {
+                    const newLap = data.m_lapData[playerIndex].m_currentLapNum || 0;
+                    
+                    // Only process if lap changed
+                    if (newLap !== currentLap && newLap > 0) {
+                        currentLap = newLap;
+                        
+                        // Check if we should auto-show the overlay
+                        if (autoDisplayEnabled && autoMode !== 'none' && pitWindowIdeal > 0) {
+                            let shouldShow = false;
+                            
+                            // Determine if current lap matches auto-show criteria
+                            if (autoMode === 'idealLap-1' && currentLap === (pitWindowIdeal - 1)) {
+                                shouldShow = true;
+                            } else if (autoMode === 'idealLap' && currentLap === pitWindowIdeal) {
+                                shouldShow = true;
+                            } else if (autoMode === 'both' && (currentLap === (pitWindowIdeal - 1) || currentLap === pitWindowIdeal)) {
+                                shouldShow = true;
+                            }
+                            
+                            // Show overlay if criteria met and not already shown for this lap
+                            if (shouldShow && lastAutoShowLap !== currentLap) {
+                                lastAutoShowLap = currentLap;
+                                showOverlay();
+                                previousVisibility = true; // Update state for auto-show
+                                
+                                // Start auto-hide timer
+                                if (autoHideTimer) clearTimeout(autoHideTimer);
+                                autoHideTimer = setTimeout(() => {
+                                    hideOverlay();
+                                    // Note: Don't update previousVisibility here - keep it true
+                                    // so that changing settings doesn't re-trigger the overlay
+                                }, autoDuration);
+                            }
+                        }
+                    }
                 }
             } else if (packetId === 7) {
                 // Car Status packet - get player's tyre compound

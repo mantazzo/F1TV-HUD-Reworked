@@ -46,7 +46,9 @@
     },
     "pit-window": {
       "visible": true,
-      "name": "Pit Window"
+      "name": "Pit Window",
+      "autoDisplay": true,
+      "autoMode": "none"
     }
   }
 }

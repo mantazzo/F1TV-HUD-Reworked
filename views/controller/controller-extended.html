@@ -67,6 +67,28 @@
             </div>
         </section>
 
+        <section class="overlay-section" id="pit-window-options-section">
+            <h2>Pit Window Options</h2>
+            <div class="option-row">
+                <label class="toggle-label">
+                    <input type="checkbox" id="pit-window-auto-display-toggle" class="toggle-checkbox">
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-text">Automatic Display</span>
+                </label>
+            </div>
+            <div class="option-row">
+                <label class="select-label">
+                    <span class="select-text">Automatic Mode:</span>
+                    <select id="pit-window-auto-mode" class="select-dropdown">
+                        <option value="none">None</option>
+                        <option value="idealLap-1">1 Lap Before Window</option>
+                        <option value="idealLap">On Pit Window</option>
+                        <option value="both">Both</option>
+                    </select>
+                </label>
+            </div>
+        </section>
+
         <section class="overlay-section" id="lap-timer-options-section">
             <h2>Lap Timer Options</h2>
             <div class="option-row">
@@ -168,8 +190,8 @@
             overlayGrid.innerHTML = '';
             
             for (const [overlayId, overlay] of Object.entries(currentConfig.overlays)) {
-                // Skip lap-timer - it's controlled by dropdown in options section
-                if (overlayId === 'lap-timer') continue;
+                // Skip overlays that don't have manual visibility control
+                if (overlayId === 'lap-timer' || overlayId === 'pit-timer') continue;
                 
                 const button = document.createElement('button');
                 button.className = `overlay-button ${overlay.visible ? 'active' : ''}`;
@@ -194,7 +216,8 @@
                 'live-speed': '💨',
                 'turn-indicator': '⤴️',
                 'mini-leaderboard': '🏆',
-                'session-info': 'ℹ️'
+                'session-info': 'ℹ️',
+                'pit-window': '🪟',
             };
             return icons[overlayId] || '📺';
         }
@@ -285,6 +308,35 @@
             pitTimerTeamColorToggle.checked = pitTimerConfig.useTeamColor !== false;
         }
 
+        // Pit window auto display toggle handling
+        const pitWindowAutoDisplayToggle = document.getElementById('pit-window-auto-display-toggle');
+        const pitWindowAutoModeSelect = document.getElementById('pit-window-auto-mode');
+        
+        pitWindowAutoDisplayToggle.addEventListener('change', () => {
+            socket.emit('config_update', {
+                overlay: 'pit-window',
+                property: 'autoDisplay',
+                value: pitWindowAutoDisplayToggle.checked
+            });
+        });
+
+        pitWindowAutoModeSelect.addEventListener('change', () => {
+            socket.emit('config_update', {
+                overlay: 'pit-window',
+                property: 'autoMode',
+                value: pitWindowAutoModeSelect.value
+            });
+        });
+
+        // Update pit window options when config changes
+        function updatePitWindowOptions() {
+            if (!currentConfig || !currentConfig.overlays || !currentConfig.overlays['pit-window']) return;
+            
+            const pitWindowConfig = currentConfig.overlays['pit-window'];
+            pitWindowAutoDisplayToggle.checked = pitWindowConfig.autoDisplay !== false;
+            pitWindowAutoModeSelect.value = pitWindowConfig.autoMode || 'none';
+        }
+
         // Lap timer visibility mode handling
         const lapTimerVisibilityMode = document.getElementById('lap-timer-visibility-mode');
         
@@ -361,6 +413,7 @@
             updateWeatherOptions();
             updateLiveSpeedOptions();
             updatePitTimerOptions();
+            updatePitWindowOptions();
             updateLapTimerOptions();
             updateSpeedometerOptions();
             updateSessionInfoOptions();
