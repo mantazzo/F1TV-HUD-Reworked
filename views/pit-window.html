@@ -14,7 +14,7 @@
         <!-- Compound Section -->
         <div class="compound-section">
             <div class="compound-oval"></div>
-            <div class="compound-name">MEDIUM</div>
+            <div class="compound-name">NO DATA</div>
             <div class="compound-decoration"></div>
         </div>
         
@@ -32,7 +32,7 @@
             <div class="pit-window-label">PIT WINDOW</div>
             <div class="pit-window-content">
                 <div class="lap-label">LAP</div>
-                <div class="lap-values">14-20</div>
+                <div class="lap-values">N/A</div>
             </div>
         </div>
         
@@ -55,6 +55,10 @@
         const compoundName = document.querySelector('.compound-name');
         const compoundDecoration = document.querySelector('.compound-decoration');
         const lapValues = document.querySelector('.lap-values');
+        const borderTopRight = document.querySelector('.border-top-right');
+        const borderBottomLeft = document.querySelector('.border-bottom-left');
+        const pitWindowLabel = document.querySelector('.pit-window-label');
+        const pitWindowContent = document.querySelector('.pit-window-content');
         
         // State variables
         let currentCompound = '';
@@ -70,13 +74,13 @@
             8: 'WET'
         };
         
-        // Compound colors for decoration border
+        // Compound colors for decorations
         const COMPOUND_COLORS = {
-            'SOFT': 'rgb(255, 50, 50)',
-            'MEDIUM': 'rgb(255, 215, 0)',
-            'HARD': 'rgb(255, 255, 255)',
-            'INTER': 'rgb(0, 200, 100)',
-            'WET': 'rgb(0, 150, 255)'
+            'SOFT': '#EC1C24',  // Red
+            'MEDIUM': '#FFD604',  // Yellow/Gold
+            'HARD': '#F0F0EC',  // White
+            'INTER': '#31AF49',  // Green
+            'WET': '#0073AD'  // Blue/Turquoise
         };
         
         // Handle overlay visibility from controller
@@ -87,6 +91,14 @@
                 // Handle visibility
                 if (pitWindowConfig.visible) {
                     overlayContainer.classList.add('visible');
+                    
+                    // Trigger blinking animation when overlay becomes visible
+                    pitWindowContent.classList.remove('blink-active');
+                    void pitWindowContent.offsetWidth; // Force reflow
+                    pitWindowContent.classList.add('blink-active');
+                    setTimeout(() => {
+                        pitWindowContent.classList.remove('blink-active');
+                    }, 2000); // Animation duration: 5 cycles × 400ms
                 } else {
                     overlayContainer.classList.remove('visible');
                 }
@@ -95,7 +107,7 @@
         
         // Update compound display
         function updateCompound(visualCompound) {
-            const compound = COMPOUND_VISUAL[visualCompound] || 'MEDIUM';
+            const compound = COMPOUND_VISUAL[visualCompound] || 'NO DATA';
             
             if (currentCompound !== compound) {
                 currentCompound = compound;
@@ -107,11 +119,23 @@
                 const imagePath = `/images/pit-window/${compound === 'INTER' ? 'Inter' : compound.charAt(0) + compound.slice(1).toLowerCase()}.png`;
                 compoundOval.style.backgroundImage = `url('${imagePath}')`;
                 
-                // Update decoration border color
-                const borderColor = COMPOUND_COLORS[compound] || 'rgb(255, 215, 0)';
-                compoundDecoration.style.borderColor = borderColor;
+                // Get color for this compound
+                const compoundColor = COMPOUND_COLORS[compound] || '#EBD25F';
                 
-                console.log('[PitWindow] Compound updated:', compound);
+                // Update decoration border color
+                compoundDecoration.style.borderColor = compoundColor;
+                
+                // Update pit window borders
+                borderTopRight.style.borderColor = compoundColor;
+                borderBottomLeft.style.borderColor = compoundColor;
+                
+                // Update pit window label color
+                pitWindowLabel.style.color = compoundColor;
+                
+                // Update lap values color
+                lapValues.style.color = compoundColor;
+                
+                console.log('[PitWindow] Compound updated:', compound, 'Color:', compoundColor);
             }
         }
         
@@ -121,6 +145,21 @@
                 lapValues.textContent = 'N/A';
             } else {
                 lapValues.textContent = `${idealLap}-${latestLap}`;
+                
+                // Trigger blinking animation if overlay is visible
+                if (overlayContainer.classList.contains('visible')) {
+                    // Remove class if already present to restart animation
+                    pitWindowContent.classList.remove('blink-active');
+                    // Force reflow to restart animation
+                    void pitWindowContent.offsetWidth;
+                    // Add class to trigger animation
+                    pitWindowContent.classList.add('blink-active');
+                    
+                    // Remove class after animation completes (5 cycles × 400ms = 2000ms)
+                    setTimeout(() => {
+                        pitWindowContent.classList.remove('blink-active');
+                    }, 2000);
+                }
             }
         }
         
@@ -151,7 +190,8 @@
         
         // Initialize with placeholder
         updatePitWindow(0, 0);
-        updateCompound(17); // Default to MEDIUM
+        // Set default compound oval image (Medium) for visibility, text will remain "NO DATA"
+        compoundOval.style.backgroundImage = "url('/images/pit-window/Medium.png')";
     </script>
 </body>
 </html>

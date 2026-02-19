@@ -13,7 +13,7 @@ body {
     width: 310px;
     height: 340px;
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.2s ease;
     overflow: hidden;
 }
 
@@ -38,6 +38,7 @@ body {
     top: 15px;
     width: 272px;
     height: 67px;
+    overflow: hidden;
 }
 
 .compound-oval {
@@ -54,7 +55,7 @@ body {
 .compound-name {
     position: absolute;
     left: 1px;
-    top: 0;
+    top: 50px;
     width: 270px;
     height: 69px;
     font-family: 'F1TV-2022';
@@ -68,6 +69,7 @@ body {
     justify-content: center;
     padding-top: 7px;
     box-sizing: border-box;
+    transition: top 0.5s ease;
 }
 
 .compound-decoration {
@@ -82,6 +84,10 @@ body {
     border-color: rgb(255, 215, 0);
     box-sizing: border-box;
     pointer-events: none;
+}
+
+.overlay-container.visible .compound-name {
+    top: 0;
 }
 
 /* Current Tyre Labels */
@@ -196,6 +202,23 @@ body {
     height: 65px;
 }
 
+/* Blinking animation triggered by JavaScript */
+.pit-window-content.blink-active {
+    animation: blink 400ms steps(1, start) 5;
+}
+
+@keyframes blink {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
 .lap-label {
     position: absolute;
     left: 0px;
@@ -252,11 +275,26 @@ body {
     top: 285px;
     width: 460px;
     height: 55px;
+    z-index: -1;
+}
+
+/* Animate banner sliding up after 10 seconds */
+.overlay-container.visible .aws-banner {
+    animation: bannerSlideUp 333ms ease-out 10s forwards;
+}
+
+@keyframes bannerSlideUp {
+    0% {
+        top: 285px;
+    }
+    100% {
+        top: 230px;
+    }
 }
 
 .aws-background {
     position: absolute;
-    left: 0;
+    left: -460px;
     top: 0;
     width: 460px;
     height: 55px;
@@ -265,13 +303,44 @@ body {
     background-repeat: no-repeat;
 }
 
+/* Animate background sliding in */
+.overlay-container.visible .aws-background {
+    animation: backgroundSlideIn 333ms ease-out forwards;
+}
+
+@keyframes backgroundSlideIn {
+    0% {
+        left: -460px;
+    }
+    100% {
+        left: 0;
+    }
+}
+
 .aws-text {
     position: absolute;
-    left: 43px;
+    left: -460px;
     top: 9px;
     width: 225px;
     height: 39px;
+    opacity: 0;
     background-image: url('/images/other-logos/pbaws.png');
     background-size: 225px 39px;
     background-repeat: no-repeat;
+}
+
+/* Animate text sliding in with fade */
+.overlay-container.visible .aws-text {
+    animation: textSlideIn 333ms ease-out forwards;
+}
+
+@keyframes textSlideIn {
+    0% {
+        left: -460px;
+        opacity: 0;
+    }
+    100% {
+        left: 43px;
+        opacity: 1;
+    }
 }
