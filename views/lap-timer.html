@@ -1000,6 +1000,67 @@
             }
         }   
 
+        // Reset all session-specific state when a new session starts
+        function resetSessionData() {
+            console.log('[LapTimer] New session started (SSTA Event received) - resetting session data');
+            
+            // Clear pending timeouts to avoid stale callbacks firing after reset
+            sectorResetTimeouts.forEach((t, i) => {
+                if (t) { clearTimeout(t); sectorResetTimeouts[i] = null; }
+            });
+            if (comparisonUpdateTimeout) {
+                clearTimeout(comparisonUpdateTimeout);
+                comparisonUpdateTimeout = null;
+            }
+            
+            // Reset lap state variables
+            currentLapTime = 'N/A';
+            lastLapTime = 'N/A';
+            lapTimeComparison = 'N/A';
+            transitionValue = 'N/A';
+            currentLapNum = 0;
+            newCurrentLapNum = -1;
+            prevLastLapTimeMS = -1;
+            prevSector = -1;
+            currentLapSectorSum = 0;
+            
+            // Reset reference/comparison times
+            refSector1TimeMS = -1;
+            refSector2TimeMS = -1;
+            refLastLapTimeMS = -1;
+            prevSector1TimeMS = -1;
+            prevSector2TimeMS = -1;
+            canUpdateReference = true;
+            canUpdateComparison = true;
+            
+            // Reset targeting state
+            leaderCarIdx = -1;
+            targetCarIdx = -1;
+            safetyCarStatus = 0;
+            overlayAnimating = false;
+            
+            // Clear session history
+            for (const key in sessionHistoryByCarIdx) delete sessionHistoryByCarIdx[key];
+            overallBestSectors.s1 = -1;
+            overallBestSectors.s2 = -1;
+            overallBestSectors.s3 = -1;
+            
+            // Reset UI elements
+            lastLapTimeElement.textContent = '';
+            lastLapTimeElement.style.opacity = '0';
+            sector1TextElement.textContent = 'S1';
+            sector2TextElement.textContent = 'S2';
+            sector3TextElement.textContent = 'S3';
+            sector1DeltaElement.textContent = '';
+            sector1DeltaElement.style.opacity = '0';
+            sector2DeltaElement.textContent = '';
+            sector2DeltaElement.style.opacity = '0';
+            lastLapDeltaElement.textContent = '';
+            lastLapDeltaElement.style.opacity = '0';
+            
+            updateLapDisplay();
+        }
+        
         socket.on('f1_data', (data) => {
             const packetId = data.m_header.m_packetId;
 
@@ -1123,6 +1184,12 @@
                     }
                     
                     updateLapDisplay();
+                }
+            } else if (packetId === 3) {
+                // Event packet - detect Session Started (SSTA) event
+                if (data.m_eventStringCode === 'SSTA' ||
+                    (data.m_eventStringCode && data.m_eventStringCode.toString() === 'SSTA')) {
+                    resetSessionData();
                 }
             } else if (packetId === 4) {
                 handleParticipantsPacket(data);
