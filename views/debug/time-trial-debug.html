@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>F1 Time Trial Packet Debug</title>
+    <link rel="stylesheet" href="/fonts.css">
+    <link rel="stylesheet" href="/styles-event-debug.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        .tt-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 1100px) {
+            .tt-grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        @media (max-width: 700px) {
+            .tt-grid { grid-template-columns: 1fr; }
+        }
+
+        .section-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .section-title {
+            font-family: 'F1TV-2022', sans-serif;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.55);
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            margin-bottom: 14px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        .section-title.title-player { border-bottom-color: rgba(225, 6, 0, 0.4); color: #ff8787; }
+        .section-title.title-pb     { border-bottom-color: rgba(180,100,255,0.4); color: #cc99ff; }
+        .section-title.title-rival  { border-bottom-color: rgba(77,171,247,0.4);  color: #74c0fc; }
+
+        .field-row {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 7px 8px;
+            border-radius: 5px;
+            transition: background 0.15s;
+        }
+
+        .field-row:hover { background: rgba(255,255,255,0.05); }
+
+        .field-name {
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            color: #4dabf7;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .field-value {
+            font-family: 'F1TV-2022', monospace;
+            font-size: 14px;
+            font-weight: 700;
+            color: #ffffff;
+            text-align: right;
+        }
+
+        .field-value.value-na {
+            color: rgba(255,255,255,0.2);
+            font-weight: 400;
+            font-size: 13px;
+        }
+
+        /* time display */
+        .time-big {
+            font-family: 'Courier New', monospace;
+            font-size: 22px;
+            font-weight: 700;
+            color: #ffffff;
+            text-align: center;
+            padding: 12px 0 6px 0;
+        }
+
+        .time-big.time-na {
+            color: rgba(255,255,255,0.15);
+            font-size: 16px;
+        }
+
+        .sector-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 14px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .sector-cell {
+            flex: 1;
+            text-align: center;
+        }
+
+        .sector-label {
+            font-family: 'F1TV-2022', sans-serif;
+            font-size: 10px;
+            color: rgba(255,255,255,0.35);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 4px;
+        }
+
+        .sector-time {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .sector-time.time-na { color: rgba(255,255,255,0.2); }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            font-size: 11px;
+            font-family: 'Segoe UI', sans-serif;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 3px;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        .badge-green  { background: rgba(0,200,100,0.2);   color: #69db7c; }
+        .badge-red    { background: rgba(225,6,0,0.2);     color: #ff8787; }
+        .badge-yellow { background: rgba(255,200,0,0.2);   color: #ffd43b; }
+        .badge-blue   { background: rgba(77,171,247,0.2);  color: #74c0fc; }
+        .badge-purple { background: rgba(180,100,255,0.2); color: #cc99ff; }
+        .badge-grey   { background: rgba(255,255,255,0.08);color: rgba(255,255,255,0.4); }
+
+        /* Divider inside card */
+        .card-divider {
+            border: none;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            margin: 12px 0;
+        }
+
+        /* Mode note */
+        .mode-note {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255,200,0,0.07);
+            border: 1px solid rgba(255,200,0,0.2);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 13px;
+            color: rgba(255,212,59,0.85);
+        }
+
+        /* Reference table */
+        .ref-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        table.ref-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        table.ref-table th {
+            text-align: left;
+            font-family: 'F1TV-2022', sans-serif;
+            font-size: 11px;
+            color: rgba(255,255,255,0.4);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 6px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+        }
+        table.ref-table td {
+            padding: 7px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            font-family: 'Segoe UI', sans-serif;
+            color: rgba(255,255,255,0.8);
+            vertical-align: top;
+        }
+        table.ref-table tr:last-child td { border-bottom: none; }
+        table.ref-table td:first-child { font-family: 'F1TV-2022', sans-serif; color: rgba(255,255,255,0.6); white-space: nowrap; }
+        table.ref-table td code {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            background: rgba(77,171,247,0.1);
+            color: #74c0fc;
+            padding: 1px 5px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-header">
+        <h1>Time Trial Packet Debug</h1>
+        <span class="debug-badge">Packet ID 14</span>
+    </div>
+
+    <div class="debug-content">
+
+        <div class="mode-note">
+            ⚠ This packet is only sent during Time Trial mode. No data will appear in any other session type.
+            Update rate is ~1 packet per second.
+        </div>
+
+        <div id="waitingMsg" class="waiting-msg">
+            <div class="waiting-spinner"></div>
+            <div>Waiting for Time Trial packets (ID&nbsp;14)…</div>
+        </div>
+
+        <div id="mainContent" style="display:none">
+
+            <!-- Status bar -->
+            <div class="status-bar" style="margin-bottom:16px">
+                <span>Total packets: <strong id="totalPackets">0</strong></span>
+                <span>Last update: <strong id="lastPacketTime">--</strong></span>
+            </div>
+
+            <!-- Three dataset cards -->
+            <div class="tt-grid">
+
+                <!-- Player Session Best -->
+                <div class="section-card">
+                    <div class="section-title title-player">Player Session Best</div>
+                    <div id="card-player">
+                        <div style="color:rgba(255,255,255,0.2);font-size:13px;font-style:italic">Waiting…</div>
+                    </div>
+                </div>
+
+                <!-- Personal Best -->
+                <div class="section-card">
+                    <div class="section-title title-pb">Personal Best</div>
+                    <div id="card-pb">
+                        <div style="color:rgba(255,255,255,0.2);font-size:13px;font-style:italic">Waiting…</div>
+                    </div>
+                </div>
+
+                <!-- Rival -->
+                <div class="section-card">
+                    <div class="section-title title-rival">Rival</div>
+                    <div id="card-rival">
+                        <div style="color:rgba(255,255,255,0.2);font-size:13px;font-style:italic">Waiting…</div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Field Reference -->
+            <div class="ref-card">
+                <div class="section-title" style="font-family:'F1TV-2022',sans-serif;font-size:14px;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.07)">
+                    Field Reference — TimeTrialDataSet
+                </div>
+                <table class="ref-table">
+                    <thead>
+                        <tr>
+                            <th style="width:180px">Field</th>
+                            <th style="width:240px">UDP Field</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Car Index</td>       <td><code>m_carIdx</code></td>              <td>Index of the car this dataset relates to (uint8).</td></tr>
+                        <tr><td>Team</td>            <td><code>m_teamId</code></td>              <td>Team ID — see team appendix (uint8).</td></tr>
+                        <tr><td>Lap Time</td>        <td><code>m_lapTimeInMS</code></td>         <td>Lap time in milliseconds (uint32). 0 = no time set.</td></tr>
+                        <tr><td>Sector 1</td>        <td><code>m_sector1TimeInMS</code></td>     <td>Sector 1 time in milliseconds (uint32).</td></tr>
+                        <tr><td>Sector 2</td>        <td><code>m_sector2TimeInMS</code></td>     <td>Sector 2 time in milliseconds (uint32).</td></tr>
+                        <tr><td>Sector 3</td>        <td><code>m_sector3TimeInMS</code></td>     <td>Sector 3 time in milliseconds (uint32).</td></tr>
+                        <tr><td>Traction Control</td><td><code>m_tractionControl</code></td>     <td>0 = assist off, 1 = assist on (uint8).</td></tr>
+                        <tr><td>Gearbox Assist</td>  <td><code>m_gearboxAssist</code></td>       <td>0 = assist off, 1 = assist on (uint8).</td></tr>
+                        <tr><td>Anti-Lock Brakes</td><td><code>m_antiLockBrakes</code></td>      <td>0 = assist off, 1 = assist on (uint8).</td></tr>
+                        <tr><td>Equal Performance</td><td><code>m_equalCarPerformance</code></td><td>0 = Realistic, 1 = Equal car performance (uint8).</td></tr>
+                        <tr><td>Custom Setup</td>    <td><code>m_customSetup</code></td>         <td>0 = No custom setup, 1 = Custom setup active (uint8).</td></tr>
+                        <tr><td>Valid</td>           <td><code>m_valid</code></td>               <td>0 = dataset invalid / no time set, 1 = valid (uint8).</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        socket.emit('identify', 'Time Trial Debug');
+
+        // --- Team data (loaded from DefaultTeams.json) ----------------------
+        let teamData = {};
+
+        fetch('/data/DefaultTeams.json')
+            .then(r => r.json())
+            .then(d => { teamData = d; })
+            .catch(() => { console.warn('[TimeTrialDebug] Could not load DefaultTeams.json'); });
+
+        function teamName(id) {
+            if (id === undefined) return '--';
+            const t = teamData[id];
+            const name = t ? (t.ShortName || `Team ${id}`) : `Team ${id}`;
+            return `${name} <span style="color:rgba(255,255,255,0.3);font-size:11px">(${id})</span>`;
+        }
+
+        // --- Formatters -----------------------------------------------------
+
+        function fmtMs(ms) {
+            if (!ms || ms === 0) return null;
+            const m   = Math.floor(ms / 60000);
+            const s   = Math.floor((ms % 60000) / 1000);
+            const rem = ms % 1000;
+            return m > 0
+                ? `${m}:${String(s).padStart(2,'0')}.${String(rem).padStart(3,'0')}`
+                : `${s}.${String(rem).padStart(3,'0')}`;
+        }
+
+        function onOff(val) {
+            return val
+                ? '<span class="badge badge-yellow">On</span>'
+                : '<span class="badge badge-grey">Off</span>';
+        }
+
+        function validBadge(val) {
+            return val
+                ? '<span class="badge badge-green">Valid</span>'
+                : '<span class="badge badge-red">Invalid</span>';
+        }
+
+        // --- Render one dataset card ----------------------------------------
+
+        function renderDataset(containerId, ds) {
+            const lapStr = fmtMs(ds.m_lapTimeInMS);
+            const s1Str  = fmtMs(ds.m_sector1TimeInMS);
+            const s2Str  = fmtMs(ds.m_sector2TimeInMS);
+            const s3Str  = fmtMs(ds.m_sector3TimeInMS);
+
+            const lapHtml = lapStr
+                ? `<div class="time-big">${lapStr}</div>`
+                : `<div class="time-big time-na">No time set</div>`;
+
+            document.getElementById(containerId).innerHTML = `
+                ${lapHtml}
+
+                <div class="sector-row">
+                    <div class="sector-cell">
+                        <div class="sector-label">Sector 1</div>
+                        <div class="sector-time ${s1Str ? '' : 'time-na'}">${s1Str || '--'}</div>
+                    </div>
+                    <div class="sector-cell">
+                        <div class="sector-label">Sector 2</div>
+                        <div class="sector-time ${s2Str ? '' : 'time-na'}">${s2Str || '--'}</div>
+                    </div>
+                    <div class="sector-cell">
+                        <div class="sector-label">Sector 3</div>
+                        <div class="sector-time ${s3Str ? '' : 'time-na'}">${s3Str || '--'}</div>
+                    </div>
+                </div>
+
+                <div class="field-row">
+                    <span class="field-name">m_valid</span>
+                    <span class="field-value">${validBadge(ds.m_valid)}</span>
+                </div>
+                <div class="field-row">
+                    <span class="field-name">m_carIdx</span>
+                    <span class="field-value">${ds.m_carIdx ?? '--'}</span>
+                </div>
+                <div class="field-row">
+                    <span class="field-name">m_teamId</span>
+                    <span class="field-value" style="font-size:13px">${teamName(ds.m_teamId)}</span>
+                </div>
+
+                <hr class="card-divider">
+
+                <div class="field-row">
+                    <span class="field-name">m_tractionControl</span>
+                    <span class="field-value">${onOff(ds.m_tractionControl)}</span>
+                </div>
+                <div class="field-row">
+                    <span class="field-name">m_gearboxAssist</span>
+                    <span class="field-value">${onOff(ds.m_gearboxAssist)}</span>
+                </div>
+                <div class="field-row">
+                    <span class="field-name">m_antiLockBrakes</span>
+                    <span class="field-value">${onOff(ds.m_antiLockBrakes)}</span>
+                </div>
+                <div class="field-row">
+                    <span class="field-name">m_equalCarPerformance</span>
+                    <span class="field-value">${ds.m_equalCarPerformance
+                        ? '<span class="badge badge-blue">Equal</span>'
+                        : '<span class="badge badge-grey">Realistic</span>'}</span>
+                </div>
+                <div class="field-row">
+                    <span class="field-name">m_customSetup</span>
+                    <span class="field-value">${ds.m_customSetup
+                        ? '<span class="badge badge-purple">Yes</span>'
+                        : '<span class="badge badge-grey">No</span>'}</span>
+                </div>
+            `;
+        }
+
+        // --- Socket handler -------------------------------------------------
+
+        let totalPackets = 0;
+        let built = false;
+
+        socket.on('f1_data', (data) => {
+            if (!data.m_header) return;
+            if (data.m_header.m_packetId !== 14) return;
+
+            if (!built) {
+                document.getElementById('waitingMsg').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                built = true;
+            }
+
+            totalPackets++;
+            document.getElementById('totalPackets').textContent = totalPackets;
+            document.getElementById('lastPacketTime').textContent = new Date().toLocaleTimeString();
+
+            if (data.m_playerSessionBestDataSet) renderDataset('card-player', data.m_playerSessionBestDataSet);
+            if (data.m_personalBestDataSet)      renderDataset('card-pb',     data.m_personalBestDataSet);
+            if (data.m_rivalDataSet)             renderDataset('card-rival',  data.m_rivalDataSet);
+        });
+
+        console.log('[TimeTrialDebug] Debug page loaded');
+    </script>
+</body>
+</html>

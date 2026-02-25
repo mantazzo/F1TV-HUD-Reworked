@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>F1 Session History Packet Debug</title>
+    <link rel="stylesheet" href="/fonts.css">
+    <link rel="stylesheet" href="/styles-event-debug.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        .section-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-family: 'F1TV-2022', sans-serif;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.55);
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            margin-bottom: 14px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        .section-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 2px 0;
+        }
+
+        .field-row {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            padding: 7px 10px;
+            border-radius: 5px;
+            transition: background 0.15s;
+        }
+
+        .field-row:hover { background: rgba(255,255,255,0.05); }
+
+        .field-name {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #4dabf7;
+            white-space: nowrap;
+            min-width: 210px;
+            flex-shrink: 0;
+        }
+
+        .field-value {
+            font-family: 'F1TV-2022', monospace;
+            font-size: 15px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .field-value.value-na {
+            color: rgba(255, 255, 255, 0.2);
+            font-weight: 400;
+            font-size: 13px;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            font-size: 11px;
+            font-family: 'Segoe UI', sans-serif;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 3px;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        .badge-green  { background: rgba(0,200,100,0.2);   color: #69db7c; }
+        .badge-yellow { background: rgba(255,200,0,0.2);   color: #ffd43b; }
+        .badge-red    { background: rgba(225,6,0,0.2);     color: #ff8787; }
+        .badge-blue   { background: rgba(77,171,247,0.2);  color: #74c0fc; }
+        .badge-purple { background: rgba(180,100,255,0.2); color: #cc99ff; }
+        .badge-orange { background: rgba(255,120,0,0.2);   color: #ff922b; }
+        .badge-grey   { background: rgba(255,255,255,0.08);color: rgba(255,255,255,0.45); }
+
+        .compound-pill {
+            display: inline-flex;
+            align-items: center;
+            font-family: 'F1TV-2022', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        /* Car selector */
+        .car-selector-bar {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            padding: 14px 20px;
+            margin-bottom: 20px;
+        }
+
+        .car-selector-label {
+            font-family: 'F1TV-2022', sans-serif;
+            font-size: 13px;
+            color: rgba(255,255,255,0.55);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            white-space: nowrap;
+        }
+
+        .car-selector-select {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 6px;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            padding: 6px 12px;
+            cursor: pointer;
+            outline: none;
+            min-width: 100px;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+
+        .car-selector-select:focus { border-color: rgba(77,171,247,0.6); }
+        .car-selector-select option { background: #1a1a2e; color: #fff; }
+
+        .player-pill {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 12px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .player-pill.p1 { background: rgba(225,6,0,0.25);   color: #ff8787; border: 1px solid rgba(225,6,0,0.4); }
+        .player-pill.p2 { background: rgba(77,171,247,0.2); color: #74c0fc; border: 1px solid rgba(77,171,247,0.35); }
+
+        .selector-spacer { flex: 1; }
+
+        /* No-data placeholder */
+        .no-data-msg {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 13px;
+            color: rgba(255,255,255,0.25);
+            font-style: italic;
+            padding: 12px 0 4px 0;
+        }
+
+        /* Tyre stints table */
+        table.stints-table,
+        table.lap-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        table.stints-table th,
+        table.lap-table th {
+            text-align: left;
+            font-family: 'F1TV-2022', sans-serif;
+            font-size: 11px;
+            color: rgba(255,255,255,0.4);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 6px 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+        }
+
+        table.stints-table td,
+        table.lap-table td {
+            padding: 6px 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            font-family: 'Segoe UI', sans-serif;
+            color: rgba(255,255,255,0.8);
+            white-space: nowrap;
+        }
+
+        table.stints-table tr:last-child td,
+        table.lap-table tr:last-child td { border-bottom: none; }
+
+        table.stints-table td:first-child,
+        table.lap-table td:first-child {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: rgba(255,255,255,0.45);
+        }
+
+        /* Lap table specifics */
+        .lap-scroll {
+            max-height: 480px;
+            overflow-y: auto;
+            border-radius: 6px;
+        }
+
+        .lap-scroll::-webkit-scrollbar { width: 6px; }
+        .lap-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); }
+        .lap-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+
+        /* Row highlight classes */
+        tr.lap-current td { background: rgba(255,212,59,0.07); }
+        tr.lap-best     td { background: rgba(180,100,255,0.08); }
+
+        /* Star markers for best lap rows */
+        .lap-star {
+            display: inline-flex;
+            gap: 3px;
+            margin-left: 6px;
+            vertical-align: middle;
+        }
+
+        .star-overall { color: #cc99ff; font-size: 11px; }
+        .star-s1      { color: #69db7c; font-size: 11px; }
+        .star-s2      { color: #ffd43b; font-size: 11px; }
+        .star-s3      { color: #ff6b6b; font-size: 11px; }
+
+        /* Validity mini-badges */
+        .vbadge {
+            display: inline-block;
+            font-size: 10px;
+            font-family: 'Segoe UI', sans-serif;
+            font-weight: 600;
+            padding: 1px 5px;
+            border-radius: 2px;
+            margin-right: 2px;
+        }
+
+        .vbadge.v-ok  { background: rgba(0,200,100,0.18); color: #69db7c; }
+        .vbadge.v-bad { background: rgba(225,6,0,0.15);   color: rgba(255,135,135,0.6); text-decoration: line-through; }
+
+        /* Time cell */
+        .time-cell {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #fff;
+        }
+
+        .time-cell.time-na { color: rgba(255,255,255,0.2); }
+
+        /* Reference table */
+        table.ref-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        table.ref-table th {
+            text-align: left;
+            font-family: 'F1TV-2022', sans-serif;
+            font-size: 11px;
+            color: rgba(255,255,255,0.4);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 6px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+        }
+        table.ref-table td {
+            padding: 7px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            font-family: 'Segoe UI', sans-serif;
+            color: rgba(255,255,255,0.8);
+            vertical-align: top;
+        }
+        table.ref-table tr:last-child td { border-bottom: none; }
+        table.ref-table td:first-child { font-family: 'F1TV-2022', sans-serif; color: rgba(255,255,255,0.6); white-space: nowrap; }
+        table.ref-table td code {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            background: rgba(77,171,247,0.1);
+            color: #74c0fc;
+            padding: 1px 5px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-header">
+        <h1>Session History Packet Debug</h1>
+        <span class="debug-badge">Packet ID 11</span>
+    </div>
+
+    <div class="debug-content">
+
+        <div id="waitingMsg" class="waiting-msg">
+            <div class="waiting-spinner"></div>
+            <div>Waiting for Session History packets (ID&nbsp;11)…</div>
+        </div>
+
+        <div id="mainContent" style="display:none">
+
+            <!-- Status bar -->
+            <div class="status-bar" style="margin-bottom:16px">
+                <span>Total packets: <strong id="totalPackets">0</strong></span>
+                <span>Last update: <strong id="lastPacketTime">--</strong></span>
+                <span>Cars seen: <strong id="carsSeen">0 / 22</strong></span>
+                <span>Player car: <strong id="playerCarIdx">--</strong></span>
+            </div>
+
+            <!-- Car selector -->
+            <div class="car-selector-bar">
+                <span class="car-selector-label">Car Index</span>
+                <select class="car-selector-select" id="carSelect">
+                    <!-- populated on first packet -->
+                </select>
+                <span id="playerIndicator"></span>
+                <span class="selector-spacer"></span>
+                <span id="carLastUpdated" style="font-family:'Segoe UI',sans-serif;font-size:12px;color:rgba(255,255,255,0.3)">--</span>
+            </div>
+
+            <!-- 1. Summary -->
+            <div class="section-card">
+                <div class="section-title">Summary</div>
+                <div id="summaryContent">
+                    <div class="no-data-msg">No data received for this car yet.</div>
+                </div>
+            </div>
+
+            <!-- 2. Tyre Stints -->
+            <div class="section-card">
+                <div class="section-title">Tyre Stints</div>
+                <div id="stintsContent">
+                    <div class="no-data-msg">No data received for this car yet.</div>
+                </div>
+            </div>
+
+            <!-- 3. Lap History -->
+            <div class="section-card">
+                <div class="section-title">Lap History</div>
+                <div style="font-family:'Segoe UI',sans-serif;font-size:11px;color:rgba(255,255,255,0.3);margin-bottom:10px">
+                    <span style="color:#cc99ff">★</span> Best lap &nbsp;
+                    <span style="color:#69db7c">★</span> Best S1 &nbsp;
+                    <span style="color:#ffd43b">★</span> Best S2 &nbsp;
+                    <span style="color:#ff6b6b">★</span> Best S3 &nbsp; | &nbsp;
+                    Purple row highlight = overall best lap time &nbsp; | &nbsp;
+                    Yellow row = current (partial) lap
+                </div>
+                <div id="lapHistoryContent">
+                    <div class="no-data-msg">No data received for this car yet.</div>
+                </div>
+            </div>
+
+            <!-- Field reference -->
+            <div class="section-card">
+                <div class="section-title">Field Reference</div>
+                <table class="ref-table">
+                    <thead>
+                        <tr>
+                            <th style="width:200px">Field</th>
+                            <th style="width:280px">UDP Field</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Car Index</td>           <td><code>m_carIdx</code></td>                   <td>Index of the car this packet relates to (0–21). Packet cycles through all cars at ~1 Hz each.</td></tr>
+                        <tr><td>Num Laps</td>            <td><code>m_numLaps</code></td>                   <td>Number of laps in the history data, including the current partial lap (uint8).</td></tr>
+                        <tr><td>Num Stints</td>          <td><code>m_numTyreStints</code></td>             <td>Number of tyre stints recorded so far (uint8).</td></tr>
+                        <tr><td>Best Lap</td>            <td><code>m_bestLapTimeLapNum</code></td>         <td>Lap number on which the best lap time was set (uint8).</td></tr>
+                        <tr><td>Best S1 Lap</td>         <td><code>m_bestSector1LapNum</code></td>         <td>Lap number on which the best Sector 1 time was set (uint8).</td></tr>
+                        <tr><td>Best S2 Lap</td>         <td><code>m_bestSector2LapNum</code></td>         <td>Lap number on which the best Sector 2 time was set (uint8).</td></tr>
+                        <tr><td>Best S3 Lap</td>         <td><code>m_bestSector3LapNum</code></td>         <td>Lap number on which the best Sector 3 time was set (uint8).</td></tr>
+                        <tr><td>Lap Time</td>            <td><code>m_lapTimeInMS</code></td>               <td>Total lap time in milliseconds (uint32). 0 = not set.</td></tr>
+                        <tr><td>Sector 1</td>            <td><code>m_sector1TimeMinutesPart + m_sector1TimeMSPart</code></td> <td>Sector 1 time: whole minutes part (uint8) + milliseconds part (uint16).</td></tr>
+                        <tr><td>Sector 2</td>            <td><code>m_sector2TimeMinutesPart + m_sector2TimeMSPart</code></td> <td>Sector 2 time: whole minutes part (uint8) + milliseconds part (uint16).</td></tr>
+                        <tr><td>Sector 3</td>            <td><code>m_sector3TimeMinutesPart + m_sector3TimeMSPart</code></td> <td>Sector 3 time: whole minutes part (uint8) + milliseconds part (uint16).</td></tr>
+                        <tr><td>Validity Flags</td>      <td><code>m_lapValidBitFlags</code></td>          <td>Bitmask. Bit 0 (0x01) = lap valid. Bit 1 (0x02) = S1 valid. Bit 2 (0x04) = S2 valid. Bit 3 (0x08) = S3 valid (uint8).</td></tr>
+                        <tr><td>Stint End Lap</td>       <td><code>m_endLap</code></td>                    <td>Lap number the tyre stint ends on. 255 = currently fitted set (uint8).</td></tr>
+                        <tr><td>Stint Actual</td>        <td><code>m_tyreActualCompound</code></td>        <td>Physical tyre compound used in this stint. Same ID encoding as CarStatusData (uint8).</td></tr>
+                        <tr><td>Stint Visual</td>        <td><code>m_tyreVisualCompound</code></td>        <td>Visual tyre compound shown in this stint (uint8).</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        socket.emit('identify', 'Session History Debug');
+
+        // --- Compound maps (same as Car Status) ------------------------------
+
+        const ACTUAL_COMPOUND = {
+            7: ['Inter', '#00b4d8', 'I'],   8: ['Wet', '#0077b6', 'W'],
+            9: ['Dry (Classic)', '#c8c8c8', 'D'],  10: ['Wet (Classic)', '#0077b6', 'W'],
+            11: ['SS (F2)', '#e63946', 'SS'], 12: ['S (F2)', '#e63946', 'S'],
+            13: ['M (F2)', '#f4a261', 'M'],  14: ['H (F2)', '#c8c8c8', 'H'], 15: ['W (F2)', '#0077b6', 'W'],
+            16: ['C5', '#e63946', 'C5'], 17: ['C4', '#e63946', 'C4'], 18: ['C3', '#f4a261', 'C3'],
+            19: ['C2', '#f4a261', 'C2'], 20: ['C1', '#c8c8c8', 'C1'], 21: ['C0', '#c8c8c8', 'C0'], 22: ['C6', '#e63946', 'C6'],
+        };
+
+        const VISUAL_COMPOUND = {
+            7:  ['Inter', '#00b4d8', 'I'],  8:  ['Wet', '#0077b6', 'W'],
+            15: ['Wet (F2)', '#0077b6', 'W'],
+            16: ['Soft',   '#e63946', 'S'], 17: ['Med', '#f4a261', 'M'],
+            18: ['Hard',   '#c8c8c8', 'H'],
+            19: ['SS (F2)', '#e63946', 'SS'], 20: ['S (F2)', '#e63946', 'S'],
+            21: ['M (F2)', '#f4a261', 'M'],   22: ['H (F2)', '#c8c8c8', 'H'],
+        };
+
+        function compoundPill(id, map) {
+            if (id === undefined) return '<span style="color:rgba(255,255,255,0.2)">--</span>';
+            const entry = map[id];
+            if (!entry) return `<span style="color:rgba(255,255,255,0.4)">${id}</span>`;
+            const [name, color, abbr] = entry;
+            const textColor = color === '#c8c8c8' ? '#333' : '#fff';
+            return `<span class="compound-pill" style="background:${color};color:${textColor}">${abbr}</span>` +
+                   `<span style="font-family:'Segoe UI',sans-serif;font-size:12px;color:rgba(255,255,255,0.5);margin-left:8px">${name}</span>`;
+        }
+
+        // --- Time formatters -------------------------------------------------
+
+        function fmtMs(ms) {
+            if (!ms || ms === 0) return null;
+            const m   = Math.floor(ms / 60000);
+            const s   = Math.floor((ms % 60000) / 1000);
+            const rem = ms % 1000;
+            return m > 0
+                ? `${m}:${String(s).padStart(2,'0')}.${String(rem).padStart(3,'0')}`
+                : `${s}.${String(rem).padStart(3,'0')}`;
+        }
+
+        function fmtSector(minPart, msPart) {
+            const total = (minPart || 0) * 60000 + (msPart || 0);
+            return fmtMs(total);
+        }
+
+        function timeCell(str) {
+            return str
+                ? `<span class="time-cell">${str}</span>`
+                : `<span class="time-cell time-na">--</span>`;
+        }
+
+        // --- Validity badges -------------------------------------------------
+
+        function validityBadges(flags) {
+            const make = (label, bit) => {
+                const ok = (flags & bit) !== 0;
+                return `<span class="vbadge ${ok ? 'v-ok' : 'v-bad'}">${label}</span>`;
+            };
+            return make('LAP',0x01) + make('S1',0x02) + make('S2',0x04) + make('S3',0x08);
+        }
+
+        // --- State -----------------------------------------------------------
+
+        const carCache   = {};   // carIdx → { data, time }
+        let selectedCar  = 0;
+        let playerIdx    = 255;
+        let player2Idx   = 255;
+        let totalPackets = 0;
+        let selectorBuilt = false;
+
+        // --- Car selector ----------------------------------------------------
+
+        function buildSelector() {
+            const sel = document.getElementById('carSelect');
+            sel.innerHTML = '';
+            for (let i = 0; i < 22; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = `Car ${i}`;
+                sel.appendChild(opt);
+            }
+            if (playerIdx < 22) { sel.value = playerIdx; selectedCar = playerIdx; }
+            selectorBuilt = true;
+        }
+
+        document.getElementById('carSelect').addEventListener('change', (e) => {
+            selectedCar = parseInt(e.target.value, 10);
+            updatePlayerIndicator();
+            renderSelected();
+        });
+
+        function updatePlayerIndicator() {
+            const el = document.getElementById('playerIndicator');
+            if (selectedCar === playerIdx)
+                el.innerHTML = '<span class="player-pill p1">Player 1</span>';
+            else if (selectedCar === player2Idx && player2Idx !== 255)
+                el.innerHTML = '<span class="player-pill p2">Player 2</span>';
+            else
+                el.innerHTML = '';
+        }
+
+        // --- Render selected car --------------------------------------------
+
+        function renderSelected() {
+            const entry = carCache[selectedCar];
+            const lastUpdatedEl = document.getElementById('carLastUpdated');
+
+            if (!entry) {
+                lastUpdatedEl.textContent = 'No packet received yet for this car';
+                document.getElementById('summaryContent').innerHTML    = '<div class="no-data-msg">No data received for this car yet.</div>';
+                document.getElementById('stintsContent').innerHTML     = '<div class="no-data-msg">No data received for this car yet.</div>';
+                document.getElementById('lapHistoryContent').innerHTML = '<div class="no-data-msg">No data received for this car yet.</div>';
+                return;
+            }
+
+            const d = entry.data;
+            lastUpdatedEl.textContent = `Last received: ${entry.time}`;
+
+            // --- Summary ---
+            const summaryHtml = `
+                <div class="section-grid">
+                    <div class="field-row"><span class="field-name">m_numLaps</span>           <span class="field-value">${d.m_numLaps ?? '--'}</span></div>
+                    <div class="field-row"><span class="field-name">m_numTyreStints</span>     <span class="field-value">${d.m_numTyreStints ?? '--'}</span></div>
+                    <div class="field-row"><span class="field-name">m_bestLapTimeLapNum</span> <span class="field-value">${d.m_bestLapTimeLapNum ? `Lap ${d.m_bestLapTimeLapNum}` : '--'}</span></div>
+                    <div class="field-row"><span class="field-name">m_bestSector1LapNum</span> <span class="field-value">${d.m_bestSector1LapNum ? `Lap ${d.m_bestSector1LapNum}` : '--'}</span></div>
+                    <div class="field-row"><span class="field-name">m_bestSector2LapNum</span> <span class="field-value">${d.m_bestSector2LapNum ? `Lap ${d.m_bestSector2LapNum}` : '--'}</span></div>
+                    <div class="field-row"><span class="field-name">m_bestSector3LapNum</span> <span class="field-value">${d.m_bestSector3LapNum ? `Lap ${d.m_bestSector3LapNum}` : '--'}</span></div>
+                </div>`;
+            document.getElementById('summaryContent').innerHTML = summaryHtml;
+
+            // --- Tyre Stints ---
+            const numStints = d.m_numTyreStints ?? 0;
+            const stints    = d.m_tyreStintsHistoryData ?? [];
+            if (numStints === 0 || stints.length === 0) {
+                document.getElementById('stintsContent').innerHTML = '<div class="no-data-msg">No stints recorded yet.</div>';
+            } else {
+                let stintRows = '';
+                for (let i = 0; i < numStints; i++) {
+                    const s = stints[i];
+                    if (!s) continue;
+                    const isCurrent = s.m_endLap === 255;
+                    const endLap    = isCurrent
+                        ? '<span class="badge badge-yellow">Current</span>'
+                        : `Lap ${s.m_endLap}`;
+                    stintRows += `<tr>
+                        <td>Stint ${i + 1}</td>
+                        <td>${endLap}</td>
+                        <td>${compoundPill(s.m_tyreActualCompound, ACTUAL_COMPOUND)}</td>
+                        <td>${compoundPill(s.m_tyreVisualCompound, VISUAL_COMPOUND)}</td>
+                    </tr>`;
+                }
+                document.getElementById('stintsContent').innerHTML = `
+                    <table class="stints-table">
+                        <thead><tr><th>#</th><th>End Lap</th><th>Actual Compound</th><th>Visual Compound</th></tr></thead>
+                        <tbody>${stintRows}</tbody>
+                    </table>`;
+            }
+
+            // --- Lap History ---
+            const numLaps   = d.m_numLaps ?? 0;
+            const laps      = d.m_lapHistoryData ?? [];
+            const bestLap   = d.m_bestLapTimeLapNum;
+            const bestS1    = d.m_bestSector1LapNum;
+            const bestS2    = d.m_bestSector2LapNum;
+            const bestS3    = d.m_bestSector3LapNum;
+
+            if (numLaps === 0) {
+                document.getElementById('lapHistoryContent').innerHTML = '<div class="no-data-msg">No lap data yet.</div>';
+                return;
+            }
+
+            let lapRows = '';
+            for (let i = 0; i < numLaps; i++) {
+                const lap    = laps[i];
+                const lapNum = i + 1;
+                if (!lap) continue;
+
+                const isCurrent = (i === numLaps - 1);
+                const isBestOverall = lapNum === bestLap;
+
+                const s1Str  = fmtSector(lap.m_sector1TimeMinutesPart, lap.m_sector1TimeMSPart);
+                const s2Str  = fmtSector(lap.m_sector2TimeMinutesPart, lap.m_sector2TimeMSPart);
+                const s3Str  = fmtSector(lap.m_sector3TimeMinutesPart, lap.m_sector3TimeMSPart);
+                const lapStr = fmtMs(lap.m_lapTimeInMS);
+
+                const stars = [
+                    isBestOverall       ? '<span class="star-overall">★</span>' : '',
+                    lapNum === bestS1   ? '<span class="star-s1">★</span>'      : '',
+                    lapNum === bestS2   ? '<span class="star-s2">★</span>'      : '',
+                    lapNum === bestS3   ? '<span class="star-s3">★</span>'      : '',
+                ].join('');
+                const starHtml = stars ? `<span class="lap-star">${stars}</span>` : '';
+
+                const rowClass = isCurrent ? 'lap-current' : isBestOverall ? 'lap-best' : '';
+
+                lapRows += `<tr class="${rowClass}">
+                    <td>${lapNum}${starHtml}${isCurrent ? ' <span class="badge badge-yellow" style="font-size:10px">NOW</span>' : ''}</td>
+                    <td>${timeCell(s1Str)}</td>
+                    <td>${timeCell(s2Str)}</td>
+                    <td>${timeCell(s3Str)}</td>
+                    <td>${timeCell(lapStr)}</td>
+                    <td>${validityBadges(lap.m_lapValidBitFlags ?? 0)}</td>
+                </tr>`;
+            }
+
+            document.getElementById('lapHistoryContent').innerHTML = `
+                <div class="lap-scroll">
+                    <table class="lap-table">
+                        <thead><tr>
+                            <th style="width:70px">Lap</th>
+                            <th style="width:110px">Sector 1</th>
+                            <th style="width:110px">Sector 2</th>
+                            <th style="width:110px">Sector 3</th>
+                            <th style="width:110px">Lap Time</th>
+                            <th>Valid</th>
+                        </tr></thead>
+                        <tbody>${lapRows}</tbody>
+                    </table>
+                </div>`;
+
+            // Auto-scroll to bottom so current lap is always visible
+            const scroll = document.querySelector('.lap-scroll');
+            if (scroll) scroll.scrollTop = scroll.scrollHeight;
+        }
+
+        // --- Socket handler --------------------------------------------------
+
+        let built = false;
+
+        socket.on('f1_data', (data) => {
+            if (!data.m_header) return;
+
+            const hdr = data.m_header;
+            playerIdx  = hdr.m_playerCarIndex          ?? playerIdx;
+            player2Idx = hdr.m_secondaryPlayerCarIndex  ?? player2Idx;
+
+            if (hdr.m_packetId !== 11) return;
+
+            if (!built) {
+                document.getElementById('waitingMsg').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                built = true;
+            }
+
+            totalPackets++;
+            document.getElementById('totalPackets').textContent = totalPackets;
+            document.getElementById('lastPacketTime').textContent = new Date().toLocaleTimeString();
+
+            const carIdx = data.m_carIdx;
+            if (carIdx === undefined) return;
+
+            // Cache the data for this car
+            carCache[carIdx] = { data, time: new Date().toLocaleTimeString() };
+
+            const seen = Object.keys(carCache).length;
+            document.getElementById('carsSeen').textContent = `${seen} / 22`;
+            document.getElementById('playerCarIdx').textContent = playerIdx === 255 ? '--' : playerIdx;
+
+            // Build selector once on first arrival
+            if (!selectorBuilt) {
+                buildSelector();
+            }
+
+            // If the dropdown hasn't been manually changed yet, keep defaulting to player car
+            if (!selectorBuilt || selectedCar === 0) {
+                if (playerIdx < 22) {
+                    selectedCar = playerIdx;
+                    document.getElementById('carSelect').value = playerIdx;
+                }
+            }
+
+            updatePlayerIndicator();
+
+            // Only re-render if this packet is for the car we're currently viewing
+            if (carIdx === selectedCar) renderSelected();
+        });
+
+        console.log('[SessionHistoryDebug] Debug page loaded');
+    </script>
+</body>
+</html>

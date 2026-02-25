@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>F1 Car Status Packet Debug</title>
+    <link rel="stylesheet" href="/fonts.css">
+    <link rel="stylesheet" href="/styles-event-debug.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        .section-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-family: 'F1TV-2022', sans-serif;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.55);
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            margin-bottom: 14px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        .section-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 2px 0;
+        }
+
+        .field-row {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            padding: 7px 10px;
+            border-radius: 5px;
+            transition: background 0.15s;
+        }
+
+        .field-row:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .field-name {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #4dabf7;
+            white-space: nowrap;
+            min-width: 220px;
+            flex-shrink: 0;
+        }
+
+        .field-value {
+            font-family: 'F1TV-2022', monospace;
+            font-size: 15px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .field-value.value-na {
+            color: rgba(255, 255, 255, 0.2);
+            font-weight: 400;
+            font-size: 13px;
+        }
+
+        .field-value.value-updated {
+            animation: flashValue 0.4s ease;
+        }
+
+        @keyframes flashValue {
+            0%   { color: #ffd43b; }
+            100% { color: #ffffff; }
+        }
+
+        /* Fuel bar */
+        .fuel-bar-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 4px 10px 10px 10px;
+        }
+
+        .fuel-bar-track {
+            flex: 1;
+            height: 8px;
+            background: rgba(255,255,255,0.07);
+            border-radius: 4px;
+            overflow: hidden;
+            max-width: 340px;
+        }
+
+        .fuel-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #69db7c, #ffd43b, #ff8787);
+            transition: width 0.25s ease;
+            width: 0%;
+        }
+
+        .fuel-bar-label {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: rgba(255,255,255,0.5);
+            white-space: nowrap;
+        }
+
+        .badge {
+            display: inline-block;
+            font-size: 11px;
+            font-family: 'Segoe UI', sans-serif;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 3px;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        .badge-green  { background: rgba(0, 200, 100, 0.2);  color: #69db7c; }
+        .badge-yellow { background: rgba(255, 200, 0, 0.2);  color: #ffd43b; }
+        .badge-red    { background: rgba(225, 6, 0, 0.2);    color: #ff8787; }
+        .badge-blue   { background: rgba(77, 171, 247, 0.2); color: #74c0fc; }
+        .badge-purple { background: rgba(180,100,255,0.2);   color: #cc99ff; }
+        .badge-orange { background: rgba(255,120,0,0.2);     color: #ff922b; }
+        .badge-grey   { background: rgba(255,255,255,0.08);  color: rgba(255,255,255,0.45); }
+        .badge-white  { background: rgba(255,255,255,0.12);  color: #ffffff; }
+
+        /* Tyre compound pill */
+        .compound-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: 'F1TV-2022', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 4px;
+        }
+
+        /* ERS bar */
+        .ers-bar-track {
+            display: inline-block;
+            width: 200px;
+            height: 8px;
+            background: rgba(255,255,255,0.07);
+            border-radius: 4px;
+            overflow: hidden;
+            vertical-align: middle;
+            margin-right: 10px;
+        }
+
+        .ers-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #4dabf7, #cc99ff);
+            transition: width 0.25s ease;
+        }
+
+        /* Car selector bar */
+        .car-selector-bar {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            padding: 14px 20px;
+            margin-bottom: 20px;
+        }
+
+        .car-selector-label {
+            font-family: 'F1TV-2022', sans-serif;
+            font-size: 13px;
+            color: rgba(255,255,255,0.55);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            white-space: nowrap;
+        }
+
+        .car-selector-select {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 6px;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            padding: 6px 12px;
+            cursor: pointer;
+            outline: none;
+            min-width: 100px;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+
+        .car-selector-select:focus {
+            border-color: rgba(77,171,247,0.6);
+        }
+
+        .car-selector-select option {
+            background: #1a1a2e;
+            color: #fff;
+        }
+
+        .player-pill {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 12px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .player-pill.p1 { background: rgba(225,6,0,0.25);    color: #ff8787; border: 1px solid rgba(225,6,0,0.4); }
+        .player-pill.p2 { background: rgba(77,171,247,0.2);  color: #74c0fc; border: 1px solid rgba(77,171,247,0.35); }
+
+        .selector-spacer { flex: 1; }
+
+        /* Reference table */
+        table.ref-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        table.ref-table th {
+            text-align: left;
+            font-family: 'F1TV-2022', sans-serif;
+            font-size: 11px;
+            color: rgba(255,255,255,0.4);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 6px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+        }
+
+        table.ref-table td {
+            padding: 7px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            font-family: 'Segoe UI', sans-serif;
+            color: rgba(255,255,255,0.8);
+            vertical-align: top;
+        }
+
+        table.ref-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        table.ref-table td:first-child {
+            font-family: 'F1TV-2022', sans-serif;
+            color: rgba(255,255,255,0.6);
+            white-space: nowrap;
+        }
+
+        table.ref-table td code {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            background: rgba(77,171,247,0.1);
+            color: #74c0fc;
+            padding: 1px 5px;
+            border-radius: 3px;
+        }
+
+        /* Restricted telemetry banner */
+        #restrictedBanner {
+            display: none;
+            align-items: center;
+            gap: 12px;
+            background: rgba(225, 6, 0, 0.1);
+            border: 1px solid rgba(225, 6, 0, 0.35);
+            border-radius: 10px;
+            padding: 12px 18px;
+            margin-bottom: 20px;
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 13px;
+            color: #ff8787;
+        }
+
+        #restrictedBanner.visible {
+            display: flex;
+        }
+
+        #restrictedBanner strong {
+            font-weight: 700;
+            color: #ff6b6b;
+        }
+
+        /* Small marker on field names that can be zeroed */
+        .rest-mark {
+            display: none;
+            font-size: 10px;
+            font-family: 'Segoe UI', sans-serif;
+            font-weight: 600;
+            color: #ff8787;
+            background: rgba(225,6,0,0.18);
+            border: 1px solid rgba(225,6,0,0.3);
+            border-radius: 3px;
+            padding: 0px 4px;
+            margin-left: 6px;
+            vertical-align: middle;
+        }
+
+        .restricted-mode .rest-mark {
+            display: inline;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-header">
+        <h1>Car Status Packet Debug</h1>
+        <span class="debug-badge">Packet ID 7</span>
+    </div>
+
+    <div class="debug-content">
+
+        <div id="waitingMsg" class="waiting-msg">
+            <div class="waiting-spinner"></div>
+            <div>Waiting for Car Status packets (ID&nbsp;7)...</div>
+        </div>
+
+        <div id="mainContent" style="display:none">
+
+            <!-- Status bar -->
+            <div class="status-bar" style="margin-bottom:16px">
+                <span>Total packets: <strong id="totalPackets">0</strong></span>
+                <span>Last update: <strong id="lastPacketTime">--</strong></span>
+                <span>Player car: <strong id="playerCarIdx">--</strong></span>
+                <span>Secondary player: <strong id="secondaryCarIdx">--</strong></span>
+            </div>
+
+            <!-- Car selector -->
+            <div class="car-selector-bar">
+                <span class="car-selector-label">Car Index</span>
+                <select class="car-selector-select" id="carSelect"></select>
+                <span id="playerIndicator"></span>
+                <span class="selector-spacer"></span>
+                <span style="font-family:'Segoe UI',sans-serif;font-size:12px;color:rgba(255,255,255,0.3)">
+                    Showing data for one car slot — switch with dropdown
+                </span>
+            </div>
+
+            <!-- Restricted telemetry warning -->
+            <div id="restrictedBanner">
+                <span style="font-size:16px">⚠</span>
+                <span><strong>Restricted Telemetry</strong> — this car's <code style="font-family:'Courier New',monospace;font-size:12px;background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:3px;color:#ffb3b3">m_yourTelemetry</code> (Packet 4) is set to <strong>Restricted</strong>. The 12 marked fields are zeroed out by the game (unless it is a Player car, then the data is always visible).</span>
+            </div>
+
+            <!-- 1. Driver Aids -->
+            <div class="section-card">
+                <div class="section-title">Driver Aids</div>
+                <div class="section-grid">
+                    <div class="field-row"><span class="field-name">m_tractionControl</span>   <span class="field-value value-na" id="f-tc">--</span></div>
+                    <div class="field-row"><span class="field-name">m_antiLockBrakes</span>     <span class="field-value value-na" id="f-abs">--</span></div>
+                    <div class="field-row"><span class="field-name">m_fuelMix<span class="rest-mark">R</span></span>            <span class="field-value value-na" id="f-fuelMix">--</span></div>
+                    <div class="field-row"><span class="field-name">m_frontBrakeBias (%)<span class="rest-mark">R</span></span> <span class="field-value value-na" id="f-brakeBias">--</span></div>
+                    <div class="field-row"><span class="field-name">m_pitLimiterStatus</span>   <span class="field-value value-na" id="f-pitLimiter">--</span></div>
+                </div>
+            </div>
+
+            <!-- 2. Fuel -->
+            <div class="section-card">
+                <div class="section-title">Fuel</div>
+                <div class="section-grid">
+                    <div class="field-row"><span class="field-name">m_fuelInTank (kg)<span class="rest-mark">R</span></span>        <span class="field-value value-na" id="f-fuelInTank">--</span></div>
+                    <div class="field-row"><span class="field-name">m_fuelCapacity (kg)<span class="rest-mark">R</span></span>       <span class="field-value value-na" id="f-fuelCapacity">--</span></div>
+                    <div class="field-row"><span class="field-name">m_fuelRemainingLaps<span class="rest-mark">R</span></span>       <span class="field-value value-na" id="f-fuelLaps">--</span></div>
+                </div>
+                <div class="fuel-bar-wrap">
+                    <div class="fuel-bar-track"><div class="fuel-bar-fill" id="fuelBarFill"></div></div>
+                    <span class="fuel-bar-label" id="fuelBarLabel">--</span>
+                </div>
+            </div>
+
+            <!-- 3. Engine & RPM -->
+            <div class="section-card">
+                <div class="section-title">Engine &amp; Gears</div>
+                <div class="section-grid">
+                    <div class="field-row"><span class="field-name">m_maxRPM</span>    <span class="field-value value-na" id="f-maxRPM">--</span></div>
+                    <div class="field-row"><span class="field-name">m_idleRPM</span>   <span class="field-value value-na" id="f-idleRPM">--</span></div>
+                    <div class="field-row"><span class="field-name">m_maxGears</span>  <span class="field-value value-na" id="f-maxGears">--</span></div>
+                </div>
+            </div>
+
+            <!-- 4. DRS -->
+            <div class="section-card">
+                <div class="section-title">DRS</div>
+                <div class="section-grid">
+                    <div class="field-row"><span class="field-name">m_drsAllowed</span>                  <span class="field-value value-na" id="f-drsAllowed">--</span></div>
+                    <div class="field-row"><span class="field-name">m_drsActivationDistance (m)</span>   <span class="field-value value-na" id="f-drsDist">--</span></div>
+                </div>
+            </div>
+
+            <!-- 5. Tyres -->
+            <div class="section-card">
+                <div class="section-title">Tyres</div>
+                <div class="section-grid">
+                    <div class="field-row"><span class="field-name">m_actualTyreCompound</span>  <span class="field-value value-na" id="f-actualCompound">--</span></div>
+                    <div class="field-row"><span class="field-name">m_visualTyreCompound</span>  <span class="field-value value-na" id="f-visualCompound">--</span></div>
+                    <div class="field-row"><span class="field-name">m_tyresAgeLaps</span>         <span class="field-value value-na" id="f-tyreAge">--</span></div>
+                </div>
+            </div>
+
+            <!-- 6. FIA Flags -->
+            <div class="section-card">
+                <div class="section-title">FIA Flags &amp; Network</div>
+                <div class="section-grid">
+                    <div class="field-row"><span class="field-name">m_vehicleFIAFlags</span>  <span class="field-value value-na" id="f-fiaFlag">--</span></div>
+                    <div class="field-row"><span class="field-name">m_networkPaused</span>     <span class="field-value value-na" id="f-netPaused">--</span></div>
+                </div>
+            </div>
+
+            <!-- 7. ERS & Power Unit -->
+            <div class="section-card">
+                <div class="section-title">ERS &amp; Power Unit</div>
+                <div class="section-grid">
+                    <div class="field-row"><span class="field-name">m_enginePowerICE (kW)<span class="rest-mark">R</span></span>           <span class="field-value value-na" id="f-iceKW">--</span></div>
+                    <div class="field-row"><span class="field-name">m_enginePowerMGUK (kW)<span class="rest-mark">R</span></span>          <span class="field-value value-na" id="f-mgukKW">--</span></div>
+                    <div class="field-row"><span class="field-name">m_ersDeployMode<span class="rest-mark">R</span></span>                  <span class="field-value value-na" id="f-ersMode">--</span></div>
+                    <div class="field-row"><span class="field-name">m_ersStoreEnergy (kJ)<span class="rest-mark">R</span></span>            <span class="field-value value-na" id="f-ersStore">--</span></div>
+                    <div class="field-row"><span class="field-name">m_ersHarvestedThisLapMGUK (kJ)<span class="rest-mark">R</span></span>  <span class="field-value value-na" id="f-harvestK">--</span></div>
+                    <div class="field-row"><span class="field-name">m_ersHarvestedThisLapMGUH (kJ)<span class="rest-mark">R</span></span>  <span class="field-value value-na" id="f-harvestH">--</span></div>
+                    <div class="field-row"><span class="field-name">m_ersDeployedThisLap (kJ)<span class="rest-mark">R</span></span>       <span class="field-value value-na" id="f-ersDeploy">--</span></div>
+                </div>
+                <!-- ERS store bar -->
+                <div class="fuel-bar-wrap" style="margin-top:4px">
+                    <span class="fuel-bar-label" style="min-width:110px">ERS Store</span>
+                    <div class="fuel-bar-track" style="max-width:300px">
+                        <div class="ers-bar-fill" id="ersBarFill" style="width:0%"></div>
+                    </div>
+                    <span class="fuel-bar-label" id="ersBarLabel">--</span>
+                </div>
+            </div>
+
+            <!-- Field reference -->
+            <div class="section-card">
+                <div class="section-title">Field Reference</div>
+                <table class="ref-table">
+                    <thead>
+                        <tr>
+                            <th style="width:220px">Field</th>
+                            <th style="width:280px">UDP Field</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Traction Control</td>       <td><code>m_tractionControl</code></td>            <td>0 = Off, 1 = Medium, 2 = Full.</td></tr>
+                        <tr><td>ABS</td>                    <td><code>m_antiLockBrakes</code></td>             <td>0 = Off, 1 = On.</td></tr>
+                        <tr><td>Fuel Mix</td>               <td><code>m_fuelMix</code></td>                    <td>0 = Lean, 1 = Standard, 2 = Rich, 3 = Max.</td></tr>
+                        <tr><td>Brake Bias</td>             <td><code>m_frontBrakeBias</code></td>             <td>Front brake bias as a percentage (uint8).</td></tr>
+                        <tr><td>Pit Limiter</td>            <td><code>m_pitLimiterStatus</code></td>           <td>0 = Off, 1 = On.</td></tr>
+                        <tr><td>Fuel in Tank</td>           <td><code>m_fuelInTank</code></td>                 <td>Current fuel mass in kg (float).</td></tr>
+                        <tr><td>Fuel Capacity</td>          <td><code>m_fuelCapacity</code></td>               <td>Maximum fuel capacity of the car in kg (float).</td></tr>
+                        <tr><td>Fuel Remaining Laps</td>    <td><code>m_fuelRemainingLaps</code></td>          <td>Estimated laps of fuel remaining; mirrors the MFD value (float).</td></tr>
+                        <tr><td>Max RPM</td>                <td><code>m_maxRPM</code></td>                     <td>RPM at which the rev limiter triggers (uint16).</td></tr>
+                        <tr><td>Idle RPM</td>               <td><code>m_idleRPM</code></td>                    <td>Idle RPM of the engine (uint16).</td></tr>
+                        <tr><td>Max Gears</td>              <td><code>m_maxGears</code></td>                   <td>Total number of forward gears available (uint8).</td></tr>
+                        <tr><td>DRS Allowed</td>            <td><code>m_drsAllowed</code></td>                 <td>0 = DRS not allowed, 1 = allowed.</td></tr>
+                        <tr><td>DRS Distance</td>           <td><code>m_drsActivationDistance</code></td>      <td>0 = DRS unavailable; non-zero = metres until DRS zone entry (uint16).</td></tr>
+                        <tr><td>Actual Compound</td>        <td><code>m_actualTyreCompound</code></td>         <td>Physical tyre compound ID. F1: 16=C5…21=C0, 22=C6, 7=Inter, 8=Wet. Classic: 9=Dry, 10=Wet. F2: 11=SS…15=Wet.</td></tr>
+                        <tr><td>Visual Compound</td>        <td><code>m_visualTyreCompound</code></td>         <td>Visual compound shown to the player. F1: 16=Soft, 17=Med, 18=Hard, 7=Inter, 8=Wet. F2: 19=SS, 20=S, 21=M, 22=H, 15=Wet.</td></tr>
+                        <tr><td>Tyre Age</td>               <td><code>m_tyresAgeLaps</code></td>               <td>Number of laps the current set has been used (uint8).</td></tr>
+                        <tr><td>FIA Flag</td>               <td><code>m_vehicleFIAFlags</code></td>            <td>Flag shown to this car. −1 = unknown, 0 = none, 1 = green, 2 = blue, 3 = yellow (int8).</td></tr>
+                        <tr><td>ICE Power</td>              <td><code>m_enginePowerICE</code></td>             <td>Power output of the internal combustion engine in Watts; displayed in kW (float).</td></tr>
+                        <tr><td>MGU-K Power</td>            <td><code>m_enginePowerMGUK</code></td>            <td>Power output of the MGU-K in Watts; displayed in kW (float).</td></tr>
+                        <tr><td>ERS Store</td>              <td><code>m_ersStoreEnergy</code></td>             <td>Energy currently held in the ERS battery in Joules; displayed in kJ. Max is ~4,000 kJ (float).</td></tr>
+                        <tr><td>ERS Deploy Mode</td>        <td><code>m_ersDeployMode</code></td>              <td>0 = None, 1 = Medium, 2 = Hotlap, 3 = Overtake (uint8).</td></tr>
+                        <tr><td>Harvested MGU-K</td>        <td><code>m_ersHarvestedThisLapMGUK</code></td>   <td>ERS energy harvested by the MGU-K this lap in Joules; displayed in kJ (float).</td></tr>
+                        <tr><td>Harvested MGU-H</td>        <td><code>m_ersHarvestedThisLapMGUH</code></td>   <td>ERS energy harvested by the MGU-H this lap in Joules; displayed in kJ (float).</td></tr>
+                        <tr><td>ERS Deployed</td>           <td><code>m_ersDeployedThisLap</code></td>        <td>ERS energy deployed (used) this lap in Joules; displayed in kJ (float).</td></tr>
+                        <tr><td>Network Paused</td>         <td><code>m_networkPaused</code></td>             <td>1 = this car is paused in a network game, 0 = otherwise (uint8).</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        socket.emit('identify', 'Car Status Debug');
+
+        // --- Enum maps --------------------------------------------------------
+
+        const TC_MAP       = { 0: ['Off', 'grey'], 1: ['Medium', 'yellow'], 2: ['Full', 'green'] };
+        const FUEL_MIX_MAP = { 0: ['Lean', 'blue'], 1: ['Standard', 'green'], 2: ['Rich', 'yellow'], 3: ['Max', 'red'] };
+        const ERS_MODE_MAP = { 0: ['None', 'grey'], 1: ['Medium', 'blue'], 2: ['Hotlap', 'yellow'], 3: ['Overtake', 'red'] };
+
+        const ACTUAL_COMPOUND = {
+            7: ['Inter', '#00b4d8', 'I'],
+            8: ['Wet',   '#0077b6', 'W'],
+            9: ['Dry (Classic)',  '#c8c8c8', 'D'],
+            10: ['Wet (Classic)', '#0077b6', 'W'],
+            11: ['Super Soft (F2)', '#e63946', 'SS'],
+            12: ['Soft (F2)',       '#e63946', 'S'],
+            13: ['Medium (F2)',     '#f4a261', 'M'],
+            14: ['Hard (F2)',       '#c8c8c8', 'H'],
+            15: ['Wet (F2)',        '#0077b6', 'W'],
+            16: ['C5', '#e63946', 'C5'],
+            17: ['C4', '#e63946', 'C4'],
+            18: ['C3', '#f4a261', 'C3'],
+            19: ['C2', '#f4a261', 'C2'],
+            20: ['C1', '#c8c8c8', 'C1'],
+            21: ['C0', '#c8c8c8', 'C0'],
+            22: ['C6', '#e63946', 'C6'],
+        };
+
+        const VISUAL_COMPOUND = {
+            7:  ['Inter',  '#00b4d8', 'I'],
+            8:  ['Wet',    '#0077b6', 'W'],
+            15: ['Wet (F2)',       '#0077b6', 'W'],
+            16: ['Soft',   '#e63946', 'S'],
+            17: ['Medium', '#f4a261', 'M'],
+            18: ['Hard',   '#c8c8c8', 'H'],
+            19: ['Super Soft (F2)', '#e63946', 'SS'],
+            20: ['Soft (F2)',       '#e63946', 'S'],
+            21: ['Medium (F2)',     '#f4a261', 'M'],
+            22: ['Hard (F2)',       '#c8c8c8', 'H'],
+        };
+
+        const FIA_FLAG = {
+            [-1]: ['Unknown', 'grey'],
+            0:    ['None',    'grey'],
+            1:    ['Green',   'green'],
+            2:    ['Blue',    'blue'],
+            3:    ['Yellow',  'yellow'],
+        };
+
+        // Max ERS store capacity (Joules) — used for percentage bar
+        const ERS_MAX_J = 4000000;
+
+        // --- Helpers ----------------------------------------------------------
+
+        function badge(text, cls) {
+            return `<span class="badge badge-${cls}">${text}</span>`;
+        }
+
+        function compoundHtml(id, map) {
+            if (id === undefined) return null;
+            const entry = map[id];
+            if (!entry) return `<span style="color:rgba(255,255,255,0.4)">${id}</span>`;
+            const [name, color, abbr] = entry;
+            const textColor = color === '#c8c8c8' ? '#333' : '#fff';
+            return `<span class="compound-pill" style="background:${color};color:${textColor}">${abbr}</span>` +
+                   `<span style="font-family:'Segoe UI',sans-serif;font-size:12px;color:rgba(255,255,255,0.5);margin-left:8px">${name}</span>` +
+                   `<span style="font-family:'Courier New',monospace;font-size:11px;color:rgba(255,255,255,0.25);margin-left:6px">${id}</span>`;
+        }
+
+        // --- Field updater ----------------------------------------------------
+
+        function setField(id, html) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (html === null || html === undefined) {
+                el.innerHTML = '--';
+                el.classList.add('value-na');
+                el.classList.remove('value-updated');
+                return;
+            }
+            el.innerHTML = html;
+            el.classList.remove('value-na', 'value-updated');
+            void el.offsetWidth;
+            el.classList.add('value-updated');
+        }
+
+        // --- Car selector ----------------------------------------------------
+
+        let selectedCar       = 0;
+        let playerIdx         = 255;
+        let player2Idx        = 255;
+        let selectorBuilt     = false;
+        let latestData        = null;
+        let latestParticipants = null;
+
+        function isRestricted(carIdx) {
+            return latestParticipants?.m_participants?.[carIdx]?.m_yourTelemetry === 0;
+        }
+
+        function updateRestrictedBanner() {
+            const restricted = isRestricted(selectedCar);
+            const banner = document.getElementById('restrictedBanner');
+            const main   = document.getElementById('mainContent');
+            banner.classList.toggle('visible', restricted);
+            main.classList.toggle('restricted-mode', restricted);
+        }
+
+        function buildSelector(count) {
+            const sel = document.getElementById('carSelect');
+            sel.innerHTML = '';
+            for (let i = 0; i < count; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = `Car ${i}`;
+                sel.appendChild(opt);
+            }
+            if (playerIdx < count) { sel.value = playerIdx; selectedCar = playerIdx; }
+            selectorBuilt = true;
+        }
+
+        document.getElementById('carSelect').addEventListener('change', (e) => {
+            selectedCar = parseInt(e.target.value, 10);
+            updatePlayerIndicator();
+            updateRestrictedBanner();
+            if (latestData && latestData.m_carStatusData) renderCar(latestData.m_carStatusData[selectedCar]);
+        });
+
+        function updatePlayerIndicator() {
+            const el = document.getElementById('playerIndicator');
+            if (selectedCar === playerIdx)
+                el.innerHTML = '<span class="player-pill p1">Player 1</span>';
+            else if (selectedCar === player2Idx && player2Idx !== 255)
+                el.innerHTML = '<span class="player-pill p2">Player 2</span>';
+            else
+                el.innerHTML = '';
+        }
+
+        // --- Render one CarStatusData entry ----------------------------------
+
+        function renderCar(car) {
+            if (!car) return;
+
+            // Driver Aids
+            const tc = car.m_tractionControl;
+            if (tc !== undefined) { const [l, c] = TC_MAP[tc] ?? [`${tc}`, 'grey']; setField('f-tc', badge(l, c)); }
+            else setField('f-tc', null);
+
+            setField('f-abs', car.m_antiLockBrakes !== undefined
+                ? (car.m_antiLockBrakes ? badge('On', 'yellow') : badge('Off', 'grey')) : null);
+
+            const fm = car.m_fuelMix;
+            if (fm !== undefined) { const [l, c] = FUEL_MIX_MAP[fm] ?? [`${fm}`, 'grey']; setField('f-fuelMix', badge(l, c)); }
+            else setField('f-fuelMix', null);
+
+            setField('f-brakeBias', car.m_frontBrakeBias !== undefined ? `${car.m_frontBrakeBias}%` : null);
+
+            setField('f-pitLimiter', car.m_pitLimiterStatus !== undefined
+                ? (car.m_pitLimiterStatus ? badge('On', 'yellow') : badge('Off', 'grey')) : null);
+
+            // Fuel
+            const fuelIn  = car.m_fuelInTank;
+            const fuelCap = car.m_fuelCapacity;
+            setField('f-fuelInTank',  fuelIn  !== undefined ? `${fuelIn.toFixed(2)} kg`  : null);
+            setField('f-fuelCapacity', fuelCap !== undefined ? `${fuelCap.toFixed(2)} kg` : null);
+
+            const fuelLaps = car.m_fuelRemainingLaps;
+            if (fuelLaps !== undefined) {
+                const lapsCls = fuelLaps < 0 ? 'red' : fuelLaps < 1 ? 'yellow' : 'green';
+                setField('f-fuelLaps', badge(`${fuelLaps.toFixed(2)} laps`, lapsCls));
+            } else setField('f-fuelLaps', null);
+
+            // Fuel bar
+            if (fuelIn !== undefined && fuelCap !== undefined && fuelCap > 0) {
+                const pct = Math.min(100, (fuelIn / fuelCap) * 100);
+                document.getElementById('fuelBarFill').style.width = `${pct.toFixed(1)}%`;
+                document.getElementById('fuelBarLabel').textContent = `${pct.toFixed(1)}%`;
+            }
+
+            // Engine & Gears
+            setField('f-maxRPM',   car.m_maxRPM   !== undefined ? car.m_maxRPM.toLocaleString()   : null);
+            setField('f-idleRPM',  car.m_idleRPM  !== undefined ? car.m_idleRPM.toLocaleString()  : null);
+            setField('f-maxGears', car.m_maxGears !== undefined ? `${car.m_maxGears}` : null);
+
+            // DRS
+            const drsAllowed = car.m_drsAllowed;
+            setField('f-drsAllowed', drsAllowed !== undefined
+                ? (drsAllowed ? badge('Allowed', 'green') : badge('Not Allowed', 'grey')) : null);
+
+            const drsDist = car.m_drsActivationDistance;
+            if (drsDist !== undefined) {
+                setField('f-drsDist', drsDist === 0
+                    ? badge('Not Available', 'grey')
+                    : `${drsDist} m`);
+            } else setField('f-drsDist', null);
+
+            // Tyres
+            setField('f-actualCompound', compoundHtml(car.m_actualTyreCompound, ACTUAL_COMPOUND));
+            setField('f-visualCompound', compoundHtml(car.m_visualTyreCompound, VISUAL_COMPOUND));
+            setField('f-tyreAge', car.m_tyresAgeLaps !== undefined ? `${car.m_tyresAgeLaps} laps` : null);
+
+            // FIA Flags
+            const flag = car.m_vehicleFIAFlags;
+            if (flag !== undefined) {
+                const [l, c] = FIA_FLAG[flag] ?? [`${flag}`, 'grey'];
+                setField('f-fiaFlag', badge(l, c));
+            } else setField('f-fiaFlag', null);
+
+            setField('f-netPaused', car.m_networkPaused !== undefined
+                ? (car.m_networkPaused ? badge('Paused', 'yellow') : badge('Active', 'green')) : null);
+
+            // ERS & Power
+            const iceW  = car.m_enginePowerICE;
+            const mgukW = car.m_enginePowerMGUK;
+            setField('f-iceKW',  iceW  !== undefined ? `${(iceW  / 1000).toFixed(1)} kW` : null);
+            setField('f-mgukKW', mgukW !== undefined ? `${(mgukW / 1000).toFixed(1)} kW` : null);
+
+            const em = car.m_ersDeployMode;
+            if (em !== undefined) { const [l, c] = ERS_MODE_MAP[em] ?? [`${em}`, 'grey']; setField('f-ersMode', badge(l, c)); }
+            else setField('f-ersMode', null);
+
+            const ersJ = car.m_ersStoreEnergy;
+            if (ersJ !== undefined) {
+                setField('f-ersStore', `${(ersJ / 1000).toFixed(1)} kJ`);
+                const ersPct = Math.min(100, (ersJ / ERS_MAX_J) * 100);
+                document.getElementById('ersBarFill').style.width  = `${ersPct.toFixed(1)}%`;
+                document.getElementById('ersBarLabel').textContent = `${ersPct.toFixed(1)}%`;
+            } else setField('f-ersStore', null);
+
+            const hK = car.m_ersHarvestedThisLapMGUK;
+            const hH = car.m_ersHarvestedThisLapMGUH;
+            const dep = car.m_ersDeployedThisLap;
+            setField('f-harvestK', hK  !== undefined ? `${(hK  / 1000).toFixed(1)} kJ` : null);
+            setField('f-harvestH', hH  !== undefined ? `${(hH  / 1000).toFixed(1)} kJ` : null);
+            setField('f-ersDeploy', dep !== undefined ? `${(dep / 1000).toFixed(1)} kJ` : null);
+        }
+
+        // --- Socket handler ---------------------------------------------------
+
+        let built        = false;
+        let totalPackets = 0;
+
+        socket.on('f1_data', (data) => {
+            if (!data.m_header) return;
+
+            // Cache participants packet for telemetry restriction check
+            if (data.m_header.m_packetId === 4) {
+                latestParticipants = data;
+                updateRestrictedBanner();
+                return;
+            }
+
+            if (data.m_header.m_packetId !== 7) return;
+
+            if (!built) {
+                document.getElementById('waitingMsg').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                built = true;
+            }
+
+            totalPackets++;
+            document.getElementById('totalPackets').textContent = totalPackets;
+            document.getElementById('lastPacketTime').textContent = new Date().toLocaleTimeString();
+
+            playerIdx  = data.m_header.m_playerCarIndex          ?? 255;
+            player2Idx = data.m_header.m_secondaryPlayerCarIndex  ?? 255;
+            document.getElementById('playerCarIdx').textContent    = playerIdx  === 255 ? '--' : playerIdx;
+            document.getElementById('secondaryCarIdx').textContent = player2Idx === 255 ? '--' : player2Idx;
+
+            const cars = data.m_carStatusData;
+            if (!cars) return;
+
+            if (!selectorBuilt) buildSelector(cars.length);
+
+            latestData = data;
+            updatePlayerIndicator();
+            updateRestrictedBanner();
+            renderCar(cars[selectedCar]);
+        });
+
+        console.log('[CarStatusDebug] Debug page loaded');
+    </script>
+</body>
+</html>

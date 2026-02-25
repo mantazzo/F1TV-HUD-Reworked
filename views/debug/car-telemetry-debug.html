@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>F1 Car Telemetry Packet Debug</title>
+    <link rel="stylesheet" href="/fonts.css">
+    <link rel="stylesheet" href="/styles-event-debug.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        .section-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-family: 'F1TV-2022', sans-serif;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.55);
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            margin-bottom: 14px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        .section-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 2px 0;
+        }
+
+        .field-row {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            padding: 7px 10px;
+            border-radius: 5px;
+            transition: background 0.15s;
+        }
+
+        .field-row:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .field-name {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #4dabf7;
+            white-space: nowrap;
+            min-width: 220px;
+            flex-shrink: 0;
+        }
+
+        .field-value {
+            font-family: 'F1TV-2022', monospace;
+            font-size: 15px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .field-value.value-na {
+            color: rgba(255, 255, 255, 0.2);
+            font-weight: 400;
+            font-size: 13px;
+        }
+
+        .field-value.value-updated {
+            animation: flashValue 0.4s ease;
+        }
+
+        @keyframes flashValue {
+            0%   { color: #ffd43b; }
+            100% { color: #ffffff; }
+        }
+
+        .badge {
+            display: inline-block;
+            font-size: 11px;
+            font-family: 'Segoe UI', sans-serif;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 3px;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        .badge-green  { background: rgba(0, 200, 100, 0.2);  color: #69db7c; }
+        .badge-yellow { background: rgba(255, 200, 0, 0.2);  color: #ffd43b; }
+        .badge-red    { background: rgba(225, 6, 0, 0.2);    color: #ff8787; }
+        .badge-blue   { background: rgba(77, 171, 247, 0.2); color: #74c0fc; }
+        .badge-purple { background: rgba(180,100,255,0.2);   color: #cc99ff; }
+        .badge-orange { background: rgba(255,120,0,0.2);     color: #ff922b; }
+        .badge-grey   { background: rgba(255,255,255,0.08);  color: rgba(255,255,255,0.45); }
+
+        /* Car selector bar */
+        .car-selector-bar {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            padding: 14px 20px;
+            margin-bottom: 20px;
+        }
+
+        .car-selector-label {
+            font-family: 'F1TV-2022', sans-serif;
+            font-size: 13px;
+            color: rgba(255,255,255,0.55);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            white-space: nowrap;
+        }
+
+        .car-selector-select {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 6px;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            padding: 6px 12px;
+            cursor: pointer;
+            outline: none;
+            min-width: 100px;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+
+        .car-selector-select:focus {
+            border-color: rgba(77,171,247,0.6);
+        }
+
+        .car-selector-select option {
+            background: #1a1a2e;
+            color: #fff;
+        }
+
+        .player-pill {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 12px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .player-pill.p1 { background: rgba(225,6,0,0.25); color: #ff8787; border: 1px solid rgba(225,6,0,0.4); }
+        .player-pill.p2 { background: rgba(77,171,247,0.2); color: #74c0fc; border: 1px solid rgba(77,171,247,0.35); }
+
+        .selector-spacer { flex: 1; }
+
+        /* Tyre grid */
+        .tyre-section {
+            margin-bottom: 18px;
+        }
+
+        .tyre-section-label {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 11px;
+            color: rgba(255,255,255,0.4);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 10px;
+        }
+
+        .tyre-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto auto;
+            gap: 6px;
+            max-width: 420px;
+        }
+
+        .tyre-cells-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+        }
+
+        .tyre-cell {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 160px;
+        }
+
+        .tyre-pos {
+            font-family: 'F1TV-2022', sans-serif;
+            font-size: 12px;
+            color: rgba(255,255,255,0.45);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            min-width: 22px;
+        }
+
+        .tyre-val {
+            font-family: 'F1TV-2022', monospace;
+            font-size: 15px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .tyre-val.value-na {
+            color: rgba(255,255,255,0.2);
+            font-weight: 400;
+            font-size: 13px;
+        }
+
+        .tyre-val.value-updated {
+            animation: flashValue 0.4s ease;
+        }
+
+        /* Rev lights bar */
+        .rev-lights {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .rev-led {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: background 0.1s, box-shadow 0.1s;
+        }
+
+        /* Green zone (bits 0–4) */
+        .rev-led.lit-green {
+            background: #51cf66;
+            box-shadow: 0 0 6px rgba(81,207,102,0.8);
+            border-color: #69db7c;
+        }
+
+        /* Red zone (bits 5–9) */
+        .rev-led.lit-red {
+            background: #ff6b6b;
+            box-shadow: 0 0 6px rgba(255,107,107,0.8);
+            border-color: #ff8787;
+        }
+
+        /* Blue zone (bits 10–14) */
+        .rev-led.lit-blue {
+            background: #4dabf7;
+            box-shadow: 0 0 6px rgba(77,171,247,0.8);
+            border-color: #74c0fc;
+        }
+
+        /* Column reference table */
+        table.ref-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        table.ref-table th {
+            text-align: left;
+            font-family: 'F1TV-2022', sans-serif;
+            font-size: 11px;
+            color: rgba(255,255,255,0.4);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 6px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+        }
+
+        table.ref-table td {
+            padding: 7px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            font-family: 'Segoe UI', sans-serif;
+            color: rgba(255,255,255,0.8);
+            vertical-align: top;
+        }
+
+        table.ref-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        table.ref-table td:first-child {
+            font-family: 'F1TV-2022', sans-serif;
+            color: rgba(255,255,255,0.6);
+            white-space: nowrap;
+        }
+
+        table.ref-table td code {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            background: rgba(77,171,247,0.1);
+            color: #74c0fc;
+            padding: 1px 5px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-header">
+        <h1>Car Telemetry Packet Debug</h1>
+        <span class="debug-badge">Packet ID 6</span>
+    </div>
+
+    <div class="debug-content">
+
+        <div id="waitingMsg" class="waiting-msg">
+            <div class="waiting-spinner"></div>
+            <div>Waiting for Car Telemetry packets (ID&nbsp;6)...</div>
+        </div>
+
+        <div id="mainContent" style="display:none">
+
+            <!-- Status bar -->
+            <div class="status-bar" style="margin-bottom:16px">
+                <span>Total packets: <strong id="totalPackets">0</strong></span>
+                <span>Last update: <strong id="lastPacketTime">--</strong></span>
+                <span>Player car: <strong id="playerCarIdx">--</strong></span>
+                <span>Secondary player: <strong id="secondaryCarIdx">--</strong></span>
+            </div>
+
+            <!-- Car selector -->
+            <div class="car-selector-bar">
+                <span class="car-selector-label">Car Index</span>
+                <select class="car-selector-select" id="carSelect">
+                    <!-- populated on first packet -->
+                </select>
+                <span id="playerIndicator"></span>
+                <span class="selector-spacer"></span>
+                <span style="font-family:'Segoe UI',sans-serif;font-size:12px;color:rgba(255,255,255,0.3)">
+                    Showing data for one car slot — switch with dropdown
+                </span>
+            </div>
+
+            <!-- 1. Inputs -->
+            <div class="section-card">
+                <div class="section-title">Inputs</div>
+                <div class="section-grid">
+                    <div class="field-row"><span class="field-name">m_speed (km/h)</span>       <span class="field-value value-na" id="f-speed">--</span></div>
+                    <div class="field-row"><span class="field-name">m_throttle (0–1)</span>      <span class="field-value value-na" id="f-throttle">--</span></div>
+                    <div class="field-row"><span class="field-name">m_brake (0–1)</span>          <span class="field-value value-na" id="f-brake">--</span></div>
+                    <div class="field-row"><span class="field-name">m_steer (-1–1)</span>         <span class="field-value value-na" id="f-steer">--</span></div>
+                    <div class="field-row"><span class="field-name">m_clutch (0–100)</span>       <span class="field-value value-na" id="f-clutch">--</span></div>
+                    <div class="field-row"><span class="field-name">m_gear</span>                 <span class="field-value value-na" id="f-gear">--</span></div>
+                </div>
+            </div>
+
+            <!-- 2. Engine & DRS -->
+            <div class="section-card">
+                <div class="section-title">Engine &amp; DRS</div>
+                <div class="section-grid">
+                    <div class="field-row"><span class="field-name">m_engineRPM</span>            <span class="field-value value-na" id="f-engineRPM">--</span></div>
+                    <div class="field-row"><span class="field-name">m_drs</span>                  <span class="field-value value-na" id="f-drs">--</span></div>
+                    <div class="field-row"><span class="field-name">m_revLightsPercent (%)</span> <span class="field-value value-na" id="f-revPct">--</span></div>
+                </div>
+                <div style="padding: 4px 10px 0 10px">
+                    <div style="font-family:'Courier New',monospace;font-size:12px;color:#4dabf7;margin-bottom:8px">m_revLightsBitValue</div>
+                    <div id="f-revLights" class="rev-lights">
+                        <!-- 15 LEDs rendered by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Temperatures -->
+            <div class="section-card">
+                <div class="section-title">Temperatures</div>
+
+                <div class="tyre-section">
+                    <div class="tyre-section-label">m_brakesTemperature[4] (°C)</div>
+                    <div class="tyre-cells-wrapper">
+                        <div class="tyre-cell"><span class="tyre-pos">FL</span><span class="tyre-val value-na" id="f-brakeTemp-fl">--</span></div>
+                        <div class="tyre-cell"><span class="tyre-pos">FR</span><span class="tyre-val value-na" id="f-brakeTemp-fr">--</span></div>
+                        <div class="tyre-cell"><span class="tyre-pos">RL</span><span class="tyre-val value-na" id="f-brakeTemp-rl">--</span></div>
+                        <div class="tyre-cell"><span class="tyre-pos">RR</span><span class="tyre-val value-na" id="f-brakeTemp-rr">--</span></div>
+                    </div>
+                </div>
+
+                <div class="tyre-section">
+                    <div class="tyre-section-label">m_tyresSurfaceTemperature[4] (°C)</div>
+                    <div class="tyre-cells-wrapper">
+                        <div class="tyre-cell"><span class="tyre-pos">FL</span><span class="tyre-val value-na" id="f-tyreSurfTemp-fl">--</span></div>
+                        <div class="tyre-cell"><span class="tyre-pos">FR</span><span class="tyre-val value-na" id="f-tyreSurfTemp-fr">--</span></div>
+                        <div class="tyre-cell"><span class="tyre-pos">RL</span><span class="tyre-val value-na" id="f-tyreSurfTemp-rl">--</span></div>
+                        <div class="tyre-cell"><span class="tyre-pos">RR</span><span class="tyre-val value-na" id="f-tyreSurfTemp-rr">--</span></div>
+                    </div>
+                </div>
+
+                <div class="tyre-section">
+                    <div class="tyre-section-label">m_tyresInnerTemperature[4] (°C)</div>
+                    <div class="tyre-cells-wrapper">
+                        <div class="tyre-cell"><span class="tyre-pos">FL</span><span class="tyre-val value-na" id="f-tyreInnerTemp-fl">--</span></div>
+                        <div class="tyre-cell"><span class="tyre-pos">FR</span><span class="tyre-val value-na" id="f-tyreInnerTemp-fr">--</span></div>
+                        <div class="tyre-cell"><span class="tyre-pos">RL</span><span class="tyre-val value-na" id="f-tyreInnerTemp-rl">--</span></div>
+                        <div class="tyre-cell"><span class="tyre-pos">RR</span><span class="tyre-val value-na" id="f-tyreInnerTemp-rr">--</span></div>
+                    </div>
+                </div>
+
+                <div class="field-row" style="margin-top:4px">
+                    <span class="field-name">m_engineTemperature (°C)</span>
+                    <span class="field-value value-na" id="f-engineTemp">--</span>
+                </div>
+            </div>
+
+            <!-- 4. Tyres -->
+            <div class="section-card">
+                <div class="section-title">Tyres</div>
+
+                <div class="tyre-section">
+                    <div class="tyre-section-label">m_tyresPressure[4] (PSI)</div>
+                    <div class="tyre-cells-wrapper">
+                        <div class="tyre-cell"><span class="tyre-pos">FL</span><span class="tyre-val value-na" id="f-tyrePressure-fl">--</span></div>
+                        <div class="tyre-cell"><span class="tyre-pos">FR</span><span class="tyre-val value-na" id="f-tyrePressure-fr">--</span></div>
+                        <div class="tyre-cell"><span class="tyre-pos">RL</span><span class="tyre-val value-na" id="f-tyrePressure-rl">--</span></div>
+                        <div class="tyre-cell"><span class="tyre-pos">RR</span><span class="tyre-val value-na" id="f-tyrePressure-rr">--</span></div>
+                    </div>
+                </div>
+
+                <div class="tyre-section" style="margin-bottom:0">
+                    <div class="tyre-section-label">m_surfaceType[4]</div>
+                    <div class="tyre-cells-wrapper">
+                        <div class="tyre-cell"><span class="tyre-pos">FL</span><span class="tyre-val value-na" id="f-surface-fl">--</span></div>
+                        <div class="tyre-cell"><span class="tyre-pos">FR</span><span class="tyre-val value-na" id="f-surface-fr">--</span></div>
+                        <div class="tyre-cell"><span class="tyre-pos">RL</span><span class="tyre-val value-na" id="f-surface-rl">--</span></div>
+                        <div class="tyre-cell"><span class="tyre-pos">RR</span><span class="tyre-val value-na" id="f-surface-rr">--</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. Packet-level -->
+            <div class="section-card">
+                <div class="section-title">Packet-level Fields</div>
+                <div class="section-grid">
+                    <div class="field-row"><span class="field-name">m_mfdPanelIndex</span>                    <span class="field-value value-na" id="f-mfdPanel">--</span></div>
+                    <div class="field-row"><span class="field-name">m_mfdPanelIndexSecondaryPlayer</span>      <span class="field-value value-na" id="f-mfdPanelP2">--</span></div>
+                    <div class="field-row"><span class="field-name">m_suggestedGear</span>                     <span class="field-value value-na" id="f-suggestedGear">--</span></div>
+                </div>
+            </div>
+
+            <!-- Field reference -->
+            <div class="section-card">
+                <div class="section-title">Field Reference</div>
+                <table class="ref-table">
+                    <thead>
+                        <tr>
+                            <th style="width:200px">Section / Field</th>
+                            <th style="width:300px">UDP Field</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Speed</td>               <td><code>m_speed</code></td>                           <td>Car speed in km/h (uint16).</td></tr>
+                        <tr><td>Throttle</td>            <td><code>m_throttle</code></td>                        <td>Throttle application, 0.0 (off) to 1.0 (full).</td></tr>
+                        <tr><td>Brake</td>               <td><code>m_brake</code></td>                           <td>Brake application, 0.0 (off) to 1.0 (full).</td></tr>
+                        <tr><td>Steer</td>               <td><code>m_steer</code></td>                           <td>Steering input, −1.0 (full left) to +1.0 (full right).</td></tr>
+                        <tr><td>Clutch</td>              <td><code>m_clutch</code></td>                          <td>Clutch application, 0–100.</td></tr>
+                        <tr><td>Gear</td>                <td><code>m_gear</code></td>                            <td>Selected gear. −1 = Reverse, 0 = Neutral, 1–8 = gear (int8).</td></tr>
+                        <tr><td>Engine RPM</td>          <td><code>m_engineRPM</code></td>                       <td>Engine revolutions per minute (uint16).</td></tr>
+                        <tr><td>DRS</td>                 <td><code>m_drs</code></td>                             <td>0 = DRS off, 1 = DRS on.</td></tr>
+                        <tr><td>Rev Lights %</td>        <td><code>m_revLightsPercent</code></td>                <td>Rev lights bar percentage, 0–100 (uint8).</td></tr>
+                        <tr><td>Rev Lights Bar</td>      <td><code>m_revLightsBitValue</code></td>               <td>Bitmask of 15 LEDs. Bit 0 = leftmost, bit 14 = rightmost. Green (0–4), red (5–9), blue (10–14) (uint16).</td></tr>
+                        <tr><td>Brake Temp</td>          <td><code>m_brakesTemperature[4]</code></td>            <td>Brake disc temperature in °C for each corner. Order: RL, RR, FL, FR (uint16[4]).</td></tr>
+                        <tr><td>Tyre Surface Temp</td>   <td><code>m_tyresSurfaceTemperature[4]</code></td>      <td>Tyre surface temperature in °C. Order: RL, RR, FL, FR (uint8[4]).</td></tr>
+                        <tr><td>Tyre Inner Temp</td>     <td><code>m_tyresInnerTemperature[4]</code></td>        <td>Tyre inner (carcass) temperature in °C. Order: RL, RR, FL, FR (uint8[4]).</td></tr>
+                        <tr><td>Engine Temp</td>         <td><code>m_engineTemperature</code></td>               <td>Engine coolant temperature in °C (uint16).</td></tr>
+                        <tr><td>Tyre Pressure</td>       <td><code>m_tyresPressure[4]</code></td>                <td>Tyre pressure in PSI for each corner. Order: RL, RR, FL, FR (float[4]).</td></tr>
+                        <tr><td>Surface Type</td>        <td><code>m_surfaceType[4]</code></td>                  <td>Driving surface under each tyre. Order: RL, RR, FL, FR. See SURFACES constant (uint8[4]).</td></tr>
+                        <tr><td>MFD Panel</td>           <td><code>m_mfdPanelIndex</code></td>                   <td>Open MFD panel index for Player 1. 255 = closed. Race: 0=Setup, 1=Pits, 2=Damage, 3=Engine, 4=Temps.</td></tr>
+                        <tr><td>MFD Panel P2</td>        <td><code>m_mfdPanelIndexSecondaryPlayer</code></td>    <td>Same as above but for secondary player (split-screen).</td></tr>
+                        <tr><td>Suggested Gear</td>      <td><code>m_suggestedGear</code></td>                   <td>Gear suggested by the assist system, 1–8. 0 = no suggestion (int8).</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        socket.emit('identify', 'Car Telemetry Debug');
+
+        // Tyre array index order from the parser: [0]=RL, [1]=RR, [2]=FL, [3]=FR
+        const TYRE_RL = 0, TYRE_RR = 1, TYRE_FL = 2, TYRE_FR = 3;
+
+        const SURFACES = [
+            'Tarmac', 'Rumble strip', 'Concrete', 'Rock', 'Gravel',
+            'Mud', 'Sand', 'Grass', 'Water', 'Cobblestone', 'Metal', 'Ridged'
+        ];
+
+        const MFD_PANEL = {
+            0: 'Car Setup', 1: 'Pits', 2: 'Damage', 3: 'Engine', 4: 'Temperatures', 255: 'Closed'
+        };
+
+        // --- Helpers ----------------------------------------------------------
+
+        function badge(text, cls) {
+            return `<span class="badge badge-${cls}">${text}</span>`;
+        }
+
+        // --- Field updater (for standard .field-value spans) ------------------
+
+        function setField(id, html) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (html === null || html === undefined) {
+                el.innerHTML = '--';
+                el.classList.add('value-na');
+                el.classList.remove('value-updated');
+                return;
+            }
+            el.innerHTML = html;
+            el.classList.remove('value-na', 'value-updated');
+            void el.offsetWidth;
+            el.classList.add('value-updated');
+        }
+
+        // --- Tyre cell updater (for .tyre-val spans) --------------------------
+
+        function setTyre(id, html) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (html === null || html === undefined) {
+                el.innerHTML = '--';
+                el.classList.add('value-na');
+                el.classList.remove('value-updated');
+                return;
+            }
+            el.innerHTML = html;
+            el.classList.remove('value-na', 'value-updated');
+            void el.offsetWidth;
+            el.classList.add('value-updated');
+        }
+
+        // --- Rev lights renderer ---------------------------------------------
+        // Builds 15 LED elements once, then just updates their classes.
+
+        (function buildRevLights() {
+            const container = document.getElementById('f-revLights');
+            for (let i = 0; i < 15; i++) {
+                const div = document.createElement('div');
+                div.classList.add('rev-led');
+                div.id = `rev-led-${i}`;
+                container.appendChild(div);
+            }
+        })();
+
+        function updateRevLights(bitValue) {
+            for (let i = 0; i < 15; i++) {
+                const el = document.getElementById(`rev-led-${i}`);
+                if (!el) continue;
+                const lit = ((bitValue ?? 0) >> i) & 1;
+                el.classList.remove('lit-green', 'lit-red', 'lit-blue');
+                if (lit) {
+                    if (i <= 4)       el.classList.add('lit-green');
+                    else if (i <= 9)  el.classList.add('lit-red');
+                    else              el.classList.add('lit-blue');
+                }
+            }
+        }
+
+        // --- Car selector ----------------------------------------------------
+
+        let selectedCar   = 0;
+        let playerIdx     = 255;
+        let player2Idx    = 255;
+        let selectorBuilt = false;
+
+        function buildSelector(count) {
+            const sel = document.getElementById('carSelect');
+            sel.innerHTML = '';
+            for (let i = 0; i < count; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = `Car ${i}`;
+                sel.appendChild(opt);
+            }
+            if (playerIdx < count) {
+                sel.value = playerIdx;
+                selectedCar = playerIdx;
+            }
+            selectorBuilt = true;
+        }
+
+        document.getElementById('carSelect').addEventListener('change', (e) => {
+            selectedCar = parseInt(e.target.value, 10);
+            updatePlayerIndicator();
+            if (latestData && latestData.m_carTelemetryData) {
+                renderCar(latestData.m_carTelemetryData[selectedCar]);
+            }
+        });
+
+        function updatePlayerIndicator() {
+            const el = document.getElementById('playerIndicator');
+            if (selectedCar === playerIdx) {
+                el.innerHTML = '<span class="player-pill p1">Player 1</span>';
+            } else if (selectedCar === player2Idx && player2Idx !== 255) {
+                el.innerHTML = '<span class="player-pill p2">Player 2</span>';
+            } else {
+                el.innerHTML = '';
+            }
+        }
+
+        // --- Render one CarTelemetryData entry --------------------------------
+
+        function renderCar(car) {
+            if (!car) return;
+
+            // Inputs
+            setField('f-speed',   car.m_speed !== undefined ? `${car.m_speed} km/h` : null);
+            setField('f-throttle', car.m_throttle !== undefined ? car.m_throttle.toFixed(3) : null);
+            setField('f-brake',    car.m_brake    !== undefined ? car.m_brake.toFixed(3)    : null);
+            setField('f-steer',    car.m_steer    !== undefined ? car.m_steer.toFixed(3)    : null);
+            setField('f-clutch',   car.m_clutch   !== undefined ? `${car.m_clutch}` : null);
+
+            const gear = car.m_gear;
+            if (gear !== undefined) {
+                const gearLabel = gear === -1 ? 'R' : gear === 0 ? 'N' : `${gear}`;
+                const gearCls = gear === -1 ? 'orange' : gear === 0 ? 'grey' : 'green';
+                setField('f-gear', badge(gearLabel, gearCls));
+            } else {
+                setField('f-gear', null);
+            }
+
+            // Engine & DRS
+            setField('f-engineRPM', car.m_engineRPM !== undefined ? car.m_engineRPM.toLocaleString() : null);
+
+            const drs = car.m_drs;
+            setField('f-drs', drs !== undefined ? (drs ? badge('ON', 'green') : badge('OFF', 'grey')) : null);
+
+            setField('f-revPct', car.m_revLightsPercent !== undefined ? `${car.m_revLightsPercent}%` : null);
+            updateRevLights(car.m_revLightsBitValue ?? 0);
+
+            // Temperatures — brake
+            const bt = car.m_brakesTemperature;
+            setTyre('f-brakeTemp-fl', bt ? `${bt[TYRE_FL]}°C` : null);
+            setTyre('f-brakeTemp-fr', bt ? `${bt[TYRE_FR]}°C` : null);
+            setTyre('f-brakeTemp-rl', bt ? `${bt[TYRE_RL]}°C` : null);
+            setTyre('f-brakeTemp-rr', bt ? `${bt[TYRE_RR]}°C` : null);
+
+            // Temperatures — tyre surface
+            const st = car.m_tyresSurfaceTemperature;
+            setTyre('f-tyreSurfTemp-fl', st ? `${st[TYRE_FL]}°C` : null);
+            setTyre('f-tyreSurfTemp-fr', st ? `${st[TYRE_FR]}°C` : null);
+            setTyre('f-tyreSurfTemp-rl', st ? `${st[TYRE_RL]}°C` : null);
+            setTyre('f-tyreSurfTemp-rr', st ? `${st[TYRE_RR]}°C` : null);
+
+            // Temperatures — tyre inner
+            const it = car.m_tyresInnerTemperature;
+            setTyre('f-tyreInnerTemp-fl', it ? `${it[TYRE_FL]}°C` : null);
+            setTyre('f-tyreInnerTemp-fr', it ? `${it[TYRE_FR]}°C` : null);
+            setTyre('f-tyreInnerTemp-rl', it ? `${it[TYRE_RL]}°C` : null);
+            setTyre('f-tyreInnerTemp-rr', it ? `${it[TYRE_RR]}°C` : null);
+
+            setField('f-engineTemp', car.m_engineTemperature !== undefined ? `${car.m_engineTemperature}°C` : null);
+
+            // Tyres — pressure
+            const tp = car.m_tyresPressure;
+            setTyre('f-tyrePressure-fl', tp ? `${tp[TYRE_FL].toFixed(2)} PSI` : null);
+            setTyre('f-tyrePressure-fr', tp ? `${tp[TYRE_FR].toFixed(2)} PSI` : null);
+            setTyre('f-tyrePressure-rl', tp ? `${tp[TYRE_RL].toFixed(2)} PSI` : null);
+            setTyre('f-tyrePressure-rr', tp ? `${tp[TYRE_RR].toFixed(2)} PSI` : null);
+
+            // Tyres — surface type
+            const surf = car.m_surfaceType;
+            setTyre('f-surface-fl', surf ? (SURFACES[surf[TYRE_FL]] ?? `${surf[TYRE_FL]}`) : null);
+            setTyre('f-surface-fr', surf ? (SURFACES[surf[TYRE_FR]] ?? `${surf[TYRE_FR]}`) : null);
+            setTyre('f-surface-rl', surf ? (SURFACES[surf[TYRE_RL]] ?? `${surf[TYRE_RL]}`) : null);
+            setTyre('f-surface-rr', surf ? (SURFACES[surf[TYRE_RR]] ?? `${surf[TYRE_RR]}`) : null);
+        }
+
+        // --- Socket handler ---------------------------------------------------
+
+        let built        = false;
+        let totalPackets = 0;
+        let latestData   = null;
+
+        socket.on('f1_data', (data) => {
+            if (!data.m_header || data.m_header.m_packetId !== 6) return;
+
+            if (!built) {
+                document.getElementById('waitingMsg').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                built = true;
+            }
+
+            totalPackets++;
+            document.getElementById('totalPackets').textContent = totalPackets;
+            document.getElementById('lastPacketTime').textContent = new Date().toLocaleTimeString();
+
+            playerIdx  = data.m_header.m_playerCarIndex          ?? 255;
+            player2Idx = data.m_header.m_secondaryPlayerCarIndex  ?? 255;
+            document.getElementById('playerCarIdx').textContent    = playerIdx  === 255 ? '--' : playerIdx;
+            document.getElementById('secondaryCarIdx').textContent = player2Idx === 255 ? '--' : player2Idx;
+
+            const cars = data.m_carTelemetryData;
+            if (!cars) return;
+
+            if (!selectorBuilt) buildSelector(cars.length);
+
+            latestData = data;
+            updatePlayerIndicator();
+
+            renderCar(cars[selectedCar]);
+
+            // Packet-level fields
+            const mfd = data.m_mfdPanelIndex;
+            setField('f-mfdPanel', mfd !== undefined
+                ? `${MFD_PANEL[mfd] ?? `Panel ${mfd}`}${mfd !== 255 ? ` <span style="color:rgba(255,255,255,0.35);font-size:12px;font-weight:400">(${mfd})</span>` : ''}`
+                : null);
+
+            const mfd2 = data.m_mfdPanelIndexSecondaryPlayer;
+            setField('f-mfdPanelP2', mfd2 !== undefined
+                ? `${MFD_PANEL[mfd2] ?? `Panel ${mfd2}`}${mfd2 !== 255 ? ` <span style="color:rgba(255,255,255,0.35);font-size:12px;font-weight:400">(${mfd2})</span>` : ''}`
+                : null);
+
+            const sg = data.m_suggestedGear;
+            if (sg !== undefined) {
+                if (sg === 0) setField('f-suggestedGear', badge('None', 'grey'));
+                else          setField('f-suggestedGear', badge(`Gear ${sg}`, 'blue'));
+            } else {
+                setField('f-suggestedGear', null);
+            }
+        });
+
+        console.log('[CarTelemetryDebug] Debug page loaded');
+    </script>
+</body>
+</html>
