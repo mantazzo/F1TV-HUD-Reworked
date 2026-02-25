@@ -15,7 +15,7 @@
     "LastName": "Name",
     "LastName_Note": "Optional field for Last Name of the driver. If provided, this will be used in HUD instead of DisplayName.",
     "Abbreviation": "DNA",
-    "Abbreviation_Note": "3-letter abbreviation for the driver. Not used at the moment, but may be used in future updates.",
+    "Abbreviation_Note": "3-letter abbreviation for the driver.",
     "Notes": "Additional notes about the driver entry. Feel free to use them to your liking.",
     "Other_Notes": "Consider this as a template entry. You can use it as a reference when adding new entries. Variable position doesn't matter. Only 'RaceNumber' and 'DisplayName' fields are mandatory. Note that 'notes' fields are just for your reference and do not affect functionality."
   },
