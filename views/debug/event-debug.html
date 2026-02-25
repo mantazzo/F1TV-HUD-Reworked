@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>F1 Event Debug Overlay</title>
+    <link rel="stylesheet" href="/fonts.css">
+    <link rel="stylesheet" href="/styles-event-debug.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <div class="debug-container">
+        <div class="debug-header">
+            <h1>Event Packet Debug</h1>
+            <div class="debug-stats">
+                <span class="stat-item">Total Events: <span id="totalEvents">0</span></span>
+                <span class="stat-item">Filtered (BUTN): <span id="filteredEvents">0</span></span>
+            </div>
+        </div>
+        
+        <div class="events-list" id="eventsList">
+            <div class="no-events">Waiting for events...</div>
+        </div>
+    </div>
+    
+    <script>
+        const socket = io();
+        
+        const MAX_EVENTS = 50;
+        let events = [];
+        let totalEventsCount = 0;
+        let filteredEventsCount = 0;
+        
+        // Event code descriptions from the specification
+        const EVENT_DESCRIPTIONS = {
+            'SSTA': 'Session Started',
+            'SEND': 'Session Ended',
+            'FTLP': 'Fastest Lap',
+            'RTMT': 'Retirement',
+            'DRSE': 'DRS Enabled',
+            'DRSD': 'DRS Disabled',
+            'TMPT': 'Team Mate in Pits',
+            'CHQF': 'Chequered Flag',
+            'RCWN': 'Race Winner',
+            'PENA': 'Penalty Issued',
+            'SPTP': 'Speed Trap Triggered',
+            'STLG': 'Start Lights',
+            'LGOT': 'Lights Out',
+            'DTSV': 'Drive Through Served',
+            'SGSV': 'Stop Go Served',
+            'FLBK': 'Flashback',
+            'BUTN': 'Button Status',
+            'RDFL': 'Red Flag',
+            'OVTK': 'Overtake',
+            'SCAR': 'Safety Car',
+            'COLL': 'Collision'
+        };
+        
+        // Listen for F1 data packets
+        socket.on('f1_data', (data) => {
+            // Filter for Event packets (packet ID 3)
+            if (!data.m_header || data.m_header.m_packetId !== 3) {
+                return;
+            }
+            
+            totalEventsCount++;
+            document.getElementById('totalEvents').textContent = totalEventsCount;
+            
+            const eventCode = data.m_eventStringCode;
+            
+            // Filter out BUTN events
+            if (eventCode === 'BUTN') {
+                // TIL: Button events are also tracked in the menus for some reason, so this event is tracked ALL THE TIME
+                // This might be the only packet that works ALL THE TIME, even in menus
+                // This event certainly needs filtering out
+                filteredEventsCount++;
+                document.getElementById('filteredEvents').textContent = filteredEventsCount;
+                return;
+            }
+            
+            // Add event to the list
+            const eventEntry = {
+                code: eventCode,
+                description: EVENT_DESCRIPTIONS[eventCode] || 'Unknown Event',
+                timestamp: new Date().toLocaleTimeString(),
+                sessionTime: data.m_header.m_sessionTime ? data.m_header.m_sessionTime.toFixed(3) + 's' : 'N/A',
+                data: data.m_eventDetails || null
+            };
+            
+            events.unshift(eventEntry); // Add to beginning
+            
+            // Keep only last 20 events
+            if (events.length > MAX_EVENTS) {
+                events.pop();
+            }
+            
+            renderEvents();
+        });
+        
+        function renderEvents() {
+            const eventsList = document.getElementById('eventsList');
+            
+            if (events.length === 0) {
+                eventsList.innerHTML = '<div class="no-events">Waiting for events...</div>';
+                return;
+            }
+            
+            eventsList.innerHTML = events.map((event, index) => `
+                <div class="event-item ${getEventClass(event.code)}">
+                    <div class="event-header">
+                        <span class="event-code">${event.code}</span>
+                        <span class="event-description">${event.description}</span>
+                        <span class="event-time">${event.timestamp}</span>
+                    </div>
+                    ${event.data ? `
+                        <div class="event-data">
+                            <span class="data-label">Session Time:</span> ${event.sessionTime}<br>
+                            <span class="data-label">Data:</span>
+                            <pre>${JSON.stringify(event.data, null, 2)}</pre>
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+        
+        function getEventClass(eventCode) {
+            // Color coding for different event types
+            const criticalEvents = ['PENA', 'RDFL', 'COLL', 'RTMT'];
+            const importantEvents = ['SCAR', 'DRSE', 'DRSD', 'FTLP'];
+            const infoEvents = ['SSTA', 'SEND', 'CHQF', 'RCWN', 'LGOT'];
+            
+            if (criticalEvents.includes(eventCode)) return 'event-critical';
+            if (importantEvents.includes(eventCode)) return 'event-important';
+            if (infoEvents.includes(eventCode)) return 'event-info';
+            return 'event-default';
+        }
+        
+        // Identify to server
+        socket.emit('identify', 'Event Debug');
+        
+        console.log('[EventDebug] Debug overlay loaded');
+    </script>
+</body>
+</html>

@@ -206,13 +206,17 @@ prompt.get(promptSchema, (err, result) => {
     // Controllers
     app.get('/controller/controller-extended', (req, res) => res.sendFile(path.join(__dirname, 'views', 'controller', 'controller-extended.html'))); 
 
-    // Public Debug pages
+    // Debug overlays
     app.get('/debug/position-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'position-debug.html')));
 
-    // Local Debug only - not added in public source code (at least at the moment)
-    // DEBATE: Should I add these pages to public source code or not?..
+    // UDP Debug pages
+    // Only really useful for analyzing raw packet data and verifying if the parser is working correctly, but can be helpful for troubleshooting and development purposes
     app.get('/debug/session-history-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'session-history-debug.html')));
     app.get('/debug/event-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'event-debug.html')));
+    app.get('/debug/header-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'header-debug.html')));
+    app.get('/debug/session-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'session-debug.html')));
+    app.get('/debug/lap-data-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'lap-data-debug.html')));
+    app.get('/debug/participants-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'participants-debug.html')));
 
     // Default to speedometer overlay (for now)
     app.get('/', (req, res) => res.redirect('/speedometer'));

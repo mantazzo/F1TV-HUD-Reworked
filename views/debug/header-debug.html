@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>F1 Header Debug</title>
+    <link rel="stylesheet" href="/fonts.css">
+    <link rel="stylesheet" href="/styles-event-debug.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .header-table thead tr {
+            background: rgba(225, 6, 0, 0.2);
+            border-bottom: 2px solid rgba(225, 6, 0, 0.5);
+        }
+
+        .header-table th {
+            padding: 12px 16px;
+            text-align: left;
+            font-family: 'F1TV-2022', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.8);
+            letter-spacing: 0.05em;
+            white-space: nowrap;
+        }
+
+        .header-table td {
+            padding: 10px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            vertical-align: middle;
+        }
+
+        .header-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .field-name {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #4dabf7;
+        }
+
+        .field-desc {
+            color: rgba(255, 255, 255, 0.55);
+            font-size: 13px;
+        }
+
+        .field-value {
+            font-family: 'F1TV-2022', monospace;
+            font-size: 15px;
+            font-weight: 700;
+            color: #ffffff;
+            min-width: 180px;
+        }
+
+        .field-value.value-updated {
+            animation: flashValue 0.4s ease;
+        }
+
+        @keyframes flashValue {
+            0% { color: #ffd43b; }
+            100% { color: #ffffff; }
+        }
+
+        .field-value.value-na {
+            color: rgba(255, 255, 255, 0.3);
+            font-weight: 400;
+        }
+
+        .field-value .badge {
+            display: inline-block;
+            font-size: 11px;
+            font-family: 'Segoe UI', sans-serif;
+            font-weight: 400;
+            padding: 2px 7px;
+            border-radius: 3px;
+            margin-left: 8px;
+            vertical-align: middle;
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Packet Stats Table */
+        .packet-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .packet-stat-item {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 6px;
+            padding: 8px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .packet-stat-item.has-data {
+            border-color: rgba(77, 171, 247, 0.3);
+            background: rgba(77, 171, 247, 0.05);
+        }
+
+        .packet-stat-name {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .packet-stat-id {
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        .packet-stat-count {
+            font-family: 'F1TV-2022', monospace;
+            font-size: 18px;
+            font-weight: 700;
+            color: #4dabf7;
+        }
+
+        .packet-stat-item:not(.has-data) .packet-stat-count {
+            color: rgba(255, 255, 255, 0.2);
+        }
+
+        .section-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-family: 'F1TV-2022', sans-serif;
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.6);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        .waiting-msg {
+            text-align: center;
+            padding: 40px;
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.4);
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-container">
+        <div class="debug-header">
+            <h1>Packet Header Debug</h1>
+            <div class="debug-stats">
+                <span class="stat-item">Total Packets: <span id="totalPackets">0</span></span>
+                <span class="stat-item">Rate: <span id="packetRate">0</span> pkt/s</span>
+                <span class="stat-item">Last Packet: <span id="lastPacketTime">—</span></span>
+            </div>
+        </div>
+
+        <!-- Header Fields Table -->
+        <div class="section-card">
+            <div class="section-title">Header Fields</div>
+            <div id="tableWrapper" class="waiting-msg">Waiting for data...</div>
+        </div>
+
+        <!-- Per-Packet-ID Counters -->
+        <div class="section-card">
+            <div class="section-title">Packets Received per Type</div>
+            <div class="packet-stats-grid" id="packetStatsGrid"></div>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        socket.emit('identify', 'Header Debug');
+
+        // --- Header field definitions (ordered as in spec) ---
+        const HEADER_FIELDS = [
+            { key: 'm_packetFormat',              label: 'Packet Format',               desc: 'UDP specification year' },
+            { key: 'm_gameYear',                  label: 'Game Year',                   desc: 'Last two digits of the game year' },
+            { key: 'm_gameMajorVersion',           label: 'Game Major Version',          desc: 'Major version number (X.00)' },
+            { key: 'm_gameMinorVersion',           label: 'Game Minor Version',          desc: 'Minor version number (1.XX)' },
+            { key: 'm_packetVersion',              label: 'Packet Version',              desc: 'Version of this packet type' },
+            { key: 'm_packetId',                   label: 'Packet ID',                   desc: 'Identifies the packet type' },
+            { key: 'm_sessionUID',                 label: 'Session UID',                 desc: 'Unique identifier for the session' },
+            { key: 'm_sessionTime',                label: 'Session Time',                desc: 'Session timestamp in seconds' },
+            { key: 'm_frameIdentifier',            label: 'Frame Identifier',            desc: 'Frame the data was retrieved on (resets on flashback)' },
+            { key: 'm_overallFrameIdentifier',     label: 'Overall Frame Identifier',    desc: 'Overall frame identifier — does not reset after flashbacks' },
+            { key: 'm_playerCarIndex',             label: 'Player Car Index',            desc: 'Array index of the player\'s car' },
+            { key: 'm_secondaryPlayerCarIndex',    label: 'Secondary Player Car Index',  desc: 'Array index of the secondary player\'s car (splitscreen); 255 = no second player' }
+        ];
+
+        const PACKET_NAMES = {
+            0:  'Motion',
+            1:  'Session',
+            2:  'Lap Data',
+            3:  'Event',
+            4:  'Participants',
+            5:  'Car Setups',
+            6:  'Car Telemetry',
+            7:  'Car Status',
+            8:  'Final Classification',
+            9:  'Lobby Info',
+            10: 'Car Damage',
+            11: 'Session History',
+            12: 'Tyre Sets',
+            13: 'Motion Ex',
+            14: 'Time Trial',
+            15: 'Lap Positions'
+        };
+
+        let totalPackets = 0;
+        let packetCounts = {};
+        let lastHeaderData = null;
+        let tableInitialised = false;
+
+        // Rate calculation
+        let packetRateBuffer = [];
+        function updateRate() {
+            const now = Date.now();
+            packetRateBuffer.push(now);
+            // Keep only packets from the last second
+            packetRateBuffer = packetRateBuffer.filter(t => now - t < 1000);
+            document.getElementById('packetRate').textContent = packetRateBuffer.length;
+        }
+
+        // Build the table once
+        function buildTable() {
+            const wrapper = document.getElementById('tableWrapper');
+            wrapper.className = '';
+            wrapper.innerHTML = `
+                <table class="header-table">
+                    <thead>
+                        <tr>
+                            <th>Field</th>
+                            <th>Description</th>
+                            <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody id="headerTableBody"></tbody>
+                </table>
+            `;
+
+            const tbody = document.getElementById('headerTableBody');
+            tbody.innerHTML = HEADER_FIELDS.map(f => `
+                <tr>
+                    <td><span class="field-name">${f.key}</span></td>
+                    <td><span class="field-desc">${f.desc}</span></td>
+                    <td><span class="field-value value-na" id="val-${f.key}">—</span></td>
+                </tr>
+            `).join('');
+
+            tableInitialised = true;
+        }
+
+        // Build the per-packet-ID grid
+        function buildPacketGrid() {
+            const grid = document.getElementById('packetStatsGrid');
+            grid.innerHTML = Object.entries(PACKET_NAMES).map(([id, name]) => `
+                <div class="packet-stat-item" id="pstat-${id}">
+                    <span class="packet-stat-name">${name}</span>
+                    <span class="packet-stat-id">ID ${id}</span>
+                    <span class="packet-stat-count" id="pcount-${id}">0</span>
+                </div>
+            `).join('');
+        }
+
+        // Format a header field value
+        function formatValue(key, raw) {
+            if (raw === undefined || raw === null) return { text: '—', badge: null };
+
+            if (key === 'm_packetId') {
+                const name = PACKET_NAMES[raw] || 'Unknown';
+                return { text: String(raw), badge: name };
+            }
+            if (key === 'm_sessionTime') {
+                return { text: parseFloat(raw).toFixed(3) + 's', badge: null };
+            }
+            if (key === 'm_secondaryPlayerCarIndex') {
+                if (raw === 255) return { text: '255', badge: 'No 2nd player' };
+                return { text: String(raw), badge: null };
+            }
+            if (key === 'm_sessionUID') {
+                // May come as string (BigInt serialised) or number
+                return { text: String(raw), badge: null };
+            }
+            if (key === 'm_gameYear') {
+                return { text: String(raw), badge: '20' + String(raw).padStart(2, '0') };
+            }
+            if (key === 'm_gameMajorVersion' || key === 'm_gameMinorVersion') {
+                return { text: String(raw), badge: null };
+            }
+            return { text: String(raw), badge: null };
+        }
+
+        // Update a single cell value with flash animation
+        function updateCell(key, raw) {
+            const el = document.getElementById(`val-${key}`);
+            if (!el) return;
+
+            const { text, badge } = formatValue(key, raw);
+            const badgeHtml = badge ? `<span class="badge">${badge}</span>` : '';
+            el.innerHTML = text + badgeHtml;
+            el.classList.remove('value-na', 'value-updated');
+            void el.offsetWidth; // force reflow
+            el.classList.add('value-updated');
+        }
+
+        buildPacketGrid();
+
+        socket.on('f1_data', (data) => {
+            if (!data.m_header) return;
+
+            const h = data.m_header;
+
+            // Initialise table on first packet
+            if (!tableInitialised) buildTable();
+
+            totalPackets++;
+            document.getElementById('totalPackets').textContent = totalPackets;
+            document.getElementById('lastPacketTime').textContent = new Date().toLocaleTimeString();
+            updateRate();
+
+            // Update per-packet-ID counters
+            const pid = h.m_packetId;
+            if (pid !== undefined) {
+                packetCounts[pid] = (packetCounts[pid] || 0) + 1;
+                const countEl = document.getElementById(`pcount-${pid}`);
+                const statEl = document.getElementById(`pstat-${pid}`);
+                if (countEl) countEl.textContent = packetCounts[pid];
+                if (statEl) statEl.classList.add('has-data');
+            }
+
+            // Update header field cells
+            HEADER_FIELDS.forEach(f => {
+                if (h[f.key] !== undefined) {
+                    updateCell(f.key, h[f.key]);
+                }
+            });
+        });
+
+        console.log('[HeaderDebug] Debug page loaded');
+    </script>
+</body>
+</html>

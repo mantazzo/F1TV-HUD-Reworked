@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>F1 Participants Packet Debug</title>
+    <link rel="stylesheet" href="/fonts.css">
+    <link rel="stylesheet" href="/styles-event-debug.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        .section-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+        }
+
+        .section-title {
+            font-family: 'F1TV-2022', sans-serif;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.55);
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            margin-bottom: 14px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+            white-space: nowrap;
+        }
+
+        /* ── Participant table ─────────────────────────────────────────── */
+
+        .pt {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .pt thead tr {
+            background: rgba(255, 255, 255, 0.05);
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .pt th {
+            padding: 8px 10px;
+            text-align: left;
+            font-family: 'F1TV-2022', sans-serif;
+            font-size: 10px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.55);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .pt th.right { text-align: right; }
+
+        .pt td {
+            padding: 6px 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            color: rgba(255, 255, 255, 0.85);
+            font-family: 'Courier New', monospace;
+            vertical-align: middle;
+        }
+
+        .pt td.right { text-align: right; }
+
+        .pt tbody tr:hover {
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        /* Player highlights */
+        .pt tbody tr.player-car   { background: rgba(225, 6, 0, 0.08); }
+        .pt tbody tr.player-car:hover { background: rgba(225, 6, 0, 0.14); }
+        .pt tbody tr.player-car-2 { background: rgba(77, 171, 247, 0.08); }
+        .pt tbody tr.player-car-2:hover { background: rgba(77, 171, 247, 0.13); }
+
+        /* Inactive/empty slots */
+        .pt tbody tr.slot-inactive td { color: rgba(255, 255, 255, 0.22); }
+        .pt tbody tr.slot-inactive .badge { opacity: 0.4; }
+        .pt tbody tr.slot-inactive .swatch { opacity: 0.3; }
+
+        /* Car index pill */
+        .car-idx {
+            display: inline-block;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            font-weight: 700;
+            width: 22px;
+            text-align: center;
+            padding: 1px 0;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.7);
+        }
+        .car-idx.is-player  { background: rgba(225, 6, 0, 0.4);    color: #ff8787; }
+        .car-idx.is-player2 { background: rgba(77, 171, 247, 0.35); color: #74c0fc; }
+
+        /* Driver name */
+        .driver-name {
+            font-family: 'F1TV-2022', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .driver-name.is-empty {
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.2);
+            font-style: italic;
+        }
+
+        .sub-id {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.4);
+            font-family: 'Courier New', monospace;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            font-size: 10px;
+            font-family: 'Segoe UI', sans-serif;
+            font-weight: 600;
+            padding: 2px 7px;
+            border-radius: 3px;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        .badge-green  { background: rgba(0, 200, 100, 0.2);  color: #69db7c; }
+        .badge-yellow { background: rgba(255, 200, 0, 0.2);  color: #ffd43b; }
+        .badge-red    { background: rgba(225, 6, 0, 0.2);    color: #ff8787; }
+        .badge-blue   { background: rgba(77, 171, 247, 0.2); color: #74c0fc; }
+        .badge-purple { background: rgba(180,100,255,0.2);   color: #cc99ff; }
+        .badge-orange { background: rgba(255,120,0,0.2);     color: #ff922b; }
+        .badge-grey   { background: rgba(255,255,255,0.08);  color: rgba(255,255,255,0.45); }
+
+        /* Livery color swatches */
+        .swatches {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .swatch {
+            display: inline-block;
+            width: 36px;
+            height: 18px;
+            border-radius: 3px;
+            border: 1px solid rgba(255,255,255,0.15);
+            cursor: default;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .swatch-label {
+            font-family: 'Courier New', monospace;
+            font-size: 8px;
+            line-height: 18px;
+            text-align: center;
+            display: block;
+            mix-blend-mode: difference;
+            color: #fff;
+            letter-spacing: -0.02em;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        /* Race number */
+        .race-num {
+            font-family: 'F1TV-2022', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.9);
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-header">
+        <h1>Participants Packet Debug</h1>
+        <span class="debug-badge">Packet ID 4</span>
+    </div>
+
+    <div class="debug-content">
+
+        <div id="waitingMsg" class="waiting-msg">
+            <div class="waiting-spinner"></div>
+            <div>Waiting for Participants packets (ID&nbsp;4)&hellip; <small style="color:rgba(255,255,255,0.35)">(sent every ~5 seconds)</small></div>
+        </div>
+
+        <div id="mainContent" style="display:none">
+
+            <!-- Status bar -->
+            <div class="status-bar" style="margin-bottom:16px">
+                <span>Total packets: <strong id="totalPackets">0</strong></span>
+                <span>Last update: <strong id="lastPacketTime">&mdash;</strong></span>
+                <span>Active cars: <strong id="activeCars">&mdash;</strong></span>
+                <span>Player car: <strong id="playerCarIdx">&mdash;</strong></span>
+                <span>Secondary player: <strong id="secondaryCarIdx">&mdash;</strong></span>
+            </div>
+
+            <!-- Participant table -->
+            <div class="section-card">
+                <div class="section-title">Participants &mdash; <span id="activeCarsTitle">?</span> active of <span id="totalSlotsTitle">?</span> slots</div>
+                <table class="pt">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Name</th>
+                            <th class="right">Car&nbsp;#</th>
+                            <th>Type</th>
+                            <th>Team</th>
+                            <th>My&nbsp;Team</th>
+                            <th>Driver&nbsp;ID</th>
+                            <th class="right">Network&nbsp;ID</th>
+                            <th>Nationality</th>
+                            <th>Telemetry</th>
+                            <th>Online&nbsp;Names</th>
+                            <th class="right">Tech&nbsp;Level</th>
+                            <th>Platform</th>
+                            <th>Livery</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ptBody"></tbody>
+                </table>
+            </div>
+
+            <!-- Field reference -->
+            <div class="section-card">
+                <div class="section-title">Column Reference</div>
+                <table class="pt">
+                    <thead>
+                        <tr>
+                            <th style="width:140px">Column</th>
+                            <th style="width:220px">UDP Field</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>#</td>                  <td><code>m_participants[i]</code></td>        <td>Car slot index (0–21). Red = Player 1, Blue = Player 2. Slots at or above <code>m_numActiveCars</code> are dimmed.</td></tr>
+                        <tr><td>Name</td>               <td><code>m_name</code></td>                   <td>Participant name in UTF-8. Truncated with … if longer than 32 characters.</td></tr>
+                        <tr><td>Car #</td>              <td><code>m_raceNumber</code></td>             <td>Race number displayed on the car.</td></tr>
+                        <tr><td>Type</td>               <td><code>m_aiControlled</code></td>           <td>0 = Human, 1 = AI.</td></tr>
+                        <tr><td>Team</td>               <td><code>m_teamId</code></td>                 <td>Team identifier. Resolved to a team name via DefaultTeams.json; falls back to "Team N" if unknown.</td></tr>
+                        <tr><td>My Team</td>            <td><code>m_myTeam</code></td>                 <td>1 = car is the player's My Team entry, 0 = otherwise.</td></tr>
+                        <tr><td>Driver ID</td>          <td><code>m_driverId</code></td>               <td>Driver identifier from the game's driver roster. Resolved to full name + abbreviation. 255 = network human (no fixed driver ID).</td></tr>
+                        <tr><td>Network ID</td>         <td><code>m_networkId</code></td>              <td>Unique identifier for network players. Not meaningful in offline sessions.</td></tr>
+                        <tr><td>Nationality</td>        <td><code>m_nationality</code></td>            <td>Driver nationality code, resolved to a country name. The actual ID is shown as a small subtag.</td></tr>
+                        <tr><td>Telemetry</td>          <td><code>m_yourTelemetry</code></td>          <td>The player's UDP telemetry restriction setting. 0 = Restricted, 1 = Public.</td></tr>
+                        <tr><td>Online Names</td>       <td><code>m_showOnlineNames</code></td>        <td>Whether the player has "show online names" enabled. 0 = Off, 1 = On.</td></tr>
+                        <tr><td>Tech Level</td>         <td><code>m_techLevel</code></td>              <td>F1 World tech level for the participant. Only relevant in F1 World game mode.</td></tr>
+                        <tr><td>Platform</td>           <td><code>m_platform</code></td>               <td>Platform the participant is playing on. 1 = Steam, 3 = PlayStation, 4 = Xbox, 6 = Origin, 255 = Unknown.</td></tr>
+                        <tr><td>Livery</td>             <td><code>m_liveryColour[0..m_numColours-1]</code></td> <td>Up to 4 livery colours for the car. Each swatch shows the RGB value; hover for HEX. <code>m_numColours</code> controls how many are valid.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        socket.emit('identify', 'Participants Debug');
+
+        // ─── Enum / lookup maps ───────────────────────────────────────────────
+
+        const PLATFORM = {
+            1: 'Steam', 3: 'PlayStation', 4: 'Xbox', 6: 'Origin', 255: 'Unknown'
+        };
+
+        const NATIONALITY = {
+            1:'American', 2:'Argentinean', 3:'Australian', 4:'Austrian', 5:'Azerbaijani',
+            6:'Bahraini', 7:'Belgian', 8:'Bolivian', 9:'Brazilian', 10:'British',
+            11:'Bulgarian', 12:'Cameroonian', 13:'Canadian', 14:'Chilean', 15:'Chinese',
+            16:'Colombian', 17:'Costa Rican', 18:'Croatian', 19:'Cypriot', 20:'Czech',
+            21:'Danish', 22:'Dutch', 23:'Ecuadorian', 24:'English', 25:'Emirian',
+            26:'Estonian', 27:'Finnish', 28:'French', 29:'German', 30:'Ghanaian',
+            31:'Greek', 32:'Guatemalan', 33:'Honduran', 34:'Hong Konger', 35:'Hungarian',
+            36:'Icelander', 37:'Indian', 38:'Indonesian', 39:'Irish', 40:'Israeli',
+            41:'Italian', 42:'Jamaican', 43:'Japanese', 44:'Jordanian', 45:'Kuwaiti',
+            46:'Latvian', 47:'Lebanese', 48:'Lithuanian', 49:'Luxembourger', 50:'Malaysian',
+            51:'Maltese', 52:'Mexican', 53:'Monegasque', 54:'New Zealander', 55:'Nicaraguan',
+            56:'Northern Irish', 57:'Norwegian', 58:'Omani', 59:'Pakistani', 60:'Panamanian',
+            61:'Paraguayan', 62:'Peruvian', 63:'Polish', 64:'Portuguese', 65:'Qatari',
+            66:'Romanian', 67:'Russian', 68:'Salvadoran', 69:'Saudi', 70:'Scottish',
+            71:'Serbian', 72:'Singaporean', 73:'Slovakian', 74:'Slovenian', 75:'South Korean',
+            76:'South African', 77:'Spanish', 78:'Swedish', 79:'Swiss', 80:'Thai',
+            81:'Turkish', 82:'Uruguayan', 83:'Ukrainian', 84:'Venezuelan', 85:'Barbadian',
+            86:'Welsh', 87:'Vietnamese', 88:'Algerian', 89:'Bosnian', 90:'Filipino',
+            255:'Not found'
+        };
+
+        const DRIVERS = {
+            0:{a:'SAI',n:'Carlos Sainz'}, 1:{a:'KVY',n:'Daniil Kvyat'}, 2:{a:'RIC',n:'Daniel Ricciardo'},
+            3:{a:'ALO',n:'Fernando Alonso'}, 4:{a:'MAS',n:'Felipe Massa'}, 6:{a:'RAI',n:'Kimi Raikkonen'},
+            7:{a:'HAM',n:'Lewis Hamilton'}, 8:{a:'ERI',n:'Marcus Ericsson'}, 9:{a:'VER',n:'Max Verstappen'},
+            10:{a:'HUL',n:'Nico Hulkenberg'}, 11:{a:'MAG',n:'Kevin Magnussen'}, 12:{a:'GRO',n:'Romain Grosjean'},
+            13:{a:'VET',n:'Sebastian Vettel'}, 14:{a:'PER',n:'Sergio Perez'}, 15:{a:'BOT',n:'Valtteri Bottas'},
+            17:{a:'OCO',n:'Esteban Ocon'}, 18:{a:'VAN',n:'Stoffel Vandoorne'}, 19:{a:'STR',n:'Lance Stroll'},
+            20:{a:'BAR',n:'Arron Barnes'}, 21:{a:'GIL',n:'Martin Giles'}, 22:{a:'MUR',n:'Alex Murray'},
+            23:{a:'ROT',n:'Lucas Roth'}, 24:{a:'COR',n:'Igor Correia'}, 25:{a:'LEV',n:'Sophie Levasseur'},
+            26:{a:'SCH',n:'Jonas Schiffer'}, 27:{a:'FOR',n:'Alain Forest'}, 28:{a:'LET',n:'Jay Letorneau'},
+            29:{a:'SAA',n:'Esto Saari'}, 30:{a:'ATI',n:'Yasar Atiyeh'}, 31:{a:'CAL',n:'Callisto Calabresi'},
+            32:{a:'IZU',n:'Naota Izum'}, 33:{a:'CLA',n:'Howard Clarke'}, 34:{a:'KAU',n:'Wilheim Kaufmann'},
+            35:{a:'LAU',n:'Marie Laursen'}, 36:{a:'NIE',n:'Flavio Nieves'}, 37:{a:'BEL',n:'Peter Belousov'},
+            38:{a:'MIC',n:'Klimek Michalski'}, 39:{a:'MOR',n:'Santiago Moreno'}, 40:{a:'COP',n:'Benjamin Coppens'},
+            41:{a:'VIS',n:'Noah Visser'}, 42:{a:'WAL',n:'Gert Waldmuller'}, 43:{a:'QUE',n:'Julian Quesada'},
+            44:{a:'JON',n:'Daniel Jones'}, 45:{a:'MAR',n:'Artem Markelov'}, 46:{a:'MAK',n:'Tadasuke Makino'},
+            47:{a:'GAL',n:'Sean Gelael'}, 48:{a:'DEV',n:'Nyck De Vries'}, 49:{a:'AIT',n:'Jack Aitken'},
+            50:{a:'RUS',n:'George Russell'}, 51:{a:'GUN',n:'Maximilian Günther'}, 52:{a:'FUK',n:'Nirei Fukuzumi'},
+            53:{a:'GHI',n:'Luca Ghiotto'}, 54:{a:'NOR',n:'Lando Norris'}, 55:{a:'SET',n:'Sérgio Sette Câmara'},
+            56:{a:'DEL',n:'Louis Delétraz'}, 57:{a:'FUO',n:'Antonio Fuoco'}, 58:{a:'LEC',n:'Charles Leclerc'},
+            59:{a:'GAS',n:'Pierre Gasly'}, 60:{a:'HAR',n:'Brendon Hartley'}, 61:{a:'SIR',n:'Sergey Sirotkin'},
+            62:{a:'ALB',n:'Alexander Albon'}, 63:{a:'LAT',n:'Nicholas Latifi'}, 64:{a:'BOC',n:'Dorian Boccolacci'},
+            65:{a:'KAR',n:'Niko Kari'}, 66:{a:'MER',n:'Roberto Merhi'}, 67:{a:'MAI',n:'Arjun Maini'},
+            68:{a:'LOR',n:'Alessio Lorandi'}, 69:{a:'MEI',n:'Ruben Meijer'}, 70:{a:'NAI',n:'Rashid Nair'},
+            71:{a:'TRE',n:'Jack Tremblay'}, 72:{a:'BUT',n:'Devon Butler'}, 73:{a:'WEB',n:'Lukas Weber'},
+            74:{a:'GIO',n:'Antonio Giovinazzi'}, 75:{a:'KUB',n:'Robert Kubica'}, 76:{a:'PRO',n:'Alain Prost'},
+            77:{a:'SEN',n:'Ayrton Senna'}, 78:{a:'MAT',n:'Nobuharu Matsushita'}, 79:{a:'MAZ',n:'Nikita Mazepin'},
+            80:{a:'ZHO',n:'Guanya Zhou'}, 81:{a:'SWH',n:'Mick Schumacher'}, 82:{a:'ILO',n:'Callum Ilott'},
+            83:{a:'COR',n:'Juan Manuel Correa'}, 84:{a:'KIN',n:'Jordan King'}, 85:{a:'RAG',n:'Mahaveer Raghunathan'},
+            86:{a:'CAL',n:'Tatiana Calderon'}, 87:{a:'HUB',n:'Anthoine Hubert'}, 88:{a:'ALE',n:'Guiliano Alesi'},
+            89:{a:'BOS',n:'Ralph Boschung'}, 90:{a:'SCH',n:'Michael Schumacher'}, 91:{a:'TIK',n:'Dan Ticktum'},
+            92:{a:'ARM',n:'Marcus Armstrong'}, 93:{a:'LUN',n:'Christian Lundgaard'}, 94:{a:'TSU',n:'Yuki Tsunoda'},
+            95:{a:'DAR',n:'Jehan Daruvala'}, 96:{a:'SAM',n:'Gulherme Samaia'}, 97:{a:'PIQ',n:'Pedro Pique'},
+            98:{a:'BOS',n:'Felipe Drugovich'}, 99:{a:'SCH',n:'Robert Schwartzman'}, 100:{a:'NIS',n:'Roy Nissany'},
+            101:{a:'SAT',n:'Marino Sato'}, 102:{a:'JAC',n:'Aidan Jackson'}, 103:{a:'AKK',n:'Casper Akkerman'},
+            109:{a:'BUT',n:'Jenson Button'}, 110:{a:'COU',n:'David Coulthard'}, 111:{a:'ROS',n:'Nico Rosberg'},
+            112:{a:'PIA',n:'Oscar Piastri'}, 113:{a:'LAW',n:'Liam Lawson'}, 114:{a:'VIP',n:'Juri Vips'},
+            115:{a:'POU',n:'Theo Pourchaire'}, 116:{a:'VES',n:'Richard Verschoor'}, 117:{a:'ZEN',n:'Lirim Zendeli'},
+            118:{a:'BEK',n:'David Beckmann'}, 121:{a:'DEL',n:'Alessio Deledda'}, 122:{a:'VIS',n:'Bent Viscaal'},
+            123:{a:'FIT',n:'Enzo Fittipaldi'}, 125:{a:'WEB',n:'Mark Webber'}, 126:{a:'VIL',n:'Jacques Villeneuve'},
+            127:{a:'MAY',n:'Callie Mayer'}, 128:{a:'BEL',n:'Noah Bell'}, 129:{a:'HUE',n:'Jake Hughes'},
+            130:{a:'VTI',n:'Frederik Vesti'}, 131:{a:'CAL',n:'Olli Caldwell'}, 132:{a:'SAR',n:'Logan Sargeant'},
+            133:{a:'BOL',n:'Cem Bolukbasi'}, 134:{a:'IWA',n:'Ayumu Iwasa'}, 135:{a:'NOV',n:'Clement Novalak'},
+            136:{a:'DOO',n:'Jack Doohan'}, 137:{a:'COR',n:'Amaury Cordeel'}, 138:{a:'HAU',n:'Dennis Hauger'},
+            139:{a:'WIL',n:'Calan Williams'}, 140:{a:'CHA',n:'Jamie Chadwick'}, 141:{a:'KOB',n:'Kamui Kobayashi'},
+            142:{a:'MAL',n:'Pastor Maldonado'}, 143:{a:'HAK',n:'Mika Hakkinen'}, 144:{a:'MAN',n:'Nigel Mansell'},
+            145:{a:'MAL',n:'Zane Maloney'}, 146:{a:'MAR',n:'Victor Martins'}, 147:{a:'BEA',n:'Oliver Bearman'},
+            148:{a:'CRA',n:'Jak Crawford'}, 149:{a:'HAD',n:'Isack Hadjar'}, 150:{a:'ART',n:'Arthur Leclerc'},
+            151:{a:'BEN',n:'Brad Benavides'}, 152:{a:'STA',n:'Roman Stanek'}, 153:{a:'MAI',n:'Kush Maini'},
+            154:{a:'HUN',n:'James Hunt'}, 155:{a:'MON',n:'Juan Pablo Montoya'}, 156:{a:'LEI',n:'Brendon Leigh'},
+            157:{a:'TON',n:'David Tonizza'}, 158:{a:'OPM',n:'Jarno Opmeer'}, 159:{a:'BLA',n:'Lucas Blakeley'},
+            160:{a:'ARN',n:'Paul Aron'}, 161:{a:'BOR',n:'Gabriel Bortoleto'}, 162:{a:'COL',n:'Franco Colapinto'},
+            163:{a:'BAR',n:'Taylor Barnard'}, 164:{a:'DUR',n:'Joshua Dürksen'}, 165:{a:'ANT',n:'Andrea-Kimi Antonelli'},
+            166:{a:'MIY',n:'Ritomo Miyata'}, 167:{a:'VIL',n:'Rafael Villagómez'}, 168:{a:'OSU',n:"Zak O'Sullivan"},
+            169:{a:'MAR',n:'Pepe Marti'}, 170:{a:'HAY',n:'Sonny Hayes'}, 171:{a:'PEA',n:'Joshua Pearce'},
+            172:{a:'VOI',n:'Callum Voisin'}, 173:{a:'ZAG',n:'Matias Zagazeta'}, 174:{a:'TSO',n:'Nikola Tsolov'},
+            175:{a:'TRA',n:'Tim Tramnitz'}, 185:{a:'COR',n:'Luca Cortez'},
+            255:{a:'NET',n:'Human Driver'}
+        };
+
+        // ─── Team data (loaded from DefaultTeams.json) ────────────────────────
+
+        let teamData = {};
+
+        fetch('/data/DefaultTeams.json')
+            .then(r => r.json())
+            .then(d => { teamData = d; })
+            .catch(() => { console.warn('[ParticipantsDebug] Could not load DefaultTeams.json'); });
+
+        function teamName(id) {
+            const t = teamData[id];
+            if (t) return t.ShortName || `Team ${id}`;
+            return `Team ${id}`;
+        }
+
+        // ─── Badge helpers ────────────────────────────────────────────────────
+
+        function badge(text, cls) {
+            return `<span class="badge badge-${cls}">${text}</span>`;
+        }
+
+        // ─── Livery colour helpers ────────────────────────────────────────────
+
+        /**
+         * Returns a CSS hex string from an RGB object: { red, green, blue }
+         */
+        function rgbToHex(r, g, b) {
+            return '#' + [r, g, b].map(v => (v ?? 0).toString(16).padStart(2, '0')).join('');
+        }
+
+        /**
+         * Perceived luminance (0..1) — used to pick white or black label text.
+         */
+        function luminance(r, g, b) {
+            return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        }
+
+        function swatchHtml(colours, count) {
+            if (!colours || count === 0) return '<span style="color:rgba(255,255,255,0.2);font-size:11px">—</span>';
+            const valid = colours.slice(0, Math.min(count, colours.length));
+            return `<div class="swatches">${valid.map(c => {
+                const r = c.red ?? 0, g = c.green ?? 0, b = c.blue ?? 0;
+                const hex = rgbToHex(r, g, b);
+                const lum = luminance(r, g, b);
+                const textCol = lum > 0.45 ? '#000' : '#fff';
+                const label = `${r},${g},${b}`;
+                return `<span class="swatch" style="background:${hex}" title="RGB: ${r}, ${g}, ${b}  |  HEX: ${hex}"><span class="swatch-label" style="color:${textCol}">${label}</span></span>`;
+            }).join('')}</div>`;
+        }
+
+        // ─── Row builder ──────────────────────────────────────────────────────
+
+        function buildRow(idx, p, isActive, playerIdx, player2Idx) {
+            const isPlayer  = idx === playerIdx;
+            const isPlayer2 = idx === player2Idx;
+
+            let trClass = '';
+            if (!isActive)       trClass = 'slot-inactive';
+            else if (isPlayer)   trClass = 'player-car';
+            else if (isPlayer2)  trClass = 'player-car-2';
+
+            // Index pill
+            const idxClass = isPlayer ? ' is-player' : isPlayer2 ? ' is-player2' : '';
+            const idxPill  = `<span class="car-idx${idxClass}">${idx}</span>`;
+
+            // Name
+            const name = p.m_name;
+            const nameHtml = (name && name.trim() !== '')
+                ? `<span class="driver-name">${name}</span>`
+                : `<span class="driver-name is-empty">empty slot</span>`;
+
+            // Race number
+            const raceNum = `<span class="race-num">${p.m_raceNumber ?? '—'}</span>`;
+
+            // AI / Human
+            const typeHtml = p.m_aiControlled === 0
+                ? badge('Human', 'blue')
+                : badge('AI', 'purple');
+
+            // Team
+            const teamHtml = p.m_teamId !== undefined
+                ? teamName(p.m_teamId)
+                : '—';
+
+            // My Team
+            const myTeamHtml = p.m_myTeam === 1
+                ? badge('My Team', 'yellow')
+                : badge('No', 'grey');
+
+            // Driver ID — resolved via DRIVERS map
+            const driverId  = p.m_driverId;
+            const driverDef = driverId !== undefined ? DRIVERS[driverId] : undefined;
+            const driverIdHtml = driverDef
+                ? `<span style="font-family:'F1TV-2022',sans-serif;font-size:12px;font-weight:700;color:#fff">${driverDef.n}</span>
+                   <span style="font-family:'Courier New',monospace;font-size:10px;color:rgba(255,255,255,0.35);margin-left:5px">${driverDef.a} / ${driverId}</span>`
+                : (driverId !== undefined ? `<span style="color:rgba(255,255,255,0.4)">${driverId}</span>` : '—');
+
+            // Network ID
+            const netIdHtml = p.m_networkId ?? '—';
+
+            // Nationality
+            const nat = p.m_nationality;
+            const natHtml = (nat !== undefined)
+                ? `${NATIONALITY[nat] ?? nat}<br><span class="sub-id">ID: ${nat}</span>`
+                : '—';
+
+            // Telemetry
+            const telHtml = p.m_yourTelemetry === 1
+                ? badge('Public', 'green')
+                : badge('Restricted', 'grey');
+
+            // Show Online Names
+            const onlineHtml = p.m_showOnlineNames === 1
+                ? badge('On', 'green')
+                : badge('Off', 'grey');
+
+            // Tech Level (F1 World)
+            const techHtml = p.m_techLevel !== undefined ? p.m_techLevel : '—';
+
+            // Platform
+            const platId   = p.m_platform;
+            const platName = PLATFORM[platId] ?? `${platId}`;
+            const platCls  = { 1:'green', 3:'blue', 4:'green', 6:'grey', 255:'grey' }[platId] ?? 'grey';
+            const platHtml = badge(platName, platCls);
+
+            // Livery swatches
+            const liveryHtml = swatchHtml(p.m_liveryColour, p.m_numColours ?? 0);
+
+            return `<tr class="${trClass}">
+                <td>${idxPill}</td>
+                <td>${nameHtml}</td>
+                <td class="right">${raceNum}</td>
+                <td>${typeHtml}</td>
+                <td>${teamHtml}</td>
+                <td>${myTeamHtml}</td>
+                <td>${driverIdHtml}</td>
+                <td class="right">${netIdHtml}</td>
+                <td>${natHtml}</td>
+                <td>${telHtml}</td>
+                <td>${onlineHtml}</td>
+                <td class="right">${techHtml}</td>
+                <td>${platHtml}</td>
+                <td>${liveryHtml}</td>
+            </tr>`;
+        }
+
+        // ─── Socket handler ───────────────────────────────────────────────────
+
+        let built = false;
+        let totalPackets = 0;
+
+        socket.on('f1_data', (data) => {
+            if (!data.m_header || data.m_header.m_packetId !== 4) return;
+
+            if (!built) {
+                document.getElementById('waitingMsg').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                built = true;
+            }
+
+            totalPackets++;
+            document.getElementById('totalPackets').textContent    = totalPackets;
+            document.getElementById('lastPacketTime').textContent  = new Date().toLocaleTimeString();
+
+            const playerIdx  = data.m_header.m_playerCarIndex          ?? 255;
+            const player2Idx = data.m_header.m_secondaryPlayerCarIndex  ?? 255;
+            const numActive  = data.m_numActiveCars ?? 0;
+            const parts      = data.m_participants ?? [];
+
+            document.getElementById('activeCars').textContent       = numActive;
+            document.getElementById('playerCarIdx').textContent     = playerIdx  === 255 ? '—' : playerIdx;
+            document.getElementById('secondaryCarIdx').textContent  = player2Idx === 255 ? '—' : player2Idx;
+            document.getElementById('activeCarsTitle').textContent  = numActive;
+            document.getElementById('totalSlotsTitle').textContent  = parts.length;
+
+            document.getElementById('ptBody').innerHTML = parts
+                .map((p, i) => buildRow(i, p, i < numActive, playerIdx, player2Idx))
+                .join('');
+        });
+
+        console.log('[ParticipantsDebug] Debug page loaded');
+    </script>
+</body>
+</html>

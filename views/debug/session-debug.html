@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>F1 Session Packet Debug</title>
+    <link rel="stylesheet" href="/fonts.css">
+    <link rel="stylesheet" href="/styles-event-debug.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        .section-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-family: 'F1TV-2022', sans-serif;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.55);
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            margin-bottom: 14px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        .section-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 2px 0;
+        }
+
+        .field-row {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            padding: 7px 10px;
+            border-radius: 5px;
+            transition: background 0.15s;
+        }
+
+        .field-row:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .field-name {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #4dabf7;
+            white-space: nowrap;
+            min-width: 220px;
+            flex-shrink: 0;
+        }
+
+        .field-value {
+            font-family: 'F1TV-2022', monospace;
+            font-size: 15px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .field-value.value-na {
+            color: rgba(255, 255, 255, 0.2);
+            font-weight: 400;
+            font-size: 13px;
+        }
+
+        .field-value.value-updated {
+            animation: flashValue 0.4s ease;
+        }
+
+        @keyframes flashValue {
+            0%   { color: #ffd43b; }
+            100% { color: #ffffff; }
+        }
+
+        .badge {
+            display: inline-block;
+            font-size: 10px;
+            font-family: 'Segoe UI', sans-serif;
+            font-weight: 400;
+            padding: 2px 7px;
+            border-radius: 3px;
+            margin-left: 6px;
+            vertical-align: middle;
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.65);
+            white-space: nowrap;
+        }
+
+        .badge-green  { background: rgba(0, 200, 100, 0.2); color: #69db7c; }
+        .badge-yellow { background: rgba(255, 200, 0, 0.2);  color: #ffd43b; }
+        .badge-red    { background: rgba(225, 6, 0, 0.2);    color: #ff8787; }
+        .badge-blue   { background: rgba(77, 171, 247, 0.2); color: #74c0fc; }
+        .badge-grey   { background: rgba(255,255,255,0.08);  color: rgba(255,255,255,0.45); }
+
+        /* Forecast mini-table */
+        .forecast-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            margin-top: 4px;
+        }
+
+        .forecast-table thead tr {
+            background: rgba(255, 255, 255, 0.06);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .forecast-table th {
+            padding: 8px 12px;
+            text-align: left;
+            font-family: 'F1TV-2022', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.6);
+            letter-spacing: 0.05em;
+            white-space: nowrap;
+        }
+
+        .forecast-table td {
+            padding: 6px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            color: rgba(255, 255, 255, 0.85);
+            font-family: 'Courier New', monospace;
+        }
+
+        .forecast-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .waiting-msg {
+            text-align: center;
+            padding: 60px 20px;
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.35);
+            font-style: italic;
+        }
+
+        #mainContent { display: none; }
+    </style>
+</head>
+<body>
+    <div class="debug-container">
+        <div class="debug-header">
+            <h1>Session Packet Debug</h1>
+            <div class="debug-stats">
+                <span class="stat-item">Updates: <span id="totalPackets">0</span></span>
+                <span class="stat-item">Last Update: <span id="lastPacketTime">—</span></span>
+            </div>
+        </div>
+
+        <div id="waitingMsg" class="waiting-msg">Waiting for Session packet (ID 1)...</div>
+
+        <div id="mainContent">
+
+            <!-- Track & Weather -->
+            <div class="section-card">
+                <div class="section-title">Track &amp; Weather</div>
+                <div class="section-grid" id="section-track"></div>
+            </div>
+
+            <!-- Session Info -->
+            <div class="section-card">
+                <div class="section-title">Session Info</div>
+                <div class="section-grid" id="section-session"></div>
+            </div>
+
+            <!-- Pit Stop -->
+            <div class="section-card">
+                <div class="section-title">Pit Stop</div>
+                <div class="section-grid" id="section-pit"></div>
+            </div>
+
+            <!-- Safety &amp; Incidents -->
+            <div class="section-card">
+                <div class="section-title">Safety &amp; Incidents</div>
+                <div class="section-grid" id="section-safety"></div>
+            </div>
+
+            <!-- Identifiers -->
+            <div class="section-card">
+                <div class="section-title">Session Identifiers</div>
+                <div class="section-grid" id="section-ids"></div>
+            </div>
+
+            <!-- Driver Assists -->
+            <div class="section-card">
+                <div class="section-title">Driver Assists</div>
+                <div class="section-grid" id="section-assists"></div>
+            </div>
+
+            <!-- Session Settings -->
+            <div class="section-card">
+                <div class="section-title">Session Settings</div>
+                <div class="section-grid" id="section-settings"></div>
+            </div>
+
+            <!-- Player Units & Preferences -->
+            <div class="section-card">
+                <div class="section-title">Player Units &amp; Preferences</div>
+                <div class="section-grid" id="section-prefs"></div>
+            </div>
+
+            <!-- Weather Forecast -->
+            <div class="section-card">
+                <div class="section-title">Weather Forecast Samples (<span id="forecastCount">0</span> samples)</div>
+                <div id="forecastContainer"><em style="color:rgba(255,255,255,0.3);font-size:13px">No forecast data yet</em></div>
+            </div>
+
+            <!-- Marshal Zones -->
+            <div class="section-card">
+                <div class="section-title">Marshal Zones (<span id="marshalZoneCount">0</span> active)</div>
+                <div id="marshalZoneContainer"><em style="color:rgba(255,255,255,0.3);font-size:13px">No marshal zone data yet</em></div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        socket.emit('identify', 'Session Debug');
+
+        // ─── Enum / lookup maps ─────────────────────────────────────────────
+
+        const WEATHER = { 0:'Clear', 1:'Light Cloud', 2:'Overcast', 3:'Light Rain', 4:'Heavy Rain', 5:'Storm' };
+        const SESSION_TYPE = { 0:'Unknown', 1:'Practice 1', 2:'Practice 2', 3:'Practice 3', 4:'Short Practice', 5:'Qualifying 1', 6:'Qualifying 2', 7:'Qualifying 3', 8:'Short Qualifying', 9:'One-Shot Qualifying', 10:'Sprint Shootout 1', 11:'Sprint Shootout 2', 12:'Sprint Shootout 3', 13:'Short Sprint Shootout', 14:'One-Shot Sprint Shootout', 15:'Race', 16:'Race 2', 17:'Race 3', 18:'Time Trial' };
+        const FORMULA = { 0:'F1 Modern', 1:'F1 Classic', 2:'F2', 3:'F1 Generic', 4:'Beta', 6:'Esports', 8:'F1 World', 9:'F1 Elimination' };
+        const TRACK_ID = { 0:'Melbourne', 2:'Shanghai', 3:'Sakhir (Bahrain)', 4:'Catalunya', 5:'Monaco', 6:'Montreal', 7:'Silverstone', 9:'Hungaroring', 10:'Spa', 11:'Monza', 12:'Singapore', 13:'Suzuka', 14:'Abu Dhabi', 15:'Texas', 16:'Brazil', 17:'Austria', 19:'Mexico', 20:'Baku (Azerbaijan)', 26:'Zandvoort', 27:'Imola', 29:'Jeddah', 30:'Miami', 31:'Las Vegas', 32:'Losail', 39:'Silverstone (Reverse)', 40:'Austria (Reverse)', 41:'Zandvoort (Reverse)' };
+        const GAME_MODE = { 4:"Grand Prix '23", 5:'Time Trial', 6:'Splitscreen', 7:'Online Custom', 15:'Online Weekly Event', 17:'Story Mode (Braking Point)', 27:"My Team Career '25", 28:"Driver Career '25", 29:"Career '25 Online", 30:"Challenge Career '25", 75:'Story Mode (APXGP)', 127:'Benchmark' };
+        const RULESET = { 0:'Practice & Qualifying', 1:'Race', 2:'Time Trial', 12:'Elimination' };
+        const SAFETY_CAR = { 0:'None', 1:'Full Safety Car', 2:'Virtual Safety Car', 3:'Formation Lap' };
+        const FORECAST_ACC = { 0:'Perfect', 1:'Approximate' };
+        const BOOL = { 0:'Off', 1:'On' };
+        const ONLINE = { 0:'Offline', 1:'Online' };
+        const BRAKING = { 0:'Off', 1:'Low', 2:'Medium', 3:'High' };
+        const GEARBOX = { 1:'Manual', 2:'Manual + Suggested', 3:'Auto' };
+        const RACE_LINE = { 0:'Off', 1:'Corners Only', 2:'Full' };
+        const RACE_LINE_TYPE = { 0:'2D', 1:'3D' };
+        const SESSION_LEN = { 0:'None', 2:'Very Short', 3:'Short', 4:'Medium', 5:'Medium Long', 6:'Long', 7:'Full' };
+        const UNITS_SPEED = { 0:'MPH', 1:'KPH' };
+        const UNITS_TEMP = { 0:'Celsius', 1:'Fahrenheit' };
+        const DAMAGE = { 0:'Off', 1:'Reduced', 2:'Standard', 3:'Simulation' };
+        const DAMAGE_RATE = { 0:'Reduced', 1:'Standard', 2:'Simulation' };
+        const COLLISIONS = { 0:'Off', 1:'Player-to-Player Off', 2:'On' };
+        const SC_SETTING = { 0:'Off', 1:'Reduced', 2:'Standard', 3:'Increased' };
+        const FLAGS = { 0:'Off', 1:'Reduced', 2:'Standard', 3:'Increased' };
+        const EXPERIENCE = { 0:'Broadcast', 1:'Immersive' };
+        const PIT_STOP_EXP = { 0:'Automatic', 1:'Broadcast', 2:'Immersive' };
+        const RECOVERY = { 0:'None', 1:'Flashbacks', 2:'Auto-Recovery' };
+        const FLASHBACK = { 0:'Low', 1:'Medium', 2:'High', 3:'Unlimited' };
+        const SURFACE = { 0:'Simplified', 1:'Realistic' };
+        const FUEL = { 0:'Easy', 1:'Hard' };
+        const STARTS = { 0:'Manual', 1:'Assisted' };
+        const TYRE_TEMP = { 0:'Surface Only', 1:'Surface & Carcass' };
+        const EQUAL_CARS = { 0:'Off', 1:'On' };
+        const WEATHER_ICONS = { 0:'☀️', 1:'🌤️', 2:'☁️', 3:'🌦️', 4:'🌧️', 5:'⛈️' };
+        const TEMP_CHANGE = { 0:'↑ Up', 1:'↓ Down', 2:'→ No Change' };
+
+        // ─── Field definitions per section ──────────────────────────────────
+
+        const SECTIONS = {
+            'section-track': [
+                { key: 'm_weather',                   label: 'Weather',                     map: WEATHER,   color: 'blue' },
+                { key: 'm_trackTemperature',           label: 'Track Temperature',           unit: '°C' },
+                { key: 'm_airTemperature',             label: 'Air Temperature',             unit: '°C' },
+                { key: 'm_trackId',                    label: 'Track ID',                    map: TRACK_ID, color: 'blue' },
+                { key: 'm_trackLength',                label: 'Track Length',                unit: 'm' },
+                { key: 'm_sector2LapDistanceStart',    label: 'Sector 2 Start Distance',     unit: 'm', decimals: 1 },
+                { key: 'm_sector3LapDistanceStart',    label: 'Sector 3 Start Distance',     unit: 'm', decimals: 1 },
+                { key: 'm_numMarshalZones',            label: 'Marshal Zones',               unit: ' zones' },
+            ],
+            'section-session': [
+                { key: 'm_sessionType',               label: 'Session Type',   map: SESSION_TYPE, color: 'blue' },
+                { key: 'm_formula',                   label: 'Formula',        map: FORMULA,      color: 'blue' },
+                { key: 'm_totalLaps',                 label: 'Total Laps' },
+                { key: 'm_sessionDuration',           label: 'Session Duration',  unit: 's', fn: formatDuration },
+                { key: 'm_sessionTimeLeft',           label: 'Session Time Left', unit: 's', fn: formatDuration },
+                { key: 'm_timeOfDay',                 label: 'Time of Day',       fn: formatTimeOfDay },
+                { key: 'm_sessionLength',             label: 'Session Length',    map: SESSION_LEN },
+                { key: 'm_networkGame',               label: 'Network Game',      map: ONLINE },
+                { key: 'm_gamePaused',                label: 'Game Paused',       map: BOOL },
+                { key: 'm_isSpectating',              label: 'Spectating',        map: BOOL },
+                { key: 'm_spectatorCarIndex',         label: 'Spectator Car Index' },
+                { key: 'm_sliProNativeSupport',       label: 'SLI Pro Support',   map: BOOL },
+                { key: 'm_aiDifficulty',              label: 'AI Difficulty',     unit: '/110' },
+                { key: 'm_forecastAccuracy',          label: 'Forecast Accuracy', map: FORECAST_ACC },
+                { key: 'm_numWeatherForecastSamples', label: 'Forecast Samples' },
+                { key: 'm_numSessionsInWeekend',      label: 'Sessions in Weekend' },
+            ],
+            'section-pit': [
+                { key: 'm_pitStopWindowIdealLap',     label: 'Pit Window – Ideal Lap' },
+                { key: 'm_pitStopWindowLatestLap',    label: 'Pit Window – Latest Lap' },
+                { key: 'm_pitStopRejoinPosition',     label: 'Predicted Rejoin Position' },
+                { key: 'm_pitSpeedLimit',             label: 'Pit Speed Limit', unit: ' km/h' },
+            ],
+            'section-safety': [
+                { key: 'm_safetyCarStatus',           label: 'Safety Car Status',          map: SAFETY_CAR, color: 'yellow' },
+                { key: 'm_numSafetyCarPeriods',       label: 'Safety Car Periods' },
+                { key: 'm_numVirtualSafetyCarPeriods',label: 'Virtual SC Periods' },
+                { key: 'm_numRedFlagPeriods',         label: 'Red Flag Periods', color: 'red' },
+            ],
+            'section-ids': [
+                { key: 'm_seasonLinkIdentifier',      label: 'Season Link ID' },
+                { key: 'm_weekendLinkIdentifier',     label: 'Weekend Link ID' },
+                { key: 'm_sessionLinkIdentifier',     label: 'Session Link ID' },
+            ],
+            'section-assists': [
+                { key: 'm_steeringAssist',            label: 'Steering Assist',       map: BOOL },
+                { key: 'm_brakingAssist',             label: 'Braking Assist',        map: BRAKING },
+                { key: 'm_gearboxAssist',             label: 'Gearbox',               map: GEARBOX },
+                { key: 'm_pitAssist',                 label: 'Pit Assist',            map: BOOL },
+                { key: 'm_pitReleaseAssist',          label: 'Pit Release Assist',    map: BOOL },
+                { key: 'm_ERSAssist',                 label: 'ERS Assist',            map: BOOL },
+                { key: 'm_DRSAssist',                 label: 'DRS Assist',            map: BOOL },
+                { key: 'm_dynamicRacingLine',         label: 'Dynamic Racing Line',   map: RACE_LINE },
+                { key: 'm_dynamicRacingLineType',     label: 'Racing Line Type',      map: RACE_LINE_TYPE },
+                { key: 'm_raceStarts',                label: 'Race Starts',           map: STARTS },
+                { key: 'm_recoveryMode',              label: 'Recovery Mode',         map: RECOVERY },
+                { key: 'm_flashbackLimit',            label: 'Flashback Limit',       map: FLASHBACK },
+            ],
+            'section-settings': [
+                { key: 'm_gameMode',                  label: 'Game Mode ID',  map: GAME_MODE, color: 'blue' },
+                { key: 'm_ruleSet',                   label: 'Rule Set ID',   map: RULESET },
+                { key: 'm_equalCarPerformance',       label: 'Equal Car Performance', map: EQUAL_CARS },
+                { key: 'm_carDamage',                 label: 'Car Damage',            map: DAMAGE },
+                { key: 'm_carDamageRate',             label: 'Car Damage Rate',       map: DAMAGE_RATE },
+                { key: 'm_collisions',                label: 'Collisions',            map: COLLISIONS },
+                { key: 'm_collisionsOffForFirstLapOnly', label: 'Collisions Off Lap 1', map: BOOL },
+                { key: 'm_mpUnsafePitRelease',        label: 'MP Unsafe Pit Release', map: BOOL },
+                { key: 'm_mpOffForGriefing',          label: 'MP Off For Griefing',   map: BOOL },
+                { key: 'm_cornerCuttingStringency',   label: 'Corner Cutting',        map: { 0:'Regular', 1:'Strict' } },
+                { key: 'm_parcFermeRules',            label: 'Parc Fermé Rules',      map: BOOL },
+                { key: 'm_pitStopExperience',         label: 'Pit Stop Experience',   map: PIT_STOP_EXP },
+                { key: 'm_safetyCar',                 label: 'Safety Car Frequency',  map: SC_SETTING },
+                { key: 'm_safetyCarExperience',       label: 'Safety Car Experience', map: EXPERIENCE },
+                { key: 'm_formationLap',              label: 'Formation Lap',         map: BOOL },
+                { key: 'm_formationLapExperience',    label: 'Formation Lap Exp.',    map: EXPERIENCE },
+                { key: 'm_redFlags',                  label: 'Red Flags Frequency',   map: FLAGS },
+                { key: 'm_affectsLicenceLevelSolo',   label: 'Affects Licence (Solo)', map: BOOL },
+                { key: 'm_affectsLicenceLevelMP',     label: 'Affects Licence (MP)',  map: BOOL },
+                { key: 'm_surfaceType',               label: 'Surface Type',          map: SURFACE },
+                { key: 'm_lowFuelMode',               label: 'Low Fuel Mode',         map: FUEL },
+                { key: 'm_tyreTemperature',           label: 'Tyre Temperature Model', map: TYRE_TEMP },
+                { key: 'm_pitLaneTyreSim',            label: 'Pit Lane Tyre Sim',     map: BOOL },
+            ],
+            'section-prefs': [
+                { key: 'm_speedUnitsLeadPlayer',           label: 'Speed Units (Lead)',          map: UNITS_SPEED },
+                { key: 'm_temperatureUnitsLeadPlayer',     label: 'Temp Units (Lead)',           map: UNITS_TEMP },
+                { key: 'm_speedUnitsSecondaryPlayer',      label: 'Speed Units (Secondary)',     map: UNITS_SPEED },
+                { key: 'm_temperatureUnitsSecondaryPlayer',label: 'Temp Units (Secondary)',      map: UNITS_TEMP },
+            ]
+        };
+
+        // ─── Helper formatters ───────────────────────────────────────────────
+
+        function formatDuration(val) {
+            if (val === undefined || val === null) return null;
+            const h = Math.floor(val / 3600);
+            const m = Math.floor((val % 3600) / 60);
+            const s = val % 60;
+            if (h > 0) return `${h}h ${m}m ${s}s`;
+            if (m > 0) return `${m}m ${s}s`;
+            return `${s}s`;
+        }
+
+        function formatTimeOfDay(val) {
+            if (val === undefined || val === null) return null;
+            const h = Math.floor(val / 60);
+            const m = val % 60;
+            return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+        }
+
+        function badgeClass(color) {
+            if (color === 'green')  return 'badge badge-green';
+            if (color === 'yellow') return 'badge badge-yellow';
+            if (color === 'red')    return 'badge badge-red';
+            if (color === 'blue')   return 'badge badge-blue';
+            return 'badge badge-grey';
+        }
+
+        // ─── Build DOM structure once ─────────────────────────────────────────
+
+        let built = false;
+        function buildSections() {
+            for (const [sectionId, fields] of Object.entries(SECTIONS)) {
+                const container = document.getElementById(sectionId);
+                if (!container) continue;
+                container.innerHTML = fields.map(f => `
+                    <div class="field-row">
+                        <span class="field-name">${f.key}</span>
+                        <span class="field-value value-na" id="fv-${f.key}">—</span>
+                    </div>
+                `).join('');
+            }
+            built = true;
+        }
+
+        // ─── Update a single value cell ──────────────────────────────────────
+
+        function updateField(fieldDef, raw) {
+            const el = document.getElementById(`fv-${fieldDef.key}`);
+            if (!el) return;
+
+            if (raw === undefined || raw === null) return;
+
+            let displayText = String(raw);
+            let badgeHtml = '';
+
+            // Apply custom formatter first
+            if (fieldDef.fn) {
+                const formatted = fieldDef.fn(raw);
+                if (formatted !== null) {
+                    displayText = String(raw) + `<span class="${badgeClass(fieldDef.color)}">${formatted}</span>`;
+                    el.innerHTML = displayText;
+                    el.className = 'field-value value-updated';
+                    return;
+                }
+            }
+
+            // Apply unit suffix
+            if (fieldDef.unit) {
+                displayText = (fieldDef.decimals !== undefined)
+                    ? parseFloat(raw).toFixed(fieldDef.decimals) + fieldDef.unit
+                    : raw + fieldDef.unit;
+            }
+
+            // Apply enum badge
+            if (fieldDef.map && fieldDef.map[raw] !== undefined) {
+                badgeHtml = `<span class="${badgeClass(fieldDef.color)}">${fieldDef.map[raw]}</span>`;
+            } else if (fieldDef.note) {
+                badgeHtml = `<span class="${badgeClass('grey')}">${fieldDef.note}</span>`;
+            }
+
+            el.innerHTML = displayText + badgeHtml;
+            el.classList.remove('value-na', 'value-updated');
+            void el.offsetWidth;
+            el.classList.add('value-updated');
+        }
+
+        // ─── Weather forecast table ──────────────────────────────────────────
+
+        function renderForecast(samples, count) {
+            document.getElementById('forecastCount').textContent = count;
+            const container = document.getElementById('forecastContainer');
+            if (!samples || samples.length === 0) return;
+
+            const visible = samples.slice(0, Math.min(count, samples.length));
+            container.innerHTML = `
+                <table class="forecast-table">
+                    <thead>
+                        <tr>
+                            <th>Session</th>
+                            <th>+Min</th>
+                            <th>Weather</th>
+                            <th>Track °C</th>
+                            <th>Track Δ</th>
+                            <th>Air °C</th>
+                            <th>Air Δ</th>
+                            <th>Rain %</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${visible.map(s => `<tr>
+                            <td>${SESSION_TYPE[s.m_sessionType] ?? s.m_sessionType}</td>
+                            <td>+${s.m_timeOffset}</td>
+                            <td>${WEATHER_ICONS[s.m_weather] ?? ''} ${WEATHER[s.m_weather] ?? s.m_weather}</td>
+                            <td>${s.m_trackTemperature}</td>
+                            <td>${TEMP_CHANGE[s.m_trackTemperatureChange] ?? s.m_trackTemperatureChange}</td>
+                            <td>${s.m_airTemperature}</td>
+                            <td>${TEMP_CHANGE[s.m_airTemperatureChange] ?? s.m_airTemperatureChange}</td>
+                            <td>${s.m_rainPercentage}%</td>
+                        </tr>`).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // ─── Marshal zones table ─────────────────────────────────────────────
+
+        const MARSHAL_FLAG = { '-1':'Invalid', 0:'None', 1:'Green', 2:'Blue', 3:'Yellow' };
+        const MARSHAL_FLAG_STYLE = {
+            '-1': 'background:rgba(255,255,255,0.15);color:#aaa',
+            0:    'background:rgba(255,255,255,0.15);color:#aaa',
+            1:    'background:#1a6b1a;color:#7fff7f',
+            2:    'background:#0a3a7a;color:#7fc8ff',
+            3:    'background:#7a6000;color:#ffe066'
+        };
+
+        function renderMarshalZones(zones, count) {
+            document.getElementById('marshalZoneCount').textContent = count;
+            const container = document.getElementById('marshalZoneContainer');
+            if (!zones || zones.length === 0 || count === 0) return;
+
+            const visible = zones.slice(0, Math.min(count, zones.length));
+            container.innerHTML = `
+                <table class="forecast-table">
+                    <thead>
+                        <tr>
+                            <th>Zone #</th>
+                            <th>Start (%)</th>
+                            <th>Flag</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${visible.map((z, i) => {
+                            const flagKey = z.m_zoneFlag;
+                            const label = MARSHAL_FLAG[flagKey] ?? flagKey;
+                            const style = MARSHAL_FLAG_STYLE[flagKey] ?? 'background:rgba(255,255,255,0.15);color:#aaa';
+                            return `<tr>
+                                <td>${i + 1}</td>
+                                <td>${(z.m_zoneStart * 100).toFixed(1)}</td>
+                                <td><span class="badge" style="${style};padding:1px 7px;border-radius:4px;font-size:12px">${label}</span></td>
+                            </tr>`;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // ─── Socket handler ──────────────────────────────────────────────────
+
+        let totalPackets = 0;
+
+        socket.on('f1_data', (data) => {
+            if (!data.m_header || data.m_header.m_packetId !== 1) return;
+
+            if (!built) {
+                buildSections();
+                document.getElementById('waitingMsg').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+            }
+
+            totalPackets++;
+            document.getElementById('totalPackets').textContent = totalPackets;
+            document.getElementById('lastPacketTime').textContent = new Date().toLocaleTimeString();
+
+            // Update all field sections
+            for (const fields of Object.values(SECTIONS)) {
+                for (const fieldDef of fields) {
+                    if (data[fieldDef.key] !== undefined) {
+                        updateField(fieldDef, data[fieldDef.key]);
+                    }
+                }
+            }
+
+            // Update weather forecast table
+            if (data.m_weatherForecastSamples) {
+                renderForecast(data.m_weatherForecastSamples, data.m_numWeatherForecastSamples || 0);
+            }
+
+            // Update marshal zones table
+            if (data.m_marshalZones) {
+                renderMarshalZones(data.m_marshalZones, data.m_numMarshalZones || 0);
+            }
+        });
+
+        console.log('[SessionDebug] Debug page loaded');
+    </script>
+</body>
+</html>
