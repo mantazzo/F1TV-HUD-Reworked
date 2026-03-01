@@ -131,6 +131,12 @@ prompt.get(promptSchema, (err, result) => {
         return obj;
     }
 
+    // Listen for Motion packets (ID 0)
+    // Uncomment later if necessary - might be useful if you want to display G-forces, for example
+    /* client.on(PACKETS.motion, (data) => {
+        io.emit('f1_data', convertBigInt(data));
+    }); */
+
     // Listen for Session packets (ID 1)
     client.on(PACKETS.session, (data) => {
         io.emit('f1_data', convertBigInt(data));
@@ -146,10 +152,16 @@ prompt.get(promptSchema, (err, result) => {
         io.emit('f1_data', convertBigInt(data));
     });
 
-    //Listen for Participants packets (ID 4)
+    // Listen for Participants packets (ID 4)
     client.on(PACKETS.participants, (data) => {
         io.emit('f1_data', convertBigInt(data));
     });
+
+    // Listen for Car Setups packets (ID 5)
+    // Uncomment later if necessary (if you want to display car setup information, or use it for some calculations related to the car performance or something like that)
+    /* client.on(PACKETS.carSetups, (data) => {
+        io.emit('f1_data', convertBigInt(data));
+    }); */
 
     // Listen for Car Telemetry packets (ID 6)
     client.on(PACKETS.carTelemetry, (data) => {
@@ -161,15 +173,50 @@ prompt.get(promptSchema, (err, result) => {
         io.emit('f1_data', convertBigInt(data));
     });
 
+    // Listen for Final Classification packets (ID 8)
+    // Uncomment later if necessary (if you need it for final classification table or something similar, or perhaps if you're just testing the packet for development purposes)
+    /* client.on(PACKETS.finalClassification, (data) => {
+        io.emit('f1_data', convertBigInt(data));
+    }); */
+
+    // Listen for Lobby Info packets (ID 9)
+    // Uncomment later if necessary - might be useful for local reasons, like tracking certain players and whether they have certain settings enabled or not
+    /* client.on(PACKETS.lobbyInfo, (data) => {
+        io.emit('f1_data', convertBigInt(data));
+    }); */
+
+    // Listen for Car Damage packets (ID 10)
+    client.on(PACKETS.carDamage, (data) => {
+        io.emit('f1_data', convertBigInt(data));
+    });
+
     // Listen for Session History packets (ID 11)
     client.on(PACKETS.sessionHistory, (data) => {
         io.emit('f1_data', convertBigInt(data));
     });
 
+    // Listen for Tyre Sets packets (ID 12)
+    // Uncomment later if necessary (for example, you have an overlay to display the information about the tyre sets available, remaining or being used by each driver)
+    /* client.on(PACKETS.tyreSets, (data) => {
+        io.emit('f1_data', convertBigInt(data));
+    }); */
+
+    // Listen for Motion Ex packets (ID 13)
+    // Uncomment later if necessary (if you have any use to display all of these extra motion parameters)
+    /* client.on(PACKETS.motionEx, (data) => {
+        io.emit('f1_data', convertBigInt(data));
+    }); */
+
     // Listen for Time Trial packets (ID 14)
     client.on(PACKETS.timeTrial, (data) => {
         io.emit('f1_data', convertBigInt(data));
     });
+
+    // Listen for Lap Position packets (ID 15)
+    // Uncomment later if necessary (might be useful for something like a session history, displaying driver positions for each lap)
+    /* client.on(PACKETS.lapPositions, (data) => {
+        io.emit('f1_data', convertBigInt(data));
+    }); */
 
     // Error handling
     client.on('error', (err) => {
