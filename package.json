@@ -1,14 +1,13 @@
 {
   "name": "f1tv-hud-reworked",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "F1TV-style HUD mod for F1 25 Game by Codemasters, reworked and improved",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "start:bun": "bun index.js"
+    "start": "node index.js"
   },
   "keywords": ["formula 1", "f1tv", "hud", "mod", "f1 25", "codemasters", "f1 game"],
-  "author": "Mantazzo",
+  "author": "mantazzo",
   "license": "GPL-3.0-or-later",
   "dependencies": {
     "@deltazeroproduction/f1-udp-parser": "^1.2.2",
