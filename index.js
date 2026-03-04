@@ -237,6 +237,7 @@ prompt.get(promptSchema, (err, result) => {
     app.use('/images', express.static(path.join(__dirname, 'images')));
 
     // Overlays
+    app.get('/car-damage', (req, res) => res.sendFile(path.join(__dirname, 'views', 'car-damage.html')));
     app.get('/speedometer', (req, res) => res.sendFile(path.join(__dirname, 'views', 'speedometer.html')));
     app.get('/lap-timer', (req, res) => res.sendFile(path.join(__dirname, 'views', 'lap-timer.html')));
     app.get('/pit-timer', (req, res) => res.sendFile(path.join(__dirname, 'views', 'pit-timer.html')));

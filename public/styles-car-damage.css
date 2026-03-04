@@ -1,0 +1,601 @@
+/* ═══════════════════════════════════════════════════════════════
+   Car Damage Overlay — styles-car-damage.css
+   Canvas: 280 × 600 px
+   All coordinates taken directly from SimHub source and scaled.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Root container ──────────────────────────────────────────── */
+.overlay-container {
+    position: relative;
+    width: 280px;
+    height: 600px;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.overlay-container.visible {
+    opacity: 1;
+}
+
+/* All children are absolutely positioned within the container */
+.overlay-container > * {
+    position: absolute;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   BACKGROUND — item_1_2r0: 280×600 left:0 top:0
+   ════════════════════════════════════════════════════════════════ */
+#cd-bg {
+    width: 280px;
+    height: 600px;
+    left: 0;
+    top: 0;
+    background-color: rgb(18, 20, 26);
+    z-index: 1;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   GRADIENT DIVS  (background-image, matching SimHub rendering)
+   ════════════════════════════════════════════════════════════════ */
+.cd-gradient {
+    z-index: 5;
+    background-image: url('/images/common/Gradient.png');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+}
+
+/* item_1_26: 280×90 at top:0 */
+#cd-gradient-top {
+    width: 280px;
+    height: 90px;
+    left: 0;
+    top: 0;
+    opacity: 1;
+}
+
+/* item_1_4r0: 280×50 at top:90 */
+#cd-gradient-info {
+    width: 280px;
+    height: 50px;
+    left: 0;
+    top: 90px;
+    opacity: 1;
+}
+
+/* item_1_23r0r0: 280×50 at top:485 */
+#cd-gradient-compound {
+    width: 280px;
+    height: 50px;
+    left: 0;
+    top: 485px;
+    opacity: 1;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   TITLE  — item_1_25_2r0 / item_1_25_3r0
+   ════════════════════════════════════════════════════════════════ */
+#cd-title-car,
+#cd-title-damage {
+    left: 0;
+    width: 280px;
+    font-family: 'F1TV-2022-Name', 'Formula1 Display', sans-serif;
+    font-weight: 700;
+    font-style: normal;
+    font-size: 30px;
+    color: rgb(255, 0, 0);
+    text-align: center;
+    white-space: pre;
+    line-height: 1;
+    z-index: 90;
+}
+
+/* "CAR": 280×50 top:2 */
+#cd-title-car {
+    height: 50px;
+    top: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* "DAMAGE": 280×60 top:32 */
+#cd-title-damage {
+    height: 60px;
+    top: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   DRIVER NAME — item_1_5r0: 280×40 left:-5 top:90
+   F1TV-2022 ObliqueBold 25px  rgb(31,91,198)  center
+   ════════════════════════════════════════════════════════════════ */
+#cd-driver-name {
+    width: 280px;
+    height: 40px;
+    left: 0px;
+    top: 90px;
+    font-family: 'F1TV-2022', 'Formula1 Display', sans-serif;
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 25px;
+    color: rgb(31, 91, 198);
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 80;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   CAR MODEL CONTAINER — item_1_24
+   300×450 canvas, scale(0.75), origin left top, placed at (27.5, 141.25).
+   All child elements use native (pre-scale) SimHub coordinates.
+   ════════════════════════════════════════════════════════════════ */
+#cd-car-container {
+    left: 27.5px;
+    top: 141.25px;
+    width: 300px;
+    height: 450px;
+    transform: scale(0.75);
+    transform-origin: left top 0px;
+    z-index: 10;
+}
+
+#cd-car-container > * {
+    position: absolute;
+}
+
+/* MFD widget — item_1_24_23: 164×450, centered within 300px car canvas */
+#cd-mfd-container {
+    left: 65px;
+    top: 0;
+    width: 164px;
+    height: 450px;
+}
+
+#cd-mfd-container > * {
+    position: absolute;
+}
+
+/* ── Image parts ── */
+.cd-car-part {
+    z-index: 10;
+}
+
+/* Frame ×2  — 101×235 at (32, 13) opacity 0.35 */
+#cd-frame-a,
+#cd-frame-b {
+    width: 101px;
+    height: 235px;
+    left: 32px;
+    top: 13px;
+    opacity: 0.35;
+    z-index: 11;
+}
+
+/* Deflectors — 95.9×35 at (34.05, 144) opacity 0.35 */
+#cd-deflectors {
+    width: 95.9px;
+    height: 35px;
+    left: 34.05px;
+    top: 144px;
+    opacity: 0.35;
+    z-index: 12;
+}
+
+/* LfWing — 79.9×71.4 at (2, 0) */
+#cd-lf-wing {
+    width: 79.9px;
+    height: 71.4px;
+    left: 2px;
+    top: 0;
+    z-index: 13;
+}
+
+/* RfWing — 79.9×71.4 at (83, 0) */
+#cd-rf-wing {
+    width: 79.9px;
+    height: 71.4px;
+    left: 83px;
+    top: 0;
+    z-index: 13;
+}
+
+/* Floor — 134.3×210.8 at (15, 164) */
+#cd-floor {
+    width: 134.3px;
+    height: 210.8px;
+    left: 15px;
+    top: 164px;
+    z-index: 14;
+}
+
+/* LSidepod — 45.9×145.35 at (27, 229) */
+#cd-l-sidepod {
+    width: 45.9px;
+    height: 145.35px;
+    left: 27px;
+    top: 229px;
+    z-index: 15;
+}
+
+/* RSidepod — 45.9×145.35 at (92, 229) */
+#cd-r-sidepod {
+    width: 45.9px;
+    height: 145.35px;
+    left: 92px;
+    top: 229px;
+    z-index: 15;
+}
+
+/* Diffuser — 62.9×21.25 at (50.55, 381) */
+#cd-diffuser {
+    width: 62.9px;
+    height: 21.25px;
+    left: 50.55px;
+    top: 381px;
+    z-index: 16;
+}
+
+/* rWing — 103.7×44.2 at (30.15, 405) */
+#cd-rear-wing {
+    width: 103.7px;
+    height: 44.2px;
+    left: 30.15px;
+    top: 405px;
+    z-index: 17;
+}
+
+/* Engine — 52×61 at (56, 255) */
+#cd-engine {
+    width: 52px;
+    height: 61px;
+    left: 56px;
+    top: 255px;
+    z-index: 18;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   DAMAGE PAIRS  — native sizes, CSS transform handles the scaling
+   ════════════════════════════════════════════════════════════════ */
+.cd-dmg-pair {
+    z-index: 20;
+}
+
+.cd-pair-bg,
+.cd-pair-stk {
+    position: absolute;
+    inset: 0;
+}
+
+.cd-pair-bg {
+    background-color: rgba(0, 255, 0, 0.3);
+}
+
+.cd-pair-stk {
+    background-color: transparent;
+    border-style: solid;
+    border-color: rgb(0, 255, 0);
+}
+
+/* Gearbox — 15×54 r2 border:3 at (75, 320) */
+#cd-gearbox {
+    width: 15px;
+    height: 54px;
+    left: 75px;
+    top: 320px;
+    border-radius: 2px;
+}
+
+#cd-gearbox .cd-pair-stk {
+    border-width: 3px;
+    border-radius: 2px;
+}
+
+/* FL Tyre — 32×60 r8 border:3 at (3, 76) */
+#cd-tyre-fl {
+    width: 32px;
+    height: 60px;
+    left: 3px;
+    top: 76px;
+    border-radius: 8px;
+}
+
+#cd-tyre-fl .cd-pair-stk {
+    border-width: 3px;
+    border-radius: 8px;
+}
+
+/* FL Brake — 9×21 r2 border:3 at (36, 95) */
+#cd-brake-fl {
+    width: 9px;
+    height: 21px;
+    left: 36px;
+    top: 95px;
+    border-radius: 2px;
+}
+
+#cd-brake-fl .cd-pair-stk {
+    border-width: 3px;
+    border-radius: 2px;
+}
+
+/* FR Tyre — 32×60 r8 border:3 at (132, 76) */
+#cd-tyre-fr {
+    width: 32px;
+    height: 60px;
+    left: 132px;
+    top: 76px;
+    border-radius: 8px;
+}
+
+#cd-tyre-fr .cd-pair-stk {
+    border-width: 3px;
+    border-radius: 8px;
+}
+
+/* FR Brake — 9×21 r2 border:3 at (122, 95) */
+#cd-brake-fr {
+    width: 9px;
+    height: 21px;
+    left: 122px;
+    top: 95px;
+    border-radius: 2px;
+}
+
+#cd-brake-fr .cd-pair-stk {
+    border-width: 3px;
+    border-radius: 2px;
+}
+
+/* RR Tyre — 34×60 r8 border:3 at (130, 359) */
+#cd-tyre-rr {
+    width: 34px;
+    height: 60px;
+    left: 130px;
+    top: 359px;
+    border-radius: 8px;
+}
+
+#cd-tyre-rr .cd-pair-stk {
+    border-width: 3px;
+    border-radius: 8px;
+}
+
+/* RR Brake — 12×21 r2 border:3 at (116, 381) */
+#cd-brake-rr {
+    width: 12px;
+    height: 21px;
+    left: 116px;
+    top: 381px;
+    border-radius: 2px;
+}
+
+#cd-brake-rr .cd-pair-stk {
+    border-width: 3px;
+    border-radius: 2px;
+}
+
+/* RL Tyre — 34×60 r8 border:3 at (0, 359) */
+#cd-tyre-rl {
+    width: 34px;
+    height: 60px;
+    left: 0;
+    top: 359px;
+    border-radius: 8px;
+}
+
+#cd-tyre-rl .cd-pair-stk {
+    border-width: 3px;
+    border-radius: 8px;
+}
+
+/* RL Brake — 12×21 r2 border:3 at (36, 381) */
+#cd-brake-rl {
+    width: 12px;
+    height: 21px;
+    left: 36px;
+    top: 381px;
+    border-radius: 2px;
+}
+
+#cd-brake-rl .cd-pair-stk {
+    border-width: 3px;
+    border-radius: 2px;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   STROKE GUIDE CORNERS — item_1_24_3r0 (on 300px canvas, native)
+   ════════════════════════════════════════════════════════════════ */
+.cd-guide {
+    width: 20px;
+    height: 20px;
+    border-style: solid;
+    border-color: rgb(128, 128, 128);
+    background: transparent;
+    z-index: 25;
+}
+
+#cd-guide-tl { left: 40px;  top: 105px; border-width: 2px 0 0 2px; }
+#cd-guide-tr { left: 235px; top: 105px; border-width: 2px 2px 0 0; }
+#cd-guide-bl { left: 40px;  top: 370px; border-width: 0 0 2px 2px; }
+#cd-guide-br { left: 235px; top: 370px; border-width: 0 2px 2px 0; }
+
+/* ════════════════════════════════════════════════════════════════
+   TYRE WEAR % TEXT — item_1_24_8r0 (on 300px canvas, native)
+   65×30, F1TV-2022 ObliqueBold 20px
+   ════════════════════════════════════════════════════════════════ */
+.cd-wear-pct {
+    width: 65px;
+    height: 30px;
+    font-family: 'F1TV-2022', 'Formula1 Display', sans-serif;
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 20px;
+    color: rgb(255, 255, 255);
+    white-space: pre;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 30;
+    transition: color 0.4s ease;
+}
+
+#cd-pct-fl { left: 5px;   top: 130px; }
+#cd-pct-fr { left: 225px; top: 130px; }
+#cd-pct-rl { left: 5px;   top: 330px; }
+#cd-pct-rr { left: 225px; top: 330px; }
+
+/* ════════════════════════════════════════════════════════════════
+   COMPOUND TEXT — item_1_20r0r0: 280×35 left:-5 top:485
+   F1TV-2022 ObliqueBold 30px  compound colour  center
+   ════════════════════════════════════════════════════════════════ */
+#cd-compound {
+    width: 280px;
+    height: 35px;
+    left: 0px;
+    top: 485px;
+    font-family: 'F1TV-2022', 'Formula1 Display', sans-serif;
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 30px;
+    color: rgb(246, 215, 44);  /* default Medium yellow, updated by JS */
+    text-align: center;
+    white-space: pre;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 80;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   TYRE AGE — item_1_21r0r0 + item_1_22r0r0
+   ════════════════════════════════════════════════════════════════ */
+/* Number: 110×30 left:0 top:520  right-aligned */
+#cd-tyre-age {
+    width: 280px;
+    height: 30px;
+    left: 0;
+    top: 520px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: pre;
+    z-index: 80;
+}
+
+#cd-tyre-age-num {
+    font-family: 'F1TV-2022', 'Formula1 Display', sans-serif;
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 25px;
+    color: rgb(255, 255, 255);
+}
+
+#cd-tyre-age-laps {
+    font-family: 'F1TV-2022', 'Formula1 Display', sans-serif;
+    font-weight: 400;
+    font-style: oblique;
+    font-size: 25px;
+    color: rgb(192, 192, 192);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   WEAR SCALE BAR — item_1_7r0r0 children
+   ════════════════════════════════════════════════════════════════ */
+
+/* Green segment — item_1_12r0r0r0: 70×8 at (27.5, 555) */
+#cd-wb-green {
+    width: 70px;
+    height: 8px;
+    left: 27.5px;
+    top: 555px;
+    background-color: rgb(0, 255, 0);
+    z-index: 70;
+}
+
+/* Orange segment — item_1_13r0r0r0: 70×8 at (97.5, 555) */
+#cd-wb-orange {
+    width: 70px;
+    height: 8px;
+    left: 97.5px;
+    top: 555px;
+    background-color: rgb(175, 122, 37);
+    z-index: 70;
+}
+
+/* Red segment — item_1_9r0r0r0: 70.2×8 at (167.5, 555) */
+#cd-wb-red {
+    width: 70px;
+    height: 8px;
+    left: 167.5px;
+    top: 555px;
+    background-color: rgb(255, 0, 0);
+    z-index: 70;
+}
+
+/* Marker lines */
+.cd-wb-marker {
+    width: 20px;
+    height: 15px;
+    border-style: solid;
+    border-color: rgb(255, 255, 255);
+    background: transparent;
+    z-index: 60;
+}
+
+/* Left marker — item_1_10: border-left only, 20×15 at (27.5, 555) */
+#cd-wbm-left {
+    left: 28px;
+    top: 555px;
+    border-width: 0 0 0 1px;
+}
+
+/* Mid marker — item_1_11: border-left only, 20×15 at (132.5, 556) */
+#cd-wbm-mid {
+    left: 132.5px;
+    top: 556px;
+    border-width: 0 0 0 1px;
+}
+
+/* Right marker — item_1_8: border-right only, 20×15 at (217.5, 555) */
+#cd-wbm-right {
+    left: 217px;
+    top: 555px;
+    border-width: 0 1px 0 0;
+}
+
+/* Wear number labels + % — F1TV-2022-Regular-Oblique 20px white center */
+.cd-wb-label {
+    height: 20px;
+    font-family: 'F1TV-2022', 'Formula1 Display', sans-serif;
+    font-weight: 400;
+    font-style: oblique;
+    font-size: 20px;
+    color: rgb(255, 255, 255);
+    white-space: pre;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 72;
+}
+
+/* "0":   60×20 at (-2.5,  575) */
+#cd-wbl-0   { width: 60px; left: -2.5px;  top: 575px; }
+/* "50":  60×20 at (107.5,  575) */
+#cd-wbl-50  { width: 60px; left:  107.5px; top: 575px; }
+/* "100": 60×20 at (207.5, 575) */
+#cd-wbl-100 { width: 60px; left: 207.5px; top: 575px; }
+
+/* Inline "%" suffix inside each label */
+.cd-wb-pct-inline {
+    font-size: 12px;
+    line-height: 1;
+    padding-bottom: 4px;
+}
