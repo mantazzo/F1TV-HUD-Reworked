@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>F1 Car Damage Packet Debug</title>
+    <link rel="stylesheet" href="/fonts.css">
+    <link rel="stylesheet" href="/styles-event-debug.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        /* ── Card / section layout ─────────────────────────────────────────── */
+        .section-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-family: 'F1TV-2022', sans-serif;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.55);
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        .section-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 2px 0;
+        }
+
+        .field-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 7px 10px;
+            border-radius: 5px;
+            transition: background 0.15s;
+        }
+
+        .field-row:hover { background: rgba(255,255,255,0.05); }
+
+        .field-name {
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            color: #4dabf7;
+            white-space: nowrap;
+            min-width: 180px;
+            flex-shrink: 0;
+        }
+
+        .field-value {
+            font-family: 'F1TV-2022', monospace;
+            font-size: 14px;
+            font-weight: 700;
+            color: #ffffff;
+            min-width: 38px;
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        /* ── Damage / wear bar ─────────────────────────────────────────────── */
+        .dmg-bar-wrap {
+            flex: 1;
+            height: 6px;
+            background: rgba(255,255,255,0.07);
+            border-radius: 3px;
+            overflow: hidden;
+            min-width: 60px;
+        }
+
+        .dmg-bar {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.3s ease, background 0.3s ease;
+        }
+
+        /* ── Tyre grid (2×2, FL/FR top, RL/RR bottom) ─────────────────────── */
+        .tyre-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto auto;
+            gap: 12px;
+        }
+
+        .tyre-cell {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px;
+            padding: 14px 16px;
+        }
+
+        .tyre-label {
+            font-family: 'F1TV-2022', sans-serif;
+            font-size: 11px;
+            color: rgba(255,255,255,0.45);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 10px;
+        }
+
+        .tyre-stat-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .tyre-stat-row:last-child { margin-bottom: 0; }
+
+        .tyre-stat-name {
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            color: rgba(255,255,255,0.4);
+            width: 60px;
+            flex-shrink: 0;
+        }
+
+        .tyre-stat-val {
+            font-family: 'F1TV-2022', monospace;
+            font-size: 13px;
+            font-weight: 700;
+            color: #fff;
+            width: 38px;
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        /* ── Car selector ──────────────────────────────────────────────────── */
+        .car-selector-bar {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            padding: 14px 20px;
+            margin-bottom: 20px;
+        }
+
+        .car-selector-label {
+            font-family: 'F1TV-2022', sans-serif;
+            font-size: 13px;
+            color: rgba(255,255,255,0.55);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            white-space: nowrap;
+        }
+
+        .car-selector-select {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 6px;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            padding: 6px 12px;
+            cursor: pointer;
+            outline: none;
+            min-width: 100px;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+
+        .car-selector-select:focus { border-color: rgba(77,171,247,0.6); }
+        .car-selector-select option { background: #1a1a2e; color: #fff; }
+
+        .player-pill {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 12px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .player-pill.p1 { background: rgba(225,6,0,0.25);   color: #ff8787; border: 1px solid rgba(225,6,0,0.4); }
+        .player-pill.p2 { background: rgba(77,171,247,0.2); color: #74c0fc; border: 1px solid rgba(77,171,247,0.35); }
+
+        .selector-spacer { flex: 1; }
+
+        /* ── Badges ────────────────────────────────────────────────────────── */
+        .badge {
+            display: inline-block;
+            font-size: 11px;
+            font-family: 'Segoe UI', sans-serif;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 3px;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        .badge-green  { background: rgba(0,200,100,0.2);   color: #69db7c; }
+        .badge-red    { background: rgba(225,6,0,0.2);     color: #ff8787; }
+        .badge-yellow { background: rgba(255,200,0,0.2);   color: #ffd43b; }
+
+        /* ── Fault indicator (large) ───────────────────────────────────────── */
+        .fault-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 9px 12px;
+            border-radius: 7px;
+            margin-bottom: 6px;
+        }
+
+        .fault-ok   { background: rgba(0,200,100,0.06); border: 1px solid rgba(0,200,100,0.18); }
+        .fault-bad  { background: rgba(225,6,0,0.10);   border: 1px solid rgba(225,6,0,0.35); }
+
+        .fault-label {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: rgba(255,255,255,0.55);
+            flex: 1;
+        }
+
+        /* ── Reference table ───────────────────────────────────────────────── */
+        table.ref-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        table.ref-table th {
+            text-align: left;
+            font-family: 'F1TV-2022', sans-serif;
+            font-size: 11px;
+            color: rgba(255,255,255,0.4);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 6px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+        }
+        table.ref-table td {
+            padding: 7px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            font-family: 'Segoe UI', sans-serif;
+            color: rgba(255,255,255,0.8);
+            vertical-align: top;
+        }
+        table.ref-table tr:last-child td { border-bottom: none; }
+        table.ref-table td:first-child {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #74c0fc;
+            white-space: nowrap;
+        }
+        table.ref-table td code {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            background: rgba(77,171,247,0.1);
+            color: #74c0fc;
+            padding: 1px 5px;
+            border-radius: 3px;
+        }
+
+        /* ── No-data placeholder ───────────────────────────────────────────── */
+        .no-data-msg {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 13px;
+            color: rgba(255,255,255,0.25);
+            font-style: italic;
+            padding: 6px 0;
+        }
+
+        /* ── Restricted telemetry banner ─────────────────────────────────────── */
+        #restrictedBanner {
+            display: none;
+            align-items: center;
+            gap: 12px;
+            background: rgba(225, 6, 0, 0.1);
+            border: 1px solid rgba(225, 6, 0, 0.35);
+            border-radius: 10px;
+            padding: 12px 18px;
+            margin-bottom: 20px;
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 13px;
+            color: #ff8787;
+        }
+
+        #restrictedBanner.visible { display: flex; }
+        #restrictedBanner strong  { font-weight: 700; color: #ff6b6b; }
+
+        .rest-mark {
+            display: none;
+            font-size: 10px;
+            font-family: 'Segoe UI', sans-serif;
+            font-weight: 600;
+            color: #ff8787;
+            background: rgba(225,6,0,0.18);
+            border: 1px solid rgba(225,6,0,0.3);
+            border-radius: 3px;
+            padding: 0px 4px;
+            margin-left: 5px;
+            vertical-align: middle;
+        }
+
+        .restricted-mode .rest-mark { display: inline; }
+    </style>
+</head>
+<body>
+    <div class="debug-header">
+        <h1>Car Damage Packet Debug</h1>
+        <span class="debug-badge">Packet ID 10</span>
+    </div>
+
+    <div class="debug-content">
+
+        <div id="waitingMsg" class="waiting-msg">
+            <div class="waiting-spinner"></div>
+            <div>Waiting for Car Damage packets (ID&nbsp;10)…</div>
+        </div>
+
+        <div id="mainContent" style="display:none">
+
+            <!-- Status bar -->
+            <div class="status-bar" style="margin-bottom:16px">
+                <span>Total packets: <strong id="totalPackets">0</strong></span>
+                <span>Last update: <strong id="lastPacketTime">--</strong></span>
+                <span>Player car: <strong id="playerCarIdx">--</strong></span>
+            </div>
+
+            <!-- Restricted telemetry banner -->
+            <div id="restrictedBanner">
+                &#9888;
+                <span><strong>Restricted Telemetry</strong> — this car's <code style="font-family:'Courier New',monospace;font-size:12px;background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:3px;color:#ffb3b3">m_yourTelemetry</code> (Packet 4) is set to <strong>Restricted</strong>. The <span class="rest-mark" style="display:inline">R</span>&#8202;marked fields are zeroed out by the game (unless it is a Player car, then the data is always visible).</span>
+            </div>
+
+            <!-- Car selector -->
+            <div class="car-selector-bar">
+                <span class="car-selector-label">Car Index</span>
+                <select class="car-selector-select" id="carSelect"></select>
+                <span id="playerIndicator"></span>
+                <span class="selector-spacer"></span>
+                <span id="carLastUpdated" style="font-family:'Segoe UI',sans-serif;font-size:12px;color:rgba(255,255,255,0.3)">--</span>
+            </div>
+
+            <!-- 1. Tyre Corner Data -->
+            <div class="section-card">
+                <div class="section-title">Tyre Corner Data</div>
+                <div id="tyresContent"><div class="no-data-msg">No data yet.</div></div>
+            </div>
+
+            <!-- 2. Bodywork -->
+            <div class="section-card">
+                <div class="section-title">Bodywork Damage</div>
+                <div id="bodyworkContent"><div class="no-data-msg">No data yet.</div></div>
+            </div>
+
+            <!-- 3. Power Unit & Gearbox -->
+            <div class="section-card">
+                <div class="section-title">Power Unit &amp; Gearbox</div>
+                <div id="powerUnitContent"><div class="no-data-msg">No data yet.</div></div>
+            </div>
+
+            <!-- Field Reference -->
+            <div class="section-card">
+                <div class="section-title">Field Reference</div>
+                <table class="ref-table">
+                    <thead>
+                        <tr>
+                            <th style="width:220px">UDP Field</th>
+                            <th style="width:80px">Type</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>m_tyresWear[4]</td>        <td>float</td>  <td>Tyre wear percentage per corner. Array order: RL, RR, FL, FR.</td></tr>
+                        <tr><td>m_tyresDamage[4]</td>      <td>uint8</td>  <td>Tyre damage percentage per corner.</td></tr>
+                        <tr><td>m_brakesDamage[4]</td>     <td>uint8</td>  <td>Brake damage percentage per corner.</td></tr>
+                        <tr><td>m_tyreBlisters[4]</td>     <td>uint8</td>  <td>Tyre blister value percentage per corner.</td></tr>
+                        <tr><td>m_frontLeftWingDamage</td> <td>uint8</td>  <td>Front left wing damage (percentage).</td></tr>
+                        <tr><td>m_frontRightWingDamage</td><td>uint8</td>  <td>Front right wing damage (percentage).</td></tr>
+                        <tr><td>m_rearWingDamage</td>      <td>uint8</td>  <td>Rear wing damage (percentage).</td></tr>
+                        <tr><td>m_floorDamage</td>         <td>uint8</td>  <td>Floor damage (percentage).</td></tr>
+                        <tr><td>m_diffuserDamage</td>      <td>uint8</td>  <td>Diffuser damage (percentage).</td></tr>
+                        <tr><td>m_sidepodDamage</td>       <td>uint8</td>  <td>Sidepod damage (percentage).</td></tr>
+                        <tr><td>m_drsFault</td>            <td>uint8</td>  <td>0 = OK, 1 = DRS fault.</td></tr>
+                        <tr><td>m_ersFault</td>            <td>uint8</td>  <td>0 = OK, 1 = ERS fault.</td></tr>
+                        <tr><td>m_gearBoxDamage</td>       <td>uint8</td>  <td>Gearbox damage (percentage).</td></tr>
+                        <tr><td>m_engineDamage</td>        <td>uint8</td>  <td>Engine damage (percentage).</td></tr>
+                        <tr><td>m_engineMGUHWear</td>      <td>uint8</td>  <td>Engine MGU-H wear (percentage).</td></tr>
+                        <tr><td>m_engineESWear</td>        <td>uint8</td>  <td>Engine Energy Store wear (percentage).</td></tr>
+                        <tr><td>m_engineCEWear</td>        <td>uint8</td>  <td>Engine Control Electronics wear (percentage).</td></tr>
+                        <tr><td>m_engineICEWear</td>       <td>uint8</td>  <td>Engine Internal Combustion Engine wear (percentage).</td></tr>
+                        <tr><td>m_engineMGUKWear</td>      <td>uint8</td>  <td>Engine MGU-K wear (percentage).</td></tr>
+                        <tr><td>m_engineTCWear</td>        <td>uint8</td>  <td>Engine Turbocharger wear (percentage).</td></tr>
+                        <tr><td>m_engineBlown</td>         <td>uint8</td>  <td>0 = OK, 1 = engine has blown.</td></tr>
+                        <tr><td>m_engineSeized</td>        <td>uint8</td>  <td>0 = OK, 1 = engine has seized.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        socket.emit('identify', 'Car Damage Debug');
+
+        // ── Tyre array order: RL=0, RR=1, FL=2, FR=3 ─────────────────────────
+        const TYRE_LABELS = ['RL', 'RR', 'FL', 'FR'];
+        // Display order: FL(2) FR(3) top row, RL(0) RR(1) bottom row
+        const TYRE_DISPLAY = [
+            { label: 'FL', idx: 2, gridCol: 1, gridRow: 1 },
+            { label: 'FR', idx: 3, gridCol: 2, gridRow: 1 },
+            { label: 'RL', idx: 0, gridCol: 1, gridRow: 2 },
+            { label: 'RR', idx: 1, gridCol: 2, gridRow: 2 },
+        ];
+
+        // ── Damage bar colour ─────────────────────────────────────────────────
+        function dmgColor(pct) {
+            if (pct <= 0)  return 'rgba(255,255,255,0.15)';
+            if (pct < 35)  return '#69db7c';  // green
+            if (pct < 65)  return '#ffd43b';  // yellow
+            if (pct < 85)  return '#ff922b';  // orange
+            return '#ff6b6b';                  // red
+        }
+
+        function dmgBar(pct) {
+            const color = dmgColor(pct);
+            return `<div class="dmg-bar-wrap">
+                        <div class="dmg-bar" style="width:${Math.min(pct,100)}%;background:${color}"></div>
+                    </div>`;
+        }
+
+        function dmgRow(fieldName, pct, decimals = 0) {
+            const display = (pct === undefined || pct === null) ? '--' : `${Number(pct).toFixed(decimals)}%`;
+            const color   = dmgColor(pct ?? 0);
+            return `<div class="field-row">
+                        <span class="field-name">${fieldName}</span>
+                        <span class="field-value" style="color:${color}">${display}</span>
+                        ${dmgBar(pct ?? 0)}
+                    </div>`;
+        }
+
+        function faultRow(fieldName, val) {
+            const isFault = val === 1;
+            return `<div class="fault-row ${isFault ? 'fault-bad' : 'fault-ok'}">
+                        <span class="fault-label">${fieldName}</span>
+                        ${isFault
+                            ? '<span class="badge badge-red">FAULT</span>'
+                            : '<span class="badge badge-green">OK</span>'}
+                    </div>`;
+        }
+
+        // ── Render ────────────────────────────────────────────────────────────
+        function renderCar(d) {
+            // -- Tyre corner data --
+            let tyreCells = '';
+            for (const t of TYRE_DISPLAY) {
+                const i      = t.idx;
+                const wear   = d.m_tyresWear?.[i];
+                const dmg    = d.m_tyresDamage?.[i];
+                const brak   = d.m_brakesDamage?.[i];
+                const blstr  = d.m_tyreBlisters?.[i];
+
+                tyreCells += `
+                    <div class="tyre-cell" style="grid-column:${t.gridCol};grid-row:${t.gridRow}">
+                        <div class="tyre-label">${t.label}</div>
+                        <div class="tyre-stat-row">
+                            <span class="tyre-stat-name">Wear<span class="rest-mark">R</span></span>
+                            <span class="tyre-stat-val" style="color:${dmgColor(wear ?? 0)}">${wear !== undefined ? Number(wear).toFixed(1) + '%' : '--'}</span>
+                            <div class="dmg-bar-wrap" style="flex:1">${wear !== undefined ? `<div class="dmg-bar" style="width:${Math.min(wear,100)}%;background:${dmgColor(wear)}"></div>` : ''}</div>
+                        </div>
+                        <div class="tyre-stat-row">
+                            <span class="tyre-stat-name">Damage<span class="rest-mark">R</span></span>
+                            <span class="tyre-stat-val" style="color:${dmgColor(dmg ?? 0)}">${dmg !== undefined ? dmg + '%' : '--'}</span>
+                            <div class="dmg-bar-wrap" style="flex:1">${dmg !== undefined ? `<div class="dmg-bar" style="width:${Math.min(dmg,100)}%;background:${dmgColor(dmg)}"></div>` : ''}</div>
+                        </div>
+                        <div class="tyre-stat-row">
+                            <span class="tyre-stat-name">Brakes<span class="rest-mark">R</span></span>
+                            <span class="tyre-stat-val" style="color:${dmgColor(brak ?? 0)}">${brak !== undefined ? brak + '%' : '--'}</span>
+                            <div class="dmg-bar-wrap" style="flex:1">${brak !== undefined ? `<div class="dmg-bar" style="width:${Math.min(brak,100)}%;background:${dmgColor(brak)}"></div>` : ''}</div>
+                        </div>
+                        <div class="tyre-stat-row">
+                            <span class="tyre-stat-name">Blisters</span>
+                            <span class="tyre-stat-val" style="color:${dmgColor(blstr ?? 0)}">${blstr !== undefined ? blstr + '%' : '--'}</span>
+                            <div class="dmg-bar-wrap" style="flex:1">${blstr !== undefined ? `<div class="dmg-bar" style="width:${Math.min(blstr,100)}%;background:${dmgColor(blstr)}"></div>` : ''}</div>
+                        </div>
+                    </div>`;
+            }
+            document.getElementById('tyresContent').innerHTML = `<div class="tyre-grid">${tyreCells}</div>`;
+
+            // -- Bodywork --
+            document.getElementById('bodyworkContent').innerHTML = `
+                <div class="section-grid">
+                    ${dmgRow('m_frontLeftWingDamage<span class="rest-mark">R</span>',  d.m_frontLeftWingDamage)}
+                    ${dmgRow('m_frontRightWingDamage<span class="rest-mark">R</span>', d.m_frontRightWingDamage)}
+                    ${dmgRow('m_rearWingDamage<span class="rest-mark">R</span>',       d.m_rearWingDamage)}
+                    ${dmgRow('m_floorDamage<span class="rest-mark">R</span>',          d.m_floorDamage)}
+                    ${dmgRow('m_diffuserDamage<span class="rest-mark">R</span>',       d.m_diffuserDamage)}
+                    ${dmgRow('m_sidepodDamage<span class="rest-mark">R</span>',        d.m_sidepodDamage)}
+                </div>`;
+
+            // -- Power Unit & Gearbox --
+            document.getElementById('powerUnitContent').innerHTML = `
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 20px">
+                    <div>
+                        ${dmgRow('m_gearBoxDamage<span class="rest-mark">R</span>',  d.m_gearBoxDamage)}
+                        ${dmgRow('m_engineDamage<span class="rest-mark">R</span>',   d.m_engineDamage)}
+                        ${dmgRow('m_engineICEWear<span class="rest-mark">R</span>',  d.m_engineICEWear)}
+                        ${dmgRow('m_engineMGUHWear<span class="rest-mark">R</span>', d.m_engineMGUHWear)}
+                        ${dmgRow('m_engineMGUKWear<span class="rest-mark">R</span>', d.m_engineMGUKWear)}
+                        ${dmgRow('m_engineESWear<span class="rest-mark">R</span>',   d.m_engineESWear)}
+                        ${dmgRow('m_engineCEWear<span class="rest-mark">R</span>',   d.m_engineCEWear)}
+                        ${dmgRow('m_engineTCWear<span class="rest-mark">R</span>',   d.m_engineTCWear)}
+                    </div>
+                    <div>
+                        ${faultRow('m_drsFault<span class="rest-mark">R</span>',     d.m_drsFault)}
+                        ${faultRow('m_ersFault',     d.m_ersFault)}
+                        ${faultRow('m_engineBlown',  d.m_engineBlown)}
+                        ${faultRow('m_engineSeized', d.m_engineSeized)}
+                    </div>
+                </div>`;
+        }
+
+        // ── State ─────────────────────────────────────────────────────────────
+        const carCache         = {};  // carIdx → latest CarDamageData for that car
+        let selectedCar        = 0;
+        let playerIdx          = 255;
+        let player2Idx         = 255;
+        let totalPkts          = 0;
+        let built              = false;
+        let latestParticipants = null;
+
+        function isRestricted(carIdx) {
+            return latestParticipants?.m_participants?.[carIdx]?.m_yourTelemetry === 0;
+        }
+
+        function updateRestrictedBanner() {
+            const restricted = isRestricted(selectedCar);
+            document.getElementById('restrictedBanner').classList.toggle('visible', restricted);
+            document.getElementById('mainContent').classList.toggle('restricted-mode', restricted);
+        }
+
+        function buildSelector() {
+            const sel = document.getElementById('carSelect');
+            sel.innerHTML = '';
+            for (let i = 0; i < 22; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = `Car ${i}`;
+                sel.appendChild(opt);
+            }
+            if (playerIdx < 22) { sel.value = playerIdx; selectedCar = playerIdx; }
+        }
+
+        document.getElementById('carSelect').addEventListener('change', (e) => {
+            selectedCar = parseInt(e.target.value, 10);
+            updatePlayerIndicator();
+            updateRestrictedBanner();
+            renderSelected();
+        });
+
+        function updatePlayerIndicator() {
+            const el = document.getElementById('playerIndicator');
+            if (selectedCar === playerIdx)
+                el.innerHTML = '<span class="player-pill p1">Player 1</span>';
+            else if (selectedCar === player2Idx && player2Idx !== 255)
+                el.innerHTML = '<span class="player-pill p2">Player 2</span>';
+            else
+                el.innerHTML = '';
+        }
+
+        function renderSelected() {
+            updateRestrictedBanner();
+            const entry = carCache[selectedCar];
+            document.getElementById('carLastUpdated').textContent =
+                entry ? `Last received: ${entry.time}` : 'No packet received yet for this car';
+
+            if (!entry) {
+                ['tyresContent','bodyworkContent','powerUnitContent']
+                    .forEach(id => document.getElementById(id).innerHTML =
+                        '<div class="no-data-msg">No data received for this car yet.</div>');
+                return;
+            }
+
+            renderCar(entry.data);
+        }
+
+        // ── Socket ────────────────────────────────────────────────────────────
+        socket.on('f1_data', (data) => {
+            if (!data.m_header) return;
+
+            const hdr = data.m_header;
+            if (hdr.m_playerCarIndex !== undefined)          playerIdx  = hdr.m_playerCarIndex;
+            if (hdr.m_secondaryPlayerCarIndex !== undefined)  player2Idx = hdr.m_secondaryPlayerCarIndex;
+
+            // Track participants for restricted-telemetry detection
+            if (hdr.m_packetId === 4) {
+                latestParticipants = data;
+                updateRestrictedBanner();
+                return;
+            }
+
+            if (hdr.m_packetId !== 10) return;
+
+            if (!built) {
+                document.getElementById('waitingMsg').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                buildSelector();
+                // Default to player car
+                if (playerIdx < 22) {
+                    selectedCar = playerIdx;
+                    document.getElementById('carSelect').value = playerIdx;
+                }
+                built = true;
+            }
+
+            totalPkts++;
+            document.getElementById('totalPackets').textContent = totalPkts;
+            document.getElementById('lastPacketTime').textContent = new Date().toLocaleTimeString();
+            document.getElementById('playerCarIdx').textContent = playerIdx === 255 ? '--' : playerIdx;
+
+            // Packet 10 is an all-car packet — split per car from the array
+            const arr = data.m_carDamageData;
+            if (!Array.isArray(arr)) return;
+
+            for (let i = 0; i < arr.length; i++) {
+                if (arr[i]) carCache[i] = { data: arr[i], time: new Date().toLocaleTimeString() };
+            }
+
+            updatePlayerIndicator();
+            renderSelected();
+        });
+
+        console.log('[CarDamageDebug] Debug page loaded');
+    </script>
+</body>
+</html>

@@ -265,6 +265,7 @@ prompt.get(promptSchema, (err, result) => {
     app.get('/debug/participants-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'participants-debug.html')));        // Participants packet (ID 4)
     app.get('/debug/car-telemetry-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'car-telemetry-debug.html')));      // Car Telemetry packet (ID 6)
     app.get('/debug/car-status-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'car-status-debug.html')));            // Car Status packet (ID 7)
+    app.get('/debug/car-damage-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'car-damage-debug.html')));            // Car Damage packet (ID 10)
     app.get('/debug/session-history-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'session-history-debug.html')));  // Session History packet (ID 11)
     app.get('/debug/time-trial-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'time-trial-debug.html')));            // Time Trial packet (ID 14)
 
