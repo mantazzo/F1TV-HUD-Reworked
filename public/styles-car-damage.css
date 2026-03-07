@@ -8,13 +8,16 @@
 .overlay-container {
     position: relative;
     width: 280px;
-    height: 600px;
+    height: 0px;
+    top: -300px;
     overflow: hidden;
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: top 200ms ease, height 200ms ease, opacity 200ms ease;
 }
 
 .overlay-container.visible {
+    height: 600px;
+    top: 0px;
     opacity: 1;
 }
 
@@ -28,9 +31,9 @@
    ════════════════════════════════════════════════════════════════ */
 #cd-bg {
     width: 280px;
-    height: 600px;
+    height: 510px;
     left: 0;
-    top: 0;
+    top: 90px;
     background-color: rgb(18, 20, 26);
     z-index: 1;
 }
@@ -45,13 +48,15 @@
     background-repeat: no-repeat;
 }
 
-/* item_1_26: 280×90 at top:0 */
+/* item_1_26: 280×90 at top:0 — slides with the title */
 #cd-gradient-top {
     width: 280px;
     height: 90px;
     left: 0;
     top: 0;
-    opacity: 1;
+    opacity: 0;
+    transform: translateY(100%);
+    z-index: 0; /* same layer as #cd-title, gradient sits on top */
 }
 
 /* item_1_4r0: 280×50 at top:90 */
@@ -73,39 +78,51 @@
 }
 
 /* ════════════════════════════════════════════════════════════════
-   TITLE  — item_1_25_2r0 / item_1_25_3r0
+   TITLE  — combined from item_1_25_2r0 / item_1_25_3r0
+   Slides up on show, holds for 10 s, then slides back down.
    ════════════════════════════════════════════════════════════════ */
-#cd-title-car,
-#cd-title-damage {
+@keyframes cd-title-slide-in {
+    from { transform: translateY(100%);  opacity: 0; }
+    to   { transform: translateY(0);     opacity: 1; }
+}
+
+@keyframes cd-title-slide-out {
+    from { transform: translateY(0);    opacity: 1; }
+    to   { transform: translateY(100%); opacity: 0; }
+}
+
+#cd-title {
     left: 0;
+    top: 0;
     width: 280px;
+    height: 90px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
     font-family: 'F1TV-2022-Name', 'Formula1 Display', sans-serif;
     font-weight: 700;
     font-style: normal;
     font-size: 30px;
+    background-color: rgb(10, 10, 15);
     color: rgb(255, 0, 0);
-    text-align: center;
-    white-space: pre;
     line-height: 1;
-    z-index: 90;
+    z-index: 0; /* behind #cd-bg (1) */
+    opacity: 0;
+    transform: translateY(100%);
 }
 
-/* "CAR": 280×50 top:2 */
-#cd-title-car {
-    height: 50px;
-    top: 2px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+/* Triggered by JS when overlay shows */
+#cd-title.cd-title-enter,
+#cd-gradient-top.cd-title-enter {
+    animation: cd-title-slide-in 200ms ease-out forwards;
 }
 
-/* "DAMAGE": 280×60 top:32 */
-#cd-title-damage {
-    height: 60px;
-    top: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+/* Triggered by JS when overlay hides or 10 s elapses */
+#cd-title.cd-title-exit,
+#cd-gradient-top.cd-title-exit {
+    animation: cd-title-slide-out 200ms ease-in forwards;
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -464,7 +481,7 @@
     font-weight: 700;
     font-style: oblique;
     font-size: 30px;
-    color: rgb(246, 215, 44);  /* default Medium yellow, updated by JS */
+    color: rgb(255, 255, 255);  /* default White, updated by JS */
     text-align: center;
     white-space: pre;
     display: flex;

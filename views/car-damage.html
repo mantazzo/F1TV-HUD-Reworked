@@ -31,17 +31,15 @@
         <div class="cd-gradient" id="cd-gradient-top"></div>
 
         <!-- ── Title (item_1_25_2r0 / item_1_25_3r0) ── -->
-        <!-- "CAR":    280×50  left:0  top:2  F1TV-2022-Name bold 30px -->
-        <!-- "DAMAGE": 280×60  left:0  top:32 F1TV-2022-Name bold 30px -->
-        <div id="cd-title-car">CAR</div>
-        <div id="cd-title-damage">DAMAGE</div>
+        <!-- Combined: 280×90 at top:0, fades out after a delay -->
+        <div id="cd-title"><span>CAR</span><span>DAMAGE</span></div>
 
         <!-- ── Info gradient (item_1_4r0): 280×50 at top:90 ── -->
         <div class="cd-gradient" id="cd-gradient-info"></div>
 
         <!-- ── Driver last name (item_1_5r0): 280×40 left:-5 top:90 ── -->
         <!-- F1TV-2022 ObliqueBold 25px color rgb(31,91,198) center -->
-        <div id="cd-driver-name">VERSTAPPEN</div>
+        <div id="cd-driver-name">PLAYER</div>
 
         <!-- ═══════════════════════════════════════════════════════════════════
              CAR MODEL — item_1_24 container (300×450 canvas → scale 0.75)
@@ -152,10 +150,10 @@
 
         <!-- ── Tyre Compound (item_1_20r0r0): 280×35 left:-5 top:485 center ── -->
         <!-- F1TV-2022 ObliqueBold 30px compound colour -->
-        <div id="cd-compound">MEDIUM</div>
+        <div id="cd-compound">NO DATA</div>
 
         <!-- ── Tyre Age: 280×30 centered top:520, num (bold white) + LAPS (grey) ── -->
-        <div id="cd-tyre-age"><span id="cd-tyre-age-num">2</span><span id="cd-tyre-age-laps"> LAPS</span></div>
+        <div id="cd-tyre-age"><span id="cd-tyre-age-num">0</span><span id="cd-tyre-age-laps"> LAPS</span></div>
 
         <!-- ── Wear scale bar (item_1_7r0r0 children) ── -->
         <!-- Green  (item_1_12r0r0r0): 70×8   at (27.5,  555) rgb(0,255,0)        -->
@@ -191,16 +189,16 @@
 
         // ── Tyre compound lookup ──────────────────────────────────────────────
         const VISUAL_COMPOUND = {
-            7:  { code: 'I',  color: '#31AF49' },
-            8:  { code: 'W',  color: '#0073AD' },
-            15: { code: 'W',  color: '#0073AD' },
-            16: { code: 'S',  color: '#EC1C24' },
-            17: { code: 'M',  color: '#FFD604' },
-            18: { code: 'H',  color: '#F0F0EC' },
-            19: { code: 'SS', color: '#97528F' },
-            20: { code: 'S',  color: '#EC1C24' },
-            21: { code: 'M',  color: '#FFD604' },
-            22: { code: 'H',  color: '#F0F0EC' }
+            7:  { code: 'INTER',  color: '#31AF49' },
+            8:  { code: 'WET',  color: '#0073AD' },
+            15: { code: 'WET',  color: '#0073AD' },
+            16: { code: 'SOFT',  color: '#EC1C24' },
+            17: { code: 'MEDIUM',  color: '#FFD604' },
+            18: { code: 'HARD',  color: '#F0F0EC' },
+            19: { code: 'SUPERSOFT', color: '#97528F' },
+            20: { code: 'SOFT',  color: '#EC1C24' },
+            21: { code: 'MEDIUM',  color: '#FFD604' },
+            22: { code: 'HARD',  color: '#F0F0EC' }
         };
 
         // ── Driver / team state ───────────────────────────────────────────────
@@ -209,6 +207,10 @@
         let customDrivers = [];
         let formulaType   = DriverUtils.FORMULA_TYPE.F1_MODERN;
         let playerIndex   = -1;
+        let currentTeamId = null;
+        let primaryColor  = null;
+        let drsFault      = 0;
+        let rearWingDmg   = 0;
 
         async function loadDriverData() {
             try {
@@ -217,6 +219,17 @@
                 teamNames     = data.teamNames;
             } catch (e) {
                 console.error('[CarDamage] Error loading driver data:', e);
+            }
+        }
+
+        // ── Driver name colour ────────────────────────────────────────────────
+        function updateDriverNameColor() {
+            const el = document.getElementById('cd-driver-name');
+            if (!el) return;
+            if (currentTeamId !== null && teamNames?.[currentTeamId]?.OverridePrimaryColor) {
+                el.style.color = teamNames[currentTeamId].OverridePrimaryColor;
+            } else if (primaryColor) {
+                el.style.color = primaryColor;
             }
         }
 
@@ -244,38 +257,139 @@
             el.querySelector('.cd-pair-stk').style.borderColor    = `rgb(${rgb})`;
         }
 
-        /** 3-state image variant for most bodywork parts. */
+        /** Wings, Diffuser, Rear Wing: <1%=Green, <50%=Yellow, ≥50%=Red */
         function partVariant(pct) {
-            if (pct === 0) return 'Green';
+            if (pct < 1)   return 'Green';
             if (pct < 50)  return 'Yellow';
             return 'Red';
         }
 
-        /** 4-state image variant for the engine. */
-        function engineVariant(pct) {
-            if (pct === 0) return 'Green';
-            if (pct < 25)  return 'Yellow';
-            if (pct < 50)  return 'Orange';
+        /** Floor, Sidepods, Brakes: <25%=Green, <50%=Yellow, ≥50%=Red */
+        function heavyPartVariant(pct) {
+            if (pct < 25)  return 'Green';
+            if (pct < 50)  return 'Yellow';
             return 'Red';
         }
 
-        function updatePartImage(id, base, pct) {
-            const img = document.getElementById(id);
-            if (img) img.src = `/images/car-damage/${base}${partVariant(pct)}.png`;
+        /** Engine: <50%=Green, 50–70%=Yellow, 70–90%=Orange, ≥90%=Red */
+        function engineVariant(pct) {
+            if (pct < 50)  return 'Green';
+            if (pct < 70)  return 'Yellow';
+            if (pct < 90)  return 'Orange';
+            return 'Red';
         }
 
-        /** Text colour for tyre wear % labels (white → yellow → red). */
+        /** Base pair-colour applier — takes a pre-computed "r, g, b" string. */
+        function applyPairColor(id, rgb) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.querySelector('.cd-pair-bg').style.backgroundColor = `rgba(${rgb}, 0.3)`;
+            el.querySelector('.cd-pair-stk').style.borderColor    = `rgb(${rgb})`;
+        }
+
+        /** Brakes / Floor-style pair: <25%=green, <50%=yellow, ≥50%=red */
+        function heavyDmgRgb(pct) {
+            if (pct < 25) return '0, 255, 0';
+            if (pct < 50) return '255, 215, 0';
+            return '255, 0, 0';
+        }
+
+        /** Gearbox pair: same thresholds but yellow is #ffae00 */
+        function gearboxDmgRgb(pct) {
+            if (pct < 25) return '0, 255, 0';
+            if (pct < 50) return '255, 174, 0';
+            return '255, 0, 0';
+        }
+
+        function updatePartImage(id, base, pct, variantFn = partVariant) {
+            const img = document.getElementById(id);
+            if (img) img.src = `/images/car-damage/${base}${variantFn(pct)}.png`;
+        }
+
+        function updateRearWing() {
+            const img = document.getElementById('cd-rear-wing');
+            if (!img) return;
+            img.src = `/images/car-damage/rWing${drsFault ? 'Red' : partVariant(rearWingDmg)}.png`;
+        }
+
+        /**
+         * Smoothly interpolates tyre wear colour across three stops:
+         *   0%  wear → #00FF00 (green)
+         *   30% wear → #FFD700 (yellow)
+         *   70% wear → #FF0000 (red)
+         * Returns a bare "r, g, b" string usable in both rgb() and rgba().
+         */
+        function wearRgbStr(pct) {
+            const lerp = (a, b, t) => Math.round(a + (b - a) * t);
+            let r, g, b;
+            if (pct <= 30) {
+                const t = pct / 30;
+                r = lerp(0x00, 0xFF, t);
+                g = lerp(0xFF, 0xD7, t);
+                b = 0;
+            } else {
+                const t = Math.min((pct - 30) / 40, 1);
+                r = 0xFF;
+                g = lerp(0xD7, 0x00, t);
+                b = 0;
+            }
+            return `${r}, ${g}, ${b}`;
+        }
+
         function wearTextColor(pct) {
-            if (pct < 35) return '#ffffff';
-            if (pct < 65) return '#FFD604';
-            if (pct < 85) return '#FF8C00';
-            return '#EC1C24';
+            return `rgb(${wearRgbStr(pct)})`;
+        }
+
+        /** Apply wear-gradient bg (0.3 opacity) + stroke to a tyre .cd-dmg-pair. */
+        function setTyrePairColor(id, pct) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const rgb = wearRgbStr(pct);
+            el.querySelector('.cd-pair-bg').style.backgroundColor = `rgba(${rgb}, 0.3)`;
+            el.querySelector('.cd-pair-stk').style.borderColor    = `rgb(${rgb})`;
+        }
+
+        // ── Title slide animation ─────────────────────────────────────────────
+        const titleEls = [
+            document.getElementById('cd-title'),
+            document.getElementById('cd-gradient-top')
+        ];
+        let titleTimer = null;
+
+        function titleSlideIn() {
+            titleEls.forEach(el => {
+                if (!el) return;
+                el.classList.remove('cd-title-exit');
+                // Force reflow so re-adding the class restarts the animation
+                void el.offsetWidth;
+                el.classList.add('cd-title-enter');
+            });
+            clearTimeout(titleTimer);
+            titleTimer = setTimeout(titleSlideOut, 10200);
+        }
+
+        function titleSlideOut() {
+            clearTimeout(titleTimer);
+            titleTimer = null;
+            titleEls.forEach(el => {
+                if (!el) return;
+                el.classList.remove('cd-title-enter');
+                void el.offsetWidth;
+                el.classList.add('cd-title-exit');
+            });
         }
 
         // ── Socket handlers ───────────────────────────────────────────────────
         socket.on('overlay_config', (config) => {
             if (config.overlays?.['car-damage']) {
-                overlayContainer.classList.toggle('visible', !!config.overlays['car-damage'].visible);
+                const shouldBeVisible = !!config.overlays['car-damage'].visible;
+                const wasVisible = overlayContainer.classList.contains('visible');
+                overlayContainer.classList.toggle('visible', shouldBeVisible);
+                if (shouldBeVisible && !wasVisible) {
+                    titleSlideIn();
+                } else if (!shouldBeVisible && wasVisible) {
+                    titleSlideOut();
+                }
             }
         });
 
@@ -294,7 +408,7 @@
                     loadDriverData();
                 }
 
-                // Packet 4 — Participants (driver name)
+                // Packet 4 — Participants (driver name + team colour)
                 if (pid === 4) {
                     const participant = data.m_participants?.[playerIndex];
                     if (participant) {
@@ -303,6 +417,19 @@
                             const el = document.getElementById('cd-driver-name');
                             el.textContent = name.toUpperCase();
                             textFit(el, { minFontSize: 12, maxFontSize: 25, multiLine: false, widthOnly: true, alignHoriz: true });
+                        }
+
+                        // Team ID
+                        if (typeof participant.m_teamId === 'number' && participant.m_teamId !== currentTeamId) {
+                            currentTeamId = participant.m_teamId;
+                            updateDriverNameColor();
+                        }
+
+                        // Livery primary colour
+                        const livery = participant.m_liveryColour?.[0];
+                        if (livery && typeof livery.red === 'number') {
+                            primaryColor = `rgb(${livery.red}, ${livery.green}, ${livery.blue})`;
+                            updateDriverNameColor();
                         }
                     }
                 }
@@ -318,7 +445,9 @@
                             compEl.style.color  = info.color;
                         }
                         if (typeof cs.m_tyresAgeLaps === 'number') {
-                            document.getElementById('cd-tyre-age-num').textContent = cs.m_tyresAgeLaps;
+                            const age = cs.m_tyresAgeLaps;
+                            document.getElementById('cd-tyre-age-num').textContent = age;
+                            document.getElementById('cd-tyre-age-laps').textContent = age === 1 ? ' LAP' : ' LAPS';
                         }
                     }
                 }
@@ -339,28 +468,38 @@
                     // Per-corner wear % text
                     [['fl', wFL], ['fr', wFR], ['rl', wRL], ['rr', wRR]].forEach(([c, w]) => {
                         const el = document.getElementById(`cd-pct-${c}`);
-                        if (el) { el.textContent = `${Math.round(w)}%`; el.style.color = wearTextColor(w); }
+                        if (el) {
+                            el.textContent    = `${Math.round(100 - w)}%`;
+                            el.style.color    = wearTextColor(w);
+                            el.style.fontSize = w === 0 ? '20px' : '25px'; /* If no wear, lower the size, otherwise we can increase the text size a little */
+                        }
                     });
 
                     // Tyre + brake damage colours
-                    setPairColor('cd-tyre-fl', tdFL); setPairColor('cd-brake-fl', bdFL);
-                    setPairColor('cd-tyre-fr', tdFR); setPairColor('cd-brake-fr', bdFR);
-                    setPairColor('cd-tyre-rl', tdRL); setPairColor('cd-brake-rl', bdRL);
-                    setPairColor('cd-tyre-rr', tdRR); setPairColor('cd-brake-rr', bdRR);
+                    setTyrePairColor('cd-tyre-fl', wFL); applyPairColor('cd-brake-fl', heavyDmgRgb(bdFL));
+                    setTyrePairColor('cd-tyre-fr', wFR); applyPairColor('cd-brake-fr', heavyDmgRgb(bdFR));
+                    setTyrePairColor('cd-tyre-rl', wRL); applyPairColor('cd-brake-rl', heavyDmgRgb(bdRL));
+                    setTyrePairColor('cd-tyre-rr', wRR); applyPairColor('cd-brake-rr', heavyDmgRgb(bdRR));
 
                     // Bodywork images
                     updatePartImage('cd-lf-wing',   'LfWing',   dmg.m_frontLeftWingDamage  ?? 0);
                     updatePartImage('cd-rf-wing',   'RfWing',   dmg.m_frontRightWingDamage ?? 0);
-                    updatePartImage('cd-floor',     'Floor',    dmg.m_floorDamage          ?? 0);
-                    updatePartImage('cd-l-sidepod', 'Lsidepod', dmg.m_sidepodDamage        ?? 0);
-                    updatePartImage('cd-r-sidepod', 'Rsidepod', dmg.m_sidepodDamage        ?? 0);
+                    updatePartImage('cd-floor',     'Floor',    dmg.m_floorDamage          ?? 0, heavyPartVariant);
+                    updatePartImage('cd-l-sidepod', 'Lsidepod', dmg.m_sidepodDamage        ?? 0, heavyPartVariant);
+                    updatePartImage('cd-r-sidepod', 'Rsidepod', dmg.m_sidepodDamage        ?? 0, heavyPartVariant);
                     updatePartImage('cd-diffuser',  'Diffuser', dmg.m_diffuserDamage       ?? 0);
-                    updatePartImage('cd-rear-wing', 'rWing',    dmg.m_rearWingDamage       ?? 0);
+
+                    // Rear wing — also respects DRS fault state
+                    rearWingDmg = dmg.m_rearWingDamage ?? 0;
+                    if (typeof dmg.m_drsFault === 'number' && dmg.m_drsFault !== drsFault) {
+                        drsFault = dmg.m_drsFault;
+                    }
+                    updateRearWing();
 
                     const engEl = document.getElementById('cd-engine');
                     if (engEl) engEl.src = `/images/car-damage/Engine${engineVariant(dmg.m_engineDamage ?? 0)}.png`;
 
-                    setPairColor('cd-gearbox', dmg.m_gearBoxDamage ?? 0);
+                    applyPairColor('cd-gearbox', gearboxDmgRgb(dmg.m_gearBoxDamage ?? 0));
                 }
 
             } catch (e) {
