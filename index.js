@@ -47,29 +47,47 @@ function saveOverlayConfig(config) {
 let overlayConfig = loadOverlayConfig();
 
 // Prompt for port
-prompt.start();
-const promptSchema = {
-    properties: {
-        port: {
-            description: 'Please enter the Game Port that you want to use',
-            type: 'integer',
-            default: 20777,
-            required: false
+// Recursively prompts for IP + port for each requested redirect
+function collectForwardAddresses(total, collected, callback) {
+    if (collected.length === total) {
+        callback(collected);
+        return;
+    }
+    const idx = collected.length + 1;
+    prompt.get({
+        properties: {
+            ip: {
+                description: `UDP Forwarding ${idx} of ${total} — IP address`,
+                type: 'string',
+                default: '127.0.0.1',
+                required: true,
+                pattern: /^(\d{1,3}\.){3}\d{1,3}$/,
+                message: 'Must be a valid IPv4 address (e.g. 127.0.0.1)'
+            },
+            port: {
+                description: `UDP Forwarding ${idx} of ${total} — Port`,
+                type: 'integer',
+                required: true
+            }
         }
-    }
-};
+    }, (err, result) => {
+        if (err) {
+            console.error('Error getting forwarding address:', err);
+            process.exit(1);
+        }
+        collected.push({ ip: result.ip, port: result.port });
+        collectForwardAddresses(total, collected, callback);
+    });
+}
 
-prompt.get(promptSchema, (err, result) => {
-    if (err) {
-        console.error('Error getting port:', err);
-        process.exit(1);
+function startServer(portNumber, forwardAddresses) {
+    // Set up F1 telemetry client
+    const clientOptions = { port: portNumber };
+    if (forwardAddresses.length > 0) {
+        clientOptions.forwardAddresses = forwardAddresses;
+        console.log(`UDP Forwarding active — forwarding to: ${forwardAddresses.map(a => `${a.ip}:${a.port}`).join(', ')}`);
     }
-    const portNumber = result.port || 20777;
-    console.log(`Using port ${portNumber} for telemetry`);
-
-    // Set up F1 telemetry client with dynamic port
-    const client = new F1TelemetryClient({ port: portNumber });
-    // Might add a UDP redirection option later as well
+    const client = new F1TelemetryClient(clientOptions);
 
     // Handle Socket.IO connections
     io.on('connection', (socket) => {
@@ -274,4 +292,68 @@ prompt.get(promptSchema, (err, result) => {
     app.get('/', (req, res) => res.redirect('/speedometer'));
     
     server.listen(3000, () => console.log('Overlays at http://localhost:3000/ (For example, http://localhost:3000/speedometer) \nController available at http://localhost:3000/controller/controller-extended \nReminder - you can press Ctrl+C to stop the system manually.'));
+}
+
+// ── Startup prompt chain ──────────────────────────────────────────────────────
+prompt.start();
+
+prompt.get({
+    properties: {
+        port: {
+            description: 'Please enter the Game Port that you want to use',
+            type: 'integer',
+            default: 20777,
+            required: false
+        }
+    }
+}, (err, result) => {
+    if (err) {
+        console.error('Error getting port:', err);
+        process.exit(1);
+    }
+    const portNumber = result.port || 20777;
+    console.log(`Using port ${portNumber} for telemetry`);
+
+    prompt.get({
+        properties: {
+            setupForwarding: {
+                description: 'Set up UDP Forwarding? (y/n)',
+                type: 'string',
+                default: 'n',
+                pattern: /^[yYnN]$/,
+                message: 'Please enter y or n',
+                required: false
+            }
+        }
+    }, (err, result) => {
+        if (err) {
+            console.error('Error during forwarding prompt:', err);
+            process.exit(1);
+        }
+
+        if ((result.setupForwarding || 'n').toLowerCase() !== 'y') {
+            startServer(portNumber, []);
+            return;
+        }
+
+        prompt.get({
+            properties: {
+                count: {
+                    description: 'How many forwarding targets?',
+                    type: 'integer',
+                    default: 1,
+                    minimum: 1,
+                    required: true
+                }
+            }
+        }, (err, result) => {
+            if (err) {
+                console.error('Error getting forwarding count:', err);
+                process.exit(1);
+            }
+            collectForwardAddresses(result.count || 1, [], (addresses) => {
+                startServer(portNumber, addresses);
+            });
+        });
+    });
 });
