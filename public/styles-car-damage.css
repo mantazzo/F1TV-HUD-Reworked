@@ -79,7 +79,7 @@
 
 /* ════════════════════════════════════════════════════════════════
    TITLE  — combined from item_1_25_2r0 / item_1_25_3r0
-   Slides up on show, holds for 10 s, then slides back down.
+   Slides up on show, holds for 8 s, then slides back down.
    ════════════════════════════════════════════════════════════════ */
 @keyframes cd-title-slide-in {
     from { transform: translateY(100%);  opacity: 0; }
@@ -119,7 +119,7 @@
     animation: cd-title-slide-in 200ms ease-out forwards;
 }
 
-/* Triggered by JS when overlay hides or 10 s elapses */
+/* Triggered by JS when overlay hides or 8 s elapses */
 #cd-title.cd-title-exit,
 #cd-gradient-top.cd-title-exit {
     animation: cd-title-slide-out 200ms ease-in forwards;

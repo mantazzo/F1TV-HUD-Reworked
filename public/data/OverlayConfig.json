@@ -52,7 +52,11 @@
     },
     "car-damage": {
       "visible": true,
-      "name": "Car Damage"
+      "name": "Car Damage",
+      "autoDisplay": true,
+      "autoMode": "on-car-damage",
+      "showRemainingLife": true,
+      "useTeamColor": true
     }
   }
 }

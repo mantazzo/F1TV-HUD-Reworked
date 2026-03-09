@@ -89,6 +89,41 @@
             </div>
         </section>
 
+        <section class="overlay-section" id="car-damage-options-section">
+            <h2>Car Damage Options</h2>
+            <div class="option-row">
+                <label class="toggle-label">
+                    <input type="checkbox" id="car-damage-team-color-toggle" class="toggle-checkbox">
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-text">Use Team Color</span>
+                </label>
+            </div>
+            <div class="option-row">
+                <label class="toggle-label">
+                    <input type="checkbox" id="car-damage-remaining-life-toggle" class="toggle-checkbox">
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-text">Show Remaining Tyre Life Instead</span>
+                </label>
+            </div>
+            <div class="option-row">
+                <label class="toggle-label">
+                    <input type="checkbox" id="car-damage-auto-display-toggle" class="toggle-checkbox">
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-text">Automatic Display</span>
+                </label>
+            </div>
+            <div class="option-row">
+                <label class="select-label">
+                    <span class="select-text">Auto-popup:</span>
+                    <select id="car-damage-auto-mode" class="select-dropdown">
+                        <option value="never">Never</option>
+                        <option value="on-car-damage">On Car Damage</option>
+                        <option value="on-any-damage">On Any Damage</option>
+                    </select>
+                </label>
+            </div>
+        </section>
+
         <section class="overlay-section" id="lap-timer-options-section">
             <h2>Lap Timer Options</h2>
             <div class="option-row">
@@ -338,6 +373,55 @@
             pitWindowAutoModeSelect.value = pitWindowConfig.autoMode || 'none';
         }
 
+        // Car damage auto display toggle handling
+        const carDamageAutoDisplayToggle   = document.getElementById('car-damage-auto-display-toggle');
+        const carDamageAutoModeSelect      = document.getElementById('car-damage-auto-mode');
+        const carDamageRemainingLifeToggle  = document.getElementById('car-damage-remaining-life-toggle');
+        const carDamageTeamColorToggle      = document.getElementById('car-damage-team-color-toggle');
+
+        carDamageAutoDisplayToggle.addEventListener('change', () => {
+            socket.emit('config_update', {
+                overlay: 'car-damage',
+                property: 'autoDisplay',
+                value: carDamageAutoDisplayToggle.checked
+            });
+        });
+
+        carDamageAutoModeSelect.addEventListener('change', () => {
+            socket.emit('config_update', {
+                overlay: 'car-damage',
+                property: 'autoMode',
+                value: carDamageAutoModeSelect.value
+            });
+        });
+
+        carDamageRemainingLifeToggle.addEventListener('change', () => {
+            socket.emit('config_update', {
+                overlay: 'car-damage',
+                property: 'showRemainingLife',
+                value: carDamageRemainingLifeToggle.checked
+            });
+        });
+
+        carDamageTeamColorToggle.addEventListener('change', () => {
+            socket.emit('config_update', {
+                overlay: 'car-damage',
+                property: 'useTeamColor',
+                value: carDamageTeamColorToggle.checked
+            });
+        });
+
+        // Update car damage options when config changes
+        function updateCarDamageOptions() {
+            if (!currentConfig || !currentConfig.overlays || !currentConfig.overlays['car-damage']) return;
+
+            const carDamageConfig = currentConfig.overlays['car-damage'];
+            carDamageAutoDisplayToggle.checked  = !!carDamageConfig.autoDisplay;
+            carDamageAutoModeSelect.value        = carDamageConfig.autoMode || 'never';
+            carDamageRemainingLifeToggle.checked = carDamageConfig.showRemainingLife !== false;
+            carDamageTeamColorToggle.checked     = carDamageConfig.useTeamColor !== false;
+        }
+
         // Lap timer visibility mode handling
         const lapTimerVisibilityMode = document.getElementById('lap-timer-visibility-mode');
         
@@ -418,6 +502,7 @@
             updateLapTimerOptions();
             updateSpeedometerOptions();
             updateSessionInfoOptions();
+            updateCarDamageOptions();
         };
 
         // Stop server button

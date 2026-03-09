@@ -212,6 +212,13 @@
         let drsFault      = 0;
         let rearWingDmg   = 0;
 
+        // ── Auto-display state ────────────────────────────────────────────────
+        let cdConfig = { autoDisplay: false, autoMode: 'never', showRemainingLife: true, useTeamColor: true };
+        let autoHideTimer       = null;
+        let dmgStateInitialized = false;
+        let prevDmgState        = {};
+        let previousVisibility  = false;
+
         async function loadDriverData() {
             try {
                 const data = await DriverUtils.loadDriverData(formulaType);
@@ -226,6 +233,10 @@
         function updateDriverNameColor() {
             const el = document.getElementById('cd-driver-name');
             if (!el) return;
+            if (!cdConfig.useTeamColor) {
+                el.style.color = 'rgb(255, 255, 255)';
+                return;
+            }
             if (currentTeamId !== null && teamNames?.[currentTeamId]?.OverridePrimaryColor) {
                 el.style.color = teamNames[currentTeamId].OverridePrimaryColor;
             } else if (primaryColor) {
@@ -234,29 +245,6 @@
         }
 
         // ── Colour helpers ────────────────────────────────────────────────────
-        /**
-         * Returns an RGB string matching SimHub's colour scale:
-         *   0 %       → rgb(0,255,0)        green
-         *   1–49 %    → rgb(175,122,37)     orange-gold
-         *   50–84 %   → rgb(255,100,0)      orange
-         *   ≥ 85 %    → rgb(255,0,0)        red
-         */
-        function dmgRgb(pct) {
-            if (pct < 1)  return '0, 255, 0';
-            if (pct < 50) return '175, 122, 37';
-            if (pct < 85) return '255, 100, 0';
-            return '255, 0, 0';
-        }
-
-        /** Apply bg (0.3 opacity) + stroke colour to a .cd-dmg-pair element. */
-        function setPairColor(id, pct) {
-            const el = document.getElementById(id);
-            if (!el) return;
-            const rgb = dmgRgb(pct);
-            el.querySelector('.cd-pair-bg').style.backgroundColor = `rgba(${rgb}, 0.3)`;
-            el.querySelector('.cd-pair-stk').style.borderColor    = `rgb(${rgb})`;
-        }
-
         /** Wings, Diffuser, Rear Wing: <1%=Green, <50%=Yellow, ≥50%=Red */
         function partVariant(pct) {
             if (pct < 1)   return 'Green';
@@ -349,6 +337,100 @@
             el.querySelector('.cd-pair-stk').style.borderColor    = `rgb(${rgb})`;
         }
 
+        // ── Show / hide helpers ────────────────────────────────────────────
+        function showOverlay() {
+            overlayContainer.classList.add('visible');
+            titleSlideIn();
+            if (cdConfig.autoDisplay) {
+                clearTimeout(autoHideTimer);
+                autoHideTimer = setTimeout(hideOverlay, 15000);
+            }
+        }
+
+        function hideOverlay() {
+            clearTimeout(autoHideTimer);
+            autoHideTimer = null;
+            overlayContainer.classList.remove('visible');
+            titleSlideOut();
+        }
+
+        // ── Auto-show (Packet 10 damage threshold detection) ──────────────────
+        /**
+         * Compares current damage values against previous state.
+         * Emits a config_update to show the overlay when a threshold is newly crossed.
+         *
+         * "on-car-damage" — triggers on bodywork entering yellow state:
+         *   Wings / Diffuser / Rear Wing: ≥ 1 %
+         *   Floor / Sidepods / Brakes:    ≥ 25 %
+         *   Engine:                        ≥ 50 %
+         *   Gearbox:                       ≥ 25 %
+         *
+         * "on-any-damage" — same as above, plus:
+         *   Tyre wear: every 5 % increment of the highest-wear tyre.
+         */
+        function checkAutoShow(dmg, wFL, wFR, wRL, wRR, bdFL, bdFR, bdRL, bdRR) {
+            if (!cdConfig.autoDisplay || cdConfig.autoMode === 'never') return;
+            if (overlayContainer.classList.contains('visible')) return;
+
+            const cur = {
+                lfWing:   dmg.m_frontLeftWingDamage  ?? 0,
+                rfWing:   dmg.m_frontRightWingDamage ?? 0,
+                floor:    dmg.m_floorDamage          ?? 0,
+                sidepod:  dmg.m_sidepodDamage        ?? 0,
+                diffuser: dmg.m_diffuserDamage       ?? 0,
+                rearWing: dmg.m_rearWingDamage       ?? 0,
+                engine:   dmg.m_engineDamage         ?? 0,
+                gearbox:  dmg.m_gearBoxDamage        ?? 0,
+                brakeFL: bdFL, brakeFR: bdFR, brakeRL: bdRL, brakeRR: bdRR
+            };
+
+            // First packet — record baseline without triggering
+            if (!dmgStateInitialized) {
+                prevDmgState = { ...cur };
+                if (cdConfig.autoMode === 'on-any-damage') {
+                    prevDmgState.wearBucket = Math.floor(Math.max(wFL, wFR, wRL, wRR) / 5);
+                }
+                dmgStateInitialized = true;
+                return;
+            }
+
+            let shouldShow = false;
+
+            // Wings / Diffuser / Rear Wing: turn yellow at ≥ 1 %
+            for (const key of ['lfWing', 'rfWing', 'diffuser', 'rearWing']) {
+                if (prevDmgState[key] < 1 && cur[key] >= 1) { shouldShow = true; break; }
+            }
+
+            // Floor / Sidepods / Brakes: turn yellow at ≥ 25 %
+            if (!shouldShow) {
+                for (const key of ['floor', 'sidepod', 'brakeFL', 'brakeFR', 'brakeRL', 'brakeRR']) {
+                    if (prevDmgState[key] < 25 && cur[key] >= 25) { shouldShow = true; break; }
+                }
+            }
+
+            // Engine: ≥ 50 %  |  Gearbox: ≥ 25 %
+            if (!shouldShow) {
+                if (prevDmgState.engine  < 50 && cur.engine  >= 50) shouldShow = true;
+                if (prevDmgState.gearbox < 25 && cur.gearbox >= 25) shouldShow = true;
+            }
+
+            // Tyre wear: every 5 % of the highest-wear tyre (on-any-damage only)
+            if (!shouldShow && cdConfig.autoMode === 'on-any-damage') {
+                const maxWear   = Math.max(wFL, wFR, wRL, wRR);
+                const newBucket = Math.floor(maxWear / 5);
+                if (newBucket > 0 && newBucket > (prevDmgState.wearBucket ?? 0)) {
+                    shouldShow = true;
+                }
+                prevDmgState.wearBucket = newBucket;
+            }
+
+            Object.assign(prevDmgState, cur);
+
+            if (shouldShow) {
+                showOverlay();
+            }
+        }
+
         // ── Title slide animation ─────────────────────────────────────────────
         const titleEls = [
             document.getElementById('cd-title'),
@@ -365,7 +447,7 @@
                 el.classList.add('cd-title-enter');
             });
             clearTimeout(titleTimer);
-            titleTimer = setTimeout(titleSlideOut, 10200);
+            titleTimer = setTimeout(titleSlideOut, 8200);
         }
 
         function titleSlideOut() {
@@ -382,13 +464,28 @@
         // ── Socket handlers ───────────────────────────────────────────────────
         socket.on('overlay_config', (config) => {
             if (config.overlays?.['car-damage']) {
-                const shouldBeVisible = !!config.overlays['car-damage'].visible;
-                const wasVisible = overlayContainer.classList.contains('visible');
-                overlayContainer.classList.toggle('visible', shouldBeVisible);
-                if (shouldBeVisible && !wasVisible) {
-                    titleSlideIn();
-                } else if (!shouldBeVisible && wasVisible) {
-                    titleSlideOut();
+                const cfg = config.overlays['car-damage'];
+                const prevAutoDisplay = cdConfig.autoDisplay;
+                cdConfig = { autoDisplay: !!cfg.autoDisplay, autoMode: cfg.autoMode || 'never', showRemainingLife: cfg.showRemainingLife !== false, useTeamColor: cfg.useTeamColor !== false };
+                updateDriverNameColor();
+
+                const newVisibility = !!cfg.visible;
+
+                if (newVisibility !== previousVisibility) {
+                    previousVisibility = newVisibility;
+                    if (newVisibility) {
+                        showOverlay();
+                    } else {
+                        hideOverlay();
+                    }
+                } else if (cdConfig.autoDisplay && !prevAutoDisplay && newVisibility) {
+                    // autoDisplay was just switched on while overlay is already showing—start timer
+                    clearTimeout(autoHideTimer);
+                    autoHideTimer = setTimeout(hideOverlay, 15000);
+                } else if (!cdConfig.autoDisplay && prevAutoDisplay) {
+                    // autoDisplay switched off — cancel any pending hide timer
+                    clearTimeout(autoHideTimer);
+                    autoHideTimer = null;
                 }
             }
         });
@@ -469,7 +566,7 @@
                     [['fl', wFL], ['fr', wFR], ['rl', wRL], ['rr', wRR]].forEach(([c, w]) => {
                         const el = document.getElementById(`cd-pct-${c}`);
                         if (el) {
-                            el.textContent    = `${Math.round(100 - w)}%`;
+                            el.textContent    = `${Math.round(cdConfig.showRemainingLife ? 100 - w : w)}%`;
                             el.style.color    = wearTextColor(w);
                             el.style.fontSize = w === 0 ? '20px' : '25px'; /* If no wear, lower the size, otherwise we can increase the text size a little */
                         }
@@ -500,6 +597,8 @@
                     if (engEl) engEl.src = `/images/car-damage/Engine${engineVariant(dmg.m_engineDamage ?? 0)}.png`;
 
                     applyPairColor('cd-gearbox', gearboxDmgRgb(dmg.m_gearBoxDamage ?? 0));
+
+                    checkAutoShow(dmg, wFL, wFR, wRL, wRR, bdFL, bdFR, bdRL, bdRR);
                 }
 
             } catch (e) {
