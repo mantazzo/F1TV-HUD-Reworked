@@ -169,7 +169,7 @@
 
 /* MFD widget — item_1_24_23: 164×450, centered within 300px car canvas */
 #cd-mfd-container {
-    left: 65px;
+    left: 66px;
     top: 0;
     width: 164px;
     height: 450px;
@@ -439,9 +439,9 @@
 }
 
 #cd-guide-tl { left: 40px;  top: 105px; border-width: 2px 0 0 2px; }
-#cd-guide-tr { left: 235px; top: 105px; border-width: 2px 2px 0 0; }
+#cd-guide-tr { left: 236px; top: 105px; border-width: 2px 2px 0 0; }
 #cd-guide-bl { left: 40px;  top: 370px; border-width: 0 0 2px 2px; }
-#cd-guide-br { left: 235px; top: 370px; border-width: 0 2px 2px 0; }
+#cd-guide-br { left: 236px; top: 370px; border-width: 0 2px 2px 0; }
 
 /* ════════════════════════════════════════════════════════════════
    TYRE WEAR % TEXT (on 300px canvas, native)
@@ -465,9 +465,9 @@
 }
 
 #cd-pct-fl { left: 5px;   top: 130px; }
-#cd-pct-fr { left: 225px; top: 130px; }
+#cd-pct-fr { left: 226px; top: 130px; }
 #cd-pct-rl { left: 5px;   top: 330px; }
-#cd-pct-rr { left: 225px; top: 330px; }
+#cd-pct-rr { left: 226px; top: 330px; }
 
 /* ════════════════════════════════════════════════════════════════
    COMPOUND TEXT: 280×35 left:-5 top:485

@@ -48,7 +48,7 @@
       "visible": true,
       "name": "Pit Window",
       "autoDisplay": true,
-      "autoMode": "none"
+      "autoMode": "idealLap-1"
     },
     "car-damage": {
       "visible": true,

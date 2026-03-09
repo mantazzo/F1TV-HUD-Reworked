@@ -559,9 +559,10 @@
                     [['fl', wFL], ['fr', wFR], ['rl', wRL], ['rr', wRR]].forEach(([c, w]) => {
                         const el = document.getElementById(`cd-pct-${c}`);
                         if (el) {
-                            el.textContent    = `${Math.round(cdConfig.showRemainingLife ? 100 - w : w)}%`;
+                            const displayed    = Math.round(cdConfig.showRemainingLife ? 100 - w : w);
+                            el.textContent    = `${displayed}%`;
                             el.style.color    = wearTextColor(w);
-                            el.style.fontSize = w === 0 ? '20px' : '25px'; /* If no wear, lower the size, otherwise we can increase the text size a little */
+                            el.style.fontSize = displayed === 100 ? '20px' : '25px'; /* At 100, reduce size to fit; otherwise use larger size */
                         }
                     });
 
