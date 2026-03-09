@@ -38,7 +38,10 @@ Use these overlays in recording software (e.g. OBS). Size is described in (Width
 - Pit Window
     - http://localhost:3000/pit-window
     - Size: 310 x 340
-- Position Debug **(DEBUG ONLY)**
+- Car Damage
+    - http://localhost:3000/car-damage
+    - Size: 280 x 600
+- Position Debug **(DEBUG OVERLAY ONLY)**
     - http://localhost:3000/debug/position-debug
     - Debug only, useful for turn position setup
 

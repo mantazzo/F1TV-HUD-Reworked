@@ -17,7 +17,7 @@
     - Might come back to it later to expand functionality even more
 - Pit Timer
     - Remade in full, uses Primary Color from the game, can be overwritten in JSON
-    - Only shows up when in race and when in pitlane
+    - Only shows up when in race and only when in pitlane
     - Holds the pit stop values for 6 seconds when exiting pits, then hides
     - Can toggle between using Team Color for the Pit Stop Timer in Extended Controller
     - Currently does not show if a penalty is being served (might change that in the future)
@@ -81,6 +81,17 @@
     - Blinking animation is also active for 2 seconds after overlay is shown
     - Has an automatic display option as well (same as in original SimHub version)
     - Might need some extra work in the future - F2 SuperSoft was not considered currently and there's no real F2 support anyway
+- Car Damage
+    - Fully Remade and Upgraded
+    - Shows either current tyre wear, or remaining tyre life (controlled through the Extended Controller)
+    - Shows damage to Wings, Sidepods, Floor, Diffuser, Rear Wing, Engine (overall) and Brakes (will likely be 0% all the time, but may be useful with some game mods...)
+    - Can hide automatically after showing up (extra option toggle, controlled through Extended Controller)
+    - Can show up automatically on any car part damage received (any Wings (Front + Rear) or Diffuser damage, 25%+ damage on Sidepods and Floor)
+        - Or it can show up on any damage - that will include tyre wear! (Will show up every 5% of highest worn tyre, additionally)
+    - Driver Name uses textFit to fit the field and also uses Primary Color from the game (can be overwritten in JSON) or uses White color as default
+    - Current Tyre Compound and Tyre Age is shown as well
+    - Additionally, the Title automatically hides after 8 seconds of showing up
+    - Further improvements may be done in the future (like temperatures)
 
 ## Overlay Controllers
 
@@ -89,9 +100,10 @@
 - Extended Controller
     - Self-made Controller, with primary aim of introducing more functions or controls while keeping the setup relatively easy
     - Somewhat limited functionality at the moment, but hey, it works, and it's pretty easy to expand!
+    - Will hopefully be expanded with various functionality from F1TV plugin settings later on
     - Also offers a simple "Shutdown" button
 
-## Debug overlays (for public use)
+## Debug overlays (for private use)
 
 - Position Debug
     - Shows current position on track (meters)
@@ -101,17 +113,16 @@
 
 ## Currently Working On
 
-Pit Window (completed)
+Car Damage (finishing up)
 
 ## Next Planned Overlay
 
-Car Damage (first of the bigger overlays, I suppose - or it could be Driver Name overlay instead... I'll have to try Sonnet 4.6 for next one)
+??? (Currently planning my further actions)
 
 ## Not started
 
 In no particular order:
 - Battery Level (from older version, so might need some extra work)
-- Car Damage (car damage, tyre wear, etc)
 - Driver Ahead and Behind (the three versions of the overlay)
 - Driver Name (and relevant info extensions like fastest lap and stuff)
 - Leaderboard (Last Name version is much older and might need to be reworked to an extent; probably most difficult overlay to do)
