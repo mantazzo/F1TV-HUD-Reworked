@@ -11,44 +11,37 @@
 </head>
 <body>
     <!--
-    Overlay canvas: 280 × 600 px — all coordinates taken directly from SimHub source.
-
-    Transform chain for car model elements:
-      Elements in item_1_24_23 (MFD widget, 164px canvas):
-        finalX = localX * 0.75 + 66.5     (item_1_24 offset 27.5 + item_1_24_23 offset 52*0.75=39)
-        finalY = localY * 0.75 + 141.25   (item_1_24 top:141.25)
-
-      Elements directly in item_1_24 (Car widget, 300px canvas):
-        finalX = localX * 0.75 + 27.5
-        finalY = localY * 0.75 + 141.25
+    Overlay canvas: 280 × 600 px.
+    Car model elements live inside #cd-car-container (CSS scale 0.75, placed at left:27.5 top:141.25).
+    All child coordinates inside #cd-car-container and #cd-mfd-container are native (pre-scale) SimHub values.
     -->
     <div class="overlay-container">
 
-        <!-- ── Background (item_1_2r0): 280×600 rgb(18,20,26) ── -->
+        <!-- ── Background: 280×510 at top:90, rgb(18,20,26) ── -->
         <div id="cd-bg"></div>
 
-        <!-- ── Top title gradient (item_1_26): 280×90 at top:0 ── -->
+        <!-- ── Top title gradient: 280×90 at top:0 ── -->
         <div class="cd-gradient" id="cd-gradient-top"></div>
 
-        <!-- ── Title (item_1_25_2r0 / item_1_25_3r0) ── -->
-        <!-- Combined: 280×90 at top:0, fades out after a delay -->
+        <!-- ── Title: 280×90 at top:0 ── -->
+        <!-- Slides in when the overlay shows; slides out after ~8 s or when the overlay hides. -->
         <div id="cd-title"><span>CAR</span><span>DAMAGE</span></div>
 
-        <!-- ── Info gradient (item_1_4r0): 280×50 at top:90 ── -->
+        <!-- ── Info gradient: 280×50 at top:90 ── -->
         <div class="cd-gradient" id="cd-gradient-info"></div>
 
-        <!-- ── Driver last name (item_1_5r0): 280×40 left:-5 top:90 ── -->
-        <!-- F1TV-2022 ObliqueBold 25px color rgb(31,91,198) center -->
+        <!-- ── Driver last name: 280×40 top:90 ── -->
+        <!-- F1TV-2022 ObliqueBold 25px; colour set dynamically from team/livery data -->
         <div id="cd-driver-name">PLAYER</div>
 
         <!-- ═══════════════════════════════════════════════════════════════════
-             CAR MODEL — item_1_24 container (300×450 canvas → scale 0.75)
+             CAR MODEL (300×450 canvas → scale 0.75)
              Placed at (27.5, 141.25) on the overlay.
              All child coords are native (pre-scale) values from SimHub source.
              ═══════════════════════════════════════════════════════════════════ -->
         <div id="cd-car-container">
 
-            <!-- Stroke guide corners — item_1_24_3r0 (300px canvas) -->
+            <!-- Stroke guide corners -->
             <!-- TL: 20×20 at (40,105)   TR: 20×20 at (235,105) -->
             <!-- BL: 20×20 at (40,370)   BR: 20×20 at (235,370) -->
             <div class="cd-guide" id="cd-guide-tl"></div>
@@ -56,7 +49,7 @@
             <div class="cd-guide" id="cd-guide-bl"></div>
             <div class="cd-guide" id="cd-guide-br"></div>
 
-            <!-- Tyre wear % text — item_1_24_8r0 (300px canvas) -->
+            <!-- Tyre wear % text -->
             <!-- FL: 65×30 at (5,130)   FR: 65×30 at (225,130) -->
             <!-- RL: 65×30 at (5,330)   RR: 65×30 at (225,330) -->
             <div class="cd-wear-pct" id="cd-pct-fl">0%</div>
@@ -64,24 +57,24 @@
             <div class="cd-wear-pct" id="cd-pct-rl">0%</div>
             <div class="cd-wear-pct" id="cd-pct-rr">0%</div>
 
-            <!-- MFD widget — item_1_24_23 (164×450 at left:52, top:0) -->
+            <!-- MFD widget (164×450, centered at left:65) -->
             <div id="cd-mfd-container">
 
-                <!-- Frame ×2 (item_1_24_23_2/3r0): 101×235 at (32, 13) opacity 0.35 -->
+                <!-- Frame ×2: 101×235 at (32, 13) opacity 0.35 -->
                 <img class="cd-car-part" id="cd-frame-a" src="/images/car-damage/car_front.png" alt="">
                 <img class="cd-car-part" id="cd-frame-b" src="/images/car-damage/car_front.png" alt="">
 
-                <!-- Deflectors (item_1_24_23_4r0): 95.9×35 at (34.05, 144) opacity 0.35 -->
+                <!-- Deflectors: 95.9×35 at (34.05, 144) opacity 0.35 -->
                 <img class="cd-car-part" id="cd-deflectors" src="/images/car-damage/deflectors.png" alt="">
 
-                <!-- LfWing   (item_1_24_23_5r0):  79.9×71.4   at (2,     0)   -->
-                <!-- RfWing   (item_1_24_23_6r0):  79.9×71.4   at (83,    0)   -->
-                <!-- Floor    (item_1_24_23_7r0):  134.3×210.8 at (15,  164)   -->
-                <!-- LSidepod (item_1_24_23_8r0):  45.9×145.35 at (27,  229)   -->
-                <!-- RSidepod (item_1_24_23_9r0):  45.9×145.35 at (92,  229)   -->
-                <!-- Diffuser (item_1_24_23_10r0): 62.9×21.25  at (50.55,381)  -->
-                <!-- rWing    (item_1_24_23_11r0): 103.7×44.2  at (30.15,405)  -->
-                <!-- Engine   (item_1_24_23_12r0): 52×61       at (56,  255)   -->
+                <!-- LfWing   :  79.9×71.4   at (2,     0)   -->
+                <!-- RfWing   :  79.9×71.4   at (83,    0)   -->
+                <!-- Floor    :  134.3×210.8 at (15,  164)   -->
+                <!-- LSidepod :  45.9×145.35 at (27,  229)   -->
+                <!-- RSidepod :  45.9×145.35 at (92,  229)   -->
+                <!-- Diffuser : 62.9×21.25  at (50.55,381)  -->
+                <!-- rWing    : 103.7×44.2  at (30.15,405)  -->
+                <!-- Engine   : 52×61       at (56,  255)   -->
                 <img class="cd-car-part" id="cd-lf-wing"   src="/images/car-damage/LfWingGreen.png"   alt="">
                 <img class="cd-car-part" id="cd-rf-wing"   src="/images/car-damage/RfWingGreen.png"   alt="">
                 <img class="cd-car-part" id="cd-floor"     src="/images/car-damage/FloorGreen.png"    alt="">
@@ -91,14 +84,14 @@
                 <img class="cd-car-part" id="cd-rear-wing" src="/images/car-damage/rWingGreen.png"    alt="">
                 <img class="cd-car-part" id="cd-engine"    src="/images/car-damage/EngineGreen.png"   alt="">
 
-                <!-- Gearbox (item_1_24_23_14/15r0r0): 15×54 r2 border:3 at (75, 320) -->
+                <!-- Gearbox: 15×54 r2 border:3 at (75, 320) -->
                 <div class="cd-dmg-pair" id="cd-gearbox">
                     <div class="cd-pair-bg"></div>
                     <div class="cd-pair-stk"></div>
                 </div>
 
-                <!-- FL Tyre  (item_1_24_23_18/19): 32×60 r8 border:3 at (3,   76) -->
-                <!-- FL Brake (item_1_24_23_21/22): 9×21  r2 border:3 at (36,  95) -->
+                <!-- FL Tyre  : 32×60 r8 border:3 at (3,   76) -->
+                <!-- FL Brake : 9×21  r2 border:3 at (36,  95) -->
                 <div class="cd-dmg-pair" id="cd-tyre-fl">
                     <div class="cd-pair-bg"></div>
                     <div class="cd-pair-stk"></div>
@@ -108,8 +101,8 @@
                     <div class="cd-pair-stk"></div>
                 </div>
 
-                <!-- FR Tyre  (item_1_24_23_24/25): 32×60 r8 border:3 at (132, 76) -->
-                <!-- FR Brake (item_1_24_23_27/28): 9×21  r2 border:3 at (122, 95) -->
+                <!-- FR Tyre  : 32×60 r8 border:3 at (132, 76) -->
+                <!-- FR Brake : 9×21  r2 border:3 at (122, 95) -->
                 <div class="cd-dmg-pair" id="cd-tyre-fr">
                     <div class="cd-pair-bg"></div>
                     <div class="cd-pair-stk"></div>
@@ -119,8 +112,8 @@
                     <div class="cd-pair-stk"></div>
                 </div>
 
-                <!-- RR Tyre  (item_1_24_23_30/31): 34×60 r8 border:3 at (130, 359) -->
-                <!-- RR Brake (item_1_24_23_33/34): 12×21 r2 border:3 at (116, 381) -->
+                <!-- RR Tyre  : 34×60 r8 border:3 at (130, 359) -->
+                <!-- RR Brake : 12×21 r2 border:3 at (116, 381) -->
                 <div class="cd-dmg-pair" id="cd-tyre-rr">
                     <div class="cd-pair-bg"></div>
                     <div class="cd-pair-stk"></div>
@@ -130,8 +123,8 @@
                     <div class="cd-pair-stk"></div>
                 </div>
 
-                <!-- RL Tyre  (item_1_24_23_36/37): 34×60 r8 border:3 at (0,  359) -->
-                <!-- RL Brake (item_1_24_23_39/40): 12×21 r2 border:3 at (36, 381) -->
+                <!-- RL Tyre  : 34×60 r8 border:3 at (0,  359) -->
+                <!-- RL Brake : 12×21 r2 border:3 at (36, 381) -->
                 <div class="cd-dmg-pair" id="cd-tyre-rl">
                     <div class="cd-pair-bg"></div>
                     <div class="cd-pair-stk"></div>
@@ -145,36 +138,36 @@
 
         </div><!-- #cd-car-container -->
 
-        <!-- ── Compound area gradient (item_1_23r0r0): 280×50 at top:485 ── -->
+        <!-- ── Compound area gradient: 280×50 at top:485 ── -->
         <div class="cd-gradient" id="cd-gradient-compound"></div>
 
-        <!-- ── Tyre Compound (item_1_20r0r0): 280×35 left:-5 top:485 center ── -->
+        <!-- ── Tyre Compound: 280×35 left:-5 top:485 center ── -->
         <!-- F1TV-2022 ObliqueBold 30px compound colour -->
         <div id="cd-compound">NO DATA</div>
 
         <!-- ── Tyre Age: 280×30 centered top:520, num (bold white) + LAPS (grey) ── -->
         <div id="cd-tyre-age"><span id="cd-tyre-age-num">0</span><span id="cd-tyre-age-laps"> LAPS</span></div>
 
-        <!-- ── Wear scale bar (item_1_7r0r0 children) ── -->
-        <!-- Green  (item_1_12r0r0r0): 70×8   at (27.5,  555) rgb(0,255,0)        -->
-        <!-- Orange (item_1_13r0r0r0): 70×8   at (97.5,  555) rgb(175,122,37)     -->
-        <!-- Red    (item_1_9r0r0r0):  70.2×8 at (167.5, 555) rgb(255,0,0)        -->
+        <!-- ── Wear scale bar ── -->
+        <!-- Green  : 70×8   at (27.5,  555) rgb(0,255,0)        -->
+        <!-- Orange : 70×8   at (97.5,  555) rgb(175,122,37)     -->
+        <!-- Red    :  70.2×8 at (167.5, 555) rgb(255,0,0)        -->
         <div id="cd-wb-green"></div>
         <div id="cd-wb-orange"></div>
         <div id="cd-wb-red"></div>
 
         <!-- Marker lines -->
-        <!-- left  (item_1_10r0r0r0): border-left  20×15 at (27.5,  555) -->
-        <!-- mid   (item_1_11r0r0r0): border-left  20×14 at (132.5, 556) -->
-        <!-- right (item_1_8r0r0r0):  border-right 20×15 at (217.5, 555) -->
+        <!-- left  : border-left  20×15 at (27.5,  555) -->
+        <!-- mid   : border-left  20×14 at (132.5, 556) -->
+        <!-- right : border-right 20×15 at (217.5, 555) -->
         <div class="cd-wb-marker" id="cd-wbm-left"></div>
         <div class="cd-wb-marker" id="cd-wbm-mid"></div>
         <div class="cd-wb-marker" id="cd-wbm-right"></div>
 
         <!-- Wear scale labels + % combined -->
-        <!-- "0"   (item_1_16 + item_1_17): 60×20 at (-2.5,  575) -->
-        <!-- "50"  (item_1_15 + item_1_18): 70×20 at (97.5,  575) -->
-        <!-- "100" (item_1_14 + item_1_19): 60×20 at (197.5, 575) -->
+        <!-- "0"   : 60×20 at (-2.5,  575) -->
+        <!-- "50"  : 70×20 at (97.5,  575) -->
+        <!-- "100" : 60×20 at (197.5, 575) -->
         <div class="cd-wb-label" id="cd-wbl-0">0<span class="cd-wb-pct-inline">%</span></div>
         <div class="cd-wb-label" id="cd-wbl-50">50<span class="cd-wb-pct-inline">%</span></div>
         <div class="cd-wb-label" id="cd-wbl-100">100<span class="cd-wb-pct-inline">%</span></div>
@@ -357,7 +350,7 @@
         // ── Auto-show (Packet 10 damage threshold detection) ──────────────────
         /**
          * Compares current damage values against previous state.
-         * Emits a config_update to show the overlay when a threshold is newly crossed.
+         * Calls showOverlay() when a damage threshold is newly crossed.
          *
          * "on-car-damage" — triggers on bodywork entering yellow state:
          *   Wings / Diffuser / Rear Wing: ≥ 1 %

@@ -27,7 +27,7 @@
 }
 
 /* ════════════════════════════════════════════════════════════════
-   BACKGROUND — item_1_2r0: 280×600 left:0 top:0
+   BACKGROUND: 280×510 left:0 top:90
    ════════════════════════════════════════════════════════════════ */
 #cd-bg {
     width: 280px;
@@ -39,7 +39,7 @@
 }
 
 /* ════════════════════════════════════════════════════════════════
-   GRADIENT DIVS  (background-image, matching SimHub rendering)
+   GRADIENT DIVS
    ════════════════════════════════════════════════════════════════ */
 .cd-gradient {
     z-index: 5;
@@ -78,7 +78,7 @@
 }
 
 /* ════════════════════════════════════════════════════════════════
-   TITLE  — combined from item_1_25_2r0 / item_1_25_3r0
+   TITLE
    Slides up on show, holds for 8 s, then slides back down.
    ════════════════════════════════════════════════════════════════ */
 @keyframes cd-title-slide-in {
@@ -126,8 +126,8 @@
 }
 
 /* ════════════════════════════════════════════════════════════════
-   DRIVER NAME — item_1_5r0: 280×40 left:-5 top:90
-   F1TV-2022 ObliqueBold 25px  rgb(31,91,198)  center
+   DRIVER NAME: 280×40 top:90
+   F1TV-2022 ObliqueBold 25px  colour set dynamically by JS
    ════════════════════════════════════════════════════════════════ */
 #cd-driver-name {
     width: 280px;
@@ -149,7 +149,7 @@
 }
 
 /* ════════════════════════════════════════════════════════════════
-   CAR MODEL CONTAINER — item_1_24
+   CAR MODEL CONTAINER
    300×450 canvas, scale(0.75), origin left top, placed at (27.5, 141.25).
    All child elements use native (pre-scale) SimHub coordinates.
    ════════════════════════════════════════════════════════════════ */
@@ -427,7 +427,7 @@
 }
 
 /* ════════════════════════════════════════════════════════════════
-   STROKE GUIDE CORNERS — item_1_24_3r0 (on 300px canvas, native)
+   STROKE GUIDE CORNERS (on 300px canvas, native)
    ════════════════════════════════════════════════════════════════ */
 .cd-guide {
     width: 20px;
@@ -444,8 +444,9 @@
 #cd-guide-br { left: 235px; top: 370px; border-width: 0 2px 2px 0; }
 
 /* ════════════════════════════════════════════════════════════════
-   TYRE WEAR % TEXT — item_1_24_8r0 (on 300px canvas, native)
-   65×30, F1TV-2022 ObliqueBold 20px
+   TYRE WEAR % TEXT (on 300px canvas, native)
+   65×30, F1TV-2022 ObliqueBold; font size set dynamically by JS
+   (20px at full life, 25px when worn)
    ════════════════════════════════════════════════════════════════ */
 .cd-wear-pct {
     width: 65px;
@@ -469,7 +470,7 @@
 #cd-pct-rr { left: 225px; top: 330px; }
 
 /* ════════════════════════════════════════════════════════════════
-   COMPOUND TEXT — item_1_20r0r0: 280×35 left:-5 top:485
+   COMPOUND TEXT: 280×35 left:-5 top:485
    F1TV-2022 ObliqueBold 30px  compound colour  center
    ════════════════════════════════════════════════════════════════ */
 #cd-compound {
@@ -491,9 +492,9 @@
 }
 
 /* ════════════════════════════════════════════════════════════════
-   TYRE AGE — item_1_21r0r0 + item_1_22r0r0
+   TYRE AGE
+   Single centered container: num (bold white) + LAP(S) (grey)
    ════════════════════════════════════════════════════════════════ */
-/* Number: 110×30 left:0 top:520  right-aligned */
 #cd-tyre-age {
     width: 280px;
     height: 30px;
@@ -523,7 +524,7 @@
 }
 
 /* ════════════════════════════════════════════════════════════════
-   WEAR SCALE BAR — item_1_7r0r0 children
+   WEAR SCALE BAR
    ════════════════════════════════════════════════════════════════ */
 
 /* Green segment — item_1_12r0r0r0: 70×8 at (27.5, 555) */
@@ -566,21 +567,21 @@
     z-index: 60;
 }
 
-/* Left marker — item_1_10: border-left only, 20×15 at (27.5, 555) */
+/* Left marker: border-left only, 20×15 at (27.5, 555) */
 #cd-wbm-left {
     left: 28px;
     top: 555px;
     border-width: 0 0 0 1px;
 }
 
-/* Mid marker — item_1_11: border-left only, 20×15 at (132.5, 556) */
+/* Mid marker: border-left only, 20×15 at (132.5, 556) */
 #cd-wbm-mid {
     left: 132.5px;
     top: 556px;
     border-width: 0 0 0 1px;
 }
 
-/* Right marker — item_1_8: border-right only, 20×15 at (217.5, 555) */
+/* Right marker: border-right only, 20×15 at (217.5, 555) */
 #cd-wbm-right {
     left: 217px;
     top: 555px;
