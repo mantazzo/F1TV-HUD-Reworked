@@ -14,9 +14,7 @@ This project is worked on with Windows systems in mind - it may work on other sy
 
 1. **Install Node.js on Windows.**  
    I would recommend using tools like [Nodist](https://github.com/nodists/nodist) (used personally) or [NVM for Windows](https://github.com/coreybutler/nvm-windows) for easier installation and version management. Any option works, as long as you can run commands like `node` or `npm`.  
-   I used the latest LTS version (v24.13.0 at the time of writing) when setting up, but most recent versions should work.
-
-   Previously, [Bun Runtime](https://bun.sh/) was used as well, however, there are some issues that make certain overlays unusable after some time (at least at the moment). It might be revisited if there are any updates to the parser and/or Runtime, however, for the time being, it is now considered unsupported.
+   I used the latest LTS version (v24.14.0 at the time of writing) when setting up, but most recent versions should work.
 
 2. **Clone the repository or download the latest version.**  
    You can clone with `git clone https://github.com/mantazzo/F1TV-HUD-Reworked.git` or download the ZIP file [by clicking on the text here](https://github.com/mantazzo/F1TV-HUD-Reworked/archive/refs/heads/main.zip).
@@ -36,6 +34,16 @@ This project is worked on with Windows systems in mind - it may work on other sy
 
 7. **Access the overlays.**  
    Open a browser and go to `http://localhost:3000` to see the default page (Speedometer overlay). Check the [Available Overlays](https://github.com/mantazzo/F1TV-HUD-Reworked/blob/main/AVAILABLE_OVERLAYS.md) page for all currently available overlays that can be used, with size references. You can use these in tools like OBS to enhance your streams or recordings.
+
+## Quick Setup
+
+If you're not feeling comfortable with all the extensive setup, I have now provided an alternative quicker approach:
+
+1. **Run the "install.bat" script.** 
+This will execute the *"install.ps1"* Powershell script, which will download the standalone binary of Node.js (latest LTS version, currently it's v24.14.0) and set it up in a "runtime/" folder, and also will set up the project's dependencies.
+
+2. **Run the "run.bat" script.** 
+This will execute the *"run.ps1"* Powershell script, which will run the project using the downloaded standalone binary. No other setup is required!
 
 ## Configuration
 - Ensure telemetry is enabled in F1 25 and set to port you entered in the Terminal.
