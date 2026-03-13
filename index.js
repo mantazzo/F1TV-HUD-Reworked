@@ -268,6 +268,7 @@ function startServer(portNumber, forwardAddresses) {
     app.get('/message-box', (req, res) => res.sendFile(path.join(__dirname, 'views', 'message-box.html')));
     app.get('/mini-leaderboard', (req, res) => res.sendFile(path.join(__dirname, 'views', 'mini-leaderboard.html')));
     app.get('/session-info', (req, res) => res.sendFile(path.join(__dirname, 'views', 'session-info.html')));
+    app.get('/leaderboard', (req, res) => res.sendFile(path.join(__dirname, 'views', 'leaderboard.html')));
 
     // Controllers
     app.get('/controller/controller-extended', (req, res) => res.sendFile(path.join(__dirname, 'views', 'controller', 'controller-extended.html'))); 

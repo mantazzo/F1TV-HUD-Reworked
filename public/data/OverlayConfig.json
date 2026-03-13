@@ -57,6 +57,10 @@
       "autoMode": "on-car-damage",
       "showRemainingLife": true,
       "useTeamColor": true
+    },
+    "leaderboard": {
+      "visible": true,
+      "name": "Leaderboard"
     }
   }
 }

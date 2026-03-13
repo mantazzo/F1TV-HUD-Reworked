@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard</title>
+    <link rel="stylesheet" href="/fonts.css">
+    <link rel="stylesheet" href="/styles-leaderboard.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/textfit@2.4.0/textFit.min.js"></script>
+</head>
+<body>
+    <!--
+    Overlay canvas: 241×646 px  (native 482×1291 at scale 0.5).
+    All coordinates inside #lb-container are native (pre-scale) SimHub values.
+    -->
+    <div class="overlay-container" id="lb-overlay">
+        <div id="lb-container">
+
+            <!-- ══ Background & Borders (item_1_3r0r0) ══════════════════════ -->
+
+            <!-- ThickStroke flags border (item_1_4r0r0r0): 331×1290 at left:3, top:1.5 -->
+            <div id="lb-flags-border">
+                <!-- Flags animation (item_1_4r0r0r0_1): 333×1187 at top:1, opacity:0.95 -->
+                <div id="lb-flags-img"></div>
+                <!-- ThickStroke texture (item_1_4r0r0r0_2): 332×1186 at top:1, opacity:0.05 -->
+                <div id="lb-thick-stroke-bg"></div>
+                <!-- Border rectangle (item_1_4r0r0r0_3): 332×1186.5 at top:1, blurred, opacity:0.1 -->
+                <div id="lb-border-rect"></div>
+            </div>
+
+            <!-- Main dark panel (item_1_5r0r0r0): 315×1149 at left:19, top:22 -->
+            <div id="lb-main-bg"></div>
+
+            <!-- Formation lap background variant (item_1_6r0r0r0): hidden until formation lap -->
+            <div id="lb-formation-bg"></div>
+
+            <!-- Position number column background (item_1_7r0r0r0): 48×1020 at left:26, top:146 -->
+            <div id="lb-pos-col-bg"></div>
+
+            <!-- Header / Laps bar (item_1_8r0r0r0): 306×50 at left:27, top:97 ═══════════════ -->
+            <div id="lb-header">
+                <!-- Header background image (item_1_8r0r0r0_1): LapBG.png -->
+                <div id="lb-header-img"></div>
+                <!-- Bottom shadow gradient (item_1_8r0r0r0_2): Gradient.png, rotated 180° -->
+                <div id="lb-header-gradient"></div>
+                <!-- Finished session banner (item_1_8r0r0r0_3): Finished.png — opacity:0 until session end -->
+                <div id="lb-finished-img"></div>
+
+                <!-- Timed sessions: session time remaining (item_1_8r0r0r0_4_2r0) -->
+                <!-- 140×50 at left:84 — F1TV-2022-ObliqueBold 32px red, centered -->
+                <div id="lb-session-time">0:00</div>
+
+                <!-- Race: LAP X / Y (item_1_8r0r0r0_5): 185×30 at left:61.5, top:10 -->
+                <div id="lb-race-laps">
+                    <span id="lb-lap-label">LAP</span>
+                    <span id="lb-lap-current">1</span>
+                    <span id="lb-lap-total">/58</span>
+                </div>
+
+                <!-- Safety car / VSC team banner (item_1_8r0r0r0_6): 308×53 at left:0 — hidden by default -->
+                <div id="lb-sc-banner">
+                    <!-- Background (item_1_8r0r0r0_6_1): BG.png, 309×53 at left:1 -->
+                    <div id="lb-sc-bg"></div>
+                    <!-- Full-size team display (item_1_8r0r0r0_6_2): 309×53 -->
+                    <div id="lb-sc-team">
+                        <!-- Team name (item_1_8r0r0r0_6_3r0): Optima 37px centered -->
+                        <div id="lb-sc-team-name">SAFETY CAR</div>
+                        <!-- Team logo (item_1_8r0r0r0_6_4r0): Mercedes.png 270×24 — hidden; shown when team logo available -->
+                        <div id="lb-sc-team-logo"></div>
+                    </div>
+                    <!-- Compact pane (item_1_8r0r0r0_6_5): alternative layout — hidden -->
+                    <div id="lb-sc-pane">
+                        <!-- Smaller team name (item_1_8r0r0r0_6_6r0): Optima 22px centered -->
+                        <div id="lb-sc-pane-name">SAFETY CAR</div>
+                        <!-- Smaller team logo (item_1_8r0r0r0_6_7r0): Mercedes.png 160×16 -->
+                        <div id="lb-sc-pane-logo"></div>
+                    </div>
+                </div>
+
+                <!-- Session name label — unknown/time trial (item_1_8r0r0r0_7): 200×34 at left:20, top:9 -->
+                <div id="lb-session-label">SESSION</div>
+            </div>
+
+            <!-- ══ Session layer (item_1_9r0r0) ══════════════════════════════ -->
+
+            <!-- Sprint logo (item_1_10r0r0r0): Sprint.png  151.58×30.21 at left:177, top:50  hidden by default -->
+            <div id="lb-sprint-logo"></div>
+
+            <!-- Session name (item_1_11r0r0r0 / _12r0r0r0 combined):
+                 135×40 at left:189, top:46  Formula1 Display 900 37px  grey  centered
+                 Initial text: NO DATA; updated by JS when session data arrives -->
+            <div id="lb-session-name">NO DATA</div>
+
+            <!-- Battery widget (item_1_13r0r0 → item_1_14r0r0r0_1):
+                 JS-generated rows, 80×40 per row at 50px stride, left:334, top:167
+                 hidden until ERS data available -->
+            <div id="lb-battery"></div>
+
+            <!-- Penalties widget (item_1_14r0r0r0_90):
+                 JS-generated rows, 145×40 per row at 50px stride, left:334, top:167
+                 Each row: Penalty_BG + shadow + Penalty icon + value text -->
+            <div id="lb-penalty"></div>
+
+            <!-- Fastest Lap Logo widget (item_1_14r0r0r0_157):
+                 JS-generated rows, 35×40 per row at 50px stride, left:334, top:167
+                 Shown during races only for the car holding the fastest lap -->
+            <div id="lb-fl-logo"></div>
+
+            <!-- Vertical gradient — normal (item_1_26r0r0r0): Gradient_Vertical.png
+                 38.75×1145 at left:295, top:21, opacity:0.4 -->
+            <div id="lb-gradient-vertical"></div>
+
+            <!-- Vertical gradient — Formation Lap only (item_1_27r0r0r0): Gradient_Vertical.png
+                 38×1245 at left:295, top:146, opacity:0.4  hidden by default -->
+            <div id="lb-gradient-vertical-formation"></div>
+
+            <!-- FlagsBorder overlay widget (item_1_34r0r0r0r0): 333×1290 at left:0, top:3
+                 Sits on top of all driver rows. JS swaps visibility based on flag/session state. -->
+            <div id="lb-deco-border-widget">
+                <!-- Normal: grey CSS border (item_1_34r0r0r0r0_2r0) — always visible -->
+                <div id="lb-deco-border"></div>
+                <!-- Formation Lap: grey CSS border, bottom half only (item_1_34r0r0r0r0_3r0) -->
+                <div id="lb-deco-border-formation"></div>
+                <!-- Race Finished: red CSS border (item_1_34r0r0r0r0_4r0) -->
+                <div id="lb-deco-border-finished"></div>
+                <!-- Safety Car / VSC: two copies of Border_SC.png for animation (item_1_34r0r0r0r0_6r0r0_1 & _2) -->
+                <div id="lb-deco-border-sc"></div>
+                <div id="lb-deco-border-sc-2"></div>
+                <!-- Yellow Flag: Border_Yellow.png, top portion only (item_1_34r0r0r0r0_8r0r0_1) -->
+                <div id="lb-deco-border-yellow"></div>
+                <!-- Green Flag: Border_Green.png, top portion only (item_1_34r0r0r0r0_10r0r0_1) -->
+                <div id="lb-deco-border-green"></div>
+            </div>
+
+            <!-- Series logo (item_1_36r0): F1.png  140.8×36.08 at left:35, top:46 -->
+            <div id="lb-series-logo"></div>
+
+            <!-- Series logo F2 (item_1_37r0): F2.png  172.15×77.275 at left:20, top:24  hidden by default -->
+            <div id="lb-series-logo-f2"></div>
+
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        socket.emit('identify', 'Leaderboard');
+
+        // ── Session type helpers ───────────────────────────────────────────
+        const RACE_TYPES  = new Set([15, 16, 17]);                           // Race, Race 2, Race 3
+        const TIMED_TYPES = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]); // Practice / Quali / Sprint
+
+        const SESSION_LABELS = {
+            1:  'PRACTICE 1',     2:  'PRACTICE 2',       3:  'PRACTICE 3',  4: 'PRACTICE',
+            5:  'Q1',             6:  'Q2',               7:  'Q3',          8: 'QUALIFYING',
+            9:  'QUALIFYING',     18: 'TIME TRIAL',
+            10: 'SPRINT SHOOTOUT', 11: 'SPRINT SHOOTOUT', 12: 'SPRINT SHOOTOUT',
+            13: 'SPRINT SHOOTOUT', 14: 'SPRINT SHOOTOUT',
+        };
+
+        // ── Element refs ───────────────────────────────────────────────────
+        const elOverlay      = document.getElementById('lb-overlay');
+        const elSessionTime  = document.getElementById('lb-session-time');
+        const elRaceLaps     = document.getElementById('lb-race-laps');
+        const elLapCurrent   = document.getElementById('lb-lap-current');
+        const elLapTotal     = document.getElementById('lb-lap-total');
+        const elSessionLabel = document.getElementById('lb-session-label');
+        const elSessionName  = document.getElementById('lb-session-name');
+        const elBattery      = document.getElementById('lb-battery');
+        const elPenalty      = document.getElementById('lb-penalty');
+        const elFlLogo       = document.getElementById('lb-fl-logo');
+
+        // ── Battery rows — pre-generate one row per car slot ─────────────────────
+        const NUM_CARS = 20;
+        const batteryRows = Array.from({ length: NUM_CARS }, (_, i) => {
+            const row = document.createElement('div');
+            row.className = 'lb-battery-row';
+            row.style.top = `${i * 50}px`;
+
+            const img = document.createElement('div');
+            img.className = 'lb-battery-img';
+
+            const gauge = document.createElement('div');
+            gauge.className = 'lb-battery-gauge';
+            const gaugeFill = document.createElement('div');
+            gaugeFill.className = 'lb-battery-gauge-fill';
+            gaugeFill.style.width = '0%';
+            gauge.appendChild(gaugeFill);
+
+            const text = document.createElement('div');
+            text.className = 'lb-battery-text';
+            text.textContent = '0%';
+
+            row.appendChild(img);
+            row.appendChild(gauge);
+            row.appendChild(text);
+            elBattery.appendChild(row);
+            return { gaugeFill, text };
+        });
+
+        // ── Penalty rows — pre-generate one row per car slot ──────────────────────
+        const penaltyRows = Array.from({ length: NUM_CARS }, (_, i) => {
+            const row = document.createElement('div');
+            row.className = 'lb-penalty-row';
+            row.style.top = `${i * 50}px`;
+
+            const bg = document.createElement('div');
+            bg.className = 'lb-penalty-bg';
+
+            const shadow = document.createElement('div');
+            shadow.className = 'lb-penalty-shadow';
+
+            const icon = document.createElement('div');
+            icon.className = 'lb-penalty-icon';
+
+            const value = document.createElement('div');
+            value.className = 'lb-penalty-value';
+            value.textContent = '3s';
+
+            row.appendChild(bg);
+            row.appendChild(shadow);
+            row.appendChild(icon);
+            row.appendChild(value);
+            elPenalty.appendChild(row);
+            return { value };
+        });
+
+        // ── Fastest Lap Logo rows — pre-generate one row per car slot ────────────
+        const flLogoRows = Array.from({ length: NUM_CARS }, (_, i) => {
+            const row = document.createElement('div');
+            row.className = 'lb-fl-logo-row';
+            row.style.top = `${i * 50}px`;
+
+            const icon = document.createElement('div');
+            icon.className = 'lb-fl-logo-icon';
+
+            row.appendChild(icon);
+            elFlLogo.appendChild(row);
+            return { row };
+        });
+
+        // ── State ──────────────────────────────────────────────────────────
+        let sessionType = 0;
+        let totalLaps   = 0;
+        let currentLap  = 0;
+        const carPositions = new Array(NUM_CARS).fill(0); // carIdx → race position (1-based)
+
+        function fitSessionName() {
+            textFit(elSessionName, { minFontSize: 10, maxFontSize: 37, multiLine: false, widthOnly: true, alignHoriz: true });
+        }
+
+        // Run once on load so "NO DATA" is fitted from the start
+        fitSessionName();
+
+        function formatSessionTime(seconds) {
+            if (seconds <= 0) return '0:00';
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = Math.floor(seconds % 60);
+            if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            return `${m}:${s.toString().padStart(2, '0')}`;
+        }
+
+        function updateHeaderDisplay() {
+            const isRace  = RACE_TYPES.has(sessionType);
+            const isTimed = TIMED_TYPES.has(sessionType);
+
+            elSessionTime.style.display  = isTimed              ? 'flex'  : 'none';
+            elRaceLaps.style.display     = isRace               ? 'block' : 'none';
+            elSessionLabel.style.display = (!isRace && !isTimed) ? 'flex'  : 'none';
+
+            if (isRace) {
+                elLapCurrent.textContent = currentLap || 1;
+                elLapTotal.textContent   = `/${totalLaps}`;
+            }
+            if (!isRace && !isTimed) {
+                elSessionLabel.textContent = SESSION_LABELS[sessionType] ?? 'SESSION';
+            }
+        }
+
+        // ── Packet handling ────────────────────────────────────────────────
+        socket.on('f1_data', (data) => {
+            if (!data?.m_header) return;
+            const pid = data.m_header.m_packetId;
+
+            // Packet ID 1 — Session
+            if (pid === 1) {
+                sessionType = data.m_sessionType    ?? 0;
+                totalLaps   = data.m_totalLaps      ?? 0;
+                const timeLeft = data.m_sessionTimeLeft ?? 0;
+                elSessionTime.textContent = formatSessionTime(timeLeft);
+                updateHeaderDisplay();
+            }
+
+            // Packet ID 2 — Lap Data
+            if (pid === 2) {
+                const lapData = data.m_lapData;
+                if (!Array.isArray(lapData)) return;
+
+                // Update carIdx → position map for all cars
+                lapData.forEach((car, idx) => {
+                    if (idx < NUM_CARS) carPositions[idx] = car.m_carPosition ?? 0;
+                });
+
+                // Track race leader's current lap for header
+                if (RACE_TYPES.has(sessionType)) {
+                    for (const car of lapData) {
+                        if (car.m_carPosition === 1) {
+                            if (car.m_currentLapNum !== currentLap) {
+                                currentLap = car.m_currentLapNum;
+                                updateHeaderDisplay();
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // Packet ID 7 — Car Status: ERS battery charge
+            if (pid === 7) {
+                const statusData = data.m_carStatusData;
+                if (!Array.isArray(statusData)) return;
+                let hasERS = false;
+                statusData.forEach((car, carIdx) => {
+                    const pos = carPositions[carIdx];
+                    if (pos < 1 || pos > NUM_CARS) return;
+                    const ersJ      = car.m_ersStoreEnergy ?? 0;
+                    const ersPct    = Math.min(100, Math.max(0, (ersJ / 4000000) * 100));
+                    const row       = batteryRows[pos - 1];
+                    row.gaugeFill.style.width = `${ersPct}%`;
+                    row.text.textContent      = `${Math.round(ersPct)}%`;
+                    if (ersJ > 0) hasERS = true;
+                });
+                elBattery.style.display = hasERS ? 'block' : 'none';
+            }
+        });
+
+        // ── Overlay visibility ─────────────────────────────────────────────
+        socket.on('overlay_config', (config) => {
+            const cfg = config?.overlays?.leaderboard;
+            if (!cfg) return;
+            elOverlay.classList.toggle('visible', !!cfg.visible);
+        });
+    </script>
+</body>
+</html>

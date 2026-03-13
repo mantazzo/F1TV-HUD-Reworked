@@ -113,11 +113,11 @@
 
 ## Currently Working On
 
-Car Damage (finishing up)
+Leaderboard (big project, will take time to get it working as intended)
 
 ## Next Planned Overlay
 
-??? (Currently planning my further actions)
+Leaderboard - Last Name version, then Driver Name
 
 ## Not started
 

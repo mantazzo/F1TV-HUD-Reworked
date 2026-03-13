@@ -1,0 +1,710 @@
+/* ════════════════════════════════════════════════════════════════
+   LEADERBOARD OVERLAY
+   Canvas: 241×646 px  (native 482×1291 at scale 0.5)
+   ════════════════════════════════════════════════════════════════ */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: transparent; overflow: hidden; }
+
+/* ════════════════════════════════════════════════════════════════
+   OVERLAY CONTAINER — 241×646 px
+   ════════════════════════════════════════════════════════════════ */
+.overlay-container {
+    position: relative;
+    width: 482px;
+    height: 1291px;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 200ms;
+}
+.overlay-container.visible { opacity: 1; }
+
+/* ════════════════════════════════════════════════════════════════
+   INNER CONTAINER — native 482×1291 at scale(0.5)
+   ════════════════════════════════════════════════════════════════ */
+#lb-container {
+    position: absolute;
+    width: 482px;
+    height: 1291px;
+    /* transform: scale(0.5);
+    transform-origin: left top; */
+}
+#lb-container > * { position: absolute; }
+
+/* ════════════════════════════════════════════════════════════════
+   FLAGS / THICK STROKE BORDER — item_1_4r0r0r0
+   331×1290 at left:3, top:1.5
+   ════════════════════════════════════════════════════════════════ */
+#lb-flags-border {
+    left: 3px;
+    top: 1.5px;
+    width: 331px;
+    height: 1290px;
+    overflow: hidden;
+    z-index: 1;
+}
+#lb-flags-border > * { position: absolute; }
+
+/* Flags animation (item_1_4r0r0r0_1): 333×1187 at top:1, opacity:0.95 */
+#lb-flags-img {
+    left: 0;
+    top: 1px;
+    width: 333px;
+    height: 1187px;
+    background-image: url('/images/leaderboard/YellowFlag.png');
+    background-size: 333px 1187px;
+    opacity: 0.95;
+    display: none; /* JS will set to block when yellow flag shown */
+}
+
+/* ThickStroke texture (item_1_4r0r0r0_2): 332×1186 at top:1, opacity:0.05 */
+#lb-thick-stroke-bg {
+    left: 0;
+    top: 1px;
+    width: 332px;
+    height: 1186px;
+    background-image: url('/images/leaderboard/BG.png');
+    background-size: 332px 1186px;
+    opacity: 0.05;
+}
+
+/* Blurred border rectangle (item_1_4r0r0r0_3): 332×1186.5 at top:1, opacity:0.1 */
+#lb-border-rect {
+    left: 0;
+    top: 1px;
+    width: 332px;
+    height: 1186.5px;
+    border-radius: 36px 0 0 37px;
+    border: 8px solid rgb(0, 0, 0);
+    border-right-width: 0;
+    opacity: 0.1;
+    filter: blur(1.5px);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   MAIN DARK PANEL — item_1_5r0r0r0
+   315×1149 at left:19, top:22
+   ════════════════════════════════════════════════════════════════ */
+#lb-main-bg {
+    left: 19px;
+    top: 22px;
+    width: 315px;
+    height: 1149px;
+    border-radius: 25px 0 0 25px;
+    background-color: rgb(18, 20, 24);
+    opacity: 0.85;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   FORMATION LAP BACKGROUND — item_1_6r0r0r0
+   315×1026 at left:19, top:146  (hidden until formation lap)
+   ════════════════════════════════════════════════════════════════ */
+#lb-formation-bg {
+    display: none;
+    left: 19px;
+    top: 146px;
+    width: 315px;
+    height: 1026px;
+    border-radius: 0 0 0 25px;
+    background-color: rgb(18, 20, 24);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   POSITION COLUMN BACKGROUND — item_1_7r0r0r0
+   48×1020 at left:26, top:146
+   ════════════════════════════════════════════════════════════════ */
+#lb-pos-col-bg {
+    left: 26px;
+    top: 146px;
+    width: 48px;
+    height: 1020px;
+    border-radius: 0 0 0 22px;
+    border-right: 1px solid rgb(74, 74, 74);
+    opacity: 0.15;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   HEADER / LAPS BAR — item_1_8r0r0r0
+   306×50 at left:27, top:97
+   ════════════════════════════════════════════════════════════════ */
+#lb-header {
+    left: 27px;
+    top: 97px;
+    width: 306px;
+    height: 50px;
+    overflow: hidden;
+}
+#lb-header > * { position: absolute; }
+
+/* Background image (item_1_8r0r0r0_1): 312×50 at left:-3, opacity:0.85 */
+#lb-header-img {
+    left: -3px;
+    top: 0;
+    width: 312px;
+    height: 50px;
+    background-image: url('/images/leaderboard/LapBG.png');
+    background-size: 312px 50px;
+    opacity: 0.85;
+}
+
+/* Bottom shadow gradient (item_1_8r0r0r0_2): 310×30 at left:-2, top:20, rotated 180°, opacity:0.35 */
+#lb-header-gradient {
+    left: -2px;
+    top: 20px;
+    width: 310px;
+    height: 30px;
+    background-image: url('/images/common/Gradient.png');
+    background-size: 310px 30px;
+    opacity: 0.35;
+    transform: rotate(180deg);
+}
+
+/* Finished banner (item_1_8r0r0r0_3): 305×50 at left:0 — hidden until session end */
+#lb-finished-img {
+    left: 0;
+    top: 0;
+    width: 305px;
+    height: 50px;
+    background-image: url('/images/leaderboard/Finished.png');
+    background-size: 305px 50px;
+    opacity: 0;
+}
+
+/* ── Timed sessions: session time remaining (item_1_8r0r0r0_4_2r0) ─────── */
+/* 140×50 at left:84  F1TV-2022-ObliqueBold 32px  rgb(255,0,0)  centered   */
+#lb-session-time {
+    left: 84px;
+    top: 0;
+    width: 140px;
+    height: 50px;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+    color: rgb(255, 0, 0);
+    font-size: 32px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+}
+
+/* ── Race: LAP X / Y (item_1_8r0r0r0_5) ─────────────────────────────────── */
+/* 185×30 at left:61.5, top:10  hidden by default                            */
+#lb-race-laps {
+    display: none;
+    left: 61.5px;
+    top: 10px;
+    width: 185px;
+    height: 30px;
+}
+#lb-race-laps > * { position: absolute; }
+
+/* "LAP" label: 70×30 at left:0  F1TV-2022-Regular-Oblique 26px  grey  centered */
+#lb-lap-label {
+    left: 0;
+    top: 0;
+    width: 70px;
+    height: 30px;
+    font-family: 'F1TV-2022';
+    font-weight: 400;
+    font-style: oblique;
+    color: rgb(192, 192, 192);
+    font-size: 26px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+}
+
+/* Current lap number: 60×30 at left:73  F1TV-2022-ObliqueBold-Int 33px  white */
+#lb-lap-current {
+    left: 73px;
+    top: 0;
+    width: 60px;
+    height: 30px;
+    font-family: 'F1TV-2022-ObliqueBold-Int';
+    font-weight: 400;
+    color: rgb(255, 255, 255);
+    font-size: 33px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    white-space: pre;
+}
+
+/* Total laps "/X": 60×27 at left:105  Formula1 DisplayOblique 24px  grey */
+#lb-lap-total {
+    left: 105px;
+    top: 0;
+    width: 60px;
+    height: 27px;
+    font-family: 'Formula1 DisplayOblique';
+    font-weight: 400;
+    color: rgb(192, 192, 192);
+    font-size: 24px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    white-space: pre;
+}
+
+/* ── Session name label (item_1_8r0r0r0_7) ──────────────────────────────── */
+/* 200×34 at left:20, top:9  Formula1 Display 30px bold  white  hidden by default */
+#lb-session-label {
+    display: none; /* JS sets to flex when shown */
+    left: 20px;
+    top: 9px;
+    width: 200px;
+    height: 34px;
+    font-family: 'Formula1 Display';
+    font-weight: 900;
+    color: rgb(255, 255, 255);
+    font-size: 30px;
+    justify-content: flex-start;
+    align-items: center;
+    white-space: pre;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   FLAGS BORDER OVERLAY — item_1_34r0r0r0r0
+   333×1290 at left:0, top:3  overlays all driver rows
+   ════════════════════════════════════════════════════════════════ */
+#lb-deco-border-widget {
+    left: 0;
+    top: 3px;
+    width: 333px;
+    height: 1290px;
+    overflow: hidden;
+}
+#lb-deco-border-widget > * { position: absolute; }
+
+/* Normal: grey CSS border (item_1_34r0r0r0r0_2r0): 309×1238 at left:23, top:25 */
+/* 309x1138 at 20 drivers */
+#lb-deco-border {
+    left: 23px;
+    top: 25px;
+    width: 309px;
+    height: 1138px;
+    border-radius: 20px 0 0 20px;
+    border-style: solid;
+    border-width: 4px 0 4px 4px;
+    border-color: rgb(79, 79, 79);
+}
+
+/* Formation Lap: grey CSS border, bottom portion only (item_1_34r0r0r0r0_3r0):
+   309×1138 at left:22, top:143  hidden by default */
+#lb-deco-border-formation {
+    display: none;
+    left: 22px;
+    top: 143px;
+    width: 309px;
+    height: 1138px;
+    border-radius: 0 0 0 20px;
+    border-style: solid;
+    border-width: 0 0 4px 4px;
+    border-color: rgb(88, 91, 92);
+}
+
+/* Race Finished: red CSS border (item_1_34r0r0r0r0_4r0):
+   309×1138 at left:22, top:25  hidden by default */
+#lb-deco-border-finished {
+    display: none;
+    left: 22px;
+    top: 25px;
+    width: 309px;
+    height: 1138px;
+    border-radius: 22px 0 0 22px;
+    border-style: solid;
+    border-width: 3px 0 3px 3px;
+    border-color: rgb(255, 0, 0);
+}
+
+/* Safety Car / VSC: Border_SC.png — two copies for animation (item_1_34r0r0r0r0_6r0r0_1 & _2):
+   320×1139 at left:23.5, top:24  hidden by default */
+#lb-deco-border-sc,
+#lb-deco-border-sc-2 {
+    display: none;
+    left: 23.5px;
+    top: 24px;
+    width: 320px;
+    height: 1139px;
+    background-image: url('/images/leaderboard/Border_SC.png');
+    background-size: 320px 1139px;
+}
+
+/* Yellow Flag: Border_Yellow.png (item_1_34r0r0r0r0_8r0r0_1):
+   325×430 at left:23, top:24  hidden by default */
+#lb-deco-border-yellow {
+    display: none;
+    left: 23px;
+    top: 24px;
+    width: 325px;
+    height: 430px;
+    background-image: url('/images/leaderboard/Border_Yellow.png');
+    background-size: 325px 430px;
+}
+
+/* Green Flag: Border_Green.png (item_1_34r0r0r0r0_10r0r0_1):
+   325×430 at left:23, top:24  hidden by default */
+#lb-deco-border-green {
+    display: none;
+    left: 23px;
+    top: 24px;
+    width: 325px;
+    height: 430px;
+    background-image: url('/images/leaderboard/Border_Green.png');
+    background-size: 325px 430px;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   VERTICAL GRADIENT — item_1_26r0r0r0 / item_1_27r0r0r0
+   ════════════════════════════════════════════════════════════════ */
+
+/* Normal (item_1_26r0r0r0): 38×1145 at left:295, top:21, opacity:0.4 */
+#lb-gradient-vertical {
+    left: 295px;
+    top: 21px;
+    width: 38px;
+    height: 1145px;
+    background-image: url('/images/leaderboard/Gradient_Vertical.png');
+    background-size: 38px 1145px;
+    opacity: 0.4;
+}
+
+/* Formation Lap only (item_1_27r0r0r0): 38×1245 at left:295, top:146, opacity:0.4 */
+#lb-gradient-vertical-formation {
+    display: none;
+    left: 295px;
+    top: 146px;
+    width: 38px;
+    height: 1245px;
+    background-image: url('/images/leaderboard/Gradient_Vertical.png');
+    background-size: 38px 1245px;
+    opacity: 0.4;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SAFETY CAR / VSC TEAM BANNER — item_1_8r0r0r0_6
+   308×53 at left:0, top:0  hidden by default
+   ════════════════════════════════════════════════════════════════ */
+#lb-sc-banner {
+    display: none;
+    left: 0;
+    top: 0;
+    width: 308px;
+    height: 53px;
+    overflow: hidden;
+}
+#lb-sc-banner > * { position: absolute; }
+
+/* Background (item_1_8r0r0r0_6_1): 309×53 at left:1 */
+#lb-sc-bg {
+    left: 1px;
+    top: 0;
+    width: 309px;
+    height: 53px;
+    background-image: url('/images/leaderboard/BG.png');
+    background-size: 309px 53px;
+}
+
+/* Full-size team layer (item_1_8r0r0r0_6_2): 309×53 at left:0, top:0 */
+#lb-sc-team {
+    left: 0;
+    top: 0;
+    width: 309px;
+    height: 53px;
+}
+#lb-sc-team > * { position: absolute; }
+
+/* Team name text (item_1_8r0r0r0_6_3r0): 305×50 at left:3, top:3  Optima 37px white centered */
+#lb-sc-team-name {
+    left: 3px;
+    top: 3px;
+    width: 305px;
+    height: 50px;
+    border-radius: 0 15px 0 0;
+    font-family: 'Optima';
+    font-weight: 400;
+    color: rgb(255, 255, 255);
+    font-size: 37px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+}
+
+/* Team logo (item_1_8r0r0r0_6_4r0): 270×24 at left:19, top:14 — hidden; shown when team logo available */
+#lb-sc-team-logo {
+    display: none;
+    left: 19px;
+    top: 14px;
+    width: 270px;
+    height: 24px;
+    background-image: url('/images/leaderboard/Mercedes.png');
+    background-size: 270px 24px;
+}
+
+/* Compact pane (item_1_8r0r0r0_6_5): 309×53 at left:0, top:0 — alternative SC/VSC layout */
+#lb-sc-pane {
+    display: none;
+    left: 0;
+    top: 0;
+    width: 309px;
+    height: 53px;
+}
+#lb-sc-pane > * { position: absolute; }
+
+/* Pane team name (item_1_8r0r0r0_6_6r0): 173×28 at left:7, top:13  Optima 22px white centered */
+#lb-sc-pane-name {
+    left: 7px;
+    top: 13px;
+    width: 173px;
+    height: 28px;
+    border-radius: 0 15px 0 0;
+    font-family: 'Optima';
+    font-weight: 400;
+    color: rgb(255, 255, 255);
+    font-size: 22px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+}
+
+/* Pane team logo (item_1_8r0r0r0_6_7r0): 160×16 at left:12, top:18 */
+#lb-sc-pane-logo {
+    left: 12px;
+    top: 18px;
+    width: 160px;
+    height: 16px;
+    background-image: url('/images/leaderboard/Mercedes.png');
+    background-size: 160px 16px;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SERIES LOGO — item_1_36r0
+   140.8×36.08 at left:35, top:46
+   ════════════════════════════════════════════════════════════════ */
+#lb-series-logo {
+    left: 35px;
+    top: 46px;
+    width: 140.8px;
+    height: 36.08px;
+    background-image: url('/images/other-logos/F1.png');
+    background-size: 140.8px 36.08px;
+}
+
+/* F2 series logo (item_1_37r0): 172.15×77.275 at left:20, top:24  hidden by default */
+#lb-series-logo-f2 {
+    display: none;
+    left: 20px;
+    top: 24px;
+    width: 172.15px;
+    height: 77.275px;
+    background-image: url('/images/other-logos/F2.png');
+    background-size: 172.15px 77.275px;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SESSION LAYER — item_1_9r0r0
+   ════════════════════════════════════════════════════════════════ */
+
+/* Sprint logo (item_1_10r0r0r0): 151.58×30.21 at left:177, top:50  hidden by default */
+#lb-sprint-logo {
+    display: none;
+    left: 177px;
+    top: 50px;
+    width: 151.58px;
+    height: 30.21px;
+    background-image: url('/images/leaderboard/Sprint.png');
+    background-size: 151.58px 30.21px;
+}
+
+/* Session name (item_1_11r0r0r0 / _12r0r0r0 combined):
+   135×40 at left:189, top:46  Formula1 Display 900  grey  centered
+   font-size managed by textFit (max 37px) */
+#lb-session-name {
+    left: 189px;
+    top: 46px;
+    width: 135px;
+    height: 40px;
+    font-family: 'Formula1 Display';
+    font-weight: 900;
+    color: rgb(192, 192, 192);
+    display: block;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   BATTERY WIDGET — item_1_14r0r0r0_1
+   JS-generated rows (NUM_CARS × 50px stride)  left:334, top:167
+   ════════════════════════════════════════════════════════════════ */
+#lb-battery {
+    display: none;
+    left: 334px;
+    top: 167px;
+    width: 80px;
+    height: 1000px; /* NUM_CARS × 50px */
+}
+#lb-battery > * { position: absolute; }
+
+/* Per-car row container (.lb-battery-row): 80×40, top set by JS */
+.lb-battery-row {
+    left: 5px;
+    width: 80px;
+    height: 40px;
+}
+.lb-battery-row > * { position: absolute; }
+
+/* Battery image frame (item_1_14r0r0r0_3r0r0): 80×40 at left:0, top:0 */
+.lb-battery-img {
+    left: 0;
+    top: 0;
+    width: 80px;
+    height: 40px;
+    background-image: url('/images/leaderboard/Battery_Yellow.png');
+    background-size: 80px 40px;
+}
+
+/* Gauge clip container (item_1_14r0r0r0_4r0r0): 68×30 at left:5, top:5 */
+.lb-battery-gauge {
+    left: 5px;
+    top: 5px;
+    width: 68px;
+    height: 30px;
+    border-radius: 1px;
+    opacity: 0.85;
+    overflow: hidden;
+}
+
+/* Gauge fill bar: width % driven by JS */
+.lb-battery-gauge-fill {
+    height: 100%;
+    width: 0%;
+    background-color: rgb(255, 140, 0);
+}
+
+/* ERS % text (item_1_14r0r0r0_5r0r0): 69×30 at left:5, top:5
+   F1TV-2022 21px  white with 3px black stroke  centered */
+.lb-battery-text {
+    left: 5px;
+    top: 5px;
+    width: 69px;
+    height: 30px;
+    font-family: 'F1TV-2022';
+    font-weight: 400;
+    font-size: 21px;
+    color: rgb(255, 255, 255);
+    -webkit-text-stroke: 3px rgb(0, 0, 0);
+    paint-order: stroke fill;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+}
+
+/* ─── Penalties widget (item_1_14r0r0r0_90) ──────────────────────────────── */
+
+#lb-penalty {
+    left: 334px;
+    top: 167px;
+    width: 145px;
+    height: 1000px; /* NUM_CARS × 50px */
+    display: none;
+}
+#lb-penalty > * { position: absolute; }
+
+/* Per-car row container: 145×40, top set by JS */
+.lb-penalty-row {
+    left: 0;
+    width: 145px;
+    height: 40px;
+}
+.lb-penalty-row > * { position: absolute; }
+
+/* Penalty background image (item_1_14r0r0r0_92r0r0_1): Penalty_BG.png 100×40 at left:0
+   opacity:0.95, rounded bottom-left corner */
+.lb-penalty-bg {
+    left: 0;
+    top: 0;
+    width: 100px;
+    height: 40px;
+    opacity: 0.95;
+    border-radius: 0 0 0 5px;
+    background-image: url('/images/leaderboard/Penalty_BG.png');
+    background-size: 100px 40px;
+}
+
+/* Shadow rectangle (item_1_14r0r0r0_92r0r0_2): 51×41 at left:10
+   blurred black rect behind the penalty icon */
+.lb-penalty-shadow {
+    left: 10px;
+    top: 0;
+    width: 51px;
+    height: 41px;
+    border-radius: 8px;
+    border: 2px solid rgb(0, 0, 0);
+    opacity: 0.5;
+    filter: blur(5px);
+    background-color: rgb(0, 0, 0);
+}
+
+/* Penalty icon (item_1_14r0r0r0_92r0r0_3): Penalty.png 60×40 at left:0 */
+.lb-penalty-icon {
+    left: 0;
+    top: 0;
+    width: 60px;
+    height: 40px;
+    background-image: url('/images/leaderboard/Penalty.png');
+    background-size: 60px 40px;
+}
+
+/* Penalty value text (item_1_14r0r0r0_93r0r0): 45×40 at left:60
+   F1TV-2022 17px  black  centered */
+.lb-penalty-value {
+    left: 60px;
+    top: 0;
+    width: 45px;
+    height: 40px;
+    font-family: 'F1TV-2022';
+    font-weight: 400;
+    font-size: 17px;
+    color: rgb(0, 0, 0);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+}
+
+/* ─── Fastest Lap Logo widget (item_1_14r0r0r0_157) ─────────────────────────── */
+
+#lb-fl-logo {
+    left: 334px;
+    top: 167px;
+    width: 35px;
+    height: 1000px; /* NUM_CARS × 50px */
+    display: none;
+}
+#lb-fl-logo > * { position: absolute; }
+
+/* Per-car row container: 35×40, top set by JS */
+.lb-fl-logo-row {
+    left: 0px;
+    width: 35px;
+    height: 40px;
+}
+
+/* FL icon (item_1_14r0r0r0_158r0): FL_Icon.png 35×40
+   magenta background, rounded right corners, opacity 0.85 */
+.lb-fl-logo-icon {
+    left: 0;
+    top: 0;
+    width: 35px;
+    height: 40px;
+    border-radius: 0 5px 5px 0;
+    opacity: 0.85;
+    background-color: rgb(255, 0, 255);
+    background-image: url('/images/leaderboard/FL_Icon.png');
+    background-size: 35px 40px;
+}
