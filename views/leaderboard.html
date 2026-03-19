@@ -6,6 +6,7 @@
     <title>Leaderboard</title>
     <link rel="stylesheet" href="/fonts.css">
     <link rel="stylesheet" href="/styles-leaderboard.css">
+    <script src="/utils/driver-utils.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/textfit@2.4.0/textFit.min.js"></script>
 </head>
@@ -107,6 +108,43 @@
                  Shown during races only for the car holding the fastest lap -->
             <div id="lb-fl-logo"></div>
 
+            <!-- Driver name slots (item_1_24r0r0 → item_1_24r0r0_49):
+                 JS-generated rows, 310×50 per row at 50px stride, left:27, top:160
+                 22 slots: abbrev, secondary/primary indicator, team logos, driver number,
+                 position, last name (PI), arrow up/down -->
+            <div id="lb-drivers"></div>
+
+            <!-- Timing widget (item_1_18r0r0r0): 150×1100 at left:167, top:161
+                 Two sub-layers: lb-timing-interval (Interval mode) and lb-timing-leader (Leader mode)
+                 JS-generated rows, one text element per car at 50px stride.
+                 P1 row shows mode label; P2-P20 show gap text. -->
+            <div id="lb-timing"></div>
+
+            <!-- In-Pit Logo (item_1_15r0r0r0): 35×1100 at left:330, top:165
+                 JS-generated rows, one per car at 50px stride, hidden by default.
+                 Each row: gradient overlay + "P" text. Used in non-race sessions. -->
+            <div id="lb-inpit"></div>
+
+            <!-- Finish Logo (item_1_16r0r0r0): 135×1100 at left:334, top:165
+                 JS-generated rows, one per car at 50px stride, hidden (opacity:0) by default.
+                 Each row: gradient overlay + Finished_Logo.png image. Shown when car has Finished result. -->
+            <div id="lb-finish"></div>
+
+            <!-- OUT text (item_1_17r0r0r0): 130×1100 at left:192, top:162
+                 JS-generated rows, one per car at 50px stride, hidden by default.
+                 Each row shows "OUT" — displayed for retired cars during a race. -->
+            <div id="lb-out"></div>
+
+            <!-- Pit Status (item_1_19r0r0r0): 130×1100 at left:187, top:162
+                 JS-generated rows, one per car at 50px stride, hidden by default.
+                 Each row shows "IN PIT" or "PIT EXIT" — used in race sessions. -->
+            <div id="lb-pit-status"></div>
+
+            <!-- Tyre Compound (item_1_23r0r0): 40×1100 at left:299, top:161
+                 JS-generated rows, one per car at 50px stride.
+                 Each row shows a single-letter compound code in the compound's colour. -->
+            <div id="lb-tyre"></div>
+
             <!-- Vertical gradient — normal (item_1_26r0r0r0): Gradient_Vertical.png
                  38.75×1145 at left:295, top:21, opacity:0.4 -->
             <div id="lb-gradient-vertical"></div>
@@ -147,15 +185,17 @@
         socket.emit('identify', 'Leaderboard');
 
         // ── Session type helpers ───────────────────────────────────────────
-        const RACE_TYPES  = new Set([15, 16, 17]);                           // Race, Race 2, Race 3
+        const RACE_TYPES  = new Set([15, 16, 17]);                                    // Race, Race 2, Race 3
         const TIMED_TYPES = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]); // Practice / Quali / Sprint
+        const TT_TYPE     = new Set([18]);                                            // Time Trial
 
+        // Session labels - Short versions for display in the header
         const SESSION_LABELS = {
-            1:  'PRACTICE 1',     2:  'PRACTICE 2',       3:  'PRACTICE 3',  4: 'PRACTICE',
-            5:  'Q1',             6:  'Q2',               7:  'Q3',          8: 'QUALIFYING',
-            9:  'QUALIFYING',     18: 'TIME TRIAL',
-            10: 'SPRINT SHOOTOUT', 11: 'SPRINT SHOOTOUT', 12: 'SPRINT SHOOTOUT',
-            13: 'SPRINT SHOOTOUT', 14: 'SPRINT SHOOTOUT',
+            1:  'FP1',     2:  'FP2',       3:  'FP3',  4: 'SHORT P',
+            5:  'Q1',             6:  'Q2',               7:  'Q3',          8: 'SHORT Q',
+            9:  'OSQ',     18: 'TT',
+            10: 'SQ1', 11: 'SQ2', 12: 'SQ3',
+            13: 'SHORT SQ', 14: 'OSSQ',
         };
 
         // ── Element refs ───────────────────────────────────────────────────
@@ -169,9 +209,17 @@
         const elBattery      = document.getElementById('lb-battery');
         const elPenalty      = document.getElementById('lb-penalty');
         const elFlLogo       = document.getElementById('lb-fl-logo');
+        const elDrivers      = document.getElementById('lb-drivers');
+        const elTiming       = document.getElementById('lb-timing');
+        const elInPit        = document.getElementById('lb-inpit');
+        const elFinish       = document.getElementById('lb-finish');
+        const elOut          = document.getElementById('lb-out');
+        const elPitStatus    = document.getElementById('lb-pit-status');
+        const elTyre         = document.getElementById('lb-tyre');
 
         // ── Battery rows — pre-generate one row per car slot ─────────────────────
-        const NUM_CARS = 20;
+        let NUM_CARS = 22;  // Pre-allocate for max possible cars (20 standard, up to 22 in MyTeam/F2).
+                            // Updated at runtime from packet 4 (m_numActiveCars).
         const batteryRows = Array.from({ length: NUM_CARS }, (_, i) => {
             const row = document.createElement('div');
             row.className = 'lb-battery-row';
@@ -239,14 +287,226 @@
             return { row };
         });
 
+        // ── Driver rows — 22 slots (max 22 drivers) ──────────────────────
+        const driverRows = Array.from({ length: NUM_CARS }, (_, i) => {
+            const row = document.createElement('div');
+            row.className = 'lb-driver-row';
+            row.style.top = `${i * 50}px`;
+
+            // Secondary indicator — thin blue bar (hidden by default)
+            const secondaryIndicator = document.createElement('div');
+            secondaryIndicator.className = 'lb-driver-secondary-indicator';
+
+            // Primary indicator — PlayerIndicator.png (zero-width = hidden by default)
+            const primaryIndicator = document.createElement('div');
+            primaryIndicator.className = 'lb-driver-primary-indicator';
+
+            // Team logo — normal variant (hidden until logo URL set by pid 4)
+            const teamLogoNormal = document.createElement('img');
+            teamLogoNormal.className = 'lb-driver-team-logo-normal';
+            teamLogoNormal.style.display = 'none';
+
+            // Team logo — PI (primary indicator) variant, larger (hidden by default)
+            const teamLogoPI = document.createElement('img');
+            teamLogoPI.className = 'lb-driver-team-logo-pi';
+
+            // Driver number (hidden/opacity 0, toggled vs team logo later)
+            const driverNumber = document.createElement('div');
+            driverNumber.className = 'lb-driver-number';
+
+            // Position number
+            const position = document.createElement('div');
+            position.className = 'lb-driver-position';
+            position.textContent = `${i + 1}`;
+
+            // Name abbreviation
+            const abbrev = document.createElement('div');
+            abbrev.className = 'lb-driver-abbrev';
+
+            // Last name — shown alongside primary indicator (hidden by default)
+            const lastName = document.createElement('div');
+            lastName.className = 'lb-driver-lastname';
+
+            // Position-gained arrow (hidden by default)
+            const arrowUp = document.createElement('div');
+            arrowUp.className = 'lb-driver-arrow-up';
+
+            // Position-lost arrow (hidden by default)
+            const arrowDown = document.createElement('div');
+            arrowDown.className = 'lb-driver-arrow-down';
+
+            row.appendChild(secondaryIndicator);
+            row.appendChild(primaryIndicator);
+            row.appendChild(teamLogoNormal);
+            row.appendChild(teamLogoPI);
+            row.appendChild(driverNumber);
+            row.appendChild(position);
+            row.appendChild(abbrev);
+            row.appendChild(lastName);
+            row.appendChild(arrowUp);
+            row.appendChild(arrowDown);
+            elDrivers.appendChild(row);
+            return { secondaryIndicator, primaryIndicator, teamLogoNormal, teamLogoPI, driverNumber, position, abbrev, lastName, arrowUp, arrowDown };
+        });
+
+        // ── Timing rows — Interval and Leader sub-layers, NUM_CARS rows each ─────
+        const elTimingInterval = document.createElement('div');
+        elTimingInterval.id = 'lb-timing-interval';
+        elTiming.appendChild(elTimingInterval);
+
+        const elTimingLeader = document.createElement('div');
+        elTimingLeader.id = 'lb-timing-leader';
+        elTiming.appendChild(elTimingLeader);
+
+        const timingRows = Array.from({ length: NUM_CARS }, (_, i) => {
+            // Interval row
+            const iRow = document.createElement('div');
+            iRow.className = 'lb-timing-row';
+            iRow.style.left = i === 0 ? '15px' : '10px';
+            iRow.style.top = `${i * 50}px`;
+            const iText = document.createElement('div');
+            iText.className = 'lb-timing-text';
+            iRow.appendChild(iText);
+            elTimingInterval.appendChild(iRow);
+
+            // Leader row
+            const lRow = document.createElement('div');
+            lRow.className = 'lb-timing-row';
+            lRow.style.left = i === 0 ? '15px' : '10px';
+            lRow.style.top = `${i * 50}px`;
+            const lText = document.createElement('div');
+            lText.className = 'lb-timing-text';
+            lRow.appendChild(lText);
+            elTimingLeader.appendChild(lRow);
+
+            return { iText, lText };
+        });
+
+        // ── In-Pit Logo rows — hidden by default, shown when car is in pit (non-race) ──
+        const inPitRows = Array.from({ length: NUM_CARS }, (_, i) => {
+            const row = document.createElement('div');
+            row.className = 'lb-inpit-row';
+            row.style.top = `${i * 50}px`;
+
+            const gradient = document.createElement('div');
+            gradient.className = 'lb-inpit-gradient';
+
+            const text = document.createElement('div');
+            text.className = 'lb-inpit-text';
+            text.textContent = 'P';
+
+            row.appendChild(gradient);
+            row.appendChild(text);
+            elInPit.appendChild(row);
+            return { row };
+        });
+
+        // ── Finish Logo rows — hidden (opacity:0) by default, shown when car result is Finished ──
+        const finishRows = Array.from({ length: NUM_CARS }, (_, i) => {
+            const row = document.createElement('div');
+            row.className = 'lb-finish-row';
+            row.style.top = `${i * 50}px`;
+
+            const gradient = document.createElement('div');
+            gradient.className = 'lb-finish-gradient';
+
+            const img = document.createElement('div');
+            img.className = 'lb-finish-img';
+
+            row.appendChild(gradient);
+            row.appendChild(img);
+            elFinish.appendChild(row);
+            return { row };
+        });
+
+        // ── OUT rows — hidden by default, shown for retired cars during a race ─────────
+        const outRows = Array.from({ length: NUM_CARS }, (_, i) => {
+            const row = document.createElement('div');
+            row.className = 'lb-out-row';
+            row.style.top = `${i * 50}px`;
+
+            const text = document.createElement('div');
+            text.className = 'lb-out-text';
+            text.textContent = 'OUT';
+
+            row.appendChild(text);
+            elOut.appendChild(row);
+            return { row };
+        });
+
+        // ── Tyre compound map — visual compound ID → { letter, color } ───────────
+        // IDs sourced from F1 UDP spec; letter used with F1TV-2022-Logos font.
+        const TYRE_COMPOUND = {
+            7:  { letter: 'I', color: '#31AF49' }, // Intermediate
+            8:  { letter: 'W', color: '#0073AD' }, // Wet
+            15: { letter: 'W', color: '#0073AD' }, // Wet (F2)
+            16: { letter: 'S', color: '#EC1C24' }, // Soft
+            17: { letter: 'M', color: '#FFD604' }, // Medium
+            18: { letter: 'H', color: '#F0F0EC' }, // Hard
+            19: { letter: 'SS', color: '#97528F' }, // Super Soft (F2)
+            20: { letter: 'S', color: '#EC1C24' }, // Soft (F2)
+            21: { letter: 'M', color: '#FFD604' }, // Medium (F2)
+            22: { letter: 'H', color: '#F0F0EC' }, // Hard (F2)
+        };
+
+        // ── Pit Status rows — hidden by default, shown for in-pit/pit-exit cars in race ──
+        const pitStatusRows = Array.from({ length: NUM_CARS }, (_, i) => {
+            const row = document.createElement('div');
+            row.className = 'lb-pit-status-row';
+            row.style.top = `${i * 50}px`;
+
+            const text = document.createElement('div');
+            text.className = 'lb-pit-status-text';
+            text.textContent = 'IN PIT';
+
+            row.appendChild(text);
+            elPitStatus.appendChild(row);
+            return { row, text };
+        });
+
+        // ── Tyre Compound rows — one per car, single-letter compound in compound colour ──
+        const tyreRows = Array.from({ length: NUM_CARS }, (_, i) => {
+            const row = document.createElement('div');
+            row.className = 'lb-tyre-row';
+            row.style.top = `${i * 50}px`;
+
+            const text = document.createElement('div');
+            text.className = 'lb-tyre-text';
+
+            row.appendChild(text);
+            elTyre.appendChild(row);
+            return { text };
+        });
+
         // ── State ──────────────────────────────────────────────────────────
         let sessionType = 0;
         let totalLaps   = 0;
         let currentLap  = 0;
         const carPositions = new Array(NUM_CARS).fill(0); // carIdx → race position (1-based)
 
+        // Driver lookup state
+        let aiDrivers    = {};
+        let customDrivers = [];
+        let teamNames    = {};
+        let formulaType  = DriverUtils.FORMULA_TYPE.F1_MODERN;
+        const carAbbrevs    = new Array(NUM_CARS).fill('');  // carIdx → abbreviation string
+        const carTeamLogos  = new Array(NUM_CARS).fill('');  // carIdx → logo URL string
+        const carDeltaFront  = new Array(NUM_CARS).fill(0);  // carIdx → delta to car in front (ms)
+        const carDeltaLeader = new Array(NUM_CARS).fill(0);  // carIdx → delta to race leader (ms)
+
+        async function loadDriverData() {
+            try {
+                const data = await DriverUtils.loadDriverData(formulaType);
+                customDrivers = data.customDrivers;
+                teamNames     = data.teamNames;
+            } catch (e) {
+                console.error('[Leaderboard] Error loading driver data:', e);
+            }
+        }
+        loadDriverData();
+
         function fitSessionName() {
-            textFit(elSessionName, { minFontSize: 10, maxFontSize: 37, multiLine: false, widthOnly: true, alignHoriz: true });
+            textFit(elSessionName, { minFontSize: 10, maxFontSize: 37, multiLine: false, widthOnly: true, alignVert: true, alignHoriz: true });
         }
 
         // Run once on load so "NO DATA" is fitted from the start
@@ -262,23 +522,61 @@
         }
 
         function updateHeaderDisplay() {
-            const isRace  = RACE_TYPES.has(sessionType);
-            const isTimed = TIMED_TYPES.has(sessionType);
+            const isRace  = RACE_TYPES.has(sessionType);   // Race Session will show Lap and Total Laps
+            const isTimed = TIMED_TYPES.has(sessionType);  // Timed Session will show Session Time Remaining
+            const isTT    = TT_TYPE.has(sessionType);      // For Time Trial, we only need to show our current lap number
 
-            elSessionTime.style.display  = isTimed              ? 'flex'  : 'none';
-            elRaceLaps.style.display     = isRace               ? 'block' : 'none';
-            elSessionLabel.style.display = (!isRace && !isTimed) ? 'flex'  : 'none';
+            elSessionTime.style.display = isTimed ? 'flex'  : 'none';
+            elRaceLaps.style.display    = isRace || isTT  ? 'block' : 'none';
 
             if (isRace) {
                 elLapCurrent.textContent = currentLap || 1;
                 elLapTotal.textContent   = `/${totalLaps}`;
+            } else if (isTT) {
+                elLapCurrent.textContent = currentLap;
+                elLapTotal.textContent   = '';
             }
-            if (!isRace && !isTimed) {
-                elSessionLabel.textContent = SESSION_LABELS[sessionType] ?? 'SESSION';
+            const label = SESSION_LABELS[sessionType] ?? 'SESSION'; // TODO: fix later so that the session name properly updates with sessions, this is likely invalid
+            elSessionName.textContent = label;
+            fitSessionName();
+            
+        }
+
+        // ── Timing delta formatter ─────────────────────────────────────────
+        function formatDeltaMs(totalMs) {
+            if (totalMs <= 0) return '+0.000';
+            const minutes  = Math.floor(totalMs / 60000);
+            const remainMs = totalMs % 60000;
+            const seconds  = Math.floor(remainMs / 1000);
+            const ms3      = String(remainMs % 1000).padStart(3, '0');
+            if (minutes > 0) {
+                return `+${minutes}:${String(seconds).padStart(2, '0')}.${ms3}`;
+            }
+            return `+${seconds}.${ms3}`;
+        }
+
+        // ── Slot visibility ────────────────────────────────────────────────
+        // Hide pre-allocated rows beyond the active car count for always-visible
+        // containers. Conditionally-visible containers (inPit, finish, out,
+        // pitStatus) are already display:none by default and driven by game data,
+        // so they don't need slot-count clamping.
+        function updateSlotVisibility() {
+            const containers = [
+                elBattery, elPenalty, elFlLogo, elDrivers,
+                elTimingInterval, elTimingLeader, elTyre,
+            ];
+            for (const container of containers) {
+                Array.from(container.children).forEach((child, i) => {
+                    child.style.display = i < NUM_CARS ? '' : 'none';
+                });
             }
         }
 
         // ── Packet handling ────────────────────────────────────────────────
+        socket.on('drivers_data', (data) => {
+            aiDrivers = data;
+        });
+
         socket.on('f1_data', (data) => {
             if (!data?.m_header) return;
             const pid = data.m_header.m_packetId;
@@ -290,6 +588,47 @@
                 const timeLeft = data.m_sessionTimeLeft ?? 0;
                 elSessionTime.textContent = formatSessionTime(timeLeft);
                 updateHeaderDisplay();
+
+                if (data.m_formula !== undefined && data.m_formula !== formulaType) {
+                    formulaType = data.m_formula;
+                    loadDriverData();
+                }
+            }
+
+            // Packet ID 4 — Participants
+            if (pid === 4) {
+                NUM_CARS = data.m_numActiveCars ?? NUM_CARS;
+                updateSlotVisibility();
+
+                const participants = data.m_participants;
+                if (Array.isArray(participants)) {
+                    participants.forEach((participant, carIdx) => {
+                        if (carIdx >= NUM_CARS) return;
+
+                        // Abbreviation
+                        const abbrev = DriverUtils.getDriverAbbreviation(participant, aiDrivers, customDrivers, teamNames);
+                        carAbbrevs[carIdx] = abbrev;
+
+                        // Team logo
+                        const teamId   = participant.m_teamId;
+                        const teamData = teamNames[teamId];
+                        const logoFile = teamData?.Logo ?? null;
+                        const logoUrl  = logoFile ? `/images/team-logos/${logoFile}` : '';
+                        carTeamLogos[carIdx] = logoUrl;
+
+                        const pos = carPositions[carIdx];
+                        if (pos >= 1 && pos <= NUM_CARS) {
+                            const row = driverRows[pos - 1];
+                            row.abbrev.textContent = abbrev;
+                            if (logoUrl) {
+                                row.teamLogoNormal.src          = logoUrl;
+                                row.teamLogoNormal.style.display = 'block';
+                            } else {
+                                row.teamLogoNormal.style.display = 'none';
+                            }
+                        }
+                    });
+                }
             }
 
             // Packet ID 2 — Lap Data
@@ -297,10 +636,22 @@
                 const lapData = data.m_lapData;
                 if (!Array.isArray(lapData)) return;
 
-                // Update carIdx → position map for all cars
+                // Update carIdx → position and delta arrays
                 lapData.forEach((car, idx) => {
-                    if (idx < NUM_CARS) carPositions[idx] = car.m_carPosition ?? 0;
+                    if (idx >= NUM_CARS) return;
+                    carPositions[idx]   = car.m_carPosition ?? 0;
+                    carDeltaFront[idx]  = (car.m_deltaToCarInFrontMinutesPart  ?? 0) * 60000 + (car.m_deltaToCarInFrontMSPart  ?? 0);
+                    carDeltaLeader[idx] = (car.m_deltaToRaceLeaderMinutesPart  ?? 0) * 60000 + (car.m_deltaToRaceLeaderMSPart  ?? 0);
                 });
+
+                // Apply timing deltas to display rows
+                for (let carIdx = 0; carIdx < NUM_CARS; carIdx++) {
+                    const pos = carPositions[carIdx];
+                    if (pos < 1 || pos > NUM_CARS) continue;
+                    const row = timingRows[pos - 1];
+                    row.iText.textContent = pos === 1 ? 'Interval' : formatDeltaMs(carDeltaFront[carIdx]);
+                    row.lText.textContent = pos === 1 ? 'Leader'   : formatDeltaMs(carDeltaLeader[carIdx]);
+                }
 
                 // Track race leader's current lap for header
                 if (RACE_TYPES.has(sessionType)) {
@@ -331,7 +682,7 @@
                     row.text.textContent      = `${Math.round(ersPct)}%`;
                     if (ersJ > 0) hasERS = true;
                 });
-                elBattery.style.display = hasERS ? 'block' : 'none';
+                elBattery.style.display = 'none';
             }
         });
 
