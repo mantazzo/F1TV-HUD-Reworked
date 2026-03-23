@@ -60,7 +60,8 @@
     },
     "leaderboard": {
       "visible": true,
-      "name": "Leaderboard"
+      "name": "Leaderboard",
+      "mfdPage": "off"
     }
   }
 }

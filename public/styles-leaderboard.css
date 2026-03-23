@@ -1109,6 +1109,261 @@ body { background: black; overflow: hidden; }
 }
 
 /* ════════════════════════════════════════════════════════════════
+   MFD1 — CURRENT TYRES PAGE (item_1_20r0r0r0 group)
+   Header BG (item_1_30r0r0r0_1): 310×105 at left:27, top:145
+   Label text (item_1_30r0r0r0_2): "CURRENT TYRES", F1TV-2022-ObliqueBold 24px
+   Compound name rows (item_1_21r0r0r0r0): 180×1100 at left:167, top:161
+   Both hidden by default; toggled as a pair by the controller.
+   ════════════════════════════════════════════════════════════════ */
+#lb-mfd1-header {
+    left: 27px;
+    top: 145px;
+    width: 307px;
+    height: 55px;
+    background-image: url('/images/leaderboard/Header_BG.png');
+    background-size: 307px 55px;
+    background-repeat: no-repeat;
+    overflow: hidden;
+    display: none;
+}
+
+#lb-mfd1-label {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 305px;
+    height: 55px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 24px;
+    color: rgb(255, 0, 0);
+    white-space: pre;
+}
+
+#lb-mfd1 {
+    left: 167px;
+    top: 207.5px;
+    width: 180px;
+    height: 1100px;
+    display: none;
+}
+
+.lb-mfd1-row {
+    position: absolute;
+    left: 0;
+    width: 180px;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'F1TV-2022';
+    font-size: 20px;
+    white-space: pre;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   MFD2 — CURRENT TYRE AGE PAGE (item_1_21r0r0r0r0_24)
+   Header BG (item_1_30r0r0r0_1): same 310×105 at left:27, top:145
+   Label (item_1_30r0r0r0_3): F1TV-2022-ObliqueCondensed 20.5px
+   Age rows: 70×50 at left:45, F1TV-2022-ObliqueBold 32px, white, right-aligned
+   ════════════════════════════════════════════════════════════════ */
+#lb-mfd2-header {
+    left: 27px;
+    top: 145px;
+    width: 310px;
+    height: 55px;
+    background-image: url('/images/leaderboard/Header_BG.png');
+    background-size: 307px 55px;
+    background-repeat: no-repeat;
+    display: none;
+}
+
+#lb-mfd2-label {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 305px;
+    height: 55px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'F1TV-2022';
+    font-weight: 400;
+    font-style: oblique;
+    font-stretch: condensed;
+    font-size: 20.5px;
+    color: rgb(255, 0, 0);
+    white-space: pre;
+}
+
+#lb-mfd2 {
+    left: 167px;
+    top: 207.5px;
+    width: 180px;
+    height: 1100px;
+    display: none;
+}
+
+.lb-mfd2-row {
+    position: absolute;
+    left: 45px;
+    width: 70px;
+    height: 50px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 32px;
+    color: #ffffff;
+    white-space: pre;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   MFD3 — LAPS COMPLETED / TYRE CHANGES PAGE (item_1_21r0r0r0r0_47)
+   Header BG (item_1_30r0r0r0_1): same 310×105 at left:27, top:145
+   Label (item_1_30r0r0r0_4): F1TV-2022-ObliqueBold 24px — text set by JS
+   Value rows: 70×50 at left:45, F1TV-2022-ObliqueBold 32px, white, right-aligned
+   ════════════════════════════════════════════════════════════════ */
+#lb-mfd3-header {
+    left: 27px;
+    top: 145px;
+    width: 307px;
+    height: 55px;
+    background-image: url('/images/leaderboard/Header_BG.png');
+    background-size: 307px 55px;
+    background-repeat: no-repeat;
+    display: none;
+}
+
+#lb-mfd3-label {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 305px;
+    height: 55px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 24px;
+    color: rgb(255, 0, 0);
+    white-space: pre;
+}
+
+#lb-mfd3 {
+    left: 167px;
+    top: 207.5px;
+    width: 180px;
+    height: 1100px;
+    display: none;
+}
+
+.lb-mfd3-row {
+    position: absolute;
+    left: 45px;
+    width: 70px;
+    height: 50px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 32px;
+    color: #ffffff;
+    white-space: pre;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   MFD4 — GAINED / LOST PAGE (item_1_21r0r0r0r0_70)
+   Header BG (item_1_30r0r0r0_1): same 310×105 at left:27, top:145
+   Label (item_1_30r0r0r0_5): F1TV-2022-ObliqueBold 24px
+   Per-car row: arrow image 60×50 at left:40 + number text 70×50 at left:100
+   Arrow images: Arrow_Up.png / Arrow_Down.png / Arrow_None.png
+   ════════════════════════════════════════════════════════════════ */
+#lb-mfd4-header {
+    left: 27px;
+    top: 145px;
+    width: 307px;
+    height: 55px;
+    background-image: url('/images/leaderboard/Header_BG.png');
+    background-size: 307px 55px;
+    background-repeat: no-repeat;
+    display: none;
+}
+
+#lb-mfd4-label {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 305px;
+    height: 55px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 24px;
+    color: rgb(255, 0, 0);
+    white-space: pre;
+}
+
+#lb-mfd4 {
+    left: 167px;
+    top: 207.5px;
+    width: 180px;
+    height: 1100px;
+    display: none;
+}
+
+.lb-mfd4-row {
+    position: absolute;
+    left: 0;
+    width: 180px;
+    height: 50px;
+}
+
+.lb-mfd4-arrow {
+    position: absolute;
+    left: 40px;
+    top: 0;
+    width: 60px;
+    height: 50px;
+    background-size: 60px 50px;
+    background-repeat: no-repeat;
+}
+
+.lb-mfd4-arrow--up   { background-image: url('/images/leaderboard/Arrow_Up.png');   }
+.lb-mfd4-arrow--down { background-image: url('/images/leaderboard/Arrow_Down.png'); }
+.lb-mfd4-arrow--none { background-image: url('/images/leaderboard/Arrow_None.png'); }
+
+.lb-mfd4-text {
+    position: absolute;
+    left: 100px;
+    top: 0;
+    width: 70px;
+    height: 50px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 32px;
+    color: #ffffff;
+    white-space: pre;
+}
+
+/* ════════════════════════════════════════════════════════════════
    QUALI/PRACTICE TIMING WIDGET — item_1_22r0r0
    JS-generated rows (NUM_CARS × 50px stride)  left:182, top:160
    Two sub-layers: Gaps (gap to P1) and Times (own best lap)

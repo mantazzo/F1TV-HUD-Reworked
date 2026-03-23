@@ -161,6 +161,20 @@
             </div>
         </section>
 
+        <section class="overlay-section" id="leaderboard-options-section">
+            <h2>Leaderboard Options</h2>
+            <div class="option-row">
+                <span class="select-text">MFD Page:</span>
+                <div class="mfd-button-group" id="mfd-button-group">
+                    <button class="mfd-button" data-mfd="off">Off</button>
+                    <button class="mfd-button" data-mfd="mfd1">MFD1</button>
+                    <button class="mfd-button" data-mfd="mfd2">MFD2</button>
+                    <button class="mfd-button" data-mfd="mfd3">MFD3</button>
+                    <button class="mfd-button" data-mfd="mfd4">MFD4</button>
+                </div>
+            </div>
+        </section>
+
         <section class="overlay-section" id="session-info-options-section">
             <h2>Session Info Options</h2>
             <div class="option-row">
@@ -491,6 +505,25 @@
             sessionInfoVisibilityMode.value = sessionInfoConfig.visibilityMode || 'toggle';
         }
 
+        // MFD page button handling
+        const mfdButtonGroup = document.getElementById('mfd-button-group');
+        mfdButtonGroup.addEventListener('click', (e) => {
+            const btn = e.target.closest('.mfd-button');
+            if (!btn) return;
+            const page = btn.dataset.mfd;
+            socket.emit('config_update', { overlay: 'leaderboard', property: 'mfdPage', value: page });
+            if (currentConfig?.overlays?.leaderboard) currentConfig.overlays.leaderboard.mfdPage = page;
+            updateLeaderboardOptions();
+        });
+
+        function updateLeaderboardOptions() {
+            if (!currentConfig?.overlays?.leaderboard) return;
+            const page = currentConfig.overlays.leaderboard.mfdPage || 'off';
+            document.querySelectorAll('.mfd-button').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mfd === page);
+            });
+        }
+
         // Override renderOverlayButtons to also update options
         const originalRender = renderOverlayButtons;
         renderOverlayButtons = function() {
@@ -503,6 +536,7 @@
             updateSpeedometerOptions();
             updateSessionInfoOptions();
             updateCarDamageOptions();
+            updateLeaderboardOptions();
         };
 
         // Stop server button

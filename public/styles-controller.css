@@ -303,6 +303,41 @@ body {
     text-align: center;
 }
 
+/* MFD Page Buttons */
+.mfd-button-group {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.mfd-button {
+    padding: 6px 14px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    color: #cccccc;
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.mfd-button:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+}
+
+.mfd-button.active {
+    background: rgba(233, 69, 96, 0.2);
+    border-color: #e94560;
+    color: #ffffff;
+}
+
+.mfd-button.active:hover {
+    background: rgba(233, 69, 96, 0.3);
+}
+
 /* Footer */
 .controller-footer {
     text-align: center;

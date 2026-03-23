@@ -158,6 +158,46 @@
                  Each row is a 5×50px green rectangle shown when DRS is active (m_drs === 1). -->
             <div id="lb-drs"></div>
 
+            <!-- MFD1 — Current Tyres page (item_1_20r0r0r0 group)
+                 Header BG + label (item_1_30r0r0r0_1/2): 310×105 at left:27, top:145.
+                 Compound text rows (item_1_21r0r0r0r0): 180×1100 at left:167, top:161.
+                 Both hidden by default; toggled as a pair by the controller. -->
+            <div id="lb-mfd1-header">
+                <div id="lb-mfd1-label">CURRENT TYRES</div>
+            </div>
+            <div id="lb-mfd1"></div>
+
+            <!-- MFD2 — Current Tyre Age page (item_1_21r0r0r0r0_24)
+                 Header BG + label (item_1_30r0r0r0_1/3): 310×105 at left:27, top:145.
+                 Tyre age rows: 180×1100 at left:167, top:161 (same as MFD1).
+                 Both hidden by default; toggled as a pair by the controller. -->
+            <div id="lb-mfd2-header">
+                <div id="lb-mfd2-label">CURRENT TYRE AGE (LAPS)</div>
+            </div>
+            <div id="lb-mfd2"></div>
+
+            <!-- MFD3 — Laps Completed / Tyre Changes page (item_1_21r0r0r0r0_47)
+                 Header BG + label (item_1_30r0r0r0_1/4): 310×105 at left:27, top:145.
+                 Value rows: 180×1100 at left:167, top:161 (same as MFD1/2).
+                 Label: "LAPS COMPLETED" in non-race, "TYRE CHANGES" in race.
+                 Data: m_currentLapNum (non-race) or m_numPitStops (race) from pid 2.
+                 Both hidden by default; toggled as a pair by the controller. -->
+            <div id="lb-mfd3-header">
+                <div id="lb-mfd3-label">LAPS COMPLETED</div>
+            </div>
+            <div id="lb-mfd3"></div>
+
+            <!-- MFD4 — Gained / Lost positions page (item_1_21r0r0r0r0_70)
+                 Header BG + label (item_1_30r0r0r0_1/5): 310×105 at left:27, top:145.
+                 Rows: 180×1100 at left:167, top:161 (same as MFD1-3).
+                 Each row has an arrow image (60×50 at left:40) and delta text (70×50 at left:100).
+                 Arrow: Up = gained, Down = lost, None = no change. Text = absolute diff.
+                 Race only page; hidden by default. -->
+            <div id="lb-mfd4-header">
+                <div id="lb-mfd4-label">GAINED / LOST</div>
+            </div>
+            <div id="lb-mfd4"></div>
+
             <!-- Vertical gradient — normal (item_1_26r0r0r0): Gradient_Vertical.png
                  38.75×1145 at left:295, top:21, opacity:0.4 -->
             <div id="lb-gradient-vertical"></div>
@@ -231,9 +271,27 @@
         const elPitStatus    = document.getElementById('lb-pit-status');
         const elTyre         = document.getElementById('lb-tyre');
         const elDrs          = document.getElementById('lb-drs');
+        const elMfd1Header   = document.getElementById('lb-mfd1-header');
+        const elMfd1         = document.getElementById('lb-mfd1');
+        const elMfd2Header   = document.getElementById('lb-mfd2-header');
+        const elMfd2         = document.getElementById('lb-mfd2');
+        const elMfd3Header   = document.getElementById('lb-mfd3-header');
+        const elMfd3Label    = document.getElementById('lb-mfd3-label');
+        const elMfd3         = document.getElementById('lb-mfd3');
+        const elMfd4Header   = document.getElementById('lb-mfd4-header');
+        const elMfd4         = document.getElementById('lb-mfd4');
 
         let NUM_CARS = 22;  // Pre-allocate for max possible cars (20 standard, up to 22 in MyTeam/F2).
                             // Updated at runtime from packet 4 (m_numActiveCars).
+
+        // Hidden elements by default — overlay_config will reveal them if no MFD page is active
+        elTiming.style.display      = 'none';
+        elQualiTiming.style.display = 'none';
+
+        // Determine what type of session this is — updated each time updateHeaderDisplay() runs
+        let isRace  = false;
+        let isTimed = false;
+        let isTT    = false;
 
         // ── Battery rows — pre-generate one row per car slot ─────────────────────
         const batteryRows = Array.from({ length: NUM_CARS }, (_, i) => {
@@ -483,16 +541,16 @@
         // ── Tyre compound map — visual compound ID → { letter, color } ───────────
         // IDs sourced from F1 UDP spec; letter used with F1TV-2022-Logos font.
         const TYRE_COMPOUND = {
-            7:  { letter: 'I', color: '#31AF49' }, // Intermediate
-            8:  { letter: 'W', color: '#0073AD' }, // Wet
-            15: { letter: 'W', color: '#0073AD' }, // Wet (F2)
-            16: { letter: 'S', color: '#EC1C24' }, // Soft
-            17: { letter: 'M', color: '#FFD604' }, // Medium
-            18: { letter: 'H', color: '#F0F0EC' }, // Hard
-            19: { letter: 'SS', color: '#97528F' }, // Super Soft (F2)
-            20: { letter: 'S', color: '#EC1C24' }, // Soft (F2)
-            21: { letter: 'M', color: '#FFD604' }, // Medium (F2)
-            22: { letter: 'H', color: '#F0F0EC' }, // Hard (F2)
+            7:  { letter: 'I', displayText: 'INTER', color: '#31AF49' }, // Intermediate
+            8:  { letter: 'W', displayText: 'WET', color: '#0073AD' }, // Wet
+            15: { letter: 'W', displayText: 'WET', color: '#0073AD' }, // Wet (F2)
+            16: { letter: 'S', displayText: 'SOFT', color: '#EC1C24' }, // Soft
+            17: { letter: 'M', displayText: 'MEDIUM', color: '#FFD604' }, // Medium
+            18: { letter: 'H', displayText: 'HARD', color: '#F0F0EC' }, // Hard
+            19: { letter: 'SS', displayText: 'SUPER SOFT', color: '#97528F' }, // Super Soft (F2)
+            20: { letter: 'S', displayText: 'SOFT', color: '#EC1C24' }, // Soft (F2)
+            21: { letter: 'M', displayText: 'MEDIUM', color: '#FFD604' }, // Medium (F2)
+            22: { letter: 'H', displayText: 'HARD', color: '#F0F0EC' }, // Hard (F2)
         };
 
         // ── Pit Status rows — hidden by default, shown for in-pit/pit-exit cars in race ──
@@ -533,10 +591,56 @@
             return { row };
         });
 
+        // ── MFD1 compound name rows — one per car, shows full compound name ──────────
+        const mfd1Rows = Array.from({ length: NUM_CARS }, (_, i) => {
+            const row = document.createElement('div');
+            row.className = 'lb-mfd1-row';
+            row.style.top = `${i * 47.5}px`;
+            elMfd1.appendChild(row);
+            return { row };
+        });
+
+        // ── MFD2 tyre age rows — one per car, shows tyre age in laps ──────────────
+        const mfd2Rows = Array.from({ length: NUM_CARS }, (_, i) => {
+            const row = document.createElement('div');
+            row.className = 'lb-mfd2-row';
+            row.style.top = `${i * 47.5}px`;
+            elMfd2.appendChild(row);
+            return { row };
+        });
+
+        // ── MFD3 laps/pitstop rows — one per car, context-sensitive value ──────────
+        const mfd3Rows = Array.from({ length: NUM_CARS }, (_, i) => {
+            const row = document.createElement('div');
+            row.className = 'lb-mfd3-row';
+            row.style.top = `${i * 47.5}px`;
+            elMfd3.appendChild(row);
+            return { row };
+        });
+
+        // ── MFD4 gained/lost rows — one per car, arrow image + delta text ─────────
+        const mfd4Rows = Array.from({ length: NUM_CARS }, (_, i) => {
+            const row = document.createElement('div');
+            row.className = 'lb-mfd4-row';
+            row.style.top = `${i * 47.5}px`;
+
+            const arrow = document.createElement('div');
+            arrow.className = 'lb-mfd4-arrow';
+
+            const text = document.createElement('div');
+            text.className = 'lb-mfd4-text';
+
+            row.appendChild(arrow);
+            row.appendChild(text);
+            elMfd4.appendChild(row);
+            return { arrow, text };
+        });
+
         // ── State ──────────────────────────────────────────────────────────
         let sessionType = 0;
         let totalLaps   = 0;
         let currentLap  = 0;
+        let mfdActive   = false;
         const carPositions = new Array(NUM_CARS).fill(0); // carIdx → race position (1-based)
 
         // Driver lookup state
@@ -578,25 +682,28 @@
         }
 
         function updateHeaderDisplay() {
-            const isRace  = RACE_TYPES.has(sessionType);   // Race Session will show Lap and Total Laps
-            const isTimed = TIMED_TYPES.has(sessionType);  // Timed Session will show Session Time Remaining
-            const isTT    = TT_TYPE.has(sessionType);      // For Time Trial, we only need to show our current lap number
+            isRace  = RACE_TYPES.has(sessionType);   // Race Session
+            isTimed = TIMED_TYPES.has(sessionType);  // Timed Session (any non-race session except for Time Trial)
+            isTT    = TT_TYPE.has(sessionType);      // Time Trial Session
 
             elSessionTime.style.display = isTimed ? 'flex'  : 'none';
             elRaceLaps.style.display    = isRace || isTT  ? 'block' : 'none';
-            elTiming.style.display      = isRace ? ''     : 'none';
-            elQualiTiming.style.display = isRace ? 'none' : '';
+            elTiming.style.display      = (!mfdActive && isRace)  ? ''     : 'none';
+            elQualiTiming.style.display = (!mfdActive && !isRace) ? ''     : 'none';
 
             if (isRace) {
                 elLapCurrent.textContent = currentLap || 1;
                 elLapTotal.textContent   = `/${totalLaps}`;
             } else if (isTT) {
                 elLapCurrent.textContent = currentLap;
-                elLapTotal.textContent   = '';
+                elLapTotal.textContent   = '';  // Only show current Lap in TT, total laps is not required
             }
             const label = SESSION_LABELS[sessionType] ?? 'SESSION'; // TODO: fix later so that the session name properly updates with sessions, this is likely invalid
             elSessionName.textContent = label;
             fitSessionName();
+
+            // MFD3 label changes with session type
+            elMfd3Label.textContent = isRace ? 'TYRE CHANGES' : 'LAPS COMPLETED';
             
         }
 
@@ -653,6 +760,11 @@
             carAbbrevs.fill('');
             carTeamLogos.fill('');
 
+            // Clear session checks
+            isRace = false;
+            isTimed = false;
+            isTT = false;
+
             // Clear race timing rows
             timingRows.forEach(row => { row.iText.textContent = ''; row.lText.textContent = ''; });
 
@@ -675,6 +787,21 @@
 
             // Clear DRS rows
             drsRows.forEach(({ row }) => { row.style.display = 'none'; });
+
+            // Clear MFD1 rows
+            mfd1Rows.forEach(({ row }) => { row.textContent = ''; row.style.color = ''; });
+
+            // Clear MFD2 rows
+            mfd2Rows.forEach(({ row }) => { row.textContent = ''; });
+
+            // Clear MFD3 rows
+            mfd3Rows.forEach(({ row }) => { row.textContent = ''; });
+
+            // Clear MFD4 rows
+            mfd4Rows.forEach(({ arrow, text }) => {
+                arrow.className = 'lb-mfd4-arrow';
+                text.textContent = '';
+            });
 
             console.log('[Leaderboard] Session reset on SSTA');
         }
@@ -732,6 +859,37 @@
                     carPositions[idx]   = car.m_carPosition ?? 0;
                     carDeltaFront[idx]  = (car.m_deltaToCarInFrontMinutesPart  ?? 0) * 60000 + (car.m_deltaToCarInFrontMSPart  ?? 0);
                     carDeltaLeader[idx] = (car.m_deltaToRaceLeaderMinutesPart  ?? 0) * 60000 + (car.m_deltaToRaceLeaderMSPart  ?? 0);
+
+                    // MFD3 — laps completed (non-race) or tyre changes / pit stops (race)
+                    const pos = car.m_carPosition ?? 0;
+                    if (pos >= 1 && pos <= NUM_CARS) {
+                        const isRace = RACE_TYPES.has(sessionType);
+                        mfd3Rows[pos - 1].row.textContent = isRace
+                            ? (car.m_numPitStops ?? 0)
+                            : (car.m_currentLapNum - 1 ?? 0);
+
+                        // MFD4 — positions gained / lost vs grid start
+                        const gridPos    = car.m_gridPosition ?? 0;
+                        const currentPos = car.m_carPosition  ?? 0;
+                        const m4Row = mfd4Rows[pos - 1];
+                        if (gridPos > 0 && currentPos > 0) {
+                            const diff = gridPos - currentPos; // positive = gained, negative = lost
+                            m4Row.text.textContent = Math.abs(diff);
+                            if (diff > 0) {
+                                m4Row.arrow.className = 'lb-mfd4-arrow lb-mfd4-arrow--up';
+                            } else if (diff < 0) {
+                                m4Row.arrow.className = 'lb-mfd4-arrow lb-mfd4-arrow--down';
+                            } else {
+                                m4Row.arrow.className = 'lb-mfd4-arrow lb-mfd4-arrow--none';
+                            }
+                        }
+
+                        // In-Pit Logo — show in non-race sessions when car is pitting and hasn't finished
+                        const inPit = !isRace &&
+                            (car.m_pitStatus ?? 0) > 0 &&
+                            (car.m_resultStatus ?? 0) !== 3;
+                        inPitRows[pos - 1].row.style.display = inPit ? 'block' : 'none';
+                    }
                 });
 
                 // Apply timing deltas and position numbers to display rows
@@ -836,7 +994,16 @@
                     if (compound) {
                         tRow.text.textContent   = compound.letter;
                         tRow.text.style.color   = compound.color;
+
+                        // MFD1 compound name
+                        const m1Row = mfd1Rows[pos - 1];
+                        m1Row.row.textContent = compound.displayText;
+                        m1Row.row.style.color = compound.color;
                     }
+
+                    // MFD2 tyre age
+                    const tyreAge = car.m_tyresAgeLaps ?? 0;
+                    mfd2Rows[pos - 1].row.textContent = tyreAge;
                 });
                 elBattery.style.display = 'none';
             }
@@ -863,6 +1030,34 @@
             const cfg = config?.overlays?.leaderboard;
             if (!cfg) return;
             elOverlay.classList.toggle('visible', !!cfg.visible);
+
+            // MFD page visibility — show the active page's header+data, hide all others
+            const page = cfg.mfdPage || 'off';
+            mfdActive = page !== 'off';
+            const mfdPages = {
+                mfd1: [elMfd1Header, elMfd1],
+                mfd2: [elMfd2Header, elMfd2],
+                mfd3: [elMfd3Header, elMfd3],
+                mfd4: [elMfd4Header, elMfd4],
+            };
+            for (const [key, [header, data]] of Object.entries(mfdPages)) {
+                const show = key === page;
+                header.style.display = show ? 'block' : 'none';
+                data.style.display   = show ? 'block' : 'none';
+            }
+
+            // Shift driver rows down when an MFD page is active (MFD header occupies top area)
+            // MFD active: 47.5px stride starting at 47.5  |  MFD off: normal 50px stride from 0
+            for (let i = 0; i < elDrivers.children.length; i++) {
+                elDrivers.children[i].style.top = mfdActive ? `${(i + 1) * 47.5}px` : `${i * 50}px`;
+            }
+
+            // Hide timing columns while any MFD page is active;
+            // when MFD is off, only show the timing relevant to the current session type
+            elTiming.style.display      = (!mfdActive && isRace)   ? '' : 'none';
+            elQualiTiming.style.display = (!mfdActive && !isRace)  ? '' : 'none';
+            elTyre.style.display        = mfdActive ? 'none' : '';
+            elDrs.style.display         = mfdActive ? 'none' : '';
         });
     </script>
 </body>
