@@ -114,11 +114,19 @@
                  position, last name (PI), arrow up/down -->
             <div id="lb-drivers"></div>
 
-            <!-- Timing widget (item_1_18r0r0r0): 150×1100 at left:167, top:161
+            <!-- Timing widget — Race (item_1_18r0r0r0): 150×1100 at left:167, top:161
                  Two sub-layers: lb-timing-interval (Interval mode) and lb-timing-leader (Leader mode)
                  JS-generated rows, one text element per car at 50px stride.
-                 P1 row shows mode label; P2-P20 show gap text. -->
+                 P1 row shows mode label; P2-P20 show gap text.
+                 Shown in race sessions only. -->
             <div id="lb-timing"></div>
+
+            <!-- Timing widget — Quali/Practice (item_1_22r0r0): 135×1100 at left:182, top:160
+                 Two sub-layers: lb-quali-timing-gaps (gap to P1) and lb-quali-timing-times (own best lap).
+                 JS-generated rows, one text element per car at 50px stride.
+                 P1 row shows their best lap; others show gap or own lap time.
+                 Shown in non-race sessions only. -->
+            <div id="lb-quali-timing"></div>
 
             <!-- In-Pit Logo (item_1_15r0r0r0): 35×1100 at left:330, top:165
                  JS-generated rows, one per car at 50px stride, hidden by default.
@@ -144,6 +152,11 @@
                  JS-generated rows, one per car at 50px stride.
                  Each row shows a single-letter compound code in the compound's colour. -->
             <div id="lb-tyre"></div>
+
+            <!-- DRS Indicator (item_1_35r0): 20×1110 at left:22.5, top:162
+                 JS-generated rows, one per car at 50px stride, hidden by default.
+                 Each row is a 5×50px green rectangle shown when DRS is active (m_drs === 1). -->
+            <div id="lb-drs"></div>
 
             <!-- Vertical gradient — normal (item_1_26r0r0r0): Gradient_Vertical.png
                  38.75×1145 at left:295, top:21, opacity:0.4 -->
@@ -211,15 +224,18 @@
         const elFlLogo       = document.getElementById('lb-fl-logo');
         const elDrivers      = document.getElementById('lb-drivers');
         const elTiming       = document.getElementById('lb-timing');
+        const elQualiTiming  = document.getElementById('lb-quali-timing');
         const elInPit        = document.getElementById('lb-inpit');
         const elFinish       = document.getElementById('lb-finish');
         const elOut          = document.getElementById('lb-out');
         const elPitStatus    = document.getElementById('lb-pit-status');
         const elTyre         = document.getElementById('lb-tyre');
+        const elDrs          = document.getElementById('lb-drs');
 
-        // ── Battery rows — pre-generate one row per car slot ─────────────────────
         let NUM_CARS = 22;  // Pre-allocate for max possible cars (20 standard, up to 22 in MyTeam/F2).
                             // Updated at runtime from packet 4 (m_numActiveCars).
+
+        // ── Battery rows — pre-generate one row per car slot ─────────────────────
         const batteryRows = Array.from({ length: NUM_CARS }, (_, i) => {
             const row = document.createElement('div');
             row.className = 'lb-battery-row';
@@ -317,7 +333,6 @@
             // Position number
             const position = document.createElement('div');
             position.className = 'lb-driver-position';
-            position.textContent = `${i + 1}`;
 
             // Name abbreviation
             const abbrev = document.createElement('div');
@@ -380,6 +395,37 @@
             elTimingLeader.appendChild(lRow);
 
             return { iText, lText };
+        });
+
+        // ── Quali/Practice Timing rows — Gaps and Times sub-layers, NUM_CARS rows each ─────
+        const elQualiGaps  = document.createElement('div');
+        elQualiGaps.id = 'lb-quali-timing-gaps';
+        elQualiTiming.appendChild(elQualiGaps);
+
+        const elQualiTimes = document.createElement('div');
+        elQualiTimes.id = 'lb-quali-timing-times';
+        elQualiTiming.appendChild(elQualiTimes);
+
+        const qualiTimingRows = Array.from({ length: NUM_CARS }, (_, i) => {
+            // Gaps row
+            const gRow = document.createElement('div');
+            gRow.className = 'lb-timing-row';
+            gRow.style.top = `${i * 50}px`;
+            const gText = document.createElement('div');
+            gText.className = 'lb-timing-text';
+            gRow.appendChild(gText);
+            elQualiGaps.appendChild(gRow);
+
+            // Times row
+            const tRow = document.createElement('div');
+            tRow.className = 'lb-timing-row';
+            tRow.style.top = `${i * 50}px`;
+            const tText = document.createElement('div');
+            tText.className = 'lb-timing-text';
+            tRow.appendChild(tText);
+            elQualiTimes.appendChild(tRow);
+
+            return { gText, tText };
         });
 
         // ── In-Pit Logo rows — hidden by default, shown when car is in pit (non-race) ──
@@ -478,6 +524,15 @@
             return { text };
         });
 
+        // ── DRS Indicator rows — one per car, hidden unless DRS active ───────────────
+        const drsRows = Array.from({ length: NUM_CARS }, (_, i) => {
+            const row = document.createElement('div');
+            row.className = 'lb-drs-row';
+            row.style.top = `${i * 50}px`;
+            elDrs.appendChild(row);
+            return { row };
+        });
+
         // ── State ──────────────────────────────────────────────────────────
         let sessionType = 0;
         let totalLaps   = 0;
@@ -493,6 +548,7 @@
         const carTeamLogos  = new Array(NUM_CARS).fill('');  // carIdx → logo URL string
         const carDeltaFront  = new Array(NUM_CARS).fill(0);  // carIdx → delta to car in front (ms)
         const carDeltaLeader = new Array(NUM_CARS).fill(0);  // carIdx → delta to race leader (ms)
+        const carBestLapMs   = new Array(NUM_CARS).fill(0);  // carIdx → best lap time in ms (from pid 11)
 
         async function loadDriverData() {
             try {
@@ -528,6 +584,8 @@
 
             elSessionTime.style.display = isTimed ? 'flex'  : 'none';
             elRaceLaps.style.display    = isRace || isTT  ? 'block' : 'none';
+            elTiming.style.display      = isRace ? ''     : 'none';
+            elQualiTiming.style.display = isRace ? 'none' : '';
 
             if (isRace) {
                 elLapCurrent.textContent = currentLap || 1;
@@ -542,7 +600,7 @@
             
         }
 
-        // ── Timing delta formatter ─────────────────────────────────────────
+        // ── Timing formatters ─────────────────────────────────────────────────────
         function formatDeltaMs(totalMs) {
             if (totalMs <= 0) return '+0.000';
             const minutes  = Math.floor(totalMs / 60000);
@@ -555,6 +613,72 @@
             return `+${seconds}.${ms3}`;
         }
 
+        function formatLapTimeMs(totalMs) {
+            if (totalMs <= 0) return '--:--.---';
+            const minutes = Math.floor(totalMs / 60000);
+            const seconds = Math.floor((totalMs % 60000) / 1000);
+            const ms3     = String(totalMs % 1000).padStart(3, '0');
+            return `${minutes}:${String(seconds).padStart(2, '0')}.${ms3}`;
+        }
+
+        // ── Quali/Practice timing display update ────────────────────────────────
+        function updateQualiTimingDisplay() {
+            let leaderMs = 0;
+            for (let carIdx = 0; carIdx < NUM_CARS; carIdx++) {
+                if (carPositions[carIdx] === 1) { leaderMs = carBestLapMs[carIdx]; break; }
+            }
+            for (let carIdx = 0; carIdx < NUM_CARS; carIdx++) {
+                const pos = carPositions[carIdx];
+                if (pos < 1 || pos > NUM_CARS) continue;
+                const row   = qualiTimingRows[pos - 1];
+                const lapMs = carBestLapMs[carIdx];
+                row.tText.textContent = lapMs > 0 ? formatLapTimeMs(lapMs) : 'NO TIME';
+                if (pos === 1) {
+                    row.gText.textContent = lapMs > 0 ? formatLapTimeMs(lapMs) : '';
+                } else {
+                    row.gText.textContent = (lapMs > 0 && leaderMs > 0)
+                        ? formatDeltaMs(lapMs - leaderMs)
+                        : '';
+                }
+            }
+        }
+
+        // ── Session reset ─────────────────────────────────────────────────────────
+        function resetSessionData() {
+            currentLap = 0;
+            carPositions.fill(0);
+            carDeltaFront.fill(0);
+            carDeltaLeader.fill(0);
+            carBestLapMs.fill(0);
+            carAbbrevs.fill('');
+            carTeamLogos.fill('');
+
+            // Clear race timing rows
+            timingRows.forEach(row => { row.iText.textContent = ''; row.lText.textContent = ''; });
+
+            // Clear quali timing rows
+            qualiTimingRows.forEach(row => { row.gText.textContent = ''; row.tText.textContent = 'NO TIME'; });
+
+            // Clear driver row display data
+            driverRows.forEach(row => {
+                row.position.textContent = '';
+                row.abbrev.textContent = '';
+                row.teamLogoNormal.src = '';
+                row.teamLogoNormal.style.display = 'none';
+            });
+
+            // Clear tyre rows
+            tyreRows.forEach(row => {
+                row.text.textContent = '';
+                row.text.style.color = '';
+            });
+
+            // Clear DRS rows
+            drsRows.forEach(({ row }) => { row.style.display = 'none'; });
+
+            console.log('[Leaderboard] Session reset on SSTA');
+        }
+
         // ── Slot visibility ────────────────────────────────────────────────
         // Hide pre-allocated rows beyond the active car count for always-visible
         // containers. Conditionally-visible containers (inPit, finish, out,
@@ -563,7 +687,9 @@
         function updateSlotVisibility() {
             const containers = [
                 elBattery, elPenalty, elFlLogo, elDrivers,
-                elTimingInterval, elTimingLeader, elTyre,
+                elTimingInterval, elTimingLeader,
+                elQualiGaps, elQualiTimes,
+                elTyre,
             ];
             for (const container of containers) {
                 Array.from(container.children).forEach((child, i) => {
@@ -592,6 +718,50 @@
                 if (data.m_formula !== undefined && data.m_formula !== formulaType) {
                     formulaType = data.m_formula;
                     loadDriverData();
+                }
+            }
+
+            // Packet ID 2 — Lap Data
+            if (pid === 2) {
+                const lapData = data.m_lapData;
+                if (!Array.isArray(lapData)) return;
+
+                // Update carIdx → position and delta arrays
+                lapData.forEach((car, idx) => {
+                    if (idx >= NUM_CARS) return;
+                    carPositions[idx]   = car.m_carPosition ?? 0;
+                    carDeltaFront[idx]  = (car.m_deltaToCarInFrontMinutesPart  ?? 0) * 60000 + (car.m_deltaToCarInFrontMSPart  ?? 0);
+                    carDeltaLeader[idx] = (car.m_deltaToRaceLeaderMinutesPart  ?? 0) * 60000 + (car.m_deltaToRaceLeaderMSPart  ?? 0);
+                });
+
+                // Apply timing deltas and position numbers to display rows
+                for (let carIdx = 0; carIdx < NUM_CARS; carIdx++) {
+                    const pos = carPositions[carIdx];
+                    if (pos < 1 || pos > NUM_CARS) continue;
+                    const row = timingRows[pos - 1];
+                    driverRows[pos - 1].position.textContent = pos;
+                    row.iText.textContent = pos === 1 ? 'Interval' : formatDeltaMs(carDeltaFront[carIdx]);
+                    row.lText.textContent = pos === 1 ? 'Leader'   : formatDeltaMs(carDeltaLeader[carIdx]);
+                }
+
+                // Track race leader's current lap for header
+                if (RACE_TYPES.has(sessionType)) {
+                    for (const car of lapData) {
+                        if (car.m_carPosition === 1) {
+                            if (car.m_currentLapNum !== currentLap) {
+                                currentLap = car.m_currentLapNum;
+                                updateHeaderDisplay();
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // Packet ID 3 — Event
+            if (pid === 3) {
+                if (data.m_eventStringCode === 'SSTA') {
+                    resetSessionData();
                 }
             }
 
@@ -631,43 +801,18 @@
                 }
             }
 
-            // Packet ID 2 — Lap Data
-            if (pid === 2) {
-                const lapData = data.m_lapData;
-                if (!Array.isArray(lapData)) return;
-
-                // Update carIdx → position and delta arrays
-                lapData.forEach((car, idx) => {
-                    if (idx >= NUM_CARS) return;
-                    carPositions[idx]   = car.m_carPosition ?? 0;
-                    carDeltaFront[idx]  = (car.m_deltaToCarInFrontMinutesPart  ?? 0) * 60000 + (car.m_deltaToCarInFrontMSPart  ?? 0);
-                    carDeltaLeader[idx] = (car.m_deltaToRaceLeaderMinutesPart  ?? 0) * 60000 + (car.m_deltaToRaceLeaderMSPart  ?? 0);
-                });
-
-                // Apply timing deltas to display rows
-                for (let carIdx = 0; carIdx < NUM_CARS; carIdx++) {
+            // Packet ID 6 — Car Telemetry: DRS active per car
+            if (pid === 6) {
+                const telData = data.m_carTelemetryData;
+                if (!Array.isArray(telData)) return;
+                telData.forEach((car, carIdx) => {
                     const pos = carPositions[carIdx];
-                    if (pos < 1 || pos > NUM_CARS) continue;
-                    const row = timingRows[pos - 1];
-                    row.iText.textContent = pos === 1 ? 'Interval' : formatDeltaMs(carDeltaFront[carIdx]);
-                    row.lText.textContent = pos === 1 ? 'Leader'   : formatDeltaMs(carDeltaLeader[carIdx]);
-                }
-
-                // Track race leader's current lap for header
-                if (RACE_TYPES.has(sessionType)) {
-                    for (const car of lapData) {
-                        if (car.m_carPosition === 1) {
-                            if (car.m_currentLapNum !== currentLap) {
-                                currentLap = car.m_currentLapNum;
-                                updateHeaderDisplay();
-                            }
-                            break;
-                        }
-                    }
-                }
+                    if (pos < 1 || pos > NUM_CARS) return;
+                    drsRows[pos - 1].row.style.display = car.m_drs === 1 ? 'block' : 'none';
+                });
             }
 
-            // Packet ID 7 — Car Status: ERS battery charge
+            // Packet ID 7 — Car Status
             if (pid === 7) {
                 const statusData = data.m_carStatusData;
                 if (!Array.isArray(statusData)) return;
@@ -675,14 +820,41 @@
                 statusData.forEach((car, carIdx) => {
                     const pos = carPositions[carIdx];
                     if (pos < 1 || pos > NUM_CARS) return;
-                    const ersJ      = car.m_ersStoreEnergy ?? 0;
-                    const ersPct    = Math.min(100, Math.max(0, (ersJ / 4000000) * 100));
-                    const row       = batteryRows[pos - 1];
-                    row.gaugeFill.style.width = `${ersPct}%`;
-                    row.text.textContent      = `${Math.round(ersPct)}%`;
+
+                    // ERS battery
+                    const ersJ   = car.m_ersStoreEnergy ?? 0;
+                    const ersPct = Math.min(100, Math.max(0, (ersJ / 4000000) * 100));
+                    const bRow   = batteryRows[pos - 1];
+                    bRow.gaugeFill.style.width = `${ersPct}%`;
+                    bRow.text.textContent      = `${Math.round(ersPct)}%`;
                     if (ersJ > 0) hasERS = true;
+
+                    // Tyre compound
+                    const compoundId = car.m_visualTyreCompound;
+                    const compound   = TYRE_COMPOUND[compoundId];
+                    const tRow       = tyreRows[pos - 1];
+                    if (compound) {
+                        tRow.text.textContent   = compound.letter;
+                        tRow.text.style.color   = compound.color;
+                    }
                 });
                 elBattery.style.display = 'none';
+            }
+
+            // Packet ID 11 — Session History: best lap per car
+            if (pid === 11) {
+                const carIdx = data.m_carIdx;
+                if (carIdx !== undefined && carIdx < NUM_CARS) {
+                    const bestLapNum = data.m_bestLapTimeLapNum ?? 0;
+                    if (bestLapNum > 0) {
+                        const laps  = data.m_lapHistoryData;
+                        const lapMs = Array.isArray(laps) ? (laps[bestLapNum - 1]?.m_lapTimeInMS ?? 0) : 0;
+                        if (lapMs > 0) {
+                            carBestLapMs[carIdx] = lapMs;
+                            updateQualiTimingDisplay();
+                        }
+                    }
+                }
             }
         });
 

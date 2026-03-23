@@ -1087,6 +1087,53 @@ body { background: black; overflow: hidden; }
     height: 1100px;
 }
 
+/* ════════════════════════════════════════════════════════════════
+   DRS INDICATOR — item_1_35r0
+   JS-generated rows (NUM_CARS × 50px stride)  left:22.5, top:162
+   Each row: 5×50px green pill, hidden by default, shown when DRS active
+   ════════════════════════════════════════════════════════════════ */
+#lb-drs {
+    left: 22.5px;
+    top: 162px;
+    width: 20px;
+    height: 1110px;
+}
+
+.lb-drs-row {
+    position: absolute;
+    width: 5px;
+    height: 50px;
+    border-radius: 2px;
+    background-color: rgb(0, 255, 0);
+    display: none;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   QUALI/PRACTICE TIMING WIDGET — item_1_22r0r0
+   JS-generated rows (NUM_CARS × 50px stride)  left:182, top:160
+   Two sub-layers: Gaps (gap to P1) and Times (own best lap)
+   Reuses .lb-timing-row and .lb-timing-text classes
+   ════════════════════════════════════════════════════════════════ */
+#lb-quali-timing {
+    left: 182px;
+    top: 160px;
+    width: 135px;
+    height: 1100px;
+}
+
+#lb-quali-timing-gaps,
+#lb-quali-timing-times {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 135px;
+    height: 1100px;
+}
+
+#lb-quali-timing-times {
+    display: none;
+}
+
 /* Each car row: 40×50, border-radius 25px pill shape, top set via JS at 50px stride */
 .lb-tyre-row {
     position: absolute;
