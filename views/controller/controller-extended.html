@@ -173,6 +173,13 @@
                     <button class="mfd-button" data-mfd="mfd4">MFD4</button>
                 </div>
             </div>
+            <div class="option-row">
+                <label class="toggle-label">
+                    <input type="checkbox" id="show-last-names-toggle" class="toggle-checkbox">
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-text">Show Last Names</span>
+                </label>
+            </div>
         </section>
 
         <section class="overlay-section" id="session-info-options-section">
@@ -268,6 +275,7 @@
                 'session-info': 'ℹ️',
                 'pit-window': '🪟',
                 'car-damage': '💣',
+                'leaderboard': '📋'
             };
             return icons[overlayId] || '📺';
         }
@@ -516,12 +524,23 @@
             updateLeaderboardOptions();
         });
 
+        // Show Last Names toggle handling
+        const showLastNamesToggle = document.getElementById('show-last-names-toggle');
+        showLastNamesToggle.addEventListener('change', () => {
+            const newVal = showLastNamesToggle.checked;
+            socket.emit('config_update', { overlay: 'leaderboard', property: 'showLastNames', value: newVal });
+            if (currentConfig?.overlays?.leaderboard) currentConfig.overlays.leaderboard.showLastNames = newVal;
+            updateLeaderboardOptions();
+        });
+
         function updateLeaderboardOptions() {
             if (!currentConfig?.overlays?.leaderboard) return;
-            const page = currentConfig.overlays.leaderboard.mfdPage || 'off';
-            document.querySelectorAll('.mfd-button').forEach(btn => {
+            const lb   = currentConfig.overlays.leaderboard;
+            const page = lb.mfdPage || 'off';
+            document.querySelectorAll('.mfd-button[data-mfd]').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.mfd === page);
             });
+            showLastNamesToggle.checked = !!lb.showLastNames;
         }
 
         // Override renderOverlayButtons to also update options

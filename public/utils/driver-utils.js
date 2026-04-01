@@ -234,6 +234,38 @@ const DriverUtils = {
     },
 
     /**
+     * Get driver last name for display
+     * Resolves custom drivers, AI drivers, and falls back to the last word of m_name
+     *
+     * @param {Object} participant - Participant data from telemetry
+     * @param {Object} aiDrivers - AI drivers lookup object (key: driverId)
+     * @param {Array} customDrivers - Array of custom driver objects
+     * @param {Object} teamNames - Team names lookup object
+     * @returns {string} Driver's last name
+     */
+    getDriverLastName(participant, aiDrivers, customDrivers, teamNames) {
+        if (!participant) return '';
+
+        // Custom driver
+        if (participant.m_driverId === 255) {
+            const customMatch = this.matchCustomDriver(participant, customDrivers, teamNames);
+            if (customMatch) {
+                return customMatch.LastName || customMatch.DisplayName || 'PLAYER';
+            }
+            return (participant.m_name ?? '').split(' ').pop() || 'PLAYER';
+        }
+
+        // AI driver
+        if (aiDrivers && aiDrivers[participant.m_driverId]) {
+            const driver = aiDrivers[participant.m_driverId];
+            if (driver.lastName) return driver.lastName;
+        }
+
+        // Fallback
+        return (participant.m_name ?? '').split(' ').pop() || 'UNKNOWN';
+    },
+
+    /**
      * Get driver abbreviation (3-letter code) for display
      * Handles AI drivers, custom drivers, and generates fallback abbreviations
      * 

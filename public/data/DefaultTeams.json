@@ -2,44 +2,44 @@
   "0": {
     "ShortName": "Mercedes",
     "FullName": "",
-    "Logo": "mercedes.png"
+    "Logo": "2025mercedeslogowhite.svg"
   },
   "1": {
     "ShortName": "Ferrari",
     "FullName": "Scuderia Ferrari HP",
-    "Logo": "ferrari.png"
+    "Logo": "2025ferrarilogo.svg"
   },
   "2": {
     "ShortName": "Red Bull Racing",
     "FullName": "",
-    "Logo": "red_bull_racing.png"
+    "Logo": "2025redbullracinglogo.svg"
   },
   "3": {
     "ShortName": "Williams",
     "FullName": "",
-    "Logo": "williams.png"
+    "Logo": "2025williamslogo.svg"
   },
   "4": {
     "ShortName": "Aston Martin",
     "FullName": "",
-    "Logo": "aston_martin.png"
+    "Logo": "2025astonmartinlogowhite.svg"
   },
   "5": {
     "ShortName": "Alpine",
     "FullName": "",
-    "Logo": "alpine.png"
+    "Logo": "2025alpinelogo.svg"
   },
   "6": {
     "ShortName": "RB",
     "FullName": "",
-    "Logo": "rb.png"
+    "Logo": "2025racingbullslogo.svg"
   },
   "7": {
     "ShortName": "Haas",
     "ShortName_Note": "The short team name that will be used in various overlays.",
     "FullName": "MoneyGram Haas F1 Team",
     "FullName_Note": "The full team name. Not used at the moment.",
-    "Logo": "haas.png",
+    "Logo": "2025haaslogo.svg",
     "Logo_Note": "The filename of the team's logo image located in the /images/team-logos folder. Can also specify a subfolder, e.g., 'f2/teamlogo.png'.",
     "OverridePrimaryColor": "#9C9FA2",
     "OverridePrimaryColor_Note": "Use this field to set a custom primary color for any team if you're not satisfied with the primary color provided by the game."
@@ -47,12 +47,12 @@
   "8": {
     "ShortName": "McLaren",
     "FullName": "",
-    "Logo": "mclaren.png"
+    "Logo": "2025mclarenlogo.svg"
   },
   "9": {
-    "ShortName": "Sauber",
+    "ShortName": "Kick Sauber",
     "FullName": "",
-    "Logo": "sauber.png"
+    "Logo": "2025kicksauberlogo.svg"
   },
   "41": {
     "ShortName": "F1 Generic",

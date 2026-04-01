@@ -61,7 +61,8 @@
     "leaderboard": {
       "visible": true,
       "name": "Leaderboard",
-      "mfdPage": "off"
+      "mfdPage": "off",
+      "showLastNames": false
     }
   }
 }

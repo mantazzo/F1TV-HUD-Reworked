@@ -280,6 +280,7 @@
         const elMfd3         = document.getElementById('lb-mfd3');
         const elMfd4Header   = document.getElementById('lb-mfd4-header');
         const elMfd4         = document.getElementById('lb-mfd4');
+        const elFinishedImg  = document.getElementById('lb-finished-img');
 
         let NUM_CARS = 22;  // Pre-allocate for max possible cars (20 standard, up to 22 in MyTeam/F2).
                             // Updated at runtime from packet 4 (m_numActiveCars).
@@ -640,7 +641,8 @@
         let sessionType = 0;
         let totalLaps   = 0;
         let currentLap  = 0;
-        let mfdActive   = false;
+        let mfdActive     = false;
+        let showLastNames = false;
         const carPositions = new Array(NUM_CARS).fill(0); // carIdx → race position (1-based)
 
         // Driver lookup state
@@ -649,6 +651,7 @@
         let teamNames    = {};
         let formulaType  = DriverUtils.FORMULA_TYPE.F1_MODERN;
         const carAbbrevs    = new Array(NUM_CARS).fill('');  // carIdx → abbreviation string
+        const carLastNames  = new Array(NUM_CARS).fill('');  // carIdx → last name string
         const carTeamLogos  = new Array(NUM_CARS).fill('');  // carIdx → logo URL string
         const carDeltaFront  = new Array(NUM_CARS).fill(0);  // carIdx → delta to car in front (ms)
         const carDeltaLeader = new Array(NUM_CARS).fill(0);  // carIdx → delta to race leader (ms)
@@ -688,12 +691,12 @@
 
             elSessionTime.style.display = isTimed ? 'flex'  : 'none';
             elRaceLaps.style.display    = isRace || isTT  ? 'block' : 'none';
-            elTiming.style.display      = (!mfdActive && isRace)  ? ''     : 'none';
-            elQualiTiming.style.display = (!mfdActive && !isRace) ? ''     : 'none';
+            elTiming.style.display      = (!mfdActive && !showLastNames && isRace)  ? '' : 'none';
+            elQualiTiming.style.display = (!mfdActive && !showLastNames && !isRace) ? '' : 'none';
 
             if (isRace) {
                 elLapCurrent.textContent = currentLap || 1;
-                elLapTotal.textContent   = `/${totalLaps}`;
+                elLapTotal.textContent   = `/ ${totalLaps}`;
             } else if (isTT) {
                 elLapCurrent.textContent = currentLap;
                 elLapTotal.textContent   = '';  // Only show current Lap in TT, total laps is not required
@@ -758,7 +761,11 @@
             carDeltaLeader.fill(0);
             carBestLapMs.fill(0);
             carAbbrevs.fill('');
+            carLastNames.fill('');
             carTeamLogos.fill('');
+
+            // Reset chequered flag banner
+            elFinishedImg.style.opacity = '';
 
             // Clear session checks
             isRace = false;
@@ -773,9 +780,10 @@
 
             // Clear driver row display data
             driverRows.forEach(row => {
-                row.position.textContent = '';
-                row.abbrev.textContent = '';
-                row.teamLogoNormal.src = '';
+                row.position.textContent  = '';
+                row.abbrev.textContent    = '';
+                row.lastName.textContent  = '';
+                row.teamLogoNormal.src    = '';
                 row.teamLogoNormal.style.display = 'none';
             });
 
@@ -840,6 +848,7 @@
                 totalLaps   = data.m_totalLaps      ?? 0;
                 const timeLeft = data.m_sessionTimeLeft ?? 0;
                 elSessionTime.textContent = formatSessionTime(timeLeft);
+                elSessionTime.classList.toggle('timer-critical', timeLeft <= 120);
                 updateHeaderDisplay();
 
                 if (data.m_formula !== undefined && data.m_formula !== formulaType) {
@@ -852,6 +861,8 @@
             if (pid === 2) {
                 const lapData = data.m_lapData;
                 if (!Array.isArray(lapData)) return;
+
+                let anyFinished = false;
 
                 // Update carIdx → position and delta arrays
                 lapData.forEach((car, idx) => {
@@ -884,13 +895,27 @@
                             }
                         }
 
-                        // In-Pit Logo — show in non-race sessions when car is pitting and hasn't finished
+                        // In-Pit Logo — show in non-race sessions when car is pitting OR driver is reported In Garage and hasn't finished
+                        // It seems sometimes game reports m_pitStatus as 0 and m_driverStatus as 0 while in pits (should be >0 and 0 instead of 0 and 0) - likely a game bug, so we do a workaround
                         const inPit = !isRace &&
-                            (car.m_pitStatus ?? 0) > 0 &&
+                            ((car.m_pitStatus ?? 0) > 0 ||
+                            (car.m_driverStatus ?? -1) === 0) &&
                             (car.m_resultStatus ?? 0) !== 3;
                         inPitRows[pos - 1].row.style.display = inPit ? 'block' : 'none';
+
+                        // Finish Logo — show when driver has finished, is not in pit lane, and is not in garage
+                        /* const finished = (car.m_resultStatus ?? 0) === 3 &&
+                            (car.m_pitStatus ?? 0) !== 1 &&
+                            (car.m_driverStatus ?? -1) !== 0; */
+                        const finished = (car.m_resultStatus ?? 0) === 3;  // Short option for testing different checks, seems to be enough to show the finished flag for all required drivers
+                        finishRows[pos - 1].row.style.opacity = finished ? '1' : '0';
+                        if (finished) anyFinished = true;
                     }
                 });
+
+                // Chequered flag banner — show as soon as any driver has finished
+                // Note: CHQF event code was also attempted but appears to be unreliable in-game
+                elFinishedImg.style.opacity = anyFinished ? '0.5' : '';
 
                 // Apply timing deltas and position numbers to display rows
                 for (let carIdx = 0; carIdx < NUM_CARS; carIdx++) {
@@ -921,6 +946,11 @@
                 if (data.m_eventStringCode === 'SSTA') {
                     resetSessionData();
                 }
+                // CHQF is NOT thrown for some reason... Commented out until I can discover why
+                // If fixed, this would be an easy way to discover when the session ending is triggered, for now, I'll have to rely on driver result status
+                /* if (data.m_eventStringCode === 'CHQF') {
+                    elFinishedImg.style.opacity = '1';
+                } */
             }
 
             // Packet ID 4 — Participants
@@ -937,6 +967,10 @@
                         const abbrev = DriverUtils.getDriverAbbreviation(participant, aiDrivers, customDrivers, teamNames);
                         carAbbrevs[carIdx] = abbrev;
 
+                        // Last name — resolved via custom/AI driver data, falling back to m_name
+                        const lastNameStr = DriverUtils.getDriverLastName(participant, aiDrivers, customDrivers, teamNames);
+                        carLastNames[carIdx] = lastNameStr;
+
                         // Team logo
                         const teamId   = participant.m_teamId;
                         const teamData = teamNames[teamId];
@@ -948,6 +982,12 @@
                         if (pos >= 1 && pos <= NUM_CARS) {
                             const row = driverRows[pos - 1];
                             row.abbrev.textContent = abbrev;
+                            row.lastName.textContent  = lastNameStr;
+                            row.lastName.className    = lastNameStr.length > 9
+                                ? 'lb-driver-lastname lb-driver-lastname--long'
+                                : 'lb-driver-lastname';
+                            row.lastName.style.display = showLastNames ? 'flex' : 'none';
+                            row.abbrev.style.display   = showLastNames ? 'none' : '';
                             if (logoUrl) {
                                 row.teamLogoNormal.src          = logoUrl;
                                 row.teamLogoNormal.style.display = 'block';
@@ -1052,12 +1092,19 @@
                 elDrivers.children[i].style.top = mfdActive ? `${(i + 1) * 47.5}px` : `${i * 50}px`;
             }
 
-            // Hide timing columns while any MFD page is active;
-            // when MFD is off, only show the timing relevant to the current session type
-            elTiming.style.display      = (!mfdActive && isRace)   ? '' : 'none';
-            elQualiTiming.style.display = (!mfdActive && !isRace)  ? '' : 'none';
-            elTyre.style.display        = mfdActive ? 'none' : '';
-            elDrs.style.display         = mfdActive ? 'none' : '';
+            // Last Names toggle — swap abbreviation vs last name per driver row
+            showLastNames = !!cfg.showLastNames;
+            driverRows.forEach(row => {
+                row.abbrev.style.display    = showLastNames ? 'none' : '';
+                row.lastName.style.display  = showLastNames ? 'flex' : 'none';
+            });
+
+            // Hide timing columns while any MFD page or Last Names mode is active;
+            // when both are off, show the timing relevant to the current session type
+            elTiming.style.display      = (!mfdActive && !showLastNames && isRace)   ? '' : 'none';
+            elQualiTiming.style.display = (!mfdActive && !showLastNames && !isRace)  ? '' : 'none';
+            elTyre.style.display        = (!mfdActive && !showLastNames) ? '' : 'none';
+            elDrs.style.display         = (!mfdActive && !showLastNames) ? '' : 'none';
         });
     </script>
 </body>

@@ -181,12 +181,16 @@ body { background: black; overflow: hidden; }
     font-family: 'F1TV-2022';
     font-weight: 700;
     font-style: oblique;
-    color: rgb(255, 0, 0);
+    color: rgb(194, 194, 196);
     font-size: 32px;
     display: flex;
     justify-content: center;
     align-items: center;
     white-space: pre;
+}
+
+#lb-session-time.timer-critical {
+    color: rgb(255, 0, 0);
 }
 
 /* ── Race: LAP X / Y (item_1_8r0r0r0_5) ─────────────────────────────────── */
@@ -240,8 +244,9 @@ body { background: black; overflow: hidden; }
     top: 0;
     width: 60px;
     height: 27px;
-    font-family: 'Formula1 DisplayOblique';
+    font-family: 'Formula1 Display';
     font-weight: 400;
+    font-style: oblique;
     color: rgb(192, 192, 192);
     font-size: 24px;
     display: flex;
@@ -780,6 +785,7 @@ body { background: black; overflow: hidden; }
     height: 50px;
     object-fit: contain;
     display: none;
+    padding: 5px; /* to fit logos in the 55×50 box better, remove if unnecessary */
 }
 
 /* Team logo — PI variant (item_1_24r0r0_57r0r0r0): img 65×60 at left:45, top:-5 */
@@ -836,14 +842,21 @@ body { background: black; overflow: hidden; }
     top: 0;
     width: 200px;
     height: 50px;
-    font-family: 'F1TV-2022';
+    font-family: 'F1TV-2022-Name';
     font-weight: 700;
-    font-style: oblique;
+    font-stretch: normal;
     font-size: 25px;
-    color: rgb(0, 0, 0);
+    color: rgb(255, 255, 255);
     justify-content: flex-start;
     align-items: center;
     white-space: pre;
+}
+
+/* Long last name variant (>9 chars) — condensed font to fit in the same space */
+.lb-driver-lastname--long {
+    font-family: 'F1TV-2022-Name';
+    font-size: 22px;
+    font-stretch: condensed;
 }
 
 /* Position-gained arrow (item_1_24r0r0_62r0r0r0): Arrow_Up.png 35×20 at left:5, top:0
