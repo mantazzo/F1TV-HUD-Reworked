@@ -62,7 +62,14 @@
       "visible": true,
       "name": "Leaderboard",
       "mfdPage": "off",
-      "showLastNames": false
+      "showLastNames": false,
+      "showQualiTimes": false,
+      "showDriverNumbers": false,
+      "showPrimaryPI": false,
+      "showSecondaryPI": false,
+      "showTeammateIndicator": false,
+      "showLeaderGaps": false,
+      "showDrsIndicators": false
     }
   }
 }

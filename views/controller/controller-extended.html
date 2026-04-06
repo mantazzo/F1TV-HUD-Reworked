@@ -180,6 +180,55 @@
                     <span class="toggle-text">Show Last Names</span>
                 </label>
             </div>
+            <div class="option-row">
+                <label class="toggle-label">
+                    <input type="checkbox" id="show-driver-numbers-toggle" class="toggle-checkbox">
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-text">Show Driver Numbers</span>
+                </label>
+            </div>
+            <div class="option-row">
+                <label class="toggle-label">
+                    <input type="checkbox" id="show-leader-gaps-toggle" class="toggle-checkbox">
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-text">[Race] Show Leader Gaps</span>
+                </label>
+            </div>
+            <div class="option-row">
+                <label class="toggle-label">
+                    <input type="checkbox" id="show-quali-times-toggle" class="toggle-checkbox">
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-text">[Non-Race] Show Lap Times</span>
+                </label>
+            </div>
+            <div class="option-row">
+                <label class="toggle-label">
+                    <input type="checkbox" id="show-primary-pi-toggle" class="toggle-checkbox">
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-text">Primary Player Indicator</span>
+                </label>
+            </div>
+            <div class="option-row">
+                <label class="toggle-label">
+                    <input type="checkbox" id="show-secondary-pi-toggle" class="toggle-checkbox">
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-text">Secondary Player Indicator</span>
+                </label>
+            </div>
+            <div class="option-row">
+                <label class="toggle-label">
+                    <input type="checkbox" id="show-teammate-indicator-toggle" class="toggle-checkbox">
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-text">Teammate Indicator</span>
+                </label>
+            </div>
+            <div class="option-row">
+                <label class="toggle-label">
+                    <input type="checkbox" id="show-drs-indicators-toggle" class="toggle-checkbox">
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-text">Show DRS Indicators</span>
+                </label>
+            </div>
         </section>
 
         <section class="overlay-section" id="session-info-options-section">
@@ -533,6 +582,69 @@
             updateLeaderboardOptions();
         });
 
+        // Show Driver Numbers toggle handling
+        const showDriverNumbersToggle = document.getElementById('show-driver-numbers-toggle');
+        showDriverNumbersToggle.addEventListener('change', () => {
+            const newVal = showDriverNumbersToggle.checked;
+            socket.emit('config_update', { overlay: 'leaderboard', property: 'showDriverNumbers', value: newVal });
+            if (currentConfig?.overlays?.leaderboard) currentConfig.overlays.leaderboard.showDriverNumbers = newVal;
+            updateLeaderboardOptions();
+        });
+
+        // Show Leader Gaps toggle handling
+        const showLeaderGapsToggle = document.getElementById('show-leader-gaps-toggle');
+        showLeaderGapsToggle.addEventListener('change', () => {
+            const newVal = showLeaderGapsToggle.checked;
+            socket.emit('config_update', { overlay: 'leaderboard', property: 'showLeaderGaps', value: newVal });
+            if (currentConfig?.overlays?.leaderboard) currentConfig.overlays.leaderboard.showLeaderGaps = newVal;
+            updateLeaderboardOptions();
+        });
+
+        // Show Quali Times toggle handling
+        const showQualiTimesToggle = document.getElementById('show-quali-times-toggle');
+        showQualiTimesToggle.addEventListener('change', () => {
+            const newVal = showQualiTimesToggle.checked;
+            socket.emit('config_update', { overlay: 'leaderboard', property: 'showQualiTimes', value: newVal });
+            if (currentConfig?.overlays?.leaderboard) currentConfig.overlays.leaderboard.showQualiTimes = newVal;
+            updateLeaderboardOptions();
+        });
+
+        // Primary Player Indicator toggle handling
+        const showPrimaryPIToggle = document.getElementById('show-primary-pi-toggle');
+        showPrimaryPIToggle.addEventListener('change', () => {
+            const newVal = showPrimaryPIToggle.checked;
+            socket.emit('config_update', { overlay: 'leaderboard', property: 'showPrimaryPI', value: newVal });
+            if (currentConfig?.overlays?.leaderboard) currentConfig.overlays.leaderboard.showPrimaryPI = newVal;
+            updateLeaderboardOptions();
+        });
+
+        // Secondary Player Indicator toggle handling
+        const showSecondaryPIToggle = document.getElementById('show-secondary-pi-toggle');
+        showSecondaryPIToggle.addEventListener('change', () => {
+            const newVal = showSecondaryPIToggle.checked;
+            socket.emit('config_update', { overlay: 'leaderboard', property: 'showSecondaryPI', value: newVal });
+            if (currentConfig?.overlays?.leaderboard) currentConfig.overlays.leaderboard.showSecondaryPI = newVal;
+            updateLeaderboardOptions();
+        });
+
+        // Teammate Indicator toggle handling
+        const showTeammateIndicatorToggle = document.getElementById('show-teammate-indicator-toggle');
+        showTeammateIndicatorToggle.addEventListener('change', () => {
+            const newVal = showTeammateIndicatorToggle.checked;
+            socket.emit('config_update', { overlay: 'leaderboard', property: 'showTeammateIndicator', value: newVal });
+            if (currentConfig?.overlays?.leaderboard) currentConfig.overlays.leaderboard.showTeammateIndicator = newVal;
+            updateLeaderboardOptions();
+        });
+
+        // Show DRS Indicators toggle handling
+        const showDrsIndicatorsToggle = document.getElementById('show-drs-indicators-toggle');
+        showDrsIndicatorsToggle.addEventListener('change', () => {
+            const newVal = showDrsIndicatorsToggle.checked;
+            socket.emit('config_update', { overlay: 'leaderboard', property: 'showDrsIndicators', value: newVal });
+            if (currentConfig?.overlays?.leaderboard) currentConfig.overlays.leaderboard.showDrsIndicators = newVal;
+            updateLeaderboardOptions();
+        });
+
         function updateLeaderboardOptions() {
             if (!currentConfig?.overlays?.leaderboard) return;
             const lb   = currentConfig.overlays.leaderboard;
@@ -540,7 +652,14 @@
             document.querySelectorAll('.mfd-button[data-mfd]').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.mfd === page);
             });
-            showLastNamesToggle.checked = !!lb.showLastNames;
+            showLastNamesToggle.checked            = !!lb.showLastNames;
+            showDriverNumbersToggle.checked        = !!lb.showDriverNumbers;
+            showLeaderGapsToggle.checked           = !!lb.showLeaderGaps;
+            showQualiTimesToggle.checked           = !!lb.showQualiTimes;
+            showPrimaryPIToggle.checked            = !!lb.showPrimaryPI;
+            showSecondaryPIToggle.checked          = !!lb.showSecondaryPI;
+            showTeammateIndicatorToggle.checked    = !!lb.showTeammateIndicator;
+            showDrsIndicatorsToggle.checked        = !!lb.showDrsIndicators;
         }
 
         // Override renderOverlayButtons to also update options

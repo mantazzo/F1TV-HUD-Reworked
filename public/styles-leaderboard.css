@@ -766,7 +766,7 @@ body { background: black; overflow: hidden; }
 /* Primary driver indicator (item_1_24r0r0_53r0r0): 0×50 at left:3
    PlayerIndicator.png — zero-width hides it; width set by JS when active */
 .lb-driver-primary-indicator {
-    left: 3px;
+    left: 1px;
     top: 0;
     width: 305px;
     height: 50px;
@@ -797,6 +797,19 @@ body { background: black; overflow: hidden; }
     height: 60px;
     object-fit: contain;
     display: none;
+    padding: 5px; /* to fit logos in the 65×60 box better, remove if unnecessary */
+}
+
+/* Driver number SVG image — same slot as team logo, shown when SVG file exists */
+.lb-driver-number-img {
+    position: absolute;
+    left: 45px;
+    top: 0;
+    width: 55px;
+    height: 50px;
+    object-fit: contain;
+    display: none;
+    padding: 5px; /* to fit logos in the 55×50 box better, remove if unnecessary */
 }
 
 /* Driver number (item_1_24r0r0_58r0r0): 45×51 at left:50
@@ -810,7 +823,7 @@ body { background: black; overflow: hidden; }
     font-family: 'Formula1 Display';
     font-weight: 700;
     font-size: 26px;
-    color: rgb(54, 113, 198);
+    color: rgb(255, 255, 255);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -847,6 +860,7 @@ body { background: black; overflow: hidden; }
     font-stretch: normal;
     font-size: 25px;
     color: rgb(255, 255, 255);
+    text-transform: uppercase;
     justify-content: flex-start;
     align-items: center;
     white-space: pre;
