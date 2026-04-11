@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Leaderboard</title>
+    <title>F1 Leaderboard Overlay</title>
     <link rel="stylesheet" href="/fonts.css">
     <link rel="stylesheet" href="/styles-leaderboard.css">
     <script src="/utils/driver-utils.js"></script>
@@ -249,6 +249,7 @@
             9:  'OSQ',     18: 'TT',
             10: 'SQ1', 11: 'SQ2', 12: 'SQ3',
             13: 'SHORT SQ', 14: 'OSSQ',
+            15: 'RACE', 16: 'RACE 2', 17: 'RACE 3'
         };
 
         // ── Element refs ───────────────────────────────────────────────────
@@ -318,7 +319,7 @@
             row.appendChild(gauge);
             row.appendChild(text);
             elBattery.appendChild(row);
-            return { gaugeFill, text };
+            return { row, img, gaugeFill, text };
         });
 
         // ── Penalty rows — pre-generate one row per car slot ──────────────────────
@@ -338,7 +339,7 @@
 
             const value = document.createElement('div');
             value.className = 'lb-penalty-value';
-            value.textContent = '3s';
+            // value.textContent = '3s';
 
             row.appendChild(bg);
             row.appendChild(shadow);
@@ -655,6 +656,8 @@
         let showSecondaryPI       = false;
         let showTeammateIndicator = false;
         let showDrsIndicators     = false;
+        let showBattery           = false;
+        let showPenalties         = false;
         let playerCarIdx          = -1;   // from m_header.m_playerCarIndex
         const carPositions = new Array(NUM_CARS).fill(0); // carIdx → race position (1-based)
 
@@ -825,6 +828,15 @@
 
             // Clear DRS rows
             drsRows.forEach(({ row }) => { row.style.display = 'none'; });
+
+            // Clear battery rows
+            batteryRows.forEach(({ row }) => { row.style.display = 'none'; });
+
+            // Clear Pit Status rows
+            pitStatusRows.forEach(({ row }) => { row.style.display = 'none'; });
+
+            // Clear penalty rows
+            penaltyRows.forEach(({ value }) => { value.textContent = ''; value.parentElement.style.display = 'none'; });
 
             // Clear MFD1 rows
             mfd1Rows.forEach(({ row }) => { row.textContent = ''; row.style.color = ''; });
@@ -1022,6 +1034,48 @@
                             (car.m_resultStatus ?? 0) !== 3;
                         inPitRows[pos - 1].row.style.display = inPit ? 'block' : 'none';
 
+                        // Penalty row — race-only, shown when toggle on and penalty > 0
+                        const penSecs = car.m_penalties ?? 0;
+                        const penRow  = penaltyRows[pos - 1];
+                        if (showPenalties && isRace && penSecs > 0) {
+                            penRow.value.textContent        = `+${penSecs}s`;
+                            penRow.value.parentElement.style.display = 'block';
+                        } else {
+                            penRow.value.parentElement.style.display = 'none';
+                        }
+
+                        // Pit Status row — race-only, shows IN PIT while in pitlane, PIT EXIT while
+                        // merging back onto track (delta still zero), hidden once timing resumes.
+                        // P1 skips PIT EXIT entirely since delta-to-leader is always zero for the leader.
+                        // Also catches pit entry: driverStatus === 2 (in lap) with deltas already zeroed.
+                        const racePit = isRace &&
+                            ((car.m_pitStatus ?? 0) > 0 ||
+                            (car.m_driverStatus ?? -1) === 0 ||
+                            ((car.m_driverStatus ?? -1) === 2 &&
+                             carDeltaFront[idx] === 0 &&
+                             carDeltaLeader[idx] === 0)) &&
+                            (car.m_resultStatus ?? 0) !== 3;
+                        const racePitExit = isRace && !racePit &&
+                            (car.m_driverStatus ?? -1) === 3 &&
+                            (car.m_numPitStops ?? 0) > 0 &&
+                            (car.m_pitStatus ?? 0) === 0 &&
+                            pos > 1 &&
+                            carDeltaFront[idx] === 0 &&
+                            carDeltaLeader[idx] === 0 &&
+                            (car.m_resultStatus ?? 0) !== 3;
+                        const psRow = pitStatusRows[pos - 1];
+                        if (racePit) {
+                            psRow.text.textContent  = 'IN PIT';
+                            psRow.text.style.color  = carPrimaryColors[idx] ?? 'rgb(255, 255, 255)';
+                            psRow.row.style.display = 'block';
+                        } else if (racePitExit) {
+                            psRow.text.textContent  = 'PIT EXIT';
+                            psRow.text.style.color  = carPrimaryColors[idx] ?? 'rgb(255, 255, 255)';
+                            psRow.row.style.display = 'block';
+                        } else {
+                            psRow.row.style.display = 'none';
+                        }
+
                         // Finish Logo — show when driver has finished, is not in pit lane, and is not in garage
                         /* const finished = (car.m_resultStatus ?? 0) === 3 &&
                             (car.m_pitStatus ?? 0) !== 1 &&
@@ -1106,6 +1160,18 @@
                     }
                 }
                 applyIndicators();
+
+                // Hide timing and tyre for any rows currently showing pit status.
+                // Must run after applyIndicators() since that clears all timing rows to ''.
+                for (let p = 0; p < NUM_CARS; p++) {
+                    if (pitStatusRows[p].row.style.display === 'block') {
+                        timingRows[p].iText.parentElement.style.display      = 'none';
+                        timingRows[p].lText.parentElement.style.display      = 'none';
+                        qualiTimingRows[p].gText.parentElement.style.display = 'none';
+                        qualiTimingRows[p].tText.parentElement.style.display = 'none';
+                        tyreRows[p].text.parentElement.style.display         = 'none';
+                    }
+                }
             }
 
             // Packet ID 3 — Event
@@ -1213,10 +1279,19 @@
                     // ERS battery
                     const ersJ   = car.m_ersStoreEnergy ?? 0;
                     const ersPct = Math.min(100, Math.max(0, (ersJ / 4000000) * 100));
-                    const bRow   = batteryRows[pos - 1];
-                    bRow.gaugeFill.style.width = `${ersPct}%`;
-                    bRow.text.textContent      = `${Math.round(ersPct)}%`;
+                    const bRow      = batteryRows[pos - 1];
+                    const overtake   = car.m_ersDeployMode === 3;
+                    const lowBattery = ersPct <= 20;
+                    bRow.gaugeFill.style.width       = `${ersPct}%`;
+                    bRow.gaugeFill.style.backgroundColor = overtake ? 'lime' : lowBattery ? 'red' : 'rgb(255, 140, 0)';
+                    bRow.img.style.backgroundImage   = overtake
+                        ? "url('/images/leaderboard/Battery_Green.png')"
+                        : lowBattery
+                        ? "url('/images/leaderboard/Battery_Red.png')"
+                        : "url('/images/leaderboard/Battery_Yellow.png')";
+                    bRow.text.textContent            = `${Math.round(ersPct)}%`;
                     if (ersJ > 0) hasERS = true;
+                    bRow.row.style.display = (showBattery && ersJ > 0) ? 'block' : 'none';
 
                     // Tyre compound
                     const compoundId = car.m_visualTyreCompound;
@@ -1236,7 +1311,6 @@
                     const tyreAge = car.m_tyresAgeLaps ?? 0;
                     mfd2Rows[pos - 1].row.textContent = tyreAge;
                 });
-                elBattery.style.display = 'none';
             }
 
             // Packet ID 11 — Session History: best lap per car
@@ -1346,6 +1420,16 @@
             elQualiTiming.style.display = (!mfdActive && !showLastNames && !isRace)  ? '' : 'none';
             elTyre.style.display        = (!mfdActive && !showLastNames) ? '' : 'none';
             elDrs.style.display         = (!mfdActive && !showLastNames) ? '' : 'none';
+
+            // ERS battery — hide entire column when toggled off
+            showBattery = !!cfg.showBattery;
+            elBattery.style.display     = showBattery ? '' : 'none';
+
+            // Penalty display — race-only; hide all rows when toggled off
+            showPenalties = !!cfg.showPenalties;
+            if (!showPenalties) {
+                penaltyRows.forEach(({ value }) => { value.parentElement.style.display = 'none'; });
+            }
         });
     </script>
 </body>

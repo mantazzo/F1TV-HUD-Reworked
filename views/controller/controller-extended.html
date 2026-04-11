@@ -229,6 +229,20 @@
                     <span class="toggle-text">Show DRS Indicators</span>
                 </label>
             </div>
+            <div class="option-row">
+                <label class="toggle-label">
+                    <input type="checkbox" id="show-battery-toggle" class="toggle-checkbox">
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-text">Show Battery</span>
+                </label>
+            </div>
+            <div class="option-row">
+                <label class="toggle-label">
+                    <input type="checkbox" id="show-penalties-toggle" class="toggle-checkbox">
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-text">[Race] Show Penalties</span>
+                </label>
+            </div>
         </section>
 
         <section class="overlay-section" id="session-info-options-section">
@@ -645,6 +659,24 @@
             updateLeaderboardOptions();
         });
 
+        // Show Battery toggle handling
+        const showBatteryToggle = document.getElementById('show-battery-toggle');
+        showBatteryToggle.addEventListener('change', () => {
+            const newVal = showBatteryToggle.checked;
+            socket.emit('config_update', { overlay: 'leaderboard', property: 'showBattery', value: newVal });
+            if (currentConfig?.overlays?.leaderboard) currentConfig.overlays.leaderboard.showBattery = newVal;
+            updateLeaderboardOptions();
+        });
+
+        // Show Penalties toggle handling
+        const showPenaltiesToggle = document.getElementById('show-penalties-toggle');
+        showPenaltiesToggle.addEventListener('change', () => {
+            const newVal = showPenaltiesToggle.checked;
+            socket.emit('config_update', { overlay: 'leaderboard', property: 'showPenalties', value: newVal });
+            if (currentConfig?.overlays?.leaderboard) currentConfig.overlays.leaderboard.showPenalties = newVal;
+            updateLeaderboardOptions();
+        });
+
         function updateLeaderboardOptions() {
             if (!currentConfig?.overlays?.leaderboard) return;
             const lb   = currentConfig.overlays.leaderboard;
@@ -660,6 +692,8 @@
             showSecondaryPIToggle.checked          = !!lb.showSecondaryPI;
             showTeammateIndicatorToggle.checked    = !!lb.showTeammateIndicator;
             showDrsIndicatorsToggle.checked        = !!lb.showDrsIndicators;
+            showBatteryToggle.checked              = !!lb.showBattery;
+            showPenaltiesToggle.checked            = !!lb.showPenalties;
         }
 
         // Override renderOverlayButtons to also update options

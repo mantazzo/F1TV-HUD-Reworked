@@ -68,8 +68,10 @@
       "showPrimaryPI": false,
       "showSecondaryPI": false,
       "showTeammateIndicator": false,
-      "showLeaderGaps": false,
-      "showDrsIndicators": false
+      "showLeaderGaps": true,
+      "showDrsIndicators": false,
+      "showBattery": false,
+      "showPenalties": false
     }
   }
 }

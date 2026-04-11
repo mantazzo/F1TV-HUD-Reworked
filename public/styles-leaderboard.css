@@ -548,7 +548,6 @@ body { background: black; overflow: hidden; }
    JS-generated rows (NUM_CARS × 50px stride)  left:334, top:167
    ════════════════════════════════════════════════════════════════ */
 #lb-battery {
-    display: none;
     left: 334px;
     top: 167px;
     width: 80px;
@@ -558,6 +557,7 @@ body { background: black; overflow: hidden; }
 
 /* Per-car row container (.lb-battery-row): 80×40, top set by JS */
 .lb-battery-row {
+    display: none;
     left: 5px;
     width: 80px;
     height: 40px;
@@ -618,12 +618,12 @@ body { background: black; overflow: hidden; }
     top: 167px;
     width: 145px;
     height: 1100px; /* NUM_CARS × 50px */
-    display: none;
 }
 #lb-penalty > * { position: absolute; }
 
 /* Per-car row container: 145×40, top set by JS */
 .lb-penalty-row {
+    display: none;
     left: 0;
     width: 145px;
     height: 40px;
