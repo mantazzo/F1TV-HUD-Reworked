@@ -224,6 +224,63 @@
                 <div id="lb-deco-border-green"></div>
             </div>
 
+            <!-- VSC Flags banner (item_1_33r0r0r0r0): 306×105 at left:27.5, top:145 -->
+            <div id="lb-vsc-banner">
+                <!-- Background (item_1_33r0r0r0r0_19r0r0): SafetyCar_Banner.png 306×105 at left:0, top:0 -->
+                <div id="lb-vsc-bg"></div>
+                <!-- Yellow Flag layer (item_1_33r0r0r0r0_1) -->
+                <div id="lb-yf-layer">
+                    <!-- Top BG (item_1_33r0r0r0r0_2r0): YellowFlag_Banner.png 306×50 at top:0 -->
+                    <div id="lb-yf-top-bg"></div>
+                    <!-- "YELLOW FLAG" (item_1_33r0r0r0r0_3r0): 295×50 at left:0, top:0  30px ObliqueBold black centered -->
+                    <div id="lb-yf-top-text">YELLOW FLAG</div>
+                    <!-- Bottom BG (item_1_33r0r0r0r0_4r0): Header_BG.png 306×55 at top:50 -->
+                    <div id="lb-yf-bottom-bg"></div>
+                    <!-- Sector label (item_1_33r0r0r0r0_6r0r0): 170×55 at left:10, top:50  26px gold right-aligned -->
+                    <div id="lb-yf-sector-label">SECTOR</div>
+                    <!-- Sector number (item_1_33r0r0r0r0_7r0r0): 90×55 at left:190, top:50  40px gold left-aligned -->
+                    <div id="lb-yf-sector-num">-</div>
+                </div>
+                <!-- Green Flag layer (item_1_33r0r0r0r0_10) -->
+                <div id="lb-gf-layer">
+                    <!-- Top BG (item_1_33r0r0r0r0_11r0): GreenFlag_Banner.png 307×50 at top:0 -->
+                    <div id="lb-gf-top-bg"></div>
+                    <!-- "GREEN FLAG" (item_1_33r0r0r0r0_12r0): 295×52 at left:0, top:0  30px ObliqueBold black centered -->
+                    <div id="lb-gf-top-text">GREEN FLAG</div>
+                    <!-- Bottom BG (item_1_33r0r0r0r0_13r0): Header_BG.png 306×55 at top:50 -->
+                    <div id="lb-gf-bottom-bg"></div>
+                    <!-- "TRACK CLEAR" (item_1_33r0r0r0r0_14r0): 250×55 at left:27, top:50  28px lime centered -->
+                    <div id="lb-gf-bottom-text">TRACK CLEAR</div>
+                </div>
+                <!-- VSC text layer (item_1_33r0r0r0r0_20r0r0) -->
+                <div id="lb-vsc-text">
+                    <!-- "VIRTUAL" (item_1_33r0r0r0r0_21r0r0r0): 204×35 at left:102, top:21  38px ObliqueBold black left -->
+                    <div id="lb-vsc-text-virtual">VIRTUAL</div>
+                    <!-- "SAFETY CAR" (item_1_33r0r0r0r0_22r0r0r0): 206×35 at left:100, top:51.5  26px ObliqueBold black left -->
+                    <div id="lb-vsc-text-safetycar">SAFETY CAR</div>
+                </div>
+                <!-- SC text layer (item_1_33r0r0r0r0_23r0r0) -->
+                <div id="lb-sc-text">
+                    <!-- "SAFETY" (item_1_33r0r0r0r0_24r0r0r0): 195×35 at left:100, top:18  37px ObliqueBold black centered -->
+                    <div id="lb-sc-text-safety">SAFETY</div>
+                    <!-- "CAR" (item_1_33r0r0r0r0_25r0r0r0): 160×35 at left:110, top:53  37px ObliqueBold black left -->
+                    <div id="lb-sc-text-car">CAR</div>
+                </div>
+                <!-- FIA logo glyph (item_1_33r0r0r0r0_27r0r0): 110×80 at left:0, top:15  F1TV-2022-Logos 80px -->
+                <div id="lb-vsc-fia-logo">f</div>
+                <!-- Red Flag layer (item_1_33r0r0r0r0_28r0) -->
+                <div id="lb-rf-layer">
+                    <!-- RedFlag_Banner.png ×3 stacked (items _29/_30/_31): 306×50 each -->
+                    <div id="lb-rf-img-1"></div>
+                    <div id="lb-rf-img-2"></div>
+                    <div id="lb-rf-img-3"></div>
+                    <!-- Semi-transparent red overlay (item_1_33r0r0r0r0_32r0r0): 305×105 opacity:0.15 -->
+                    <div id="lb-rf-overlay"></div>
+                    <!-- "RED FLAG" text (item_1_33r0r0r0r0_33r0r0): 302×105  48px white centered -->
+                    <div id="lb-rf-text">RED FLAG</div>
+                </div>
+            </div>
+
             <!-- Series logo (item_1_36r0): F1.png  140.8×36.08 at left:35, top:46 -->
             <div id="lb-series-logo"></div>
 
@@ -282,6 +339,22 @@
         const elMfd4Header   = document.getElementById('lb-mfd4-header');
         const elMfd4         = document.getElementById('lb-mfd4');
         const elFinishedImg  = document.getElementById('lb-finished-img');
+        const elVscBanner    = document.getElementById('lb-vsc-banner');
+        const elVscBg        = document.getElementById('lb-vsc-bg');
+        const elVscText      = document.getElementById('lb-vsc-text');
+        const elScText       = document.getElementById('lb-sc-text');
+        const elVscFiaLogo   = document.getElementById('lb-vsc-fia-logo');
+        const elRfLayer      = document.getElementById('lb-rf-layer');
+        const elYfLayer      = document.getElementById('lb-yf-layer');
+        const elYfSectorLabel = document.getElementById('lb-yf-sector-label');
+        const elYfSectorNum  = document.getElementById('lb-yf-sector-num');
+        const elGfLayer      = document.getElementById('lb-gf-layer');
+        const elFlagsImg     = document.getElementById('lb-flags-img');
+        const elDecoBorder      = document.getElementById('lb-deco-border');
+        const elDecoBorderSc    = document.getElementById('lb-deco-border-sc');
+        const elDecoBorderSc2   = document.getElementById('lb-deco-border-sc-2');
+        const elDecoBorderYellow = document.getElementById('lb-deco-border-yellow');
+        const elDecoBorderGreen  = document.getElementById('lb-deco-border-green');
 
         let NUM_CARS = 22;  // Pre-allocate for max possible cars (20 standard, up to 22 in MyTeam/F2).
                             // Updated at runtime from packet 4 (m_numActiveCars).
@@ -658,6 +731,7 @@
         let showDrsIndicators     = false;
         let showBattery           = false;
         let showPenalties         = false;
+        let flagsBannerMode        = null;  // null | 'vsc' | 'sc' | 'rf' | 'yellow' | 'green'
         let playerCarIdx          = -1;   // from m_header.m_playerCarIndex
         const carPositions = new Array(NUM_CARS).fill(0); // carIdx → race position (1-based)
 
@@ -792,6 +866,9 @@
             // Reset chequered flag banner
             elFinishedImg.style.opacity = '';
 
+            // Reset VSC banner
+            setFlagsBanner(null);
+
             // Clear session checks
             isRace = false;
             isTimed = false;
@@ -854,6 +931,107 @@
             });
 
             console.log('[Leaderboard] Session reset on SSTA');
+        }
+
+        // ── Row positioning helpers ────────────────────────────────────────
+        // Returns the correct top px value for row at 0-based index i.
+        // MFD mode takes priority (banner is hidden when MFD is active).
+        function getRowTop(i) {
+            if (mfdActive)          return (i + 1) * 47.5;
+            if (flagsBannerMode)    return i * 50 + (95 - i * 5);
+            return i * 50;
+        }
+
+        const ROW_CONTAINERS = [
+            elDrivers, elBattery, elPenalty, elFlLogo,
+            elTimingInterval, elTimingLeader, elQualiGaps, elQualiTimes,
+            elInPit, elFinish, elOut, elPitStatus, elTyre, elDrs,
+        ];
+
+        function updateAllRowPositions() {
+            for (const container of ROW_CONTAINERS) {
+                const children = container.children;
+                for (let i = 0; i < children.length; i++) {
+                    children[i].style.top = `${getRowTop(i)}px`;
+                }
+            }
+        }
+
+        // ── Flags banner helper ────────────────────────────────────────────
+        // sectors: array of sector numbers to display (for 'yellow' mode), or null
+        function setFlagsBanner(mode, sectors = null) {
+            flagsBannerMode = mode;
+            updateAllRowPositions();
+            // Banner itself is hidden when any MFD page is active (rows use MFD stride instead)
+            elVscBanner.style.display    = (mode && !mfdActive) ? 'block' : 'none';
+            const scVsc = mode === 'vsc' || mode === 'sc';
+            elVscBg.style.display        = scVsc ? '' : 'none';
+            elVscFiaLogo.style.display   = scVsc ? '' : 'none';
+            elVscText.style.display      = mode === 'vsc' ? 'block' : 'none';
+            elScText.style.display       = mode === 'sc'  ? 'block' : 'none';
+            elRfLayer.style.display      = mode === 'rf'  ? 'block' : 'none';
+            elYfLayer.style.display      = mode === 'yellow' ? 'block' : 'none';
+            elGfLayer.style.display      = mode === 'green'  ? 'block' : 'none';
+
+            // Deco borders — default is always shown unless a flag-specific one takes over
+            const scVscBorder = mode === 'sc' || mode === 'vsc';
+            elDecoBorder.style.display       = (scVscBorder || mode === 'yellow' || mode === 'green') ? 'none' : '';
+            elDecoBorderSc.style.display     = scVscBorder    ? 'block' : 'none';
+            elDecoBorderSc2.style.display    = scVscBorder    ? 'block' : 'none';
+            elDecoBorderYellow.style.display = mode === 'yellow' ? 'block' : 'none';
+            elDecoBorderGreen.style.display  = mode === 'green'  ? 'block' : 'none';
+
+            const flagImgMap = {
+                rf:     'RedFlagThick.png',
+                sc:     'SC_VSC.png',
+                vsc:    'SC_VSC.png',
+                yellow: 'YellowFlag.png',
+                green:  'GreenFlag.png',
+            };
+            const flagImg = flagImgMap[mode] ?? null;
+            elFlagsImg.style.backgroundImage = flagImg ? `url('/images/leaderboard/${flagImg}')` : '';
+            elFlagsImg.style.display         = flagImg ? 'block' : 'none';
+
+            if (mode === 'yellow' && sectors) {
+                elYfSectorLabel.textContent = sectors.length > 1 ? 'SECTORS' : 'SECTOR';
+                elYfSectorNum.textContent   = sectors.join(' & ');
+            }
+        }
+
+        // ── Yellow flag sector helper ─────────────────────────────────────
+        // Returns sorted array of yellow sector numbers (1/2/3), or null if no yellow zones.
+        function getYellowSectors(sessionData) {
+            const zones      = sessionData.m_marshalZones;
+            const numZones   = sessionData.m_numMarshalZones  ?? 0;
+            const trackLen   = sessionData.m_trackLength      ?? 0;
+            const s2Start    = sessionData.m_sector2LapDistanceStart ?? 0;
+            const s3Start    = sessionData.m_sector3LapDistanceStart ?? 0;
+            if (!Array.isArray(zones) || numZones === 0 || trackLen === 0) return null;
+
+            const yellowSectors = new Set();
+            for (let i = 0; i < numZones; i++) {
+                const zone = zones[i];
+                if ((zone?.m_zoneFlag ?? -1) !== 3) continue;  // 3 = yellow
+                const dist = (zone.m_zoneStart ?? 0) * trackLen;
+                if (dist < s2Start)      yellowSectors.add(1);
+                else if (dist < s3Start) yellowSectors.add(2);
+                else                     yellowSectors.add(3);
+            }
+            return yellowSectors.size > 0 ? [...yellowSectors].sort() : null;
+        }
+
+        // Returns true if any marshal zone has m_zoneFlag === 1 (green) and none are yellow.
+        function hasGreenFlag(sessionData) {
+            const zones    = sessionData.m_marshalZones;
+            const numZones = sessionData.m_numMarshalZones ?? 0;
+            if (!Array.isArray(zones) || numZones === 0) return false;
+            let hasGreen = false;
+            for (let i = 0; i < numZones; i++) {
+                const flag = zones[i]?.m_zoneFlag ?? -1;
+                if (flag === 3) return false;  // yellow present — green takes no priority
+                if (flag === 1) hasGreen = true;
+            }
+            return hasGreen;
         }
 
         // ── Indicator rendering ────────────────────────────────────────────
@@ -980,6 +1158,20 @@
                 elSessionTime.textContent = formatSessionTime(timeLeft);
                 elSessionTime.classList.toggle('timer-critical', timeLeft <= 120);
                 updateHeaderDisplay();
+
+                // Safety Car / VSC: m_safetyCarStatus 1 = SC, 2 = VSC
+                // Yellow flag: any marshal zone with m_zoneFlag === 3, only when no SC/VSC/RF active
+                const scStatus = data.m_safetyCarStatus ?? 0;
+                if (scStatus === 1) {
+                    setFlagsBanner('sc');
+                } else if (scStatus === 2) {
+                    setFlagsBanner('vsc');
+                } else if (flagsBannerMode !== 'rf') {
+                    const yellowSectors = getYellowSectors(data);
+                    if (yellowSectors)          setFlagsBanner('yellow', yellowSectors);
+                    else if (hasGreenFlag(data)) setFlagsBanner('green');
+                    else                         setFlagsBanner(null);
+                }
 
                 if (data.m_formula !== undefined && data.m_formula !== formulaType) {
                     formulaType = data.m_formula;
@@ -1179,6 +1371,18 @@
                 if (data.m_eventStringCode === 'SSTA') {
                     resetSessionData();
                 }
+                // SCAR: safetyCarType 1 = SC, 2 = VSC; eventType 0 = deployed, 1 = returning, 3 = resume race
+                if (data.m_eventStringCode === 'SCAR') {
+                    const scType  = data.m_eventDetails?.safetyCarType ?? -1;
+                    const evtType = data.m_eventDetails?.eventType     ?? -1;
+                    if (evtType === 3) setFlagsBanner(null);  // Resume Race clears any flag banner (incl. red flag)
+                    else if (scType === 1) setFlagsBanner(evtType === 0 ? 'sc'  : null);
+                    else if (scType === 2) setFlagsBanner(evtType === 0 ? 'vsc' : null);
+                }
+                // RDFL: red flag deployed — cleared by SCAR eventType 3 (Resume Race) or SSTA
+                if (data.m_eventStringCode === 'RDFL') {
+                    setFlagsBanner('rf');
+                }
                 // CHQF is NOT thrown for some reason... Commented out until I can discover why
                 // If fixed, this would be an easy way to discover when the session ending is triggered, for now, I'll have to rely on driver result status
                 /* if (data.m_eventStringCode === 'CHQF') {
@@ -1351,11 +1555,10 @@
                 data.style.display   = show ? 'block' : 'none';
             }
 
-            // Shift driver rows down when an MFD page is active (MFD header occupies top area)
-            // MFD active: 47.5px stride starting at 47.5  |  MFD off: normal 50px stride from 0
-            for (let i = 0; i < elDrivers.children.length; i++) {
-                elDrivers.children[i].style.top = mfdActive ? `${(i + 1) * 47.5}px` : `${i * 50}px`;
-            }
+            // Reposition all rows: MFD stride when active, banner shift when flag is set, else normal
+            updateAllRowPositions();
+            // Banner is hidden while MFD is active; re-show it if a flag mode was already set
+            elVscBanner.style.display = (flagsBannerMode && !mfdActive) ? 'block' : 'none';
 
             // Last Names toggle — swap abbreviation vs last name per driver row
             showLastNames = !!cfg.showLastNames;

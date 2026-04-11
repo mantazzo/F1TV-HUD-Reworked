@@ -52,10 +52,9 @@ body { background: black; overflow: hidden; }
     top: 1px;
     width: 333px;
     height: 1187px;
-    background-image: url('/images/leaderboard/YellowFlag.png');
     background-size: 333px 1187px;
     opacity: 0.95;
-    display: none; /* JS will set to block when yellow flag shown */
+    display: none; /* JS drives background-image and visibility via setFlagsBanner */
 }
 
 /* ThickStroke texture (item_1_4r0r0r0_2): 332×1186 at top:1, opacity:0.05 */
@@ -489,6 +488,339 @@ body { background: black; overflow: hidden; }
 }
 
 /* ════════════════════════════════════════════════════════════════
+   VSC FLAGS BANNER — item_1_33r0r0r0r0
+   306×105 at left:27.5, top:145
+   ════════════════════════════════════════════════════════════════ */
+#lb-vsc-banner {
+    display: none;
+    left: 27.5px;
+    top: 145px;
+    width: 306px;
+    height: 105px;
+    overflow: hidden;
+}
+#lb-vsc-banner > * { position: absolute; }
+
+/* Yellow Flag layer (item_1_33r0r0r0r0_1): 306×105 at left:0, top:0 */
+#lb-yf-layer {
+    display: none;
+    left: 0;
+    top: 0;
+    width: 306px;
+    height: 105px;
+}
+#lb-yf-layer > * { position: absolute; }
+
+/* Top BG (item_1_33r0r0r0r0_2r0): YellowFlag_Banner.png 306×50 at top:0 */
+#lb-yf-top-bg {
+    left: 0;
+    top: 0;
+    width: 306px;
+    height: 50px;
+    background-image: url('/images/leaderboard/YellowFlag_Banner.png');
+    background-size: 306px 50px;
+}
+
+/* "YELLOW FLAG" (item_1_33r0r0r0r0_3r0): 295×50 at left:0, top:0  30px ObliqueBold black centered */
+#lb-yf-top-text {
+    left: 0;
+    top: 0;
+    width: 295px;
+    height: 50px;
+    font-family: 'F1TV-2022';
+    font-style: oblique;
+    font-weight: 700;
+    font-size: 30px;
+    color: rgb(0, 0, 0);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+}
+
+/* Bottom BG (item_1_33r0r0r0r0_4r0): Header_BG.png 306×55 at top:50 */
+#lb-yf-bottom-bg {
+    left: 0;
+    top: 50px;
+    width: 306px;
+    height: 55px;
+    background-image: url('/images/leaderboard/Header_BG.png');
+    background-size: 306px 55px;
+}
+
+/* Sector label (item_1_33r0r0r0r0_6r0r0): 170×55 at left:10, top:50  26px gold right-aligned */
+#lb-yf-sector-label {
+    left: 10px;
+    top: 50px;
+    width: 170px;
+    height: 55px;
+    font-family: 'F1TV-2022';
+    font-weight: 400;
+    font-size: 26px;
+    color: rgb(255, 215, 0);
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    white-space: pre;
+}
+
+/* Sector number (item_1_33r0r0r0r0_7r0r0): 90×55 at left:190, top:50  40px gold left-aligned */
+#lb-yf-sector-num {
+    left: 190px;
+    top: 50px;
+    width: 90px;
+    height: 55px;
+    font-family: 'Formula1 Display'; /* TODO: fix the font to the WIDE version */
+    font-weight: 300;
+    font-size: 40px;
+    color: rgb(255, 215, 0);
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    white-space: pre;
+}
+
+/* Green Flag layer (item_1_33r0r0r0r0_10): 306×105 at left:0, top:0 */
+#lb-gf-layer {
+    display: none;
+    left: 0;
+    top: 0;
+    width: 306px;
+    height: 105px;
+}
+#lb-gf-layer > * { position: absolute; }
+
+/* Top BG (item_1_33r0r0r0r0_11r0): GreenFlag_Banner.png 307×50 at top:0 */
+#lb-gf-top-bg {
+    left: 0;
+    top: 0;
+    width: 306px;
+    height: 50px;
+    background-image: url('/images/leaderboard/GreenFlag_Banner.png');
+    background-size: 306px 50px;
+}
+
+/* "GREEN FLAG" (item_1_33r0r0r0r0_12r0): 295×52 at left:0, top:0  30px ObliqueBold black centered */
+#lb-gf-top-text {
+    left: 0;
+    top: 0;
+    width: 295px;
+    height: 52px;
+    font-family: 'F1TV-2022';
+    font-style: oblique;
+    font-weight: 700;
+    font-size: 30px;
+    color: rgb(0, 0, 0);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+}
+
+/* Bottom BG (item_1_33r0r0r0r0_13r0): Header_BG.png 306×55 at top:50 */
+#lb-gf-bottom-bg {
+    left: 0;
+    top: 50px;
+    width: 306px;
+    height: 55px;
+    background-image: url('/images/leaderboard/Header_BG.png');
+    background-size: 306px 55px;
+}
+
+/* "TRACK CLEAR" (item_1_33r0r0r0r0_14r0): 250×55 at left:27, top:50  28px lime centered */
+#lb-gf-bottom-text {
+    left: 27px;
+    top: 50px;
+    width: 250px;
+    height: 55px;
+    font-family: 'F1TV-2022';
+    font-weight: 300;
+    font-size: 28px;
+    color: rgb(0, 255, 0);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+}
+
+/* Background (item_1_33r0r0r0r0_19r0r0): SafetyCar_Banner.png 306×105 at left:0, top:0 */
+#lb-vsc-bg {
+    left: 0;
+    top: 0;
+    width: 306px;
+    height: 105px;
+    background-image: url('/images/leaderboard/SafetyCar_Banner.png');
+    background-size: 306px 105px;
+}
+
+/* VSC text layer (item_1_33r0r0r0r0_20r0r0): 306×105 at left:0, top:0 */
+#lb-vsc-text {
+    display: none;
+    left: 0;
+    top: 0;
+    width: 306px;
+    height: 105px;
+}
+#lb-vsc-text > * { position: absolute; }
+
+/* "VIRTUAL" (item_1_33r0r0r0r0_21r0r0r0): 204×35 at left:102, top:21  38px ObliqueBold black left */
+#lb-vsc-text-virtual {
+    left: 102px;
+    top: 21px;
+    width: 204px;
+    height: 35px;
+    font-family: 'F1TV-2022';
+    font-style: oblique;
+    font-weight: 700;
+    font-size: 38px;
+    color: rgb(0, 0, 0);
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    white-space: pre;
+}
+
+/* "SAFETY CAR" (item_1_33r0r0r0r0_22r0r0r0): 206×35 at left:100, top:51.5  26px ObliqueBold black left */
+#lb-vsc-text-safetycar {
+    left: 100px;
+    top: 51.5px;
+    width: 206px;
+    height: 35px;
+    font-family: 'F1TV-2022';
+    font-style: oblique;
+    font-weight: 700;
+    font-size: 26px;
+    color: rgb(0, 0, 0);
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    white-space: pre;
+}
+
+/* FIA logo glyph (item_1_33r0r0r0r0_27r0r0): 110×80 at left:0, top:15  F1TV-2022-Logos 80px centered */
+#lb-vsc-fia-logo {
+    left: 0;
+    top: 15px;
+    width: 110px;
+    height: 80px;
+    font-family: 'F1TV-2022-Logos';
+    font-weight: 400;
+    font-size: 80px;
+    color: rgb(0, 0, 0);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+}
+
+/* SC text layer (item_1_33r0r0r0r0_23r0r0): 306×105 at left:0, top:0 */
+#lb-sc-text {
+    display: none;
+    left: 0;
+    top: 0;
+    width: 306px;
+    height: 105px;
+}
+#lb-sc-text > * { position: absolute; }
+
+/* "SAFETY" (item_1_33r0r0r0r0_24r0r0r0): 195×35 at left:100, top:18  37px ObliqueBold black centered */
+#lb-sc-text-safety {
+    left: 100px;
+    top: 18px;
+    width: 195px;
+    height: 35px;
+    font-family: 'F1TV-2022';
+    font-style: oblique;
+    font-weight: 700;
+    font-size: 37px;
+    color: rgb(0, 0, 0);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+}
+
+/* "CAR" (item_1_33r0r0r0r0_25r0r0r0): 160×35 at left:110, top:53  37px ObliqueBold black left */
+#lb-sc-text-car {
+    left: 110px;
+    top: 53px;
+    width: 160px;
+    height: 35px;
+    font-family: 'F1TV-2022';
+    font-style: oblique;
+    font-weight: 700;
+    font-size: 37px;
+    color: rgb(0, 0, 0);
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    white-space: pre;
+}
+
+/* Red Flag layer (item_1_33r0r0r0r0_28r0): 306×105 at left:0, top:0 */
+#lb-rf-layer {
+    display: none;
+    left: 0;
+    top: 0;
+    width: 306px;
+    height: 105px;
+}
+#lb-rf-layer > * { position: absolute; }
+
+/* RedFlag_Banner.png ×3 (items _29/_30/_31): 306×50 each */
+#lb-rf-img-1 {
+    left: 0;
+    top: 0;
+    width: 306px;
+    height: 50px;
+    background-image: url('/images/leaderboard/RedFlag_Banner.png');
+    background-size: 306px 50px;
+}
+#lb-rf-img-2 {
+    left: 0;
+    top: 49px;
+    width: 306px;
+    height: 50px;
+    background-image: url('/images/leaderboard/RedFlag_Banner.png');
+    background-size: 306px 50px;
+}
+#lb-rf-img-3 {
+    left: 0;
+    top: 57px;
+    width: 306px;
+    height: 50px;
+    background-image: url('/images/leaderboard/RedFlag_Banner.png');
+    background-size: 306px 50px;
+}
+
+/* Semi-transparent red overlay (item_1_33r0r0r0r0_32r0r0): 306×105 */
+#lb-rf-overlay {
+    left: 0;
+    top: 0;
+    width: 306px;
+    height: 105px;
+    background-color: rgb(255, 0, 0);
+    opacity: 0.15;
+}
+
+/* "RED FLAG" text (item_1_33r0r0r0r0_33r0r0): 302×105  48px ObliqueBold white centered */
+#lb-rf-text {
+    left: 0;
+    top: 0;
+    width: 302px;
+    height: 105px;
+    font-family: 'F1TV-2022';
+    font-style: oblique;
+    font-weight: 700;
+    font-size: 48px;
+    color: rgb(255, 255, 255);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+}
+
+/* ════════════════════════════════════════════════════════════════
    SERIES LOGO — item_1_36r0
    140.8×36.08 at left:35, top:46
    ════════════════════════════════════════════════════════════════ */
@@ -561,6 +893,7 @@ body { background: black; overflow: hidden; }
     left: 5px;
     width: 80px;
     height: 40px;
+    transition: top 300ms ease;
 }
 .lb-battery-row > * { position: absolute; }
 
@@ -627,6 +960,7 @@ body { background: black; overflow: hidden; }
     left: 0;
     width: 145px;
     height: 40px;
+    transition: top 300ms ease;
 }
 .lb-penalty-row > * { position: absolute; }
 
@@ -700,6 +1034,7 @@ body { background: black; overflow: hidden; }
     left: 0px;
     width: 35px;
     height: 40px;
+    transition: top 300ms ease;
 }
 
 /* FL icon (item_1_14r0r0r0_158r0): FL_Icon.png 35×40
@@ -731,6 +1066,7 @@ body { background: black; overflow: hidden; }
     left: 0;
     width: 310px;
     height: 50px;
+    transition: top 300ms ease;
 }
 .lb-driver-row > * { position: absolute; }
 
@@ -923,6 +1259,7 @@ body { background: black; overflow: hidden; }
     position: absolute;
     width: 125px;
     height: 49px;
+    transition: top 300ms ease;
 }
 
 /* Text element inside each row */
@@ -958,6 +1295,7 @@ body { background: black; overflow: hidden; }
     height: 40px;
     display: none;
     overflow: hidden;
+    transition: top 300ms ease;
 }
 
 /* Gradient overlay (item_1_15r0r0r0_2r0_2):
@@ -1010,6 +1348,7 @@ body { background: black; overflow: hidden; }
     height: 40px;
     opacity: 0;
     overflow: hidden;
+    transition: top 300ms ease;
 }
 
 /* Gradient overlay (item_1_16r0r0r0_3r0r0_1):
@@ -1053,6 +1392,7 @@ body { background: black; overflow: hidden; }
     width: 130px;
     height: 50px;
     display: none;
+    transition: top 300ms ease;
 }
 
 /* "OUT" text element */
@@ -1087,6 +1427,7 @@ body { background: black; overflow: hidden; }
     width: 130px;
     height: 50px;
     display: none;
+    transition: top 300ms ease;
 }
 
 /* "IN PIT" / "PIT EXIT" text element */
@@ -1133,6 +1474,7 @@ body { background: black; overflow: hidden; }
     border-radius: 2px;
     background-color: rgb(0, 255, 0);
     display: none;
+    transition: top 300ms ease;
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -1423,6 +1765,7 @@ body { background: black; overflow: hidden; }
     width: 40px;
     height: 50px;
     border-radius: 25px;
+    transition: top 300ms ease;
 }
 
 /* Single-letter compound text; colour set per-row via JS */
