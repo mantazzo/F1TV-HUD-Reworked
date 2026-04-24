@@ -1,6 +1,6 @@
 # F1TV-HUD-Reworked
 
-![GitHub package.json version](https://img.shields.io/github/package-json/v/mantazzo/F1TV-HUD-Reworked?style=flat-square) ![GitHub last commit](https://img.shields.io/github/last-commit/mantazzo/F1TV-HUD-Reworked?style=flat-square) ![GitHub License](https://img.shields.io/github/license/mantazzo/F1TV-HUD-Reworked?style=flat-square)
+![GitHub package.json version](https://img.shields.io/github/package-json/v/mantazzo/F1TV-HUD-Reworked?style=flat-square) ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/mantazzo/F1TV-HUD-Reworked/main?style=flat-square&label=Main%20Branch%20Last%20Commit%3A) ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/mantazzo/F1TV-HUD-Reworked/dev?style=flat-square&label=Dev%20Branch%20Last%20Commit%3A) ![GitHub License](https://img.shields.io/github/license/mantazzo/F1TV-HUD-Reworked?style=flat-square)
 
 F1TV HUD mod for latest Codemasters games, reworked and improved
 

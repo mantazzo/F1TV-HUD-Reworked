@@ -409,7 +409,7 @@ body { background: black; overflow: hidden; }
     top: 0;
     width: 309px;
     height: 53px;
-    background-image: url('/images/leaderboard/BG.png');
+    background-image: url('/images/leaderboard/Header_BG.png');
     background-size: 309px 53px;
 }
 
@@ -570,8 +570,8 @@ body { background: black; overflow: hidden; }
     top: 50px;
     width: 90px;
     height: 55px;
-    font-family: 'Formula1 Display'; /* TODO: fix the font to the WIDE version */
-    font-weight: 300;
+    font-family: 'Formula1 Display Wide';
+    font-weight: 300; /* TODO: might require adjustment to match the spec in fonts.css */
     font-size: 40px;
     color: rgb(255, 215, 0);
     display: flex;
@@ -641,6 +641,110 @@ body { background: black; overflow: hidden; }
     justify-content: center;
     align-items: center;
     white-space: pre;
+}
+
+/* ── Pane modes ─────────────────────────────────────────── */
+/* All direct children always carry an opacity transition so pane changes animate */
+#lb-container > *:not(#lb-series-logo):not(#lb-series-logo-f2) {
+    transition: opacity 333ms ease;
+}
+/* Pane 4 — logo only: fade out everything except the series logo */
+#lb-container.pane-4 > *:not(#lb-series-logo):not(#lb-series-logo-f2) {
+    opacity: 0 !important;
+}
+
+/* ── Time/Laps Remaining banner (item_1_28r0r0r0) ──────────────────────── */
+#lb-timelaps-banner {
+    left: 28px;
+    top: 147px;
+    width: 306px;
+    height: 105px;
+    display: none;
+}
+
+/* Background (item_1_28r0r0r0_2r0): TimeLapsRemBG.png 306×105 */
+#lb-timelaps-bg {
+    left: 0;
+    top: 0;
+    width: 306px;
+    height: 105px;
+    background-image: url('/images/leaderboard/TimeLapsRemBG.png');
+    background-size: 306px 105px;
+}
+
+/* Number/value (item_1_28r0r0r0_3r0): 145×105 at left:15  80px red oblique bold */
+#lb-timelaps-num {
+    left: 15px;
+    top: 0;
+    width: 145px;
+    height: 105px;
+    font-family: 'Formula1 Display';
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 80px;
+    color: rgb(255, 0, 0);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+}
+
+/* Label text (item_1_28r0r0r0_4r0): 140×85 at left:145, top:13  25px white bold centered */
+#lb-timelaps-label {
+    left: 145px;
+    top: 13px;
+    width: 140px;
+    height: 85px;
+    font-family: 'Formula1 Display';
+    font-weight: 700;
+    font-size: 25px;
+    color: rgb(255, 255, 255);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    white-space: pre;
+}
+
+/* Final Lap pane (item_1_28r0r0r0_6): 306×105, hidden by default */
+#lb-timelaps-finallap {
+    left: 0;
+    top: 0;
+    width: 306px;
+    height: 105px;
+    display: none;
+}
+
+/* "FINAL" text (item_1_28r0r0r0_7r0): 155×105 at left:13, top:-20  44px oblique bold white */
+#lb-timelaps-final {
+    left: 13px;
+    top: -20px;
+    width: 155px;
+    height: 105px;
+    font-family: 'Formula1 Display';
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 44px;
+    color: rgb(255, 255, 255);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* "LAP" text (item_1_28r0r0r0_8r0): 155×105 at left:13, top:20  44px oblique bold white */
+#lb-timelaps-lap {
+    left: 13px;
+    top: 20px;
+    width: 155px;
+    height: 105px;
+    font-family: 'Formula1 Display';
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 44px;
+    color: rgb(255, 255, 255);
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 /* Background (item_1_33r0r0r0r0_19r0r0): SafetyCar_Banner.png 306×105 at left:0, top:0 */

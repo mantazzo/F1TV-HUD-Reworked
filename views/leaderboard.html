@@ -281,6 +281,21 @@
                 </div>
             </div>
 
+            <!-- Time/Laps Remaining banner (item_1_28r0r0r0): 306×105 at left:28, top:147 — hidden by default -->
+            <div id="lb-timelaps-banner">
+                <!-- Background (item_1_28r0r0r0_2r0): TimeLapsRemBG.png 306×105 -->
+                <div id="lb-timelaps-bg"></div>
+                <!-- Number/value (item_1_28r0r0r0_3r0): 145×105 at left:15  80px red oblique bold -->
+                <div id="lb-timelaps-num"></div>
+                <!-- Label text (item_1_28r0r0r0_4r0): 140×85 at left:145, top:13  25px white bold centered -->
+                <div id="lb-timelaps-label"></div>
+                <!-- Final Lap pane (item_1_28r0r0r0_6): shown instead of num+label on final lap -->
+                <div id="lb-timelaps-finallap">
+                    <div id="lb-timelaps-final">FINAL</div>
+                    <div id="lb-timelaps-lap">LAP</div>
+                </div>
+            </div>
+
             <!-- Series logo (item_1_36r0): F1.png  140.8×36.08 at left:35, top:46 -->
             <div id="lb-series-logo"></div>
 
@@ -311,6 +326,7 @@
 
         // ── Element refs ───────────────────────────────────────────────────
         const elOverlay      = document.getElementById('lb-overlay');
+        const elContainer    = document.getElementById('lb-container');
         const elSessionTime  = document.getElementById('lb-session-time');
         const elRaceLaps     = document.getElementById('lb-race-laps');
         const elLapCurrent   = document.getElementById('lb-lap-current');
@@ -355,6 +371,10 @@
         const elDecoBorderSc2   = document.getElementById('lb-deco-border-sc-2');
         const elDecoBorderYellow = document.getElementById('lb-deco-border-yellow');
         const elDecoBorderGreen  = document.getElementById('lb-deco-border-green');
+        const elTimeLapsBanner   = document.getElementById('lb-timelaps-banner');
+        const elTimeLapsNum      = document.getElementById('lb-timelaps-num');
+        const elTimeLapsLabel    = document.getElementById('lb-timelaps-label');
+        const elTimeLapsFinalLap = document.getElementById('lb-timelaps-finallap');
 
         let NUM_CARS = 22;  // Pre-allocate for max possible cars (20 standard, up to 22 in MyTeam/F2).
                             // Updated at runtime from packet 4 (m_numActiveCars).
@@ -732,6 +752,15 @@
         let showBattery           = false;
         let showPenalties         = false;
         let flagsBannerMode        = null;  // null | 'vsc' | 'sc' | 'rf' | 'yellow' | 'green'
+        let paneMode               = 0;  // TODO: Implement Panes 1, 2 and 3
+        let timeLapsBannerActive   = false;
+        let timeLapsBannerTimer    = null;
+        let sessionDuration        = 0;
+        let prevTimeLeft           = Infinity;
+        let prevLapsRemaining      = Infinity;
+
+        const TIME_TRIGGERS_S = [1200, 900, 600, 300, 120]; // 20, 15, 10, 5, 2 minutes in seconds
+        const LAP_TRIGGERS    = [15, 10, 5, 3];
         let playerCarIdx          = -1;   // from m_header.m_playerCarIndex
         const carPositions = new Array(NUM_CARS).fill(0); // carIdx → race position (1-based)
 
@@ -795,6 +824,10 @@
                 elLapCurrent.textContent = currentLap;
                 elLapTotal.textContent   = '';  // Only show current Lap in TT, total laps is not required
             }
+            // Shift lap number elements right when lap reaches double digits to avoid overlap
+            const doubleDigitLap = (currentLap || 1) >= 10;
+            elLapCurrent.style.left = doubleDigitLap ? '70px'  : '73px';
+            elLapTotal.style.left   = doubleDigitLap ? '125px' : '105px';
             const label = SESSION_LABELS[sessionType] ?? 'SESSION'; // TODO: fix later so that the session name properly updates with sessions, this is likely invalid
             elSessionName.textContent = label;
             fitSessionName();
@@ -931,14 +964,25 @@
             });
 
             console.log('[Leaderboard] Session reset on SSTA');
+
+            // Reset Time/Laps Remaining banner state
+            if (timeLapsBannerTimer) clearTimeout(timeLapsBannerTimer);
+            timeLapsBannerTimer            = null;
+            timeLapsBannerActive           = false;
+            sessionDuration                = 0;
+            prevTimeLeft                   = Infinity;
+            prevLapsRemaining              = Infinity;
+            elTimeLapsBanner.style.display = 'none';
+            elTimeLapsNum.style.display    = '';
+            elTimeLapsLabel.style.display  = '';
         }
 
         // ── Row positioning helpers ────────────────────────────────────────
         // Returns the correct top px value for row at 0-based index i.
         // MFD mode takes priority (banner is hidden when MFD is active).
         function getRowTop(i) {
-            if (mfdActive)          return (i + 1) * 47.5;
-            if (flagsBannerMode)    return i * 50 + (95 - i * 5);
+            if (mfdActive)                               return (i + 1) * 47.5;
+            if (flagsBannerMode || timeLapsBannerActive) return i * 50 + (95 - i * 5);
             return i * 50;
         }
 
@@ -996,6 +1040,41 @@
                 elYfSectorLabel.textContent = sectors.length > 1 ? 'SECTORS' : 'SECTOR';
                 elYfSectorNum.textContent   = sectors.join(' & ');
             }
+        }
+
+        // ── Time/Laps Remaining banner helpers ────────────────────────────
+        function showTimeLapsBanner(type, value) {
+            if (timeLapsBannerTimer) clearTimeout(timeLapsBannerTimer);
+            timeLapsBannerActive = true;
+            elTimeLapsBanner.style.display   = 'block';
+            elTimeLapsFinalLap.style.display = 'none';
+            elTimeLapsNum.style.display      = '';
+            elTimeLapsLabel.style.display    = '';
+            elTimeLapsNum.textContent        = value;
+            elTimeLapsLabel.textContent      = type === 'minutes' ? 'MINUTES\nTO GO' : 'LAPS\nTO GO';
+            updateAllRowPositions();
+            timeLapsBannerTimer = setTimeout(() => {
+                timeLapsBannerActive = false;
+                elTimeLapsBanner.style.display = 'none';
+                updateAllRowPositions();
+            }, 10000);
+        }
+
+        function showFinalLapBanner() {
+            if (timeLapsBannerTimer) clearTimeout(timeLapsBannerTimer);
+            timeLapsBannerActive = true;
+            elTimeLapsBanner.style.display   = 'block';
+            elTimeLapsFinalLap.style.display = 'block';
+            elTimeLapsNum.style.display      = 'none';
+            elTimeLapsLabel.style.display    = 'none';
+            updateAllRowPositions();
+            timeLapsBannerTimer = setTimeout(() => {
+                timeLapsBannerActive = false;
+                elTimeLapsBanner.style.display   = 'none';
+                elTimeLapsNum.style.display      = '';
+                elTimeLapsLabel.style.display    = '';
+                updateAllRowPositions();
+            }, 10000);
         }
 
         // ── Yellow flag sector helper ─────────────────────────────────────
@@ -1154,10 +1233,22 @@
             if (pid === 1) {
                 sessionType = data.m_sessionType    ?? 0;
                 totalLaps   = data.m_totalLaps      ?? 0;
+                sessionDuration = data.m_sessionDuration ?? sessionDuration;
                 const timeLeft = data.m_sessionTimeLeft ?? 0;
                 elSessionTime.textContent = formatSessionTime(timeLeft);
                 elSessionTime.classList.toggle('timer-critical', timeLeft <= 120);
                 updateHeaderDisplay();
+
+                // Time/Laps remaining banner — timed sessions
+                if (TIMED_TYPES.has(sessionType)) {
+                    for (const t of TIME_TRIGGERS_S) {
+                        if (t < sessionDuration && prevTimeLeft > t && timeLeft <= t) {
+                            showTimeLapsBanner('minutes', Math.round(t / 60));
+                            break;
+                        }
+                    }
+                }
+                prevTimeLeft = timeLeft;
 
                 // Safety Car / VSC: m_safetyCarStatus 1 = SC, 2 = VSC
                 // Yellow flag: any marshal zone with m_zoneFlag === 3, only when no SC/VSC/RF active
@@ -1346,6 +1437,21 @@
                             if (car.m_currentLapNum !== currentLap) {
                                 currentLap = car.m_currentLapNum;
                                 updateHeaderDisplay();
+                                // Time/Laps remaining banner — lap triggers
+                                if (totalLaps > 0 && currentLap >= 2) {
+                                    const lapsToGo = totalLaps - currentLap + 1;
+                                    if (lapsToGo === 1) {
+                                        if (prevLapsRemaining > 1) showFinalLapBanner();
+                                    } else {
+                                        for (const t of LAP_TRIGGERS) {
+                                            if (prevLapsRemaining > t && lapsToGo <= t) {
+                                                showTimeLapsBanner('laps', t);
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    prevLapsRemaining = lapsToGo;
+                                }
                             }
                             break;
                         }
@@ -1543,6 +1649,8 @@
             // MFD page visibility — show the active page's header+data, hide all others
             const page = cfg.mfdPage || 'off';
             mfdActive = page !== 'off';
+            paneMode = cfg.pane ?? 0;
+            elContainer.classList.toggle('pane-4', paneMode === 4);
             const mfdPages = {
                 mfd1: [elMfd1Header, elMfd1],
                 mfd2: [elMfd2Header, elMfd2],

@@ -289,6 +289,9 @@ function startServer(portNumber, forwardAddresses) {
     app.get('/debug/session-history-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'session-history-debug.html')));  // Session History packet (ID 11)
     app.get('/debug/time-trial-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'time-trial-debug.html')));            // Time Trial packet (ID 14)
 
+    // Other Debug pages
+    app.get('/debug/fonts-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'fonts-debug.html'))); // A page to test the fonts
+
     // Default to speedometer overlay (for now)
     app.get('/', (req, res) => res.redirect('/speedometer'));
     

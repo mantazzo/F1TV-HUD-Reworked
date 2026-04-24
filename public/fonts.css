@@ -1,3 +1,4 @@
+/* Main original fonts */
 /* Formula1 Display fonts */
 @font-face {
     font-family: 'Formula1 Display'; /* Regular */
@@ -12,7 +13,7 @@
     font-family: 'Formula1 Display'; /* Bold */
     src: url('/fonts/woff2/Formula1-Bold.woff2') format('woff2'),
          url('/fonts/Formula1-Bold.ttf') format('truetype');
-    font-weight: 700;
+    font-weight: 700; /* original weight in formula1.com webpage uses weight of 500, so it might require adjustment */
     font-style: normal;
     font-display: swap;
 }
@@ -27,20 +28,32 @@
 }
 
 @font-face {
-    font-family: 'Formula1 Display'; /* Oblique */
-    src: url('/fonts/woff2/Formula1-Oblique.woff2') format('woff2'),
-         url('/fonts/Formula1-Oblique.ttf') format('truetype');
-    font-weight: 400;
-    font-style: oblique;
-    font-display: swap;
-}
-
-@font-face {
     font-family: 'Formula1 Display'; /* Black */
     src: url('/fonts/woff2/Formula1-Black.woff2') format('woff2'),
          url('/fonts/Formula1-Black.ttf') format('truetype');
     font-weight: 900;
     font-style: normal;
+    font-display: swap;
+}
+
+/* Special Formula1 Display Wide variant */
+@font-face {
+    font-family: 'Formula1 Display Wide'; /* Specific case, so it's using a different name instead of using the regular name with some sort of extra property */
+    src: url('/fonts/woff2/Formula1-Wide.woff2') format('woff2'),
+         url('/fonts/Formula1-Wide.ttf') format('truetype');
+    font-weight: 400; /* original weight in formula1.com webpage uses weight of 500, so it might require adjustment */
+    font-style: normal;
+    font-display: swap;
+}
+
+/* Other display fonts used in the overlays */
+/* Special Formula1 Display Oblique variant */
+@font-face {
+    font-family: 'Formula1 Display'; /* Oblique */
+    src: url('/fonts/woff2/Formula1-Oblique.woff2') format('woff2'),
+         url('/fonts/Formula1-Oblique.ttf') format('truetype');
+    font-weight: 400;
+    font-style: oblique;
     font-display: swap;
 }
 
@@ -83,6 +96,7 @@
 
 /* F1TV 2022 fonts - specialized variants kept as separate families */
 /* Note: These fonts have unique designs (Position, Timing, etc.) so they remain separate */
+/* TODO: Come back to potentially simplify the fonts */
 @font-face {
     font-family: 'F1TV-2022-Position';
     src: url('/fonts/woff2/F1TV-2022-Position.woff2') format('woff2'),
