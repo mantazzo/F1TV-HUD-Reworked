@@ -48,9 +48,13 @@
                 <!-- Finished session banner (item_1_8r0r0r0_3): Finished.png — opacity:0 until session end -->
                 <div id="lb-finished-img"></div>
 
-                <!-- Timed sessions: session time remaining (item_1_8r0r0r0_4_2r0) -->
-                <!-- 140×50 at left:84 — F1TV-2022-ObliqueBold 32px red, centered -->
-                <div id="lb-session-time">0:00</div>
+                <!-- Timed sessions container (item_1_8r0r0r0_4): left:84 normal / 24 narrow pane -->
+                <div id="lb-timer-wrap">
+                    <!-- F1 session timer (item_1_8r0r0r0_4_2r0): 140×50, hidden for F2/SQ sessions -->
+                    <div id="lb-session-time">0:00</div>
+                    <!-- F2/SQ session timer (item_1_8r0r0r0_4_3r0): 160×50, shown for F2 or SQ sessions -->
+                    <div id="lb-session-time-f2">0:00</div>
+                </div>
 
                 <!-- Race: LAP X / Y (item_1_8r0r0r0_5): 185×30 at left:61.5, top:10 -->
                 <div id="lb-race-laps">
@@ -313,6 +317,8 @@
         const RACE_TYPES  = new Set([15, 16, 17]);                                    // Race, Race 2, Race 3
         const TIMED_TYPES = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]); // Practice / Quali / Sprint
         const TT_TYPE     = new Set([18]);                                            // Time Trial
+        const SQ_TYPES    = new Set([10, 11, 12, 13, 14]);                           // Sprint Qualifying
+        const QUALI_TYPES = new Set([5, 6, 7, 8, 9]);                               // Standard Qualifying
 
         // Session labels - Short versions for display in the header
         const SESSION_LABELS = {
@@ -328,6 +334,8 @@
         const elOverlay      = document.getElementById('lb-overlay');
         const elContainer    = document.getElementById('lb-container');
         const elSessionTime  = document.getElementById('lb-session-time');
+        const elTimerWrap     = document.getElementById('lb-timer-wrap');
+        const elSessionTimeF2 = document.getElementById('lb-session-time-f2');
         const elRaceLaps     = document.getElementById('lb-race-laps');
         const elLapCurrent   = document.getElementById('lb-lap-current');
         const elLapTotal     = document.getElementById('lb-lap-total');
@@ -375,6 +383,13 @@
         const elTimeLapsNum      = document.getElementById('lb-timelaps-num');
         const elTimeLapsLabel    = document.getElementById('lb-timelaps-label');
         const elTimeLapsFinalLap = document.getElementById('lb-timelaps-finallap');
+        const elThickStrokeBg = document.getElementById('lb-thick-stroke-bg');
+        const elFlagsBorder  = document.getElementById('lb-flags-border');
+        const elBorderRect   = document.getElementById('lb-border-rect');
+        const elMainBg      = document.getElementById('lb-main-bg');
+        const elFormationBg = document.getElementById('lb-formation-bg');
+        const elPosColBg    = document.getElementById('lb-pos-col-bg');
+        const elHeader      = document.getElementById('lb-header');
 
         let NUM_CARS = 22;  // Pre-allocate for max possible cars (20 standard, up to 22 in MyTeam/F2).
                             // Updated at runtime from packet 4 (m_numActiveCars).
@@ -387,6 +402,7 @@
         let isRace  = false;
         let isTimed = false;
         let isTT    = false;
+        let isSQ    = false;
 
         // ── Battery rows — pre-generate one row per car slot ─────────────────────
         const batteryRows = Array.from({ length: NUM_CARS }, (_, i) => {
@@ -752,6 +768,9 @@
         let showBattery           = false;
         let showPenalties         = false;
         let flagsBannerMode        = null;  // null | 'vsc' | 'sc' | 'rf' | 'yellow' | 'green'
+        let formationLap           = false; // true when m_safetyCarStatus === 3
+        let sessionEnded           = false; // true once session has ended (P1 finished in race / any finished in non-race / timer hit 0)
+        let extendedGrid           = false;  // true when NUM_CARS > 20 — selects _22 image variants
         let paneMode               = 0;  // TODO: Implement Panes 1, 2 and 3
         let timeLapsBannerActive   = false;
         let timeLapsBannerTimer    = null;
@@ -807,12 +826,33 @@
             return `${m}:${s.toString().padStart(2, '0')}`;
         }
 
+        // Updates both timer elements with consistent text and critical colour
+        function updateTimerText(timeLeft) {
+            const text     = sessionEnded ? '0:00' : formatSessionTime(timeLeft);
+            const critical = sessionEnded || timeLeft <= 120;
+            elSessionTime.textContent = text;
+            elSessionTime.classList.toggle('timer-critical', critical);
+            elSessionTimeF2.textContent = text;
+            elSessionTimeF2.classList.toggle('timer-critical', critical);
+        }
+
         function updateHeaderDisplay() {
             isRace  = RACE_TYPES.has(sessionType);   // Race Session
             isTimed = TIMED_TYPES.has(sessionType);  // Timed Session (any non-race session except for Time Trial)
             isTT    = TT_TYPE.has(sessionType);      // Time Trial Session
+            isSQ    = SQ_TYPES.has(sessionType);     // Sprint Qualifying
 
-            elSessionTime.style.display = isTimed ? 'flex'  : 'none';
+            // Timer wrapper: shown for timed sessions; F1 timer hidden for F2/SQ; F2 timer shown for F2 or SQ
+            const showF1Timer = isTimed && !isSQ && formulaType !== 2;
+            const showF2Timer = isTimed && (isSQ || formulaType === 2);
+            elTimerWrap.style.display     = isTimed ? 'block' : 'none';
+            elSessionTime.style.display   = showF1Timer ? 'flex' : 'none';
+            elSessionTimeF2.style.display = showF2Timer ? 'flex' : 'none';
+            if (showF2Timer) {
+                const isF2Quali = formulaType === 2 && QUALI_TYPES.has(sessionType);
+                elSessionTimeF2.style.left = isF2Quali ? '70px' : (formulaType === 2 ? '100px' : '65px');
+            }
+
             elRaceLaps.style.display    = isRace || isTT  ? 'block' : 'none';
             elTiming.style.display      = (!mfdActive && !showLastNames && isRace)  ? '' : 'none';
             elQualiTiming.style.display = (!mfdActive && !showLastNames && !isRace) ? '' : 'none';
@@ -972,6 +1012,8 @@
             sessionDuration                = 0;
             prevTimeLeft                   = Infinity;
             prevLapsRemaining              = Infinity;
+            formationLap                   = false;
+            sessionEnded                   = false;
             elTimeLapsBanner.style.display = 'none';
             elTimeLapsNum.style.display    = '';
             elTimeLapsLabel.style.display  = '';
@@ -1001,6 +1043,61 @@
             }
         }
 
+        // ── Flags border state helper ──────────────────────────────────────
+        // Syncs top (RF shift), width (narrow pane), and visibility (formula)
+        function updateFlagsBorder() {
+            elFlagsBorder.style.top   = formationLap ? '144px' : '1.5px';
+            elFlagsBorder.style.width = (paneMode === 1 || paneMode === 3) ? '212px' : '331px';
+            elFlagsBorder.style.display = (formulaType === 2 || formulaType === 7) ? 'none' : '';
+        }
+
+        function updateFlagsImg() {
+            elFlagsImg.style.top = formationLap ? '-142px' : '1px';
+            const h = extendedGrid ? '1287px' : '1187px';
+            elFlagsImg.style.height = h;
+            elFlagsImg.style.backgroundSize = `333px ${h}`;
+        }
+
+        function updateThickStrokeBg() {
+            elThickStrokeBg.style.top = formationLap ? '-142px' : '1px';
+            const h = extendedGrid ? '1286px' : '1186px';
+            elThickStrokeBg.style.height = h;
+            elThickStrokeBg.style.backgroundSize = `332px ${h}`;
+        }
+
+        function updateBorderRect() {
+            elBorderRect.style.top    = formationLap ? '-142px' : '1px';
+            elBorderRect.style.height = extendedGrid ? '1286.5px' : '1186.5px';
+        }
+
+        function updateMainPanels() {
+            const isF2   = formulaType === 2 || formulaType === 7;
+            const narrow = paneMode === 1 || paneMode === 3;
+
+            // lb-main-bg
+            elMainBg.style.top     = isF2 ? '97px' : '22px';
+            elMainBg.style.width   = narrow ? '195px' : '315px';
+            const baseH = extendedGrid ? 1252 : 1152;
+            elMainBg.style.height  = `${(isF2 ? baseH - 74 : baseH) - 3}px`;
+            elMainBg.style.display = formationLap ? 'none' : '';
+
+            // lb-formation-bg
+            elFormationBg.style.width   = narrow ? '195px' : '315px';
+            elFormationBg.style.height  = `${(extendedGrid ? 1250 : 1150) - 124}px`;
+            elFormationBg.style.display = formationLap ? '' : 'none';
+
+            // lb-pos-col-bg
+            elPosColBg.style.height = extendedGrid ? '1120px' : '1020px';
+            // TODO: BackgroundColor from PositionBG setting (item_1_7r0r0r0)
+
+            // lb-header
+            elHeader.style.width   = narrow ? '186px' : '306px';
+            elHeader.style.display = formationLap ? 'none' : '';
+
+            // lb-timer-wrap (item_1_8r0r0r0_4): slides left in narrow pane
+            elTimerWrap.style.left = narrow ? '24px' : '84px';
+        }
+
         // ── Flags banner helper ────────────────────────────────────────────
         // sectors: array of sector numbers to display (for 'yellow' mode), or null
         function setFlagsBanner(mode, sectors = null) {
@@ -1019,16 +1116,22 @@
 
             // Deco borders — default is always shown unless a flag-specific one takes over
             const scVscBorder = mode === 'sc' || mode === 'vsc';
-            elDecoBorder.style.display       = (scVscBorder || mode === 'yellow' || mode === 'green') ? 'none' : '';
-            elDecoBorderSc.style.display     = scVscBorder    ? 'block' : 'none';
-            elDecoBorderSc2.style.display    = scVscBorder    ? 'block' : 'none';
+            const rfBorder    = mode === 'rf';
+            elDecoBorder.style.display       = (scVscBorder || rfBorder || mode === 'yellow' || mode === 'green') ? 'none' : '';
+            const scBorderImg = scVscBorder
+                ? (extendedGrid ? 'Border_SC_22.png' : 'Border_SC.png')
+                : 'Border_Red.png';
+            elDecoBorderSc.style.backgroundImage  = `url('/images/leaderboard/${scBorderImg}')`;
+            elDecoBorderSc2.style.backgroundImage = `url('/images/leaderboard/${scBorderImg}')`;
+            elDecoBorderSc.style.display     = (scVscBorder || rfBorder) ? 'block' : 'none';
+            elDecoBorderSc2.style.display    = (scVscBorder || rfBorder) ? 'block' : 'none';
             elDecoBorderYellow.style.display = mode === 'yellow' ? 'block' : 'none';
             elDecoBorderGreen.style.display  = mode === 'green'  ? 'block' : 'none';
 
             const flagImgMap = {
                 rf:     'RedFlagThick.png',
-                sc:     'SC_VSC.png',
-                vsc:    'SC_VSC.png',
+                sc:     extendedGrid ? 'SC_VSC_22.png' : 'SC_VSC.png',
+                vsc:    extendedGrid ? 'SC_VSC_22.png' : 'SC_VSC.png',
                 yellow: 'YellowFlag.png',
                 green:  'GreenFlag.png',
             };
@@ -1040,6 +1143,7 @@
                 elYfSectorLabel.textContent = sectors.length > 1 ? 'SECTORS' : 'SECTOR';
                 elYfSectorNum.textContent   = sectors.join(' & ');
             }
+            updateFlagsBorder();
         }
 
         // ── Time/Laps Remaining banner helpers ────────────────────────────
@@ -1235,8 +1339,6 @@
                 totalLaps   = data.m_totalLaps      ?? 0;
                 sessionDuration = data.m_sessionDuration ?? sessionDuration;
                 const timeLeft = data.m_sessionTimeLeft ?? 0;
-                elSessionTime.textContent = formatSessionTime(timeLeft);
-                elSessionTime.classList.toggle('timer-critical', timeLeft <= 120);
                 updateHeaderDisplay();
 
                 // Time/Laps remaining banner — timed sessions
@@ -1247,16 +1349,28 @@
                             break;
                         }
                     }
+                    // Timer hit zero — freeze timer display at 0:00 and show finished banner
+                    if (prevTimeLeft > 0 && timeLeft === 0) {
+                        elFinishedImg.style.opacity = '0.5';
+                        sessionEnded = true;
+                    }
                 }
+                updateTimerText(timeLeft);
                 prevTimeLeft = timeLeft;
 
-                // Safety Car / VSC: m_safetyCarStatus 1 = SC, 2 = VSC
+                // Safety Car / VSC: m_safetyCarStatus 1 = SC, 2 = VSC, 3 = Formation Lap
                 // Yellow flag: any marshal zone with m_zoneFlag === 3, only when no SC/VSC/RF active
                 const scStatus = data.m_safetyCarStatus ?? 0;
+                const wasFormationLap = formationLap;
+                formationLap = scStatus === 3;
+                if (formationLap !== wasFormationLap) { updateFlagsBorder(); updateFlagsImg(); updateThickStrokeBg(); updateBorderRect(); updateMainPanels(); }
                 if (scStatus === 1) {
                     setFlagsBanner('sc');
                 } else if (scStatus === 2) {
                     setFlagsBanner('vsc');
+                } else if (scStatus === 3) {
+                    // Formation Lap: no banner, border just shifts via updateFlagsBorder above
+                    if (flagsBannerMode !== 'rf') setFlagsBanner(null);
                 } else if (flagsBannerMode !== 'rf') {
                     const yellowSectors = getYellowSectors(data);
                     if (yellowSectors)          setFlagsBanner('yellow', yellowSectors);
@@ -1267,6 +1381,9 @@
                 if (data.m_formula !== undefined && data.m_formula !== formulaType) {
                     formulaType = data.m_formula;
                     loadDriverData();
+                    updateFlagsBorder();
+                    updateMainPanels();
+                    updateHeaderDisplay(); // re-evaluate F1 vs F2 timer visibility
                 }
             }
 
@@ -1369,9 +1486,17 @@
                     }
                 });
 
-                // Chequered flag banner — show as soon as any driver has finished
-                // Note: CHQF event code was also attempted but appears to be unreliable in-game
-                elFinishedImg.style.opacity = anyFinished ? '0.5' : '';
+                // Chequered flag banner:
+                // Races: show when the car in P1 has finished
+                // Non-race: show when any car has finished
+                // NOTE: "CHQF" event was not being triggered properly, so we rely on the 'finished' status
+                const raceFinished = RACE_TYPES.has(sessionType) && lapData.some(car => (car.m_carPosition ?? 0) === 1 && (car.m_resultStatus ?? 0) === 3);
+                const showFinished = raceFinished || (!RACE_TYPES.has(sessionType) && anyFinished);
+                elFinishedImg.style.opacity = showFinished ? '0.5' : '';
+                if (showFinished && !sessionEnded) {
+                    sessionEnded = true;
+                    updateTimerText(0);
+                }
 
                 // Apply timing deltas, position numbers, and driver identity to display rows.
                 // Driver identity (abbrev/lastName/logo) is re-applied here on every pid 2 packet
@@ -1499,6 +1624,14 @@
             // Packet ID 4 — Participants
             if (pid === 4) {
                 NUM_CARS = data.m_numActiveCars ?? NUM_CARS;
+                extendedGrid = NUM_CARS > 20;
+                updateFlagsImg();
+                updateThickStrokeBg();
+                updateBorderRect();
+                updateMainPanels();
+                elThickStrokeBg.style.backgroundImage = extendedGrid
+                    ? "url('/images/leaderboard/BG_22.png')"
+                    : "url('/images/leaderboard/BG.png')";
                 updateSlotVisibility();
 
                 const participants = data.m_participants;
@@ -1651,6 +1784,8 @@
             mfdActive = page !== 'off';
             paneMode = cfg.pane ?? 0;
             elContainer.classList.toggle('pane-4', paneMode === 4);
+            updateFlagsBorder();
+            updateMainPanels();
             const mfdPages = {
                 mfd1: [elMfd1Header, elMfd1],
                 mfd2: [elMfd2Header, elMfd2],

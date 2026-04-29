@@ -43,10 +43,12 @@ body { background: black; overflow: hidden; }
     height: 1290px;
     overflow: hidden;
     z-index: 1;
+    transition: top 300ms ease, width 300ms ease;
 }
 #lb-flags-border > * { position: absolute; }
 
-/* Flags animation (item_1_4r0r0r0_1): 333×1187 at top:1, opacity:0.95 */
+/* Flags animation (item_1_4r0r0r0_1): 333×(1187|1287) at top:(1|-142)
+   top, height, background-size are all set dynamically by updateFlagsImg() */
 #lb-flags-img {
     left: 0;
     top: 1px;
@@ -54,10 +56,11 @@ body { background: black; overflow: hidden; }
     height: 1187px;
     background-size: 333px 1187px;
     opacity: 0.95;
-    display: none; /* JS drives background-image and visibility via setFlagsBanner */
+    display: none; /* JS drives background-image, top, height, background-size, and visibility */
 }
 
-/* ThickStroke texture (item_1_4r0r0r0_2): 332×1186 at top:1, opacity:0.05 */
+/* ThickStroke texture (item_1_4r0r0r0_2): 332×(1186|1286) at top:(1|-142), opacity:0.05
+   top, height, background-size, background-image are all set dynamically by updateThickStrokeBg() / pid 4 */
 #lb-thick-stroke-bg {
     left: 0;
     top: 1px;
@@ -68,7 +71,8 @@ body { background: black; overflow: hidden; }
     opacity: 0.05;
 }
 
-/* Blurred border rectangle (item_1_4r0r0r0_3): 332×1186.5 at top:1, opacity:0.1 */
+/* Blurred border rectangle (item_1_4r0r0r0_3): 332×(1186.5|1286.5) at top:(1|-142), opacity:0.1
+   top, height are set dynamically by updateBorderRect() */
 #lb-border-rect {
     left: 0;
     top: 1px;
@@ -83,7 +87,7 @@ body { background: black; overflow: hidden; }
 
 /* ════════════════════════════════════════════════════════════════
    MAIN DARK PANEL — item_1_5r0r0r0
-   315×1149 at left:19, top:22
+   top, width, height, display set dynamically by updateMainPanels()
    ════════════════════════════════════════════════════════════════ */
 #lb-main-bg {
     left: 19px;
@@ -93,11 +97,12 @@ body { background: black; overflow: hidden; }
     border-radius: 25px 0 0 25px;
     background-color: rgb(18, 20, 24);
     opacity: 0.85;
+    transition: width 300ms ease;
 }
 
 /* ════════════════════════════════════════════════════════════════
    FORMATION LAP BACKGROUND — item_1_6r0r0r0
-   315×1026 at left:19, top:146  (hidden until formation lap)
+   width, height, display set dynamically by updateMainPanels()
    ════════════════════════════════════════════════════════════════ */
 #lb-formation-bg {
     display: none;
@@ -107,11 +112,12 @@ body { background: black; overflow: hidden; }
     height: 1026px;
     border-radius: 0 0 0 25px;
     background-color: rgb(18, 20, 24);
+    transition: width 300ms ease;
 }
 
 /* ════════════════════════════════════════════════════════════════
    POSITION COLUMN BACKGROUND — item_1_7r0r0r0
-   48×1020 at left:26, top:146
+   height set dynamically by updateMainPanels()
    ════════════════════════════════════════════════════════════════ */
 #lb-pos-col-bg {
     left: 26px;
@@ -125,7 +131,7 @@ body { background: black; overflow: hidden; }
 
 /* ════════════════════════════════════════════════════════════════
    HEADER / LAPS BAR — item_1_8r0r0r0
-   306×50 at left:27, top:97
+   width, display set dynamically by updateMainPanels()
    ════════════════════════════════════════════════════════════════ */
 #lb-header {
     left: 27px;
@@ -133,6 +139,7 @@ body { background: black; overflow: hidden; }
     width: 306px;
     height: 50px;
     overflow: hidden;
+    transition: width 300ms ease;
 }
 #lb-header > * { position: absolute; }
 
@@ -159,7 +166,7 @@ body { background: black; overflow: hidden; }
     transform: rotate(180deg);
 }
 
-/* Finished banner (item_1_8r0r0r0_3): 305×50 at left:0 — hidden until session end */
+/* Finished banner (item_1_8r0r0r0_3): 305×50 at left:0 — opacity driven by JS */
 #lb-finished-img {
     left: 0;
     top: 0;
@@ -168,12 +175,25 @@ body { background: black; overflow: hidden; }
     background-image: url('/images/leaderboard/Finished.png');
     background-size: 305px 50px;
     opacity: 0;
+    transition: opacity 333ms ease;
 }
 
-/* ── Timed sessions: session time remaining (item_1_8r0r0r0_4_2r0) ─────── */
-/* 140×50 at left:84  F1TV-2022-ObliqueBold 32px  rgb(255,0,0)  centered   */
-#lb-session-time {
+/* Timer container (item_1_8r0r0r0_4): 230×50 — left/display driven by JS (updateHeaderDisplay/updateMainPanels) */
+#lb-timer-wrap {
     left: 84px;
+    top: 0;
+    width: 230px;
+    height: 50px;
+    display: none;
+    overflow: hidden;
+    transition: left 300ms ease;
+}
+#lb-timer-wrap > * { position: absolute; }
+
+/* ── Timed sessions: F1 session time remaining (item_1_8r0r0r0_4_2r0) ───── */
+/* 140×50 at left:0 within wrapper — F1TV-2022-ObliqueBold 32px, centered    */
+#lb-session-time {
+    left: 0;
     top: 0;
     width: 140px;
     height: 50px;
@@ -182,13 +202,35 @@ body { background: black; overflow: hidden; }
     font-style: oblique;
     color: rgb(194, 194, 196);
     font-size: 32px;
-    display: flex;
+    display: none;
     justify-content: center;
     align-items: center;
     white-space: pre;
 }
 
 #lb-session-time.timer-critical {
+    color: rgb(255, 0, 0);
+}
+
+/* ── Timed sessions: F2/SQ session time remaining (item_1_8r0r0r0_4_3r0) ── */
+/* 160×50 at left:varies — F1TV-2022-Regular-Oblique 32px grey, left-aligned */
+#lb-session-time-f2 {
+    left: 100px;
+    top: 0;
+    width: 160px;
+    height: 50px;
+    font-family: 'F1TV-2022';
+    font-weight: 400;
+    font-style: oblique;
+    color: rgb(194, 194, 196);
+    font-size: 32px;
+    display: none;
+    justify-content: flex-start;
+    align-items: center;
+    white-space: pre;
+}
+
+#lb-session-time-f2.timer-critical {
     color: rgb(255, 0, 0);
 }
 
@@ -334,7 +376,6 @@ body { background: black; overflow: hidden; }
     top: 24px;
     width: 320px;
     height: 1139px;
-    background-image: url('/images/leaderboard/Border_SC.png');
     background-size: 320px 1139px;
 }
 
