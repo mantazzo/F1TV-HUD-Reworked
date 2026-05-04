@@ -299,8 +299,8 @@ body { background: black; overflow: hidden; }
 /* ── Session name label (item_1_8r0r0r0_7) ──────────────────────────────── */
 /* 200×34 at left:20, top:9  Formula1 Display 30px bold  white  hidden by default */
 #lb-session-label {
-    display: none; /* JS sets to flex when shown */
-    left: 20px;
+    display: none; /* JS sets to flex when shown; left also set dynamically */
+    left: 10px;
     top: 9px;
     width: 200px;
     height: 34px;
@@ -434,6 +434,14 @@ body { background: black; overflow: hidden; }
    SAFETY CAR / VSC TEAM BANNER — item_1_8r0r0r0_6
    308×53 at left:0, top:0  hidden by default
    ════════════════════════════════════════════════════════════════ */
+/* Blink animation: visible for 4.5 s, hidden for 25.5 s, repeating every 30 s */
+/* TODO: check if the "blink" is accurate */
+@keyframes sc-banner-blink {
+    0%    { opacity: 1; }
+    15%   { opacity: 1; }
+    15.1% { opacity: 0; }
+    100%  { opacity: 0; }
+}
 #lb-sc-banner {
     display: none;
     left: 0;
@@ -442,6 +450,7 @@ body { background: black; overflow: hidden; }
     height: 53px;
     overflow: hidden;
 }
+#lb-sc-banner.sc-active { animation: sc-banner-blink 30s linear infinite; }
 #lb-sc-banner > * { position: absolute; }
 
 /* Background (item_1_8r0r0r0_6_1): 309×53 at left:1 */
@@ -487,7 +496,7 @@ body { background: black; overflow: hidden; }
     top: 14px;
     width: 270px;
     height: 24px;
-    background-image: url('/images/leaderboard/Mercedes.png');
+    background-image: url('/images/leaderboard/SC_Mercedes.png');
     background-size: 270px 24px;
 }
 
@@ -524,7 +533,7 @@ body { background: black; overflow: hidden; }
     top: 18px;
     width: 160px;
     height: 16px;
-    background-image: url('/images/leaderboard/Mercedes.png');
+    background-image: url('/images/leaderboard/SC_Mercedes.png');
     background-size: 160px 16px;
 }
 

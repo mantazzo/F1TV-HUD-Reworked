@@ -70,14 +70,14 @@
                     <!-- Full-size team display (item_1_8r0r0r0_6_2): 309×53 -->
                     <div id="lb-sc-team">
                         <!-- Team name (item_1_8r0r0r0_6_3r0): Optima 37px centered -->
-                        <div id="lb-sc-team-name">SAFETY CAR</div>
+                        <div id="lb-sc-team-name">ASTON MARTIN</div>
                         <!-- Team logo (item_1_8r0r0r0_6_4r0): Mercedes.png 270×24 — hidden; shown when team logo available -->
                         <div id="lb-sc-team-logo"></div>
                     </div>
                     <!-- Compact pane (item_1_8r0r0r0_6_5): alternative layout — hidden -->
                     <div id="lb-sc-pane">
                         <!-- Smaller team name (item_1_8r0r0r0_6_6r0): Optima 22px centered -->
-                        <div id="lb-sc-pane-name">SAFETY CAR</div>
+                        <div id="lb-sc-pane-name">ASTON MARTIN</div>
                         <!-- Smaller team logo (item_1_8r0r0r0_6_7r0): Mercedes.png 160×16 -->
                         <div id="lb-sc-pane-logo"></div>
                     </div>
@@ -390,6 +390,14 @@
         const elFormationBg = document.getElementById('lb-formation-bg');
         const elPosColBg    = document.getElementById('lb-pos-col-bg');
         const elHeader      = document.getElementById('lb-header');
+        const elScBanner    = document.getElementById('lb-sc-banner');
+        const elScTeam      = document.getElementById('lb-sc-team');
+        const elScTeamName  = document.getElementById('lb-sc-team-name');
+        const elScTeamLogo  = document.getElementById('lb-sc-team-logo');
+        const elScPane      = document.getElementById('lb-sc-pane');
+        const elScPaneName  = document.getElementById('lb-sc-pane-name');
+        const elScPaneLogo  = document.getElementById('lb-sc-pane-logo');
+        const elSprintLogo  = document.getElementById('lb-sprint-logo');
 
         let NUM_CARS = 22;  // Pre-allocate for max possible cars (20 standard, up to 22 in MyTeam/F2).
                             // Updated at runtime from packet 4 (m_numActiveCars).
@@ -403,6 +411,7 @@
         let isTimed = false;
         let isTT    = false;
         let isSQ    = false;
+        let isSprintSession = false; // true when session is a sprint race (sessionType 15 with Race 2 in forecast)
 
         // ── Battery rows — pre-generate one row per car slot ─────────────────────
         const batteryRows = Array.from({ length: NUM_CARS }, (_, i) => {
@@ -769,6 +778,7 @@
         let showPenalties         = false;
         let flagsBannerMode        = null;  // null | 'vsc' | 'sc' | 'rf' | 'yellow' | 'green'
         let formationLap           = false; // true when m_safetyCarStatus === 3
+        let trackId                = -1;    // m_trackId from session packet; -1 = unknown
         let sessionEnded           = false; // true once session has ended (P1 finished in race / any finished in non-race / timer hit 0)
         let extendedGrid           = false;  // true when NUM_CARS > 20 — selects _22 image variants
         let paneMode               = 0;  // TODO: Implement Panes 1, 2 and 3
@@ -780,6 +790,8 @@
 
         const TIME_TRIGGERS_S = [1200, 900, 600, 300, 120]; // 20, 15, 10, 5, 2 minutes in seconds
         const LAP_TRIGGERS    = [15, 10, 5, 3];
+        // Tracks that use Aston Martin Safety Car branding (all others use Mercedes)
+        const ASTON_MARTIN_TRACKS = new Set([0, 27, 4, 20, 6, 17, 9, 10, 11, 15, 19, 16]);
         let playerCarIdx          = -1;   // from m_header.m_playerCarIndex
         const carPositions = new Array(NUM_CARS).fill(0); // carIdx → race position (1-based)
 
@@ -857,24 +869,110 @@
             elTiming.style.display      = (!mfdActive && !showLastNames && isRace)  ? '' : 'none';
             elQualiTiming.style.display = (!mfdActive && !showLastNames && !isRace) ? '' : 'none';
 
-            if (isRace) {
-                elLapCurrent.textContent = currentLap || 1;
-                elLapTotal.textContent   = `/ ${totalLaps}`;
-            } else if (isTT) {
-                elLapCurrent.textContent = currentLap;
-                elLapTotal.textContent   = '';  // Only show current Lap in TT, total laps is not required
+            updateRaceLaps();
+            
+            // Session label inside header bar (item_1_8r0r0r0_7)
+            // Shown for SQ sessions (all session types) and for F2 non-race sessions (Short P / Short Q / OSQ)
+            let sessionLabelText = '';
+            if (isSQ) {
+                sessionLabelText = SESSION_LABELS[sessionType] ?? '';
+            } else if (formulaType === 2 && isTimed) {
+                if      (sessionType === 4)                      sessionLabelText = 'PRACTICE'; // Short Practice
+                else if (sessionType === 8 || sessionType === 9) sessionLabelText = 'QUALI';    // Short Q / OSQ
             }
-            // Shift lap number elements right when lap reaches double digits to avoid overlap
-            const doubleDigitLap = (currentLap || 1) >= 10;
-            elLapCurrent.style.left = doubleDigitLap ? '70px'  : '73px';
-            elLapTotal.style.left   = doubleDigitLap ? '125px' : '105px';
-            const label = SESSION_LABELS[sessionType] ?? 'SESSION'; // TODO: fix later so that the session name properly updates with sessions, this is likely invalid
-            elSessionName.textContent = label;
-            fitSessionName();
+            elSessionLabel.textContent = sessionLabelText;
+            elSessionLabel.style.display = sessionLabelText ? 'flex' : 'none';
+            if (isSQ) {
+                elSessionLabel.style.left = '70px';
+            } else if (sessionType === 8 || sessionType === 9) {
+                elSessionLabel.style.left = '35px'; // F2 Short Q / OSQ — sits left of the timer
+            } else {
+                elSessionLabel.style.left = '10px';
+            }
+
+            // Sprint logo (item_1_8r0r0r0_10): visible in any sprint session; hidden in narrow pane
+            const narrow = paneMode === 1 || paneMode === 3;
+            elSprintLogo.style.display = (isSQ || isSprintSession) && !narrow ? 'block' : 'none';
+
+            // Session name (item_1_11r0r0r0): hidden in sprint/SQ sessions and for F2 short P/Q sessions
+            const hideSessionName = isSQ || isSprintSession
+                || (formulaType === 2 && (sessionType === 4 || sessionType === 8 || sessionType === 9));
+            elSessionName.style.display = hideSessionName ? 'none' : '';
+            elSessionName.style.top     = formulaType === 2 ? '40px' : '46px';
+            elSessionName.style.color   = formulaType === 2 ? 'rgb(255, 255, 255)' : 'rgb(192, 192, 192)';
+            if (!hideSessionName) {
+                elSessionName.textContent = SESSION_LABELS[sessionType] ?? 'SESSION';
+                fitSessionName();
+            }
 
             // MFD3 label changes with session type
             elMfd3Label.textContent = isRace ? 'TYRE CHANGES' : 'LAPS COMPLETED';
             
+        }
+
+        // ── SC team banner (item_1_8r0r0r0_6) ────────────────────────────────────
+        // Shows which brand of Safety Car is in use. Only visible during Full SC (not VSC, not RF).
+        // While active the banner blinks: visible for 4.5 s, hidden for 25.5 s, repeating every 30 s.
+        function updateScBanner() {
+            const scActive = flagsBannerMode === 'sc';
+            elScBanner.style.display = scActive ? 'block' : 'none';
+            elScBanner.classList.toggle('sc-active', scActive);
+
+            const narrow = paneMode === 1 || paneMode === 3;
+            elScTeam.style.display = narrow ? 'none' : '';
+            elScPane.style.display = narrow ? '' : 'none';
+
+            // Aston Martin name shown for specific tracks; Mercedes logo shown for all others
+            const isAston = ASTON_MARTIN_TRACKS.has(trackId);
+            elScTeamName.style.display = isAston ? '' : 'none';
+            elScTeamLogo.style.display = isAston ? 'none' : '';
+            elScPaneName.style.display = isAston ? '' : 'none';
+            elScPaneLogo.style.display = isAston ? 'none' : '';
+        }
+
+        // ── Race laps counter (item_1_8r0r0r0_5) ──────────────────────────────────
+        function updateRaceLaps() {
+            const narrow         = paneMode === 1 || paneMode === 3;
+            const doubleDigitLap = (currentLap || 1) >= 10;
+
+            // Container left: shifts left in narrow pane and for short-lap-count races
+            let raceLeft;
+            if (totalLaps < 6 && narrow) {
+                raceLeft = '20px';
+            } else if (totalLaps < 7) {
+                raceLeft = '75px';
+            } else if (narrow && doubleDigitLap) {
+                raceLeft = '5px';
+            } else if (narrow) {
+                raceLeft = '14px';
+            } else {
+                raceLeft = '61.5px';
+            }
+            elRaceLaps.style.left = raceLeft;
+
+            // Lap current text: formation lap → 1; session ended (race) → totalLaps; else current lap
+            if (isRace) {
+                if (formationLap) {
+                    elLapCurrent.textContent = '1';
+                } else if (sessionEnded) {
+                    elLapCurrent.textContent = totalLaps;
+                } else {
+                    elLapCurrent.textContent = currentLap || 1;
+                }
+                elLapTotal.textContent = `/ ${totalLaps}`;
+            } else if (isTT) {
+                elLapCurrent.textContent = currentLap || 1;
+                elLapTotal.textContent   = '';
+            }
+
+            // Child element left positions shift right for double-digit lap numbers
+            elLapCurrent.style.left = doubleDigitLap ? '70px'  : '73px';
+            elLapTotal.style.left   = doubleDigitLap ? '125px' : '105px';
+
+            // lb-lap-total font size: pane1 OR (pane3 AND totalLaps > 9) → 20px, else 24px
+            // TODO: revisit this resize logic later, I think it should check pane 1 or 3, AND totalLaps > 9
+            const smallFont = (paneMode === 1) || (paneMode === 3 && totalLaps > 9);
+            elLapTotal.style.fontSize = smallFont ? '20px' : '24px';
         }
 
         // ── Timing formatters ─────────────────────────────────────────────────────
@@ -1014,6 +1112,7 @@
             prevLapsRemaining              = Infinity;
             formationLap                   = false;
             sessionEnded                   = false;
+            isSprintSession                = false;
             elTimeLapsBanner.style.display = 'none';
             elTimeLapsNum.style.display    = '';
             elTimeLapsLabel.style.display  = '';
@@ -1144,6 +1243,7 @@
                 elYfSectorNum.textContent   = sectors.join(' & ');
             }
             updateFlagsBorder();
+            updateScBanner();
         }
 
         // ── Time/Laps Remaining banner helpers ────────────────────────────
@@ -1339,6 +1439,22 @@
                 totalLaps   = data.m_totalLaps      ?? 0;
                 sessionDuration = data.m_sessionDuration ?? sessionDuration;
                 const timeLeft = data.m_sessionTimeLeft ?? 0;
+                const newTrackId = data.m_trackId ?? -1;
+                if (newTrackId !== -1 && newTrackId !== trackId) {
+                    trackId = newTrackId;
+                    updateScBanner();
+                }
+
+                // Sprint race detection: sessionType 15 with sessionType 16 also in weather forecast
+                if (sessionType === 15) {
+                    const numSamples = data.m_numWeatherForecastSamples ?? 0;
+                    const forecasts  = data.m_weatherForecastSamples;
+                    isSprintSession  = Array.isArray(forecasts)
+                        && forecasts.slice(0, numSamples).some(s => (s.m_sessionType ?? 0) === 16);
+                } else {
+                    isSprintSession = false;
+                }
+
                 updateHeaderDisplay();
 
                 // Time/Laps remaining banner — timed sessions
@@ -1363,7 +1479,7 @@
                 const scStatus = data.m_safetyCarStatus ?? 0;
                 const wasFormationLap = formationLap;
                 formationLap = scStatus === 3;
-                if (formationLap !== wasFormationLap) { updateFlagsBorder(); updateFlagsImg(); updateThickStrokeBg(); updateBorderRect(); updateMainPanels(); }
+                if (formationLap !== wasFormationLap) { updateFlagsBorder(); updateFlagsImg(); updateThickStrokeBg(); updateBorderRect(); updateMainPanels(); updateRaceLaps(); }
                 if (scStatus === 1) {
                     setFlagsBanner('sc');
                 } else if (scStatus === 2) {
@@ -1786,6 +1902,8 @@
             elContainer.classList.toggle('pane-4', paneMode === 4);
             updateFlagsBorder();
             updateMainPanels();
+            updateRaceLaps();
+            updateScBanner();
             const mfdPages = {
                 mfd1: [elMfd1Header, elMfd1],
                 mfd2: [elMfd2Header, elMfd2],
