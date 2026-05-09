@@ -1011,6 +1011,7 @@ body { background: black; overflow: hidden; }
     height: 30.21px;
     background-image: url('/images/leaderboard/Sprint.png');
     background-size: 151.58px 30.21px;
+    transition: opacity 300ms ease;
 }
 
 /* Session name (item_1_11r0r0r0 / _12r0r0r0 combined):
@@ -1027,6 +1028,7 @@ body { background: black; overflow: hidden; }
     display: block;
     overflow: hidden;
     white-space: nowrap;
+    transition: opacity 300ms ease;
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -1038,6 +1040,7 @@ body { background: black; overflow: hidden; }
     top: 167px;
     width: 80px;
     height: 1100px; /* NUM_CARS × 50px */
+    transition: left 300ms ease;
 }
 #lb-battery > * { position: absolute; }
 
@@ -1059,6 +1062,7 @@ body { background: black; overflow: hidden; }
     height: 40px;
     background-image: url('/images/leaderboard/Battery_Yellow.png');
     background-size: 80px 40px;
+    transition: left 300ms ease;
 }
 
 /* Gauge clip container (item_1_14r0r0r0_4r0r0): 68×30 at left:5, top:5 */
@@ -1070,6 +1074,7 @@ body { background: black; overflow: hidden; }
     border-radius: 1px;
     opacity: 0.85;
     overflow: hidden;
+    transition: left 300ms ease;
 }
 
 /* Gauge fill bar: width % driven by JS */
@@ -1096,6 +1101,7 @@ body { background: black; overflow: hidden; }
     justify-content: center;
     align-items: center;
     white-space: pre;
+    transition: left 300ms ease;
 }
 
 /* ─── Penalties widget (item_1_14r0r0r0_90) ──────────────────────────────── */
@@ -1105,6 +1111,7 @@ body { background: black; overflow: hidden; }
     top: 167px;
     width: 145px;
     height: 1100px; /* NUM_CARS × 50px */
+    transition: left 300ms ease;
 }
 #lb-penalty > * { position: absolute; }
 
@@ -1129,6 +1136,7 @@ body { background: black; overflow: hidden; }
     border-radius: 0 0 0 5px;
     background-image: url('/images/leaderboard/Penalty_BG.png');
     background-size: 100px 40px;
+    transition: left 300ms ease;
 }
 
 /* Shadow rectangle (item_1_14r0r0r0_92r0r0_2): 51×41 at left:10
@@ -1143,6 +1151,7 @@ body { background: black; overflow: hidden; }
     opacity: 0.5;
     filter: blur(5px);
     background-color: rgb(0, 0, 0);
+    transition: left 300ms ease;
 }
 
 /* Penalty icon (item_1_14r0r0r0_92r0r0_3): Penalty.png 60×40 at left:0 */
@@ -1153,6 +1162,7 @@ body { background: black; overflow: hidden; }
     height: 40px;
     background-image: url('/images/leaderboard/Penalty.png');
     background-size: 60px 40px;
+    transition: left 300ms ease;
 }
 
 /* Penalty value text (item_1_14r0r0r0_93r0r0): 45×40 at left:60
@@ -1170,6 +1180,7 @@ body { background: black; overflow: hidden; }
     justify-content: center;
     align-items: center;
     white-space: pre;
+    transition: left 300ms ease;
 }
 
 /* ─── Fastest Lap Logo widget (item_1_14r0r0r0_157) ─────────────────────────── */
@@ -1179,7 +1190,9 @@ body { background: black; overflow: hidden; }
     top: 167px;
     width: 35px;
     height: 1100px; /* NUM_CARS × 50px */
-    display: none;
+    display: block;
+    transition: left 300ms ease, opacity 300ms ease;
+    opacity: 0;
 }
 #lb-fl-logo > * { position: absolute; }
 
@@ -1188,7 +1201,7 @@ body { background: black; overflow: hidden; }
     left: 0px;
     width: 35px;
     height: 40px;
-    transition: top 300ms ease;
+    transition: top 300ms ease, left 300ms ease, opacity 300ms ease;
 }
 
 /* FL icon (item_1_14r0r0r0_158r0): FL_Icon.png 35×40
@@ -1203,6 +1216,7 @@ body { background: black; overflow: hidden; }
     background-color: rgb(255, 0, 255);
     background-image: url('/images/leaderboard/FL_Icon.png');
     background-size: 35px 40px;
+    transition: left 300ms ease, opacity 300ms ease;
 }
 
 /* ─── Driver name slots (item_1_24r0r0 → item_1_24r0r0_49) ──────────────────── */
@@ -1439,6 +1453,7 @@ body { background: black; overflow: hidden; }
     top: 165px;
     width: 35px;
     height: 1100px;
+    transition: left 300ms ease;
 }
 
 /* Each car row: 35×40, hidden by default, top set via JS at 50px stride */
@@ -1492,6 +1507,7 @@ body { background: black; overflow: hidden; }
     top: 165px;
     width: 135px;
     height: 1100px;
+    transition: left 300ms ease;
 }
 
 /* Each car row: 35×40, opacity:0 (hidden) by default, top set via JS at 50px stride */
@@ -1502,7 +1518,7 @@ body { background: black; overflow: hidden; }
     height: 40px;
     opacity: 0;
     overflow: hidden;
-    transition: top 300ms ease;
+    transition: top 300ms ease, opacity 300ms ease;
 }
 
 /* Gradient overlay (item_1_16r0r0r0_3r0r0_1):
@@ -1536,7 +1552,7 @@ body { background: black; overflow: hidden; }
     top: 162px;
     width: 130px;
     height: 1100px;
-    opacity: 0.65;
+    opacity: 1;
 }
 
 /* Each car row: 130×50, hidden by default, top set via JS at 50px stride */
@@ -1546,6 +1562,7 @@ body { background: black; overflow: hidden; }
     width: 130px;
     height: 50px;
     display: none;
+    opacity: 0.65;
     transition: top 300ms ease;
 }
 

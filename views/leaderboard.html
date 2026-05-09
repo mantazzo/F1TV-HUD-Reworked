@@ -437,7 +437,7 @@
             row.appendChild(gauge);
             row.appendChild(text);
             elBattery.appendChild(row);
-            return { row, img, gaugeFill, text };
+            return { row, img, gauge, gaugeFill, text };
         });
 
         // ── Penalty rows — pre-generate one row per car slot ──────────────────────
@@ -464,7 +464,7 @@
             row.appendChild(icon);
             row.appendChild(value);
             elPenalty.appendChild(row);
-            return { value };
+            return { row, bg, shadow, icon, value };
         });
 
         // ── Fastest Lap Logo rows — pre-generate one row per car slot ────────────
@@ -478,7 +478,7 @@
 
             row.appendChild(icon);
             elFlLogo.appendChild(row);
-            return { row };
+            return { row, icon };
         });
 
         // ── Driver rows — 22 slots (max 22 drivers) ──────────────────────
@@ -780,8 +780,9 @@
         let formationLap           = false; // true when m_safetyCarStatus === 3
         let trackId                = -1;    // m_trackId from session packet; -1 = unknown
         let sessionEnded           = false; // true once session has ended (P1 finished in race / any finished in non-race / timer hit 0)
-        let extendedGrid           = false;  // true when NUM_CARS > 20 — selects _22 image variants
-        let paneMode               = 0;  // TODO: Implement Panes 1, 2 and 3
+        let extendedGrid           = false;  // true when numActiveCars > 20 — selects _22 image variants
+        let numActiveCars          = 22;     // actual active cars from pid 4 (m_numActiveCars), used for slot visibility
+        let paneMode               = 0;  // TODO: Implement Panes 1, 2 and 3 properly
         let timeLapsBannerActive   = false;
         let timeLapsBannerTimer    = null;
         let sessionDuration        = 0;
@@ -789,7 +790,7 @@
         let prevLapsRemaining      = Infinity;
 
         const TIME_TRIGGERS_S = [1200, 900, 600, 300, 120]; // 20, 15, 10, 5, 2 minutes in seconds
-        const LAP_TRIGGERS    = [15, 10, 5, 3];
+        const LAP_TRIGGERS    = [15, 10, 5, 3]; // TODO: Might need to add extra cases when there are less laps
         // Tracks that use Aston Martin Safety Car branding (all others use Mercedes)
         const ASTON_MARTIN_TRACKS = new Set([0, 27, 4, 20, 6, 17, 9, 10, 11, 15, 19, 16]);
         let playerCarIdx          = -1;   // from m_header.m_playerCarIndex
@@ -810,6 +811,8 @@
         const carDeltaFront  = new Array(NUM_CARS).fill(0);  // carIdx → delta to car in front (ms)
         const carDeltaLeader = new Array(NUM_CARS).fill(0);  // carIdx → delta to race leader (ms)
         const carBestLapMs   = new Array(NUM_CARS).fill(0);  // carIdx → best lap time in ms (from pid 11)
+        const carResultStatus = new Array(NUM_CARS).fill(0); // carIdx → m_resultStatus from pid 2 (0=invalid, 3=finished, 4=DSQ, 6=retired)
+        let fastestLapCarIdx = -1; // carIdx with the fastest lap (updated from pid 11)
 
         async function loadDriverData() {
             try {
@@ -890,18 +893,23 @@
                 elSessionLabel.style.left = '10px';
             }
 
-            // Sprint logo (item_1_8r0r0r0_10): visible in any sprint session; hidden in narrow pane
+            // Sprint logo (item_1_10r0r0r0): visible in any sprint session; opacity 0 in narrow pane
             const narrow = paneMode === 1 || paneMode === 3;
-            elSprintLogo.style.display = (isSQ || isSprintSession) && !narrow ? 'block' : 'none';
+            elSprintLogo.style.display = (isSQ || isSprintSession) ? 'block' : 'none';
+            elSprintLogo.style.opacity  = narrow ? '0' : '1';
 
-            // Session name (item_1_11r0r0r0): hidden in sprint/SQ sessions and for F2 short P/Q sessions
-            const hideSessionName = isSQ || isSprintSession
-                || (formulaType === 2 && (sessionType === 4 || sessionType === 8 || sessionType === 9));
-            elSessionName.style.display = hideSessionName ? 'none' : '';
+            // Session name (item_1_11r0r0r0 / _12r0r0r0):
+            // Hidden for F2 Practice (types 1-4) and F2 Qualifying (types 5-9),
+            // and for any Sprint/SQ session. Opacity 0 in narrow pane.
+            const isF2Practice = formulaType === 2 && (sessionType >= 1 && sessionType <= 4);  // We cover all sessions, even though only Quick Practice is used (sessionType 4)
+            const isF2Quali    = formulaType === 2 && (sessionType >= 5 && sessionType <= 9);  // We cover all sessions, even though only Short Q (sessionType 8) and OSQ (sessionType 9) are used
+            const hideSessionName = isSQ || isSprintSession || isF2Practice || isF2Quali;
+            elSessionName.style.display = hideSessionName ? 'none' : 'block';
+            elSessionName.style.opacity = narrow ? '0' : '1';
             elSessionName.style.top     = formulaType === 2 ? '40px' : '46px';
             elSessionName.style.color   = formulaType === 2 ? 'rgb(255, 255, 255)' : 'rgb(192, 192, 192)';
             if (!hideSessionName) {
-                elSessionName.textContent = SESSION_LABELS[sessionType] ?? 'SESSION';
+                elSessionName.textContent = SESSION_LABELS[sessionType] ?? 'NO DATA';
                 fitSessionName();
             }
 
@@ -975,6 +983,87 @@
             elLapTotal.style.fontSize = smallFont ? '20px' : '24px';
         }
 
+        // ── Battery row left offset (item_1_14r0r0r0_2r0 / _3r0r0 / _4r0r0 / _5r0r0) ─────────────
+        // Fastest-lap driver shifts right during race (leader >2 laps).
+        // Top positioning is handled by getRowTop() via updateAllRowPositions().
+        function updateBatteryLayout() {
+            const isRaceSession = RACE_TYPES.has(sessionType);
+            const leaderHasLaps = isRaceSession && (currentLap > 2);
+            const fastestPos = fastestLapCarIdx >= 0 ? carPositions[fastestLapCarIdx] : 0;
+
+            for (let i = 0; i < NUM_CARS; i++) {
+                const b = batteryRows[i];
+                if (!b) continue;
+                const pos = i + 1; // 1-based position
+
+                // Left: fastest-lap driver shifts right in race (after leader has >2 laps)
+                const isFastest = leaderHasLaps && pos === fastestPos;
+                b.img.style.left   = isFastest ? '35px' : '0px';
+                b.gauge.style.left = isFastest ? '40px' : '5px';
+                b.text.style.left  = isFastest ? '40px' : '5px';
+            }
+        }
+
+        // ── Penalty row left offset (item_1_14r0r0r0_91r0 / _92r0r0 / _93r0r0) ─────────────
+        // Fastest-lap driver shifts right during race (leader >2 laps).
+        // Top positioning is handled by getRowTop() via updateAllRowPositions().
+        function updatePenaltyLayout() {
+            const isRaceSession = RACE_TYPES.has(sessionType);
+            const leaderHasLaps = isRaceSession && (currentLap > 2);
+            const fastestPos = fastestLapCarIdx >= 0 ? carPositions[fastestLapCarIdx] : 0;
+
+            for (let i = 0; i < NUM_CARS; i++) {
+                const p = penaltyRows[i];
+                if (!p) continue;
+                const pos = i + 1; // 1-based position
+
+                // Left: fastest-lap driver shifts right in race (after leader has >2 laps)
+                const isFastest = leaderHasLaps && pos === fastestPos;
+                p.bg.style.left     = isFastest ? '35px' : '0px';
+                p.shadow.style.left = isFastest ? '45px' : '10px';
+                p.icon.style.left   = isFastest ? '35px' : '0px';
+                p.value.style.left  = isFastest ? '95px' : '60px';
+            }
+        }
+
+        // ── Fastest Lap logo layout (item_1_14r0r0r0_157 / _158r0) ──────────────────
+        // Shows FL icon for the fastest-lap driver during race (leader >2 laps).
+        // Icon hides (slides left) when that driver finishes.
+        // Top positioning is handled by getRowTop() via updateAllRowPositions().
+        function updateFlLogoLayout() {
+            const isRaceSession = RACE_TYPES.has(sessionType);
+            const leaderHasLaps = isRaceSession && (currentLap > 2);
+            const fastestPos = fastestLapCarIdx >= 0 ? carPositions[fastestLapCarIdx] : 0;
+            const fastestFinished = fastestLapCarIdx >= 0
+                && (carResultStatus[fastestLapCarIdx] ?? 0) === 3;
+
+            // Container opacity: visible once race leader has >2 laps
+            elFlLogo.style.opacity = leaderHasLaps ? '1' : '0';
+
+            for (let i = 0; i < NUM_CARS; i++) {
+                const fl = flLogoRows[i];
+                if (!fl) continue;
+                const pos = i + 1;
+
+                const isFastest = leaderHasLaps && pos === fastestPos;
+                const showIcon  = isFastest && !fastestFinished;
+                fl.row.style.left    = showIcon ? '0px' : '-40px';
+                fl.row.style.opacity = showIcon ? '0.85' : '0';
+            }
+        }
+
+        // ── Data container left offset (item_1_14r0r0r0) ────────────────────────────
+        // Battery, Penalty and FL Logo containers slide left in narrow pane (1 or 3).
+        function updateDataContainerLeft() {
+            const narrow = paneMode === 1 || paneMode === 3;
+            const left = narrow ? '215px' : '334px';
+            elBattery.style.left   = left;
+            elPenalty.style.left   = left;
+            elFlLogo.style.left    = left;
+            elFinish.style.left    = left;
+            elInPit.style.left     = narrow ? '210px' : '330px';
+        }
+
         // ── Timing formatters ─────────────────────────────────────────────────────
         function formatDeltaMs(totalMs) {
             if (totalMs <= 0) return '+0.000';
@@ -1025,6 +1114,8 @@
             carDeltaFront.fill(0);
             carDeltaLeader.fill(0);
             carBestLapMs.fill(0);
+            carResultStatus.fill(0);
+            fastestLapCarIdx = -1;
             carAbbrevs.fill('');
             carLastNames.fill('');
             carTeamLogos.fill('');
@@ -1033,6 +1124,8 @@
             carNumSvgOk.fill(null);
             carTeamIds.fill(-1);
             playerCarIdx = -1;
+            numActiveCars = 0;
+            extendedGrid = false;
 
             // Reset chequered flag banner
             elFinishedImg.style.opacity = '';
@@ -1083,6 +1176,12 @@
             // Clear Pit Status rows
             pitStatusRows.forEach(({ row }) => { row.style.display = 'none'; });
 
+            // Clear OUT rows
+            outRows.forEach(({ row }) => { row.style.display = 'none'; });
+
+            // Clear finish rows
+            finishRows.forEach(({ row }) => { row.style.opacity = '0'; });
+
             // Clear penalty rows
             penaltyRows.forEach(({ value }) => { value.textContent = ''; value.parentElement.style.display = 'none'; });
 
@@ -1122,8 +1221,8 @@
         // Returns the correct top px value for row at 0-based index i.
         // MFD mode takes priority (banner is hidden when MFD is active).
         function getRowTop(i) {
-            if (mfdActive)                               return (i + 1) * 47.5;
-            if (flagsBannerMode || timeLapsBannerActive) return i * 50 + (95 - i * 5);
+            if (mfdActive)                               return i * 50 + Math.max(0, 47.5 - i * 2.5);
+            if (flagsBannerMode || timeLapsBannerActive) return i * 50 + Math.max(0, 95   - i * 5);
             return i * 50;
         }
 
@@ -1175,7 +1274,7 @@
 
             // lb-main-bg
             elMainBg.style.top     = isF2 ? '97px' : '22px';
-            elMainBg.style.width   = narrow ? '195px' : '315px';
+            elMainBg.style.width   = narrow ? '195px' : '315px';  // no transition effect noted here - might need to check on how it's called
             const baseH = extendedGrid ? 1252 : 1152;
             elMainBg.style.height  = `${(isF2 ? baseH - 74 : baseH) - 3}px`;
             elMainBg.style.display = formationLap ? 'none' : '';
@@ -1190,7 +1289,7 @@
             // TODO: BackgroundColor from PositionBG setting (item_1_7r0r0r0)
 
             // lb-header
-            elHeader.style.width   = narrow ? '186px' : '306px';
+            elHeader.style.width   = narrow ? '187px' : '306px';
             elHeader.style.display = formationLap ? 'none' : '';
 
             // lb-timer-wrap (item_1_8r0r0r0_4): slides left in narrow pane
@@ -1202,6 +1301,9 @@
         function setFlagsBanner(mode, sectors = null) {
             flagsBannerMode = mode;
             updateAllRowPositions();
+            updateBatteryLayout();
+            updatePenaltyLayout();
+            updateFlLogoLayout();
             // Banner itself is hidden when any MFD page is active (rows use MFD stride instead)
             elVscBanner.style.display    = (mode && !mfdActive) ? 'block' : 'none';
             const scVsc = mode === 'vsc' || mode === 'sc';
@@ -1257,10 +1359,16 @@
             elTimeLapsNum.textContent        = value;
             elTimeLapsLabel.textContent      = type === 'minutes' ? 'MINUTES\nTO GO' : 'LAPS\nTO GO';
             updateAllRowPositions();
+            updateBatteryLayout();
+            updatePenaltyLayout();
+            updateFlLogoLayout();
             timeLapsBannerTimer = setTimeout(() => {
                 timeLapsBannerActive = false;
                 elTimeLapsBanner.style.display = 'none';
                 updateAllRowPositions();
+                updateBatteryLayout();
+                updatePenaltyLayout();
+                updateFlLogoLayout();
             }, 10000);
         }
 
@@ -1272,12 +1380,18 @@
             elTimeLapsNum.style.display      = 'none';
             elTimeLapsLabel.style.display    = 'none';
             updateAllRowPositions();
+            updateBatteryLayout();
+            updatePenaltyLayout();
+            updateFlLogoLayout();
             timeLapsBannerTimer = setTimeout(() => {
                 timeLapsBannerActive = false;
                 elTimeLapsBanner.style.display   = 'none';
                 elTimeLapsNum.style.display      = '';
                 elTimeLapsLabel.style.display    = '';
                 updateAllRowPositions();
+                updateBatteryLayout();
+                updatePenaltyLayout();
+                updateFlLogoLayout();
             }, 10000);
         }
 
@@ -1419,7 +1533,7 @@
             ];
             for (const container of containers) {
                 Array.from(container.children).forEach((child, i) => {
-                    child.style.display = i < NUM_CARS ? '' : 'none';
+                    child.style.display = i < numActiveCars ? '' : 'none';
                 });
             }
         }
@@ -1479,7 +1593,7 @@
                 const scStatus = data.m_safetyCarStatus ?? 0;
                 const wasFormationLap = formationLap;
                 formationLap = scStatus === 3;
-                if (formationLap !== wasFormationLap) { updateFlagsBorder(); updateFlagsImg(); updateThickStrokeBg(); updateBorderRect(); updateMainPanels(); updateRaceLaps(); }
+                if (formationLap !== wasFormationLap) { updateFlagsBorder(); updateFlagsImg(); updateThickStrokeBg(); updateBorderRect(); updateMainPanels(); updateRaceLaps(); updateDataContainerLeft(); }
                 if (scStatus === 1) {
                     setFlagsBanner('sc');
                 } else if (scStatus === 2) {
@@ -1499,6 +1613,7 @@
                     loadDriverData();
                     updateFlagsBorder();
                     updateMainPanels();
+                    updateDataContainerLeft();
                     updateHeaderDisplay(); // re-evaluate F1 vs F2 timer visibility
                 }
             }
@@ -1547,16 +1662,35 @@
                         const inPit = !isRace &&
                             ((car.m_pitStatus ?? 0) > 0 ||
                             (car.m_driverStatus ?? -1) === 0) &&
-                            (car.m_resultStatus ?? 0) !== 3;
+                            (car.m_resultStatus ?? 0) < 3;  // only show for active cars (not finished/retired)
                         inPitRows[pos - 1].row.style.display = inPit ? 'block' : 'none';
 
-                        // Penalty row — race-only, shown when toggle on and penalty > 0
-                        const penSecs = car.m_penalties ?? 0;
-                        const penRow  = penaltyRows[pos - 1];
-                        if (showPenalties && isRace && penSecs > 0) {
-                            penRow.value.textContent        = `+${penSecs}s`;
+                        // Penalty row — race-only, shown when toggle on and any penalty exists
+                        const unservedSG = car.m_numUnservedStopGoPens ?? 0;
+                        const unservedDT = car.m_numUnservedDriveThroughPens ?? 0;
+                        const penSecs    = car.m_penalties ?? 0;
+                        const hasPenalty = unservedSG > 0 || unservedDT > 0 || penSecs > 0;
+                        const penRow     = penaltyRows[pos - 1];
+                        if (showPenalties && isRace && hasPenalty) {
+                            let penText = '';
+                            // Priority 1: unserved drive-through penalties
+                            if (unservedDT > 0) {
+                                penText = 'DT';
+                            } else if (unservedSG > 0 && penSecs > 0) {
+                                // Priority 2: calculate and display combined time of unserved stop/go time penalties (10s each) and any other earned time penalties
+                                let combinedTime = unservedSG * 10 + penSecs;
+                                penText = `${combinedTime}s`;
+                            } else if (unservedSG > 0) {
+                                // Priority 3: display any unserved stop/go time penalties (10s each)
+                                penText = `${unservedSG * 10}s`;
+                            } else if (penSecs > 0) {
+                                // Priority 4: display time penalty if there are no other type of penalties
+                                penText = `${penSecs}s`;
+                            }
+                            penRow.value.textContent = penText;
                             penRow.value.parentElement.style.display = 'block';
                         } else {
+                            // If driver has no penalty, just don't display the block for the driver
                             penRow.value.parentElement.style.display = 'none';
                         }
 
@@ -1570,7 +1704,7 @@
                             ((car.m_driverStatus ?? -1) === 2 &&
                              carDeltaFront[idx] === 0 &&
                              carDeltaLeader[idx] === 0)) &&
-                            (car.m_resultStatus ?? 0) !== 3;
+                            (car.m_resultStatus ?? 0) < 3;  // only show for active cars (not finished/retired)
                         const racePitExit = isRace && !racePit &&
                             (car.m_driverStatus ?? -1) === 3 &&
                             (car.m_numPitStops ?? 0) > 0 &&
@@ -1593,15 +1727,30 @@
                         }
 
                         // Finish Logo — show when driver has finished, is not in pit lane, and is not in garage
-                        /* const finished = (car.m_resultStatus ?? 0) === 3 &&
-                            (car.m_pitStatus ?? 0) !== 1 &&
-                            (car.m_driverStatus ?? -1) !== 0; */
-                        const finished = (car.m_resultStatus ?? 0) === 3;  // Short option for testing different checks, seems to be enough to show the finished flag for all required drivers
+                        const finished = (car.m_resultStatus ?? 0) === 3; // Will likely need to shift this to carResultStatus later to unify the structure
                         finishRows[pos - 1].row.style.opacity = finished ? '1' : '0';
                         if (finished) anyFinished = true;
+
+                        // Store result status for battery visibility guard
+                        carResultStatus[idx] = car.m_resultStatus ?? 0;
+
+                        // OUT text — show for DNF (4), DSQ (5), or retired (7) drivers
+                        const isOut = carResultStatus[idx] === 4 || carResultStatus[idx] === 5 || carResultStatus[idx] === 7;
+                        outRows[pos - 1].row.style.display = isOut ? 'block' : 'none';
                     }
                 });
 
+                // Compute numActiveCars from highest assigned position (includes retired/finished cars)
+                let maxPos = 0;
+                for (let i = 0; i < NUM_CARS; i++) {
+                    if (carPositions[i] > maxPos) maxPos = carPositions[i];
+                }
+                numActiveCars = maxPos; // Human note: need to check with a 20-size grid, game does like to send 22 drivers after all...
+                updateSlotVisibility();
+
+                updateBatteryLayout();
+                updatePenaltyLayout();
+                updateFlLogoLayout();
                 // Chequered flag banner:
                 // Races: show when the car in P1 has finished
                 // Non-race: show when any car has finished
@@ -1700,7 +1849,7 @@
                 }
                 applyIndicators();
 
-                // Hide timing and tyre for any rows currently showing pit status.
+                // Hide timing and tyre for any rows currently showing pit status or OUT text.
                 // Must run after applyIndicators() since that clears all timing rows to ''.
                 for (let p = 0; p < NUM_CARS; p++) {
                     if (pitStatusRows[p].row.style.display === 'block') {
@@ -1709,6 +1858,16 @@
                         qualiTimingRows[p].gText.parentElement.style.display = 'none';
                         qualiTimingRows[p].tText.parentElement.style.display = 'none';
                         tyreRows[p].text.parentElement.style.display         = 'none';
+                    }
+                    // In race sessions, hide timing for DNF/DSQ/retired drivers so OUT text is visible
+                    for (let carIdx = 0; carIdx < NUM_CARS; carIdx++) {
+                        const pos = carPositions[carIdx];
+                        if (pos < 1 || pos > NUM_CARS) continue;
+                        const rowIdx = pos - 1;
+                        if (isRace && (carResultStatus[carIdx] === 4 || carResultStatus[carIdx] === 5 || carResultStatus[carIdx] === 7)) {
+                            timingRows[rowIdx].iText.parentElement.style.display = 'none';
+                            timingRows[rowIdx].lText.parentElement.style.display = 'none';
+                        }
                     }
                 }
             }
@@ -1730,6 +1889,14 @@
                 if (data.m_eventStringCode === 'RDFL') {
                     setFlagsBanner('rf');
                 }
+                // FTLP: fastest lap achieved - save vehicleIdx for faster identification
+                // This is the game's official fastest-lap announcement; takes priority over pid 11 recomputation.
+                if (data.m_eventStringCode === 'FTLP') {
+                    fastestLapCarIdx = data.m_eventDetails?.vehicleIdx ?? -1;
+                    updateBatteryLayout();
+                    updatePenaltyLayout();
+                    updateFlLogoLayout();
+                }
                 // CHQF is NOT thrown for some reason... Commented out until I can discover why
                 // If fixed, this would be an easy way to discover when the session ending is triggered, for now, I'll have to rely on driver result status
                 /* if (data.m_eventStringCode === 'CHQF') {
@@ -1739,16 +1906,17 @@
 
             // Packet ID 4 — Participants
             if (pid === 4) {
-                NUM_CARS = data.m_numActiveCars ?? NUM_CARS;
-                extendedGrid = NUM_CARS > 20;
+                const activeFromPacket = data.m_numActiveCars ?? 0;
+                if (activeFromPacket > numActiveCars) numActiveCars = activeFromPacket;
+                extendedGrid = numActiveCars > 20;
                 updateFlagsImg();
                 updateThickStrokeBg();
                 updateBorderRect();
                 updateMainPanels();
+                updateDataContainerLeft();
                 elThickStrokeBg.style.backgroundImage = extendedGrid
                     ? "url('/images/leaderboard/BG_22.png')"
                     : "url('/images/leaderboard/BG.png')";
-                updateSlotVisibility();
 
                 const participants = data.m_participants;
                 if (Array.isArray(participants)) {
@@ -1850,7 +2018,10 @@
                         : "url('/images/leaderboard/Battery_Yellow.png')";
                     bRow.text.textContent            = `${Math.round(ersPct)}%`;
                     if (ersJ > 0) hasERS = true;
-                    bRow.row.style.display = (showBattery && ersJ > 0) ? 'block' : 'none';
+                    // Hide battery for DSQ (4), Retired (6), or Finished (3) drivers
+                    const rs = carResultStatus[carIdx] ?? 0;
+                    const hideBattery = rs === 3 || rs === 4 || rs === 6;
+                    bRow.row.style.display = (showBattery && ersJ > 0 && !hideBattery) ? 'block' : 'none';
 
                     // Tyre compound
                     const compoundId = car.m_visualTyreCompound;
@@ -1870,6 +2041,9 @@
                     const tyreAge = car.m_tyresAgeLaps ?? 0;
                     mfd2Rows[pos - 1].row.textContent = tyreAge;
                 });
+                updateBatteryLayout();
+                updatePenaltyLayout();
+                updateFlLogoLayout();
             }
 
             // Packet ID 11 — Session History: best lap per car
@@ -1882,7 +2056,19 @@
                         const lapMs = Array.isArray(laps) ? (laps[bestLapNum - 1]?.m_lapTimeInMS ?? 0) : 0;
                         if (lapMs > 0) {
                             carBestLapMs[carIdx] = lapMs;
+                            // Recompute fastest-lap driver across all cars
+                            let bestMs = Infinity;
+                            fastestLapCarIdx = -1;
+                            for (let i = 0; i < NUM_CARS; i++) {
+                                if (carBestLapMs[i] > 0 && carBestLapMs[i] < bestMs) {
+                                    bestMs = carBestLapMs[i];
+                                    fastestLapCarIdx = i;
+                                }
+                            }
                             updateQualiTimingDisplay();
+                            updateBatteryLayout();
+                            updatePenaltyLayout();
+                            updateFlLogoLayout();
                         }
                     }
                 }
@@ -1900,10 +2086,12 @@
             mfdActive = page !== 'off';
             paneMode = cfg.pane ?? 0;
             elContainer.classList.toggle('pane-4', paneMode === 4);
+            updateHeaderDisplay();
             updateFlagsBorder();
             updateMainPanels();
             updateRaceLaps();
             updateScBanner();
+            updateDataContainerLeft();
             const mfdPages = {
                 mfd1: [elMfd1Header, elMfd1],
                 mfd2: [elMfd2Header, elMfd2],
@@ -1918,6 +2106,9 @@
 
             // Reposition all rows: MFD stride when active, banner shift when flag is set, else normal
             updateAllRowPositions();
+            updateBatteryLayout();
+            updatePenaltyLayout();
+            updateFlLogoLayout();
             // Banner is hidden while MFD is active; re-show it if a flag mode was already set
             elVscBanner.style.display = (flagsBannerMode && !mfdActive) ? 'block' : 'none';
 
