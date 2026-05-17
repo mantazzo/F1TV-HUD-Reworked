@@ -810,9 +810,15 @@
         const carTeamIds       = new Array(NUM_CARS).fill(-1);   // carIdx → m_teamId (for teammate detection)
         const carDeltaFront  = new Array(NUM_CARS).fill(0);  // carIdx → delta to car in front (ms)
         const carDeltaLeader = new Array(NUM_CARS).fill(0);  // carIdx → delta to race leader (ms)
+        const carLapNum      = new Array(NUM_CARS).fill(0);  // carIdx → m_currentLapNum from pid 2
+        const carLapDist     = new Array(NUM_CARS).fill(0);  // carIdx → m_lapDistance from pid 2 (metres)
         const carBestLapMs   = new Array(NUM_CARS).fill(0);  // carIdx → best lap time in ms (from pid 11)
         const carResultStatus = new Array(NUM_CARS).fill(0); // carIdx → m_resultStatus from pid 2 (0=invalid, 3=finished, 4=DSQ, 6=retired)
         let fastestLapCarIdx = -1; // carIdx with the fastest lap (updated from pid 11)
+        let prevFastestLapMs = Infinity; // previous session fastest lap time (for change detection)
+        let fastestLapDisplayMs = 0;     // fastest lap time to display (0 = not showing)
+        let fastestLapDisplayPos = 0;    // position of driver who set the fastest lap (1-based)
+        let fastestLapTimer = null;        // 6-second timeout for fastest lap display
 
         async function loadDriverData() {
             try {
@@ -1052,6 +1058,18 @@
             }
         }
 
+        // ── Fastest lap display trigger ───────────────────────────────────────────
+        // Shows the driver's best lap time for 6 seconds when they set a new fastest lap.
+        function triggerFastestLapDisplay(ms, pos) {
+            fastestLapDisplayMs = ms;
+            fastestLapDisplayPos = pos;
+            if (fastestLapTimer) clearTimeout(fastestLapTimer);
+            fastestLapTimer = setTimeout(() => {
+                fastestLapDisplayMs = 0;
+                fastestLapDisplayPos = 0;
+            }, 6000);
+        }
+
         // ── Data container left offset (item_1_14r0r0r0) ────────────────────────────
         // Battery, Penalty and FL Logo containers slide left in narrow pane (1 or 3).
         function updateDataContainerLeft() {
@@ -1113,9 +1131,15 @@
             carPositions.fill(0);
             carDeltaFront.fill(0);
             carDeltaLeader.fill(0);
+            carLapNum.fill(0);
+            carLapDist.fill(0);
             carBestLapMs.fill(0);
             carResultStatus.fill(0);
             fastestLapCarIdx = -1;
+            prevFastestLapMs = Infinity;
+            fastestLapDisplayMs = 0;
+            fastestLapDisplayPos = 0;
+            if (fastestLapTimer) { clearTimeout(fastestLapTimer); fastestLapTimer = null; }
             carAbbrevs.fill('');
             carLastNames.fill('');
             carTeamLogos.fill('');
@@ -1174,7 +1198,7 @@
             batteryRows.forEach(({ row }) => { row.style.display = 'none'; });
 
             // Clear Pit Status rows
-            pitStatusRows.forEach(({ row }) => { row.style.display = 'none'; });
+            pitStatusRows.forEach(({ row }) => { row.style.opacity = '0'; });
 
             // Clear OUT rows
             outRows.forEach(({ row }) => { row.style.display = 'none'; });
@@ -1632,6 +1656,8 @@
                     carPositions[idx]   = car.m_carPosition ?? 0;
                     carDeltaFront[idx]  = (car.m_deltaToCarInFrontMinutesPart  ?? 0) * 60000 + (car.m_deltaToCarInFrontMSPart  ?? 0);
                     carDeltaLeader[idx] = (car.m_deltaToRaceLeaderMinutesPart  ?? 0) * 60000 + (car.m_deltaToRaceLeaderMSPart  ?? 0);
+                    carLapNum[idx]      = car.m_currentLapNum ?? 0;
+                    carLapDist[idx]     = car.m_lapDistance ?? 0;
 
                     // MFD3 — laps completed (non-race) or tyre changes / pit stops (race)
                     const pos = car.m_carPosition ?? 0;
@@ -1640,6 +1666,13 @@
                         mfd3Rows[pos - 1].row.textContent = isRace
                             ? (car.m_numPitStops ?? 0)
                             : (car.m_currentLapNum - 1 ?? 0);
+                        // MFD3 visibility: hide for DSQ/retired, non-race with no best lap, or in pits
+                        const resultStatus = car.m_resultStatus ?? 0;
+                        const isNotActive = resultStatus < 2 || resultStatus > 3; // any status that is not "Active" or "Finished"
+                        const hasBestLap = carBestLapMs[carIdx] > 0;
+                        const inPits = (car.m_pitStatus ?? 0) > 0 || (car.m_driverStatus ?? -1) === 0;
+                        const showMfd3 = !isNotActive && (isRace || hasBestLap) && !inPits;
+                        mfd3Rows[pos - 1].row.style.display = showMfd3 ? 'flex' : 'none';
 
                         // MFD4 — positions gained / lost vs grid start
                         const gridPos    = car.m_gridPosition ?? 0;
@@ -1662,7 +1695,7 @@
                         const inPit = !isRace &&
                             ((car.m_pitStatus ?? 0) > 0 ||
                             (car.m_driverStatus ?? -1) === 0) &&
-                            (car.m_resultStatus ?? 0) < 3;  // only show for active cars (not finished/retired)
+                            (car.m_resultStatus ?? 0) !== 3;  // only show for non-finished cars
                         inPitRows[pos - 1].row.style.display = inPit ? 'block' : 'none';
 
                         // Penalty row — race-only, shown when toggle on and any penalty exists
@@ -1712,18 +1745,19 @@
                             pos > 1 &&
                             carDeltaFront[idx] === 0 &&
                             carDeltaLeader[idx] === 0 &&
-                            (car.m_resultStatus ?? 0) !== 3;
+                            (car.m_resultStatus ?? 0) < 3;  // only show for active cars (not finished/retired)
+                        // TODO: Also might need fixing for after Red Flag - "PIT EXIT" is triggered on race restart for all cars
                         const psRow = pitStatusRows[pos - 1];
                         if (racePit) {
                             psRow.text.textContent  = 'IN PIT';
                             psRow.text.style.color  = carPrimaryColors[idx] ?? 'rgb(255, 255, 255)';
-                            psRow.row.style.display = 'block';
+                            psRow.row.style.opacity = '1';
                         } else if (racePitExit) {
                             psRow.text.textContent  = 'PIT EXIT';
                             psRow.text.style.color  = carPrimaryColors[idx] ?? 'rgb(255, 255, 255)';
-                            psRow.row.style.display = 'block';
+                            psRow.row.style.opacity = '1';
                         } else {
-                            psRow.row.style.display = 'none';
+                            psRow.row.style.opacity = '0';
                         }
 
                         // Finish Logo — show when driver has finished, is not in pit lane, and is not in garage
@@ -1745,7 +1779,7 @@
                 for (let i = 0; i < NUM_CARS; i++) {
                     if (carPositions[i] > maxPos) maxPos = carPositions[i];
                 }
-                numActiveCars = maxPos; // Human note: need to check with a 20-size grid, game does like to send 22 drivers after all...
+                numActiveCars = maxPos; // NOTE: Seems to work for now, however, multiplayer check will be required later.
                 updateSlotVisibility();
 
                 updateBatteryLayout();
@@ -1790,7 +1824,7 @@
                     dRow.driverNumber.style.color   = carPrimaryColors[carIdx];
                     if (showDriverNumbers && raceNum > 0) {
                         const svgOk  = carNumSvgOk[carIdx];
-                        const svgSrc = `/images/driver-numbers/${raceNum}.svg`;  // TODO: Also add .PNG loading as an alternative
+                        const svgSrc = `/images/driver-numbers/${raceNum}.svg`;  // TODO: Also add .PNG loading as an alternative, maybe also add team-specific loading
                         if (svgOk === true) {
                             // SVG confirmed available — show image, hide text
                             if (dRow.numberImg.src !== svgSrc) dRow.numberImg.src = svgSrc;
@@ -1816,8 +1850,31 @@
                         }
                     }
 
-                    tRow.iText.textContent = pos === 1 ? 'Interval' : formatDeltaMs(carDeltaFront[carIdx]);
-                    tRow.lText.textContent = pos === 1 ? 'Leader'   : formatDeltaMs(carDeltaLeader[carIdx]);
+                    // Fastest lap display: show lap time for 6 seconds when driver sets new fastest lap
+                    const showFastestLap = fastestLapDisplayMs > 0 && pos === fastestLapDisplayPos;
+
+                    // Helper: compute lapped text using hybrid lapNum + lapDistance approach
+                    function getLappedText(deltaMs, refLapNum, refLapDist) {
+                        if (deltaMs !== 0) return formatDeltaMs(deltaMs);
+                        const carLap = carLapNum[carIdx] ?? 0;
+                        let lapsDown = refLapNum - carLap;
+                        if (refLapDist < carLapDist[carIdx]) lapsDown -= 1;
+                        if (lapsDown > 0) return `+${lapsDown} LAP${lapsDown > 1 ? 'S' : ''}`;
+                        return formatDeltaMs(deltaMs);
+                    }
+
+                    // Find car indices for leader and car in front (for Interval reference)
+                    const leaderCarIdx = carPositions.indexOf(1);
+                    const frontCarIdx  = carPositions.indexOf(pos - 1);
+                    const leaderLapNum = leaderCarIdx >= 0 ? (carLapNum[leaderCarIdx] ?? 0) : 0;
+                    const leaderLapDist = leaderCarIdx >= 0 ? (carLapDist[leaderCarIdx] ?? 0) : 0;
+                    const frontLapNum  = frontCarIdx >= 0 ? (carLapNum[frontCarIdx] ?? 0) : 0;
+                    const frontLapDist = frontCarIdx >= 0 ? (carLapDist[frontCarIdx] ?? 0) : 0;
+
+                    tRow.iText.textContent = showFastestLap ? formatLapTimeMs(fastestLapDisplayMs)
+                        : (pos === 1 ? 'Interval' : getLappedText(carDeltaFront[carIdx], frontLapNum, frontLapDist));
+                    tRow.lText.textContent = showFastestLap ? formatLapTimeMs(fastestLapDisplayMs)
+                        : (pos === 1 ? 'Leader'   : getLappedText(carDeltaLeader[carIdx], leaderLapNum, leaderLapDist));
                 }
 
                 // Track race leader's current lap for header
@@ -2033,13 +2090,29 @@
 
                         // MFD1 compound name
                         const m1Row = mfd1Rows[pos - 1];
-                        m1Row.row.textContent = compound.displayText;
-                        m1Row.row.style.color = compound.color;
+                        if (compound) {
+                            m1Row.row.textContent = compound.displayText;
+                            m1Row.row.style.color = compound.color;
+                        }
+                        // MFD1 visibility: hide for DSQ/retired, non-race with no best lap, or in pits
+                        const resultStatus = car.m_resultStatus ?? 0;
+                        const isNotActive = resultStatus < 2 || resultStatus > 3; // any status that is not "Active" or "Finished"
+                        const hasBestLap = carBestLapMs[carIdx] > 0;
+                        const inPits = (car.m_pitStatus ?? 0) > 0 || (car.m_driverStatus ?? -1) === 0;
+                        const showMfd1 = !isNotActive && (isRace || hasBestLap) && !inPits;
+                        m1Row.row.style.display = showMfd1 ? 'flex' : 'none';
                     }
 
                     // MFD2 tyre age
                     const tyreAge = car.m_tyresAgeLaps ?? 0;
                     mfd2Rows[pos - 1].row.textContent = tyreAge;
+                    // MFD2 visibility: hide for DSQ/retired, non-race with no best lap, or in pits
+                    const resultStatus = car.m_resultStatus ?? 0;
+                    const isNotActive = resultStatus < 2 || resultStatus > 3; // any status that is not "Active" or "Finished"
+                    const hasBestLap = carBestLapMs[carIdx] > 0;
+                    const inPits = (car.m_pitStatus ?? 0) > 0 || (car.m_driverStatus ?? -1) === 0;
+                    const showMfd2 = !isNotActive && (isRace || hasBestLap) && !inPits;
+                    mfd2Rows[pos - 1].row.style.display = showMfd2 ? 'flex' : 'none';
                 });
                 updateBatteryLayout();
                 updatePenaltyLayout();
@@ -2064,6 +2137,12 @@
                                     bestMs = carBestLapMs[i];
                                     fastestLapCarIdx = i;
                                 }
+                            }
+                            // Detect new fastest lap and trigger 6-second display
+                            if (bestMs < prevFastestLapMs && fastestLapCarIdx >= 0) {
+                                const pos = carPositions[fastestLapCarIdx];
+                                if (pos >= 1) triggerFastestLapDisplay(bestMs, pos);
+                                prevFastestLapMs = bestMs;
                             }
                             updateQualiTimingDisplay();
                             updateBatteryLayout();
@@ -2099,9 +2178,9 @@
                 mfd4: [elMfd4Header, elMfd4],
             };
             for (const [key, [header, data]] of Object.entries(mfdPages)) {
-                const show = key === page;
-                header.style.display = show ? 'block' : 'none';
-                data.style.display   = show ? 'block' : 'none';
+                const show = key === page && (key === 'mfd1' || !formationLap);  // MFD1 can be shown during formation lap
+                header.style.opacity = show ? '1' : '0';
+                data.style.opacity   = show ? '1' : '0';
             }
 
             // Reposition all rows: MFD stride when active, banner shift when flag is set, else normal

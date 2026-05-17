@@ -1050,7 +1050,7 @@ body { background: black; overflow: hidden; }
     left: 5px;
     width: 80px;
     height: 40px;
-    transition: top 300ms ease;
+    transition: top 333ms ease;
 }
 .lb-battery-row > * { position: absolute; }
 
@@ -1121,7 +1121,7 @@ body { background: black; overflow: hidden; }
     left: 0;
     width: 145px;
     height: 40px;
-    transition: top 300ms ease;
+    transition: top 333ms ease;
 }
 .lb-penalty-row > * { position: absolute; }
 
@@ -1201,7 +1201,7 @@ body { background: black; overflow: hidden; }
     left: 0px;
     width: 35px;
     height: 40px;
-    transition: top 300ms ease, left 300ms ease, opacity 300ms ease;
+    transition: top 333ms ease, left 300ms ease, opacity 300ms ease;
 }
 
 /* FL icon (item_1_14r0r0r0_158r0): FL_Icon.png 35×40
@@ -1407,6 +1407,7 @@ body { background: black; overflow: hidden; }
     top: 161px;
     width: 150px;
     height: 1100px;
+    transition: opacity 200ms ease;
 }
 
 #lb-timing-interval,
@@ -1416,6 +1417,7 @@ body { background: black; overflow: hidden; }
     top: 0;
     width: 150px;
     height: 1100px;
+    transition: opacity 200ms ease;
 }
 
 #lb-timing-leader {
@@ -1427,7 +1429,7 @@ body { background: black; overflow: hidden; }
     position: absolute;
     width: 125px;
     height: 49px;
-    transition: top 300ms ease;
+    transition: top 333ms ease;
 }
 
 /* Text element inside each row */
@@ -1464,7 +1466,7 @@ body { background: black; overflow: hidden; }
     height: 40px;
     display: none;
     overflow: hidden;
-    transition: top 300ms ease;
+    transition: top 333ms ease;
 }
 
 /* Gradient overlay (item_1_15r0r0r0_2r0_2):
@@ -1518,7 +1520,7 @@ body { background: black; overflow: hidden; }
     height: 40px;
     opacity: 0;
     overflow: hidden;
-    transition: top 300ms ease, opacity 300ms ease;
+    transition: top 333ms ease, opacity 300ms ease;
 }
 
 /* Gradient overlay (item_1_16r0r0r0_3r0r0_1):
@@ -1563,7 +1565,7 @@ body { background: black; overflow: hidden; }
     height: 50px;
     display: none;
     opacity: 0.65;
-    transition: top 300ms ease;
+    transition: top 333ms ease;
 }
 
 /* "OUT" text element */
@@ -1597,8 +1599,8 @@ body { background: black; overflow: hidden; }
     left: 0;
     width: 130px;
     height: 50px;
-    display: none;
-    transition: top 300ms ease;
+    opacity: 0;
+    transition: opacity 167ms ease, top 333ms ease;
 }
 
 /* "IN PIT" / "PIT EXIT" text element */
@@ -1645,7 +1647,7 @@ body { background: black; overflow: hidden; }
     border-radius: 2px;
     background-color: rgb(0, 255, 0);
     display: none;
-    transition: top 300ms ease;
+    transition: top 333ms ease;
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -1664,7 +1666,8 @@ body { background: black; overflow: hidden; }
     background-size: 307px 55px;
     background-repeat: no-repeat;
     overflow: hidden;
-    display: none;
+    opacity: 0;
+    transition: opacity 167ms ease;
 }
 
 #lb-mfd1-label {
@@ -1689,7 +1692,8 @@ body { background: black; overflow: hidden; }
     top: 207.5px;
     width: 180px;
     height: 1100px;
-    display: none;
+    opacity: 0;
+    transition: opacity 167ms ease;
 }
 
 .lb-mfd1-row {
@@ -1719,7 +1723,8 @@ body { background: black; overflow: hidden; }
     background-image: url('/images/leaderboard/Header_BG.png');
     background-size: 307px 55px;
     background-repeat: no-repeat;
-    display: none;
+    opacity: 0;
+    transition: opacity 167ms ease;
 }
 
 #lb-mfd2-label {
@@ -1745,7 +1750,8 @@ body { background: black; overflow: hidden; }
     top: 207.5px;
     width: 180px;
     height: 1100px;
-    display: none;
+    opacity: 0;
+    transition: opacity 167ms ease;
 }
 
 .lb-mfd2-row {
@@ -1778,7 +1784,8 @@ body { background: black; overflow: hidden; }
     background-image: url('/images/leaderboard/Header_BG.png');
     background-size: 307px 55px;
     background-repeat: no-repeat;
-    display: none;
+    opacity: 0;
+    transition: opacity 167ms ease;
 }
 
 #lb-mfd3-label {
@@ -1803,7 +1810,8 @@ body { background: black; overflow: hidden; }
     top: 207.5px;
     width: 180px;
     height: 1100px;
-    display: none;
+    opacity: 0;
+    transition: opacity 167ms ease;
 }
 
 .lb-mfd3-row {
@@ -1837,7 +1845,8 @@ body { background: black; overflow: hidden; }
     background-image: url('/images/leaderboard/Header_BG.png');
     background-size: 307px 55px;
     background-repeat: no-repeat;
-    display: none;
+    opacity: 0;
+    transition: opacity 167ms ease;
 }
 
 #lb-mfd4-label {
@@ -1862,7 +1871,8 @@ body { background: black; overflow: hidden; }
     top: 207.5px;
     width: 180px;
     height: 1100px;
-    display: none;
+    opacity: 0;
+    transition: opacity 167ms ease;
 }
 
 .lb-mfd4-row {
