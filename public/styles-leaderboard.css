@@ -1447,6 +1447,7 @@ body { background: black; overflow: hidden; }
     justify-content: flex-end;
     text-align: right;
     align-items: center;
+    transition: color 200ms ease;
 }
 
 /* ── In-Pit Logo (item_1_15r0r0r0): 35×1100 at left:330, top:165 ─────────── */
@@ -1626,6 +1627,7 @@ body { background: black; overflow: hidden; }
     top: 161px;
     width: 40px;
     height: 1100px;
+    transition: left 333ms ease, opacity 333ms ease;
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -1933,10 +1935,11 @@ body { background: black; overflow: hidden; }
     top: 0;
     width: 135px;
     height: 1100px;
+    transition: opacity 200ms ease;
 }
 
 #lb-quali-timing-times {
-    display: none;
+    opacity: 0;
 }
 
 /* Each car row: 40×50, border-radius 25px pill shape, top set via JS at 50px stride */
@@ -1947,6 +1950,40 @@ body { background: black; overflow: hidden; }
     height: 50px;
     border-radius: 25px;
     transition: top 300ms ease;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   FASTEST LAP ANIMATION (NON-RACE) — item_1_24r0r0_1
+   Overlays the P1 driver row; width transitions 0→310px (185px
+   in narrow pane) when P1 sets a new fastest lap, retracts after 6s.
+   Top is kept in sync with the P1 row by updateFlAnimPosition() in JS.
+   ════════════════════════════════════════════════════════════════ */
+#lb-fl-anim {
+    left: 27px;
+    top: 162.5px;   /* initial: lb-drivers top(160) + getRowTop(0)(0) + 2.5 */
+    width: 0;
+    height: 45px;
+    overflow: hidden;
+    display: none;  /* hidden in race sessions; shown by updateHeaderDisplay() */
+    pointer-events: none;
+}
+
+/* Background rectangle (item_1_24r0r0_1_2r0) + diagonal stripes effect
+   (item_1_24r0r0_1_5r0r0…r92) combined into a single CSS gradient */
+#lb-fl-anim-bg {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 310px;
+    height: 45px;
+    background-color: rgb(255, 0, 255);
+    background-image: repeating-linear-gradient(
+        -45deg,
+        rgba(0, 0, 0, 0.5) 0,
+        rgba(0, 0, 0, 0.5) 1.25px,
+        transparent 1.25px,
+        transparent 4px
+    );
 }
 
 /* Single-letter compound text; colour set per-row via JS */
