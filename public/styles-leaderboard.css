@@ -1253,10 +1253,11 @@ body { background: black; overflow: hidden; }
     justify-content: flex-start;
     align-items: center;
     white-space: pre;
+    transition: opacity 200ms ease;
 }
 
 /* Secondary driver indicator (item_1_24r0r0_52r0r0): 5×50 at left:44
-   Thin blue bar — hidden by default */
+   Thin colored bar — hidden by default */
 .lb-driver-secondary-indicator {
     display: none;
     left: 44px;
@@ -1264,7 +1265,7 @@ body { background: black; overflow: hidden; }
     width: 5px;
     height: 50px;
     border-radius: 1px;
-    background-color: rgb(31, 91, 198);
+    background-color: rgb(255, 255, 255);
 }
 
 /* Primary driver indicator (item_1_24r0r0_53r0r0): 0×50 at left:3
@@ -1351,29 +1352,31 @@ body { background: black; overflow: hidden; }
     white-space: pre;
 }
 
-/* Driver last name — PI variant (item_1_24r0r0_60r0r0): 200×50 at left:115
-   F1TV-2022-ObliqueBold 25px  black  left-aligned  hidden by default */
+/* Driver last name (item_1_24r0r0_4r0r0 / item_1_24r0r0_27r0r0): 210×49 at left:100
+   F1TV-2022-Name-Bold 24px  white  left-aligned  hidden by default */
 .lb-driver-lastname {
-    display: none;
-    left: 115px;
+    display: flex;
+    opacity: 0;
+    pointer-events: none;
+    left: 100px;
     top: 0;
-    width: 200px;
-    height: 50px;
+    width: 210px;
+    height: 49px;
     font-family: 'F1TV-2022-Name';
     font-weight: 700;
-    font-stretch: normal;
-    font-size: 25px;
+    font-size: 24px;
     color: rgb(255, 255, 255);
     text-transform: uppercase;
     justify-content: flex-start;
     align-items: center;
     white-space: pre;
+    transition: opacity 200ms ease;
 }
 
 /* Long last name variant (>9 chars) — condensed font to fit in the same space */
 .lb-driver-lastname--long {
     font-family: 'F1TV-2022-Name';
-    font-size: 22px;
+    font-size: 24px;
     font-stretch: condensed;
 }
 

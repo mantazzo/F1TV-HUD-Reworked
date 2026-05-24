@@ -530,9 +530,10 @@
             const abbrev = document.createElement('div');
             abbrev.className = 'lb-driver-abbrev';
 
-            // Last name — shown alongside primary indicator (hidden by default)
+            // Last name (hidden by default)
             const lastName = document.createElement('div');
             lastName.className = 'lb-driver-lastname';
+            // TODO: Add a Primary Indicator version of Last Name, since it's slightly different
 
             // Position-gained arrow (hidden by default)
             const arrowUp = document.createElement('div');
@@ -792,7 +793,7 @@
         let sessionEnded           = false; // true once session has ended (P1 finished in race / any finished in non-race / timer hit 0)
         let extendedGrid           = false;  // true when numActiveCars > 20 — selects _22 image variants
         let numActiveCars          = 22;     // actual active cars from pid 4 (m_numActiveCars), used for slot visibility
-        let paneMode               = 0;  // TODO: Implement Panes 1, 2 and 3 properly
+        let paneMode               = 0;  // Pane 1: Narrow, Pane 2: Short, Pane 3: Narrow Short, Pane 4: Logo; // TODO: Implement Panes 1, 2 and 3 properly
         let timeLapsBannerActive   = false;
         let timeLapsBannerTimer    = null;
         let sessionDuration        = 0;
@@ -894,8 +895,9 @@
             }
 
             elRaceLaps.style.display    = isRace || isTT  ? 'block' : 'none';
-            elTiming.style.display      = (!mfdActive && !showLastNames && isRace)  ? '' : 'none';
-            elQualiTiming.style.display = (!mfdActive && !showLastNames && !isRace) ? '' : 'none';
+            elTiming.style.display      = (!mfdActive && !showLastNames && isRace && paneMode !== 1 && paneMode !== 3)  ? '' : 'none';
+            elQualiTiming.style.display = (!mfdActive && !showLastNames && !isRace && paneMode !== 1 && paneMode !== 3) ? '' : 'none';
+            elBattery.style.display     = (showBattery && isRace) ? '' : 'none';
 
             updateRaceLaps();
             
@@ -1602,10 +1604,10 @@
                 row.numberImg.style.display         = 'none';
                 row.driverNumber.style.display      = 'none';
                 row.driverNumber.style.opacity      = '0';
-                row.abbrev.style.display            = 'none';
-                row.lastName.style.display          = 'flex';
-                row.lastName.style.color            = 'rgb(0, 0, 0)';
-                row.position.style.color            = 'rgb(0, 0, 0)';
+                row.abbrev.style.opacity   = '0';
+                row.lastName.style.opacity = '1';
+                row.lastName.style.color   = 'rgb(0, 0, 0)';
+                row.position.style.color   = 'rgb(0, 0, 0)';
                 tyreRows[p].text.parentElement.style.display        = 'none';
                 drsRows[p].row.style.display                        = 'none';
                 timingRows[p].iText.parentElement.style.display      = 'none';
@@ -1632,10 +1634,10 @@
                 row.numberImg.style.display         = 'none';
                 row.driverNumber.style.display      = 'none';
                 row.driverNumber.style.opacity      = '0';
-                row.abbrev.style.display            = 'none';
-                row.lastName.style.display          = 'flex';
-                row.lastName.style.color            = 'rgb(0, 0, 0)';
-                row.position.style.color            = 'rgb(0, 0, 0)';
+                row.abbrev.style.opacity   = '0';
+                row.lastName.style.opacity = '1';
+                row.lastName.style.color   = 'rgb(0, 0, 0)';
+                row.position.style.color   = 'rgb(0, 0, 0)';
                 tyreRows[p].text.parentElement.style.display        = 'none';
                 drsRows[p].row.style.display                        = 'none';
                 timingRows[p].iText.parentElement.style.display      = 'none';
@@ -1652,7 +1654,7 @@
         // so they don't need slot-count clamping.
         function updateSlotVisibility() {
             const containers = [
-                elBattery, elPenalty, elFlLogo, elDrivers,
+                elPenalty, elFlLogo, elDrivers,
                 elTimingInterval, elTimingLeader,
                 elQualiGaps, elQualiTimes,
                 elTyre,
@@ -1923,8 +1925,11 @@
                     dRow.lastName.className       = lastNameStr.length > 9
                         ? 'lb-driver-lastname lb-driver-lastname--long'
                         : 'lb-driver-lastname';
-                    dRow.lastName.style.display   = showLastNames ? 'flex' : 'none';
-                    dRow.abbrev.style.display      = showLastNames ? 'none' : '';
+                    const rsA = carResultStatus[carIdx];
+                    const dimA = rsA === 5 || rsA === 7;
+                    const showLNA = showLastNames && paneMode !== 1;
+                    dRow.lastName.style.opacity = showLNA ? (dimA ? '0.65' : '1') : '0';
+                    dRow.abbrev.style.opacity   = showLNA ? '0' : '1';
                     dRow.driverNumber.textContent  = raceNum > 0 ? raceNum : '';
                     dRow.driverNumber.style.color   = carPrimaryColors[carIdx];
                     if (showDriverNumbers && raceNum > 0) {
@@ -2037,6 +2042,17 @@
                         }
                     }
                 }
+
+                // Re-hide tyre rows for any car currently in the pits. applyIndicators() unconditionally
+                // resets all tyre rows to display:'', so in non-race sessions (where pitStatusRows are
+                // never set to opacity '1') the tyre would otherwise flicker visible on every Packet 2.
+                for (let ci = 0; ci < NUM_CARS; ci++) {
+                    const pos = carPositions[ci];
+                    if (pos < 1 || pos > NUM_CARS) continue;
+                    if ((carPitStatus[ci] ?? 0) > 0 || (carDriverStatus[ci] ?? -1) === 0) {
+                        tyreRows[pos - 1].text.parentElement.style.display = 'none';
+                    }
+                }
             }
 
             // Packet ID 3 — Event
@@ -2138,8 +2154,11 @@
                             row.lastName.className    = lastNameStr.length > 9
                                 ? 'lb-driver-lastname lb-driver-lastname--long'
                                 : 'lb-driver-lastname';
-                            row.lastName.style.display = showLastNames ? 'flex' : 'none';
-                            row.abbrev.style.display   = showLastNames ? 'none' : '';
+                            const rsB = carResultStatus[carIdx];
+                            const dimB = rsB > 3; // Any DNF/DSQ/NotClassified/Retired status
+                            const showLNB = showLastNames && paneMode !== 1;
+                            row.lastName.style.opacity = showLNB ? (dimB ? '0.65' : '1') : '0';
+                            row.abbrev.style.opacity   = showLNB ? '0' : '1';
                             if (logoUrl) {
                                 row.teamLogoNormal.src          = logoUrl;
                                 row.teamLogoNormal.style.display = 'block';
@@ -2323,9 +2342,13 @@
 
             // Last Names toggle — swap abbreviation vs last name per driver row
             showLastNames = !!cfg.showLastNames;
-            driverRows.forEach(row => {
-                row.abbrev.style.display    = showLastNames ? 'none' : '';
-                row.lastName.style.display  = showLastNames ? 'flex' : 'none';
+            driverRows.forEach((row, p) => {
+                const carIdx = carPositions.indexOf(p + 1);
+                const rs = carIdx >= 0 ? carResultStatus[carIdx] : 0;
+                const dim = rs > 3; // Any DNF/DSQ/NotClassified/Retired status
+                const showLN = showLastNames && paneMode !== 1;
+                row.abbrev.style.opacity   = showLN ? '0' : '1';
+                row.lastName.style.opacity = showLN ? (dim ? '0.65' : '1') : '0';
             });
 
             // Driver Numbers toggle — swap team logo vs race number (SVG preferred, text fallback)
@@ -2380,8 +2403,8 @@
 
             // Hide timing columns while any MFD page or Last Names mode is active;
             // when both are off, show the timing relevant to the current session type
-            elTiming.style.display      = (!mfdActive && !showLastNames && isRace)   ? '' : 'none';
-            elQualiTiming.style.display = (!mfdActive && !showLastNames && !isRace)  ? '' : 'none';
+            elTiming.style.display      = (!mfdActive && !showLastNames && isRace && paneMode !== 1 && paneMode !== 3)   ? '' : 'none';
+            elQualiTiming.style.display = (!mfdActive && !showLastNames && !isRace && paneMode !== 1 && paneMode !== 3)  ? '' : 'none';
             const isMfd2 = page === 'mfd2';
             const tyreHidden = showLastNames || formulaType === 2 || formulaType === 7 || formationLap || paneMode === 1;
             elTyre.style.display = tyreHidden ? 'none' : '';
@@ -2392,9 +2415,9 @@
             }
             elDrs.style.display         = (!mfdActive && !showLastNames) ? '' : 'none';
 
-            // ERS battery — hide entire column when toggled off
+            // ERS battery — hide entire column when toggled off or outside race sessions
             showBattery = !!cfg.showBattery;
-            elBattery.style.display     = showBattery ? '' : 'none';
+            elBattery.style.display     = (showBattery && isRace) ? '' : 'none';
 
             // Penalty display — race-only; hide all rows when toggled off
             showPenalties = !!cfg.showPenalties;
