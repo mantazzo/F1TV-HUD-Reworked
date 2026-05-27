@@ -1268,17 +1268,18 @@ body { background: black; overflow: hidden; }
     background-color: rgb(255, 255, 255);
 }
 
-/* Primary driver indicator (item_1_24r0r0_53r0r0): 0×50 at left:3
-   PlayerIndicator.png — zero-width hides it; width set by JS when active */
+/* Primary driver indicator (item_1_24r0r0_53r0r0): expands 0→305px at left:1
+   PlayerIndicator.png — width:0 hides it; JS sets width 305px when active */
 .lb-driver-primary-indicator {
     left: 1px;
     top: 0;
-    width: 305px;
+    width: 0;
     height: 50px;
+    overflow: hidden;
     background-image: url('/images/common/PlayerIndicator.png');
     background-size: 305px 50px;
     background-repeat: no-repeat;
-    display: none;
+    transition: width 125ms ease;
 }
 
 /* Team logo — normal variant (item_1_24r0r0_56r0r0r0): img 55×50 at left:45 */
@@ -1305,7 +1306,8 @@ body { background: black; overflow: hidden; }
     padding: 5px; /* to fit logos in the 65×60 box better, remove if unnecessary */
 }
 
-/* Driver number SVG image — same slot as team logo, shown when SVG file exists */
+/* Driver number image (SVG or PNG) — same slot as team logo, shown when image file exists
+   width animates in sync with the text version when PI active */
 .lb-driver-number-img {
     position: absolute;
     left: 45px;
@@ -1315,10 +1317,12 @@ body { background: black; overflow: hidden; }
     object-fit: contain;
     display: none;
     padding: 5px; /* to fit logos in the 55×50 box better, remove if unnecessary */
+    transition: width 125ms ease;
 }
 
 /* Driver number (item_1_24r0r0_58r0r0): 45×51 at left:50
-   Formula1 Display Bold 26px  team-blue  centered  hidden (opacity 0) */
+   Formula1 Display Bold 26px  team-blue  centered  hidden (opacity 0)
+   width/font-size animate when PI active (45→145px, 26→30px) */
 .lb-driver-number {
     left: 50px;
     top: 0;
@@ -1333,6 +1337,7 @@ body { background: black; overflow: hidden; }
     justify-content: center;
     align-items: center;
     white-space: pre;
+    transition: width 125ms ease, font-size 125ms ease;
 }
 
 /* Position number (item_1_24r0r0_59r0r0): 45×50 at left:0
@@ -1381,7 +1386,7 @@ body { background: black; overflow: hidden; }
 }
 
 /* Position-gained arrow (item_1_24r0r0_62r0r0r0): Arrow_Up.png 35×20 at left:5, top:0
-   opacity 0 by default */
+   opacity 0 by default; fades in/out over 200ms when position is gained */
 .lb-driver-arrow-up {
     left: 5px;
     top: 0;
@@ -1390,10 +1395,11 @@ body { background: black; overflow: hidden; }
     opacity: 0;
     background-image: url('/images/leaderboard/Arrow_Up.png');
     background-size: 35px 20px;
+    transition: opacity 200ms ease;
 }
 
 /* Position-lost arrow (item_1_24r0r0_63r0r0r0): Arrow_Down.png 35×20 at left:5, top:30
-   opacity 0 by default */
+   opacity 0 by default; fades in/out over 200ms when position is lost */
 .lb-driver-arrow-down {
     left: 5px;
     top: 30px;
@@ -1402,6 +1408,56 @@ body { background: black; overflow: hidden; }
     opacity: 0;
     background-image: url('/images/leaderboard/Arrow_Down.png');
     background-size: 35px 20px;
+    transition: opacity 200ms ease;
+}
+
+/* Knockout zone indicator (item_1_24r0r0_192r0r0): 47×45 at left:0, top:2.5px
+   Knockout.png — hidden by default; shown in Q1/Q2/SQ1/SQ2 for knockout-zone drivers
+   once the threshold position has set a valid lap time */
+.lb-driver-knockout {
+    left: 0;
+    top: 2.5px;
+    width: 47px;
+    height: 45px;
+    background-image: url('/images/common/Knockout.png');
+    background-size: 47px 45px;
+    display: none;
+}
+
+/* Team logo colored background (item_1_24r0r0_55r0r0r0): 65×50 at left:45
+   Filled with team primary color — hidden by default, shown when PI/teammate indicator active */
+.lb-driver-team-logo-bg {
+    left: 45px;
+    top: 0;
+    width: 65px;
+    height: 50px;
+    display: none;
+}
+
+/* Driver last name — PI variant (item_1_24r0r0_60r0r0): 200×50 at left:115
+   F1TV-2022 ObliqueBold 25px black — opacity 0 by default, 1 when PI/teammate indicator active */
+.lb-driver-lastname-pi {
+    left: 115px;
+    top: 0;
+    width: 200px;
+    height: 50px;
+    opacity: 0;
+    pointer-events: none;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 25px;
+    color: rgb(0, 0, 0);
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    white-space: pre;
+    transition: opacity 200ms ease;
+}
+
+/* Long last name variant for PI mode (>9 chars) — reduced font size */
+.lb-driver-lastname-pi--long {
+    font-size: 22px;
 }
 
 /* ── Timing widget (item_1_18r0r0r0): 150×1100 at left:167, top:161 ──────── */
@@ -1968,7 +2024,7 @@ body { background: black; overflow: hidden; }
     height: 45px;
     overflow: hidden;
     display: none;  /* hidden in race sessions; shown by updateHeaderDisplay() */
-    pointer-events: none;
+    transition: width 333ms ease, opacity 333ms ease;
 }
 
 /* Background rectangle (item_1_24r0r0_1_2r0) + diagonal stripes effect
@@ -1987,6 +2043,53 @@ body { background: black; overflow: hidden; }
         transparent 1.25px,
         transparent 4px
     );
+}
+
+/* Race session fastest lap animation — shown on top of the FL car's row */
+#lb-fl-race-anim {
+    left: 27px;
+    top: 165px;   /* initial: lb-drivers top(160) + getRowTop(0)(0) + 5; updated by JS */
+    width: 0;
+    height: 40px;
+    overflow: hidden;
+    display: none;  /* hidden in non-race sessions; shown by updateHeaderDisplay() */
+    pointer-events: none;
+    transition: width 333ms ease;
+}
+
+#lb-fl-race-anim-bg {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 310px;
+    height: 40px;
+    background-color: rgb(255, 0, 255);
+    background-image: repeating-linear-gradient(
+        -45deg,
+        rgba(0, 0, 0, 0.5) 0,
+        rgba(0, 0, 0, 0.5) 1.25px,
+        transparent 1.25px,
+        transparent 4px
+    );
+}
+
+#lb-fl-race-anim-text {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 310px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-sizing: border-box;
+    padding-bottom: 2px;
+    white-space: pre;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 30px;
+    color: rgb(255, 255, 255);
 }
 
 /* Single-letter compound text; colour set per-row via JS */

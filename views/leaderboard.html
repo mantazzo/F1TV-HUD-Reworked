@@ -112,19 +112,20 @@
                  Shown during races only for the car holding the fastest lap -->
             <div id="lb-fl-logo"></div>
 
+            <!-- Fastest Lap Animation (non-race, P1 only) — item_1_24r0r0_1
+                 Slides to full width (310px or 185px pane1) when P1 sets a new
+                 fastest lap in a non-race session; retracts to 0 after 6 seconds.
+                 Position tracked via JS (updateFlAnimPosition).
+                 Placed before lb-drivers so it paints behind driver content, timing, tyre, and DRS. -->
+            <div id="lb-fl-anim">
+                <div id="lb-fl-anim-bg"></div>
+            </div>
+
             <!-- Driver name slots (item_1_24r0r0 → item_1_24r0r0_49):
                  JS-generated rows, 310×50 per row at 50px stride, left:27, top:160
                  22 slots: abbrev, secondary/primary indicator, team logos, driver number,
                  position, last name (PI), arrow up/down -->
             <div id="lb-drivers"></div>
-
-            <!-- Fastest Lap Animation (non-race, P1 only) — item_1_24r0r0_1
-                 Slides to full width (310px or 185px pane1) when P1 sets a new
-                 fastest lap in a non-race session; retracts to 0 after 6 seconds.
-                 Position tracked via JS (updateFlAnimPosition). -->
-            <div id="lb-fl-anim">
-                <div id="lb-fl-anim-bg"></div>
-            </div>
 
             <!-- Timing widget — Race (item_1_18r0r0r0): 150×1100 at left:167, top:161
                  Two sub-layers: lb-timing-interval (Interval mode) and lb-timing-leader (Leader mode)
@@ -169,6 +170,15 @@
                  JS-generated rows, one per car at 50px stride, hidden by default.
                  Each row is a 5×50px green rectangle shown when DRS is active (m_drs === 1). -->
             <div id="lb-drs"></div>
+
+            <!-- Fastest Lap Animation — Race sessions (item_1_24r0r0_375r0)
+                 Slides to full width when any car sets a new fastest lap during a race.
+                 Positioned over that car's row via JS (updateFlRaceAnimPosition).
+                 Holds for 3 s, 333ms ease in/out transition. -->
+            <div id="lb-fl-race-anim">
+                <div id="lb-fl-race-anim-bg"></div>
+                <div id="lb-fl-race-anim-text">FASTEST LAP</div>
+            </div>
 
             <!-- MFD1 — Current Tyres page (item_1_20r0r0r0 group)
                  Header BG + label (item_1_30r0r0r0_1/2): 310×105 at left:27, top:145.
@@ -407,10 +417,11 @@
         const elScPaneLogo  = document.getElementById('lb-sc-pane-logo');
         const elSprintLogo  = document.getElementById('lb-sprint-logo');
         const elFlAnim      = document.getElementById('lb-fl-anim');
-        elFlAnim.style.transition = 'width 333ms ease, opacity 333ms ease';
+        const elFlRaceAnim  = document.getElementById('lb-fl-race-anim');
 
         let NUM_CARS = 22;  // Pre-allocate for max possible cars (20 standard, up to 22 in MyTeam/F2).
                             // Updated at runtime from packet 4 (m_numActiveCars).
+                            // NOTE, pre-F1 26 Season Pack DLC release: Max Number will increase to 24 with 2026 DLC, code will get changes accordingly later on when the parser gets updated.
 
         // Hidden elements by default — overlay_config will reveal them if no MFD page is active
         elTiming.style.display      = 'none';
@@ -497,13 +508,17 @@
             row.className = 'lb-driver-row';
             row.style.top = `${i * 50}px`;
 
-            // Secondary indicator — thin blue bar (hidden by default)
+            // Secondary indicator — thin colored bar (hidden by default)
             const secondaryIndicator = document.createElement('div');
             secondaryIndicator.className = 'lb-driver-secondary-indicator';
 
-            // Primary indicator — PlayerIndicator.png (zero-width = hidden by default)
+            // Primary indicator — PlayerIndicator.png background (width:0 = hidden by default)
             const primaryIndicator = document.createElement('div');
             primaryIndicator.className = 'lb-driver-primary-indicator';
+
+            // Team logo colored background (PI/teammate indicator only, hidden by default)
+            const teamLogoBg = document.createElement('div');
+            teamLogoBg.className = 'lb-driver-team-logo-bg';
 
             // Team logo — normal variant (hidden until logo URL set by pid 4)
             const teamLogoNormal = document.createElement('img');
@@ -518,7 +533,7 @@
             const driverNumber = document.createElement('div');
             driverNumber.className = 'lb-driver-number';
 
-            // Driver number SVG image — shown instead of text when a per-number SVG exists
+            // Driver number image (SVG or PNG) — shown when image file exists for race number
             const numberImg = document.createElement('img');
             numberImg.className = 'lb-driver-number-img';
 
@@ -530,10 +545,13 @@
             const abbrev = document.createElement('div');
             abbrev.className = 'lb-driver-abbrev';
 
-            // Last name (hidden by default)
+            // Last name — PI variant (oblique bold black, shown only when PI/teammate indicator active)
+            const lastNamePI = document.createElement('div');
+            lastNamePI.className = 'lb-driver-lastname-pi';
+
+            // Last name — standard (hidden by default, shown in full-name mode)
             const lastName = document.createElement('div');
             lastName.className = 'lb-driver-lastname';
-            // TODO: Add a Primary Indicator version of Last Name, since it's slightly different
 
             // Position-gained arrow (hidden by default)
             const arrowUp = document.createElement('div');
@@ -543,19 +561,26 @@
             const arrowDown = document.createElement('div');
             arrowDown.className = 'lb-driver-arrow-down';
 
+            // Knockout zone indicator (topmost — shown in Q1/Q2/SQ1/SQ2 for knockout positions)
+            const knockoutIndicator = document.createElement('div');
+            knockoutIndicator.className = 'lb-driver-knockout';
+
             row.appendChild(secondaryIndicator);
             row.appendChild(primaryIndicator);
+            row.appendChild(teamLogoBg);
             row.appendChild(teamLogoNormal);
             row.appendChild(teamLogoPI);
             row.appendChild(driverNumber);
             row.appendChild(numberImg);
+            row.appendChild(knockoutIndicator);
             row.appendChild(position);
             row.appendChild(abbrev);
+            row.appendChild(lastNamePI);
             row.appendChild(lastName);
             row.appendChild(arrowUp);
             row.appendChild(arrowDown);
             elDrivers.appendChild(row);
-            return { secondaryIndicator, primaryIndicator, teamLogoNormal, teamLogoPI, driverNumber, numberImg, position, abbrev, lastName, arrowUp, arrowDown };
+            return { secondaryIndicator, primaryIndicator, teamLogoBg, teamLogoNormal, teamLogoPI, driverNumber, numberImg, position, abbrev, lastNamePI, lastName, arrowUp, arrowDown, knockoutIndicator };
         });
 
         // ── Timing rows — Interval and Leader sub-layers, NUM_CARS rows each ─────
@@ -683,7 +708,7 @@
             16: { letter: 'S', displayText: 'SOFT', color: '#EC1C24' }, // Soft
             17: { letter: 'M', displayText: 'MEDIUM', color: '#FFD604' }, // Medium
             18: { letter: 'H', displayText: 'HARD', color: '#F0F0EC' }, // Hard
-            19: { letter: 'SS', displayText: 'SUPER SOFT', color: '#97528F' }, // Super Soft (F2)
+            19: { letter: 'SS', displayText: 'SUPER SOFT', color: '#97528F' }, // SuperSoft (F2)
             20: { letter: 'S', displayText: 'SOFT', color: '#EC1C24' }, // Soft (F2)
             21: { letter: 'M', displayText: 'MEDIUM', color: '#FFD604' }, // Medium (F2)
             22: { letter: 'H', displayText: 'HARD', color: '#F0F0EC' }, // Hard (F2)
@@ -817,8 +842,10 @@
         const carTeamLogos     = new Array(NUM_CARS).fill('');  // carIdx → logo URL string
         const carRaceNumbers   = new Array(NUM_CARS).fill(0);   // carIdx → race/car number
         const carPrimaryColors = new Array(NUM_CARS).fill('rgb(255, 255, 255)'); // carIdx → team primary color
-        const carNumSvgOk      = new Array(NUM_CARS).fill(null); // carIdx → null=unchecked, true=SVG loaded, false=no SVG
+        const carNumImgUrl     = new Array(NUM_CARS).fill(null); // carIdx → null=unchecked, string=image URL, false=no image
         const carTeamIds       = new Array(NUM_CARS).fill(-1);   // carIdx → m_teamId (for teammate detection)
+        const carPrevPositions = new Array(NUM_CARS).fill(0);  // carIdx → previous race position (for arrow detection)
+        const arrowTimers      = new Array(NUM_CARS).fill(null); // posIdx → active arrow fadeout timer
         const carDeltaFront  = new Array(NUM_CARS).fill(0);  // carIdx → delta to car in front (ms)
         const carDeltaLeader = new Array(NUM_CARS).fill(0);  // carIdx → delta to race leader (ms)
         const carLapNum      = new Array(NUM_CARS).fill(0);  // carIdx → m_currentLapNum from pid 2
@@ -834,6 +861,7 @@
         let fastestLapDisplayPos = 0;    // position of driver who set the fastest lap (1-based)
         let fastestLapTimer = null;        // 6-second timeout for fastest lap display
         let flAnimTimer     = null;        // 6-second timeout for fastest lap animation (non-race)
+        let flRaceAnimTimer = null;        // 3-second timeout for fastest lap animation (race)
 
         // Personal best display state (quali/practice gaps mode)
         const prevPersonalBestMs = new Array(NUM_CARS).fill(0); // previous personal best per car (for change detection)
@@ -943,13 +971,17 @@
             // MFD3 label changes with session type
             elMfd3Label.textContent = isRace ? 'TYRE CHANGES' : 'LAPS COMPLETED';
 
-            // FL animation — only active in non-race sessions; cancel and hide if switching to race
+            // FL animation — non-race version active only outside race; race version active only in race
             if (isRace) {
                 if (flAnimTimer) { clearTimeout(flAnimTimer); flAnimTimer = null; }
                 elFlAnim.style.width   = '0px';
                 elFlAnim.style.display = 'none';
+                elFlRaceAnim.style.display = 'block';
             } else {
-                elFlAnim.style.display = '';
+                elFlAnim.style.display = 'block';
+                if (flRaceAnimTimer) { clearTimeout(flRaceAnimTimer); flRaceAnimTimer = null; }
+                elFlRaceAnim.style.width   = '0px';
+                elFlRaceAnim.style.display = 'none';
             }
         }
 
@@ -1113,10 +1145,10 @@
 
         // ── Fastest Lap Animation trigger (non-race, P1 only) — item_1_24r0r0_1 ──────
         // Slides the magenta overlay to full width when P1 sets a new fastest lap,
-        // then retracts after 6 seconds. Width matches pane mode (185px narrow, 310px full).
+        // then retracts after 6 seconds. Width matches pane mode (185px narrow, 306px full).
         function triggerFlAnim() {
             const narrow = paneMode === 1 || paneMode === 3;
-            elFlAnim.style.width = narrow ? '185px' : '310px';
+            elFlAnim.style.width = narrow ? '185px' : '306px'; // Full-width adjusted from 310px to 306px to match the design a bit better
             if (flAnimTimer) clearTimeout(flAnimTimer);
             flAnimTimer = setTimeout(() => {
                 elFlAnim.style.width = '0px';
@@ -1127,6 +1159,30 @@
         // Keeps #lb-fl-anim vertically aligned to the P1 row under all row-offset modes.
         function updateFlAnimPosition() {
             elFlAnim.style.top = `${160 + getRowTop(0) + 2.5}px`;
+        }
+
+        // Slides the magenta overlay to full width over the row of the car that set the
+        // fastest lap, then retracts after 3 seconds. Width matches pane mode.
+        function triggerFlRaceAnim() {
+            if (fastestLapCarIdx < 0) return;
+            const pos = carPositions[fastestLapCarIdx];
+            if (pos < 1 || pos > NUM_CARS) return;
+            const narrow = paneMode === 1 || paneMode === 3;
+            elFlRaceAnim.style.top   = `${160 + getRowTop(pos - 1) + 5}px`;
+            elFlRaceAnim.style.width = narrow ? '185px' : '306px';
+            if (flRaceAnimTimer) clearTimeout(flRaceAnimTimer);
+            flRaceAnimTimer = setTimeout(() => {
+                elFlRaceAnim.style.width = '0px';
+                flRaceAnimTimer = null;
+            }, 3333);
+        }
+
+        // Keeps #lb-fl-race-anim aligned to the fastest-lap car's current row.
+        function updateFlRaceAnimPosition() {
+            if (fastestLapCarIdx < 0) return;
+            const pos = carPositions[fastestLapCarIdx];
+            if (pos < 1 || pos > NUM_CARS) return;
+            elFlRaceAnim.style.top = `${160 + getRowTop(pos - 1) + 5}px`;
         }
 
         // ── Data container left offset (item_1_14r0r0r0) ────────────────────────────
@@ -1239,7 +1295,9 @@
             fastestLapDisplayPos = 0;
             if (fastestLapTimer) { clearTimeout(fastestLapTimer); fastestLapTimer = null; }
             if (flAnimTimer)     { clearTimeout(flAnimTimer);     flAnimTimer     = null; }
-            elFlAnim.style.width = '0px';
+            if (flRaceAnimTimer) { clearTimeout(flRaceAnimTimer); flRaceAnimTimer = null; }
+            elFlAnim.style.width     = '0px';
+            elFlRaceAnim.style.width = '0px';
             personalBestTimers.forEach(id => clearTimeout(id));
             personalBestTimers.clear();
             personalBestDisplayMs.clear();
@@ -1248,8 +1306,11 @@
             carTeamLogos.fill('');
             carRaceNumbers.fill(0);
             carPrimaryColors.fill('rgb(255, 255, 255)');
-            carNumSvgOk.fill(null);
+            carNumImgUrl.fill(null);
             carTeamIds.fill(-1);
+            carPrevPositions.fill(0);
+            arrowTimers.forEach(id => { if (id !== null) clearTimeout(id); });
+            arrowTimers.fill(null);
             playerCarIdx = -1;
             numActiveCars = 0;
             extendedGrid = false;
@@ -1275,6 +1336,8 @@
             driverRows.forEach(row => {
                 row.position.textContent  = '';
                 row.abbrev.textContent    = '';
+                row.lastNamePI.textContent   = '';
+                row.lastNamePI.style.opacity = '0';
                 row.lastName.textContent  = '';
                 row.driverNumber.textContent   = '';
                 row.driverNumber.style.display = 'none';
@@ -1282,10 +1345,14 @@
                 row.numberImg.style.display    = 'none';
                 row.teamLogoNormal.src         = '';
                 row.teamLogoNormal.style.display = 'none';
-                row.primaryIndicator.style.display   = 'none';
+                row.primaryIndicator.style.width = '0';
                 row.secondaryIndicator.style.display = 'none';
+                row.teamLogoBg.style.display         = 'none';
                 row.teamLogoPI.src                   = '';
                 row.teamLogoPI.style.display         = 'none';
+                row.arrowUp.style.opacity            = '0';
+                row.arrowDown.style.opacity          = '0';
+                row.knockoutIndicator.style.display  = 'none';
             });
 
             // Clear tyre rows
@@ -1367,6 +1434,7 @@
                 }
             }
             updateFlAnimPosition();
+            updateFlRaceAnimPosition();
         }
 
         // ── Flags border state helper ──────────────────────────────────────
@@ -1559,16 +1627,50 @@
             return hasGreen;
         }
 
+        // ── Knockout zone indicator ───────────────────────────────────────
+        // Shows Knockout.png on rows that are in the elimination zone (Q1/Q2/SQ1/SQ2),
+        // but only once the threshold position (15th or 10th) has set a valid lap time.
+        function updateKnockoutIndicators() {
+            const isQ1 = sessionType === 5 || sessionType === 10;
+            const isQ2 = sessionType === 6 || sessionType === 11;
+            if (!isQ1 && !isQ2) {
+                driverRows.forEach(row => { row.knockoutIndicator.style.display = 'none'; });
+                return;
+            }
+            const threshold = isQ1
+                ? (numActiveCars > 20
+                    ? DriverUtils.KNOCKOUT_ZONE_POSITIONS.Q1_22_CARS
+                    : DriverUtils.KNOCKOUT_ZONE_POSITIONS.Q1_20_CARS)
+                : DriverUtils.KNOCKOUT_ZONE_POSITIONS.Q2;
+            let thresholdHasTime = false;
+            for (let ci = 0; ci < NUM_CARS; ci++) {
+                if (carPositions[ci] === threshold && carBestLapMs[ci] > 0) {
+                    thresholdHasTime = true;
+                    break;
+                }
+            }
+            for (let posIdx = 0; posIdx < NUM_CARS; posIdx++) {
+                const row = driverRows[posIdx];
+                const inZone = DriverUtils.isInKnockoutZone(posIdx + 1, sessionType, numActiveCars);
+                row.knockoutIndicator.style.display = (inZone && thresholdHasTime) ? 'block' : 'none';
+            }
+        }
+
         // ── Indicator rendering ────────────────────────────────────────────
         function applyIndicators() {
             // Clear all indicator elements and any indicator-driven style overrides from every row
             driverRows.forEach((row, i) => {
-                row.primaryIndicator.style.display   = 'none';
+                row.primaryIndicator.style.width     = '0';
                 row.secondaryIndicator.style.display = 'none';
                 row.teamLogoPI.style.display         = 'none';
+                row.teamLogoBg.style.display         = 'none';
+                row.lastNamePI.style.opacity         = '0';
                 row.lastName.style.color             = '';
                 row.position.style.color             = '';
-                tyreRows[i].text.parentElement.style.display        = '';
+                row.position.style.fontSize          = '';
+                row.driverNumber.style.width         = '';
+                row.driverNumber.style.fontSize      = '';
+                row.numberImg.style.width            = '';
                 timingRows[i].iText.parentElement.style.display      = '';
                 timingRows[i].lText.parentElement.style.display      = '';
                 qualiTimingRows[i].gText.parentElement.style.display = '';
@@ -1593,21 +1695,32 @@
             }
             const teammatePos = teammateCarIdx >= 0 ? carPositions[teammateCarIdx] : 0;
 
-            // Primary Player Indicator — row highlight + PI logo + force last name visible + hide tyre/DRS/timing
+            // Primary Player Indicator — row highlight + PI logo + PI last name + hide tyre/DRS/timing
             if (showPrimaryPI && playerPos >= 1 && playerPos <= NUM_CARS) {
                 const p   = playerPos - 1;
                 const row = driverRows[p];
-                row.primaryIndicator.style.display  = 'block';
-                row.teamLogoPI.src                  = carTeamLogos[playerCarIdx] ?? '';
-                row.teamLogoPI.style.display        = 'block';
-                row.teamLogoNormal.style.display    = 'none';
-                row.numberImg.style.display         = 'none';
-                row.driverNumber.style.display      = 'none';
-                row.driverNumber.style.opacity      = '0';
+                const piLastName = carLastNames[playerCarIdx] ?? '';
+                row.primaryIndicator.style.width     = '305px';
+                row.teamLogoBg.style.display         = 'block';
+                row.teamLogoBg.style.backgroundColor = carPrimaryColors[playerCarIdx] ?? 'transparent';
+                row.teamLogoPI.src                   = carTeamLogos[playerCarIdx] ?? '';
+                row.teamLogoPI.style.display         = 'block';
+                row.teamLogoNormal.style.display     = 'none';
+                row.numberImg.style.display          = 'none';
+                row.numberImg.style.width            = '145px';
+                row.driverNumber.style.display       = 'none';
+                row.driverNumber.style.opacity       = '0';
+                row.driverNumber.style.width         = '145px';
+                row.driverNumber.style.fontSize      = '30px';
                 row.abbrev.style.opacity   = '0';
-                row.lastName.style.opacity = '1';
-                row.lastName.style.color   = 'rgb(0, 0, 0)';
-                row.position.style.color   = 'rgb(0, 0, 0)';
+                row.lastNamePI.textContent = piLastName.toUpperCase();
+                row.lastNamePI.className   = piLastName.length > 9
+                    ? 'lb-driver-lastname-pi lb-driver-lastname-pi--long'
+                    : 'lb-driver-lastname-pi';
+                row.lastNamePI.style.opacity = '1';
+                row.lastName.style.opacity   = '0';
+                row.position.style.color     = 'rgb(0, 0, 0)';
+                row.position.style.fontSize  = '25px';
                 tyreRows[p].text.parentElement.style.display        = 'none';
                 drsRows[p].row.style.display                        = 'none';
                 timingRows[p].iText.parentElement.style.display      = 'none';
@@ -1627,17 +1740,28 @@
             if (showTeammateIndicator && teammatePos >= 1 && teammatePos <= NUM_CARS) {
                 const p   = teammatePos - 1;
                 const row = driverRows[p];
-                row.primaryIndicator.style.display  = 'block';
-                row.teamLogoPI.src                  = carTeamLogos[teammateCarIdx] ?? '';
-                row.teamLogoPI.style.display        = 'block';
-                row.teamLogoNormal.style.display    = 'none';
-                row.numberImg.style.display         = 'none';
-                row.driverNumber.style.display      = 'none';
-                row.driverNumber.style.opacity      = '0';
+                const tmLastName = carLastNames[teammateCarIdx] ?? '';
+                row.primaryIndicator.style.width     = '305px';
+                row.teamLogoBg.style.display         = 'block';
+                row.teamLogoBg.style.backgroundColor = carPrimaryColors[teammateCarIdx] ?? 'transparent';
+                row.teamLogoPI.src                   = carTeamLogos[teammateCarIdx] ?? '';
+                row.teamLogoPI.style.display         = 'block';
+                row.teamLogoNormal.style.display     = 'none';
+                row.numberImg.style.display          = 'none';
+                row.numberImg.style.width            = '145px';
+                row.driverNumber.style.display       = 'none';
+                row.driverNumber.style.opacity       = '0';
+                row.driverNumber.style.width         = '145px';
+                row.driverNumber.style.fontSize      = '30px';
                 row.abbrev.style.opacity   = '0';
-                row.lastName.style.opacity = '1';
-                row.lastName.style.color   = 'rgb(0, 0, 0)';
-                row.position.style.color   = 'rgb(0, 0, 0)';
+                row.lastNamePI.textContent = tmLastName.toUpperCase();
+                row.lastNamePI.className   = tmLastName.length > 9
+                    ? 'lb-driver-lastname-pi lb-driver-lastname-pi--long'
+                    : 'lb-driver-lastname-pi';
+                row.lastNamePI.style.opacity = '1';
+                row.lastName.style.opacity   = '0';
+                row.position.style.color     = 'rgb(0, 0, 0)';
+                row.position.style.fontSize  = '25px';
                 tyreRows[p].text.parentElement.style.display        = 'none';
                 drsRows[p].row.style.display                        = 'none';
                 timingRows[p].iText.parentElement.style.display      = 'none';
@@ -1698,6 +1822,7 @@
                 }
 
                 updateHeaderDisplay();
+                updateKnockoutIndicators();
 
                 // Time/Laps remaining banner — timed sessions
                 if (TIMED_TYPES.has(sessionType)) {
@@ -1913,7 +2038,26 @@
                     const dRow = driverRows[pos - 1];
                     const tRow = timingRows[pos - 1];
 
-                    dRow.position.textContent = pos;
+                    // Position change arrow detection
+                    const prevPos = carPrevPositions[carIdx];
+                    if (prevPos > 0 && prevPos !== pos) {
+                        const posIdx = pos - 1;
+                        if (arrowTimers[posIdx] !== null) { clearTimeout(arrowTimers[posIdx]); arrowTimers[posIdx] = null; }
+                        if (pos < prevPos) {
+                            dRow.arrowDown.style.opacity = '0';
+                            dRow.arrowUp.style.opacity   = '1';
+                            arrowTimers[posIdx] = setTimeout(() => { dRow.arrowUp.style.opacity = '0'; arrowTimers[posIdx] = null; }, 2200);
+                        } else {
+                            dRow.arrowUp.style.opacity   = '0';
+                            dRow.arrowDown.style.opacity = '1';
+                            arrowTimers[posIdx] = setTimeout(() => { dRow.arrowDown.style.opacity = '0'; arrowTimers[posIdx] = null; }, 2200);
+                        }
+                    }
+                    carPrevPositions[carIdx] = pos;
+
+                    // Qualifying dash: show '–' instead of position number when no valid lap time set
+                    const isQuali = QUALI_TYPES.has(sessionType) || SQ_TYPES.has(sessionType);
+                    dRow.position.textContent = (isQuali && carBestLapMs[carIdx] === 0) ? '–' : pos;
 
                     // Sync name/logo from stored arrays (written by pid 4)
                     const abbrev      = carAbbrevs[carIdx];
@@ -1921,6 +2065,10 @@
                     const logoUrl     = carTeamLogos[carIdx];
                     const raceNum     = carRaceNumbers[carIdx];
                     dRow.abbrev.textContent       = abbrev;
+                    dRow.lastNamePI.textContent   = lastNameStr.toUpperCase();
+                    dRow.lastNamePI.className     = lastNameStr.length > 9
+                        ? 'lb-driver-lastname-pi lb-driver-lastname-pi--long'
+                        : 'lb-driver-lastname-pi';
                     dRow.lastName.textContent     = lastNameStr;
                     dRow.lastName.className       = lastNameStr.length > 9
                         ? 'lb-driver-lastname lb-driver-lastname--long'
@@ -1933,19 +2081,18 @@
                     dRow.driverNumber.textContent  = raceNum > 0 ? raceNum : '';
                     dRow.driverNumber.style.color   = carPrimaryColors[carIdx];
                     if (showDriverNumbers && raceNum > 0) {
-                        const svgOk  = carNumSvgOk[carIdx];
-                        const svgSrc = `/images/driver-numbers/${raceNum}.svg`;  // TODO: Also add .PNG loading as an alternative, maybe also add team-specific loading
-                        if (svgOk === true) {
-                            // SVG confirmed available — show image, hide text
-                            if (dRow.numberImg.src !== svgSrc) dRow.numberImg.src = svgSrc;
-                            dRow.numberImg.style.display      = 'block';
-                            dRow.driverNumber.style.display   = 'none';
-                            dRow.driverNumber.style.opacity   = '0';
+                        const imgUrl = carNumImgUrl[carIdx];
+                        if (imgUrl) {
+                            // Image confirmed available (SVG or PNG) — show image, hide text
+                            dRow.numberImg.src              = imgUrl;
+                            dRow.numberImg.style.display    = 'block';
+                            dRow.driverNumber.style.display = 'none';
+                            dRow.driverNumber.style.opacity = '0';
                         } else {
-                            // No SVG (or still checking) — show colored text
-                            dRow.numberImg.style.display      = 'none';
-                            dRow.driverNumber.style.display   = 'flex';
-                            dRow.driverNumber.style.opacity   = '1';
+                            // No image (or still checking) — show colored text
+                            dRow.numberImg.style.display    = 'none';
+                            dRow.driverNumber.style.display = 'flex';
+                            dRow.driverNumber.style.opacity = '1';
                         }
                         dRow.teamLogoNormal.style.display = 'none';
                     } else {
@@ -2020,6 +2167,7 @@
                 }
 
                 applyIndicators();
+                updateKnockoutIndicators();
 
                 // Hide timing and tyre for any rows currently showing pit status or OUT text.
                 // Must run after applyIndicators() since that clears all timing rows to ''.
@@ -2079,7 +2227,8 @@
                     updateBatteryLayout();
                     updatePenaltyLayout();
                     updateFlLogoLayout();
-                    if (!isRace && fastestLapCarIdx >= 0) triggerFlAnim();
+                    if (!isRace) triggerFlAnim();
+                    if (isRace)  triggerFlRaceAnim();
                 }
                 // CHQF is NOT thrown for some reason... Commented out until I can discover why
                 // If fixed, this would be an easy way to discover when the session ending is triggered, for now, I'll have to rely on driver result status
@@ -2115,15 +2264,20 @@
                         const lastNameStr = DriverUtils.getDriverLastName(participant, aiDrivers, customDrivers, teamNames);
                         carLastNames[carIdx] = lastNameStr;
 
-                        // Race number + SVG preload
+                        // Race number + image preload (SVG preferred, PNG fallback)
                         const raceNum = participant.m_raceNumber ?? 0;
                         if (raceNum > 0 && carRaceNumbers[carIdx] !== raceNum) {
-                            // Race number changed — re-check SVG availability
-                            carNumSvgOk[carIdx] = null;
+                            carNumImgUrl[carIdx] = null;
                             const svgSrc = `/images/driver-numbers/${raceNum}.svg`;
+                            const pngSrc = `/images/driver-numbers/${raceNum}.png`;
                             const preload = new Image();
-                            preload.onload  = () => { carNumSvgOk[carIdx] = true; };
-                            preload.onerror = () => { carNumSvgOk[carIdx] = false; };
+                            preload.onload  = () => { carNumImgUrl[carIdx] = svgSrc; };
+                            preload.onerror = () => {
+                                const pngPreload = new Image();
+                                pngPreload.onload  = () => { carNumImgUrl[carIdx] = pngSrc; };
+                                pngPreload.onerror = () => { carNumImgUrl[carIdx] = false; };
+                                pngPreload.src = pngSrc;
+                            };
                             preload.src = svgSrc;
                         }
                         carRaceNumbers[carIdx] = raceNum;
@@ -2149,7 +2303,11 @@
                         const pos = carPositions[carIdx];
                         if (pos >= 1 && pos <= NUM_CARS) {
                             const row = driverRows[pos - 1];
-                            row.abbrev.textContent = abbrev;
+                            row.abbrev.textContent        = abbrev;
+                            row.lastNamePI.textContent    = lastNameStr.toUpperCase();
+                            row.lastNamePI.className      = lastNameStr.length > 9
+                                ? 'lb-driver-lastname-pi lb-driver-lastname-pi--long'
+                                : 'lb-driver-lastname-pi';
                             row.lastName.textContent  = lastNameStr;
                             row.lastName.className    = lastNameStr.length > 9
                                 ? 'lb-driver-lastname lb-driver-lastname--long'
@@ -2168,6 +2326,7 @@
                         }
                     });
                 }
+                updateKnockoutIndicators();
             }
 
             // Packet ID 6 — Car Telemetry: DRS active per car
@@ -2234,8 +2393,7 @@
                     }
 
                     // MFD2 tyre age
-                    const tyreAge = car.m_tyresAgeLaps ?? 0;
-                    mfd2Rows[pos - 1].row.textContent = tyreAge;
+                    mfd2Rows[pos - 1].row.textContent = car.m_tyresAgeLaps ?? 0;
                     // MFD2 visibility: hide for DSQ/retired, non-race with no best lap, or in pits
                     const resultStatus = carResultStatus[carIdx] ?? 0;
                     const isNotActive = resultStatus < 2 || resultStatus > 3; // any status that is not "Active" or "Finished"
@@ -2253,7 +2411,17 @@
                         pos > 1 &&
                         carDeltaFront[carIdx] === 0 &&
                         carDeltaLeader[carIdx] === 0;
-                    tRow.text.parentElement.style.display = (!isNotActive && !inPits && !tyrePitExit) ? '' : 'none';
+                    const playerTeamId = playerCarIdx >= 0 ? (carTeamIds[playerCarIdx] ?? -2) : -2;
+                    const isTeammateRow = showTeammateIndicator && playerCarIdx >= 0
+                        && carIdx !== playerCarIdx
+                        && playerTeamId >= 0
+                        && carTeamIds[carIdx] === playerTeamId;
+                    const isPlayerRow = showPrimaryPI && carIdx === playerCarIdx;
+                    if (isPlayerRow || isTeammateRow) {
+                        tRow.text.parentElement.style.display = 'none';
+                    } else {
+                        tRow.text.parentElement.style.display = (!isNotActive && !inPits && !tyrePitExit) ? '' : 'none';
+                    }
                 });
                 updateBatteryLayout();
                 updatePenaltyLayout();
@@ -2294,6 +2462,7 @@
                             }
                             prevPersonalBestMs[carIdx] = lapMs;
                             updateQualiTimingDisplay();
+                            updateKnockoutIndicators();
                             updateBatteryLayout();
                             updatePenaltyLayout();
                             updateFlLogoLayout();
@@ -2358,10 +2527,11 @@
                 if (pos < 1 || pos > NUM_CARS) continue;
                 const row    = driverRows[pos - 1];
                 const rn     = carRaceNumbers[carIdx];
-                const svgOk  = carNumSvgOk[carIdx];
+                const imgUrl = carNumImgUrl[carIdx];
                 if (showDriverNumbers && rn > 0) {
                     row.teamLogoNormal.style.display = 'none';
-                    if (svgOk === true) {
+                    if (imgUrl) {
+                        row.numberImg.src              = imgUrl;
                         row.numberImg.style.display    = 'block';
                         row.driverNumber.style.display = 'none';
                         row.driverNumber.style.opacity = '0';
