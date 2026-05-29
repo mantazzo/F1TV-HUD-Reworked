@@ -32,6 +32,18 @@ body { background: black; overflow: hidden; }
 }
 #lb-container > * { position: absolute; }
 
+/* ── Pane modes ─────────────────────────────────────────── */
+/* All direct children carry an opacity transition for pane changes.
+   :where() keeps the specificity at (1,0,0) so element-specific transition
+   rules defined later win via source order. */
+#lb-container > *:not(:where(#lb-series-logo, #lb-series-logo-f2)) {
+    transition: opacity 333ms ease;
+}
+/* Pane 4 — logo only: fade out everything except the series logo */
+#lb-container.pane-4 > *:not(:where(#lb-series-logo, #lb-series-logo-f2)) {
+    opacity: 0 !important;
+}
+
 /* ════════════════════════════════════════════════════════════════
    FLAGS / THICK STROKE BORDER — item_1_4r0r0r0
    331×1290 at left:3, top:1.5
@@ -43,7 +55,7 @@ body { background: black; overflow: hidden; }
     height: 1290px;
     overflow: hidden;
     z-index: 1;
-    transition: top 300ms ease, width 300ms ease;
+    transition: top 300ms ease, width 300ms ease, opacity 333ms ease;
 }
 #lb-flags-border > * { position: absolute; }
 
@@ -97,7 +109,7 @@ body { background: black; overflow: hidden; }
     border-radius: 25px 0 0 25px;
     background-color: rgb(18, 20, 24);
     opacity: 0.85;
-    transition: width 300ms ease;
+    transition: width 300ms ease, opacity 333ms ease;
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -112,7 +124,7 @@ body { background: black; overflow: hidden; }
     height: 1026px;
     border-radius: 0 0 0 25px;
     background-color: rgb(18, 20, 24);
-    transition: width 300ms ease;
+    transition: width 300ms ease, opacity 333ms ease;
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -139,7 +151,7 @@ body { background: black; overflow: hidden; }
     width: 306px;
     height: 50px;
     overflow: hidden;
-    transition: width 300ms ease;
+    transition: width 300ms ease, opacity 333ms ease;
 }
 #lb-header > * { position: absolute; }
 
@@ -416,18 +428,20 @@ body { background: black; overflow: hidden; }
     background-image: url('/images/leaderboard/Gradient_Vertical.png');
     background-size: 38px 1145px;
     opacity: 0.4;
+    transition: left 300ms ease;
 }
 
-/* Formation Lap only (item_1_27r0r0r0): 38×1245 at left:295, top:146, opacity:0.4 */
+/* Formation Lap only (item_1_27r0r0r0): 38×(1020|1120) at left:295, top:146, opacity:0.4 */
 #lb-gradient-vertical-formation {
     display: none;
     left: 295px;
     top: 146px;
     width: 38px;
-    height: 1245px;
+    height: 1020px;
     background-image: url('/images/leaderboard/Gradient_Vertical.png');
-    background-size: 38px 1245px;
+    background-size: 38px 1020px;
     opacity: 0.4;
+    transition: left 300ms ease;
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -691,16 +705,6 @@ body { background: black; overflow: hidden; }
     justify-content: center;
     align-items: center;
     white-space: pre;
-}
-
-/* ── Pane modes ─────────────────────────────────────────── */
-/* All direct children always carry an opacity transition so pane changes animate */
-#lb-container > *:not(#lb-series-logo):not(#lb-series-logo-f2) {
-    transition: opacity 333ms ease;
-}
-/* Pane 4 — logo only: fade out everything except the series logo */
-#lb-container.pane-4 > *:not(#lb-series-logo):not(#lb-series-logo-f2) {
-    opacity: 0 !important;
 }
 
 /* ── Time/Laps Remaining banner (item_1_28r0r0r0) ──────────────────────── */
@@ -1463,7 +1467,7 @@ body { background: black; overflow: hidden; }
 /* ── Timing widget (item_1_18r0r0r0): 150×1100 at left:167, top:161 ──────── */
 #lb-timing {
     left: 167px;
-    top: 161px;
+    top: 160px;
     width: 150px;
     height: 1100px;
     transition: opacity 200ms ease;
@@ -1611,7 +1615,7 @@ body { background: black; overflow: hidden; }
 /* ── OUT text (item_1_17r0r0r0): 130×1100 at left:192, top:162 ─────────────── */
 #lb-out {
     left: 192px;
-    top: 162px;
+    top: 160px;
     width: 130px;
     height: 1100px;
     opacity: 1;
@@ -1683,7 +1687,7 @@ body { background: black; overflow: hidden; }
 /* ── Tyre Compound (item_1_23r0r0): 40×1100 at left:299, top:161 ───────────── */
 #lb-tyre {
     left: 299px;
-    top: 161px;
+    top: 160px;
     width: 40px;
     height: 1100px;
     transition: left 333ms ease, opacity 333ms ease;
@@ -1696,7 +1700,7 @@ body { background: black; overflow: hidden; }
    ════════════════════════════════════════════════════════════════ */
 #lb-drs {
     left: 22.5px;
-    top: 162px;
+    top: 160px;
     width: 20px;
     height: 1110px;
 }
@@ -2053,8 +2057,7 @@ body { background: black; overflow: hidden; }
     height: 40px;
     overflow: hidden;
     display: none;  /* hidden in non-race sessions; shown by updateHeaderDisplay() */
-    pointer-events: none;
-    transition: width 333ms ease;
+    transition: width 333ms ease, opacity 333ms ease;
 }
 
 #lb-fl-race-anim-bg {

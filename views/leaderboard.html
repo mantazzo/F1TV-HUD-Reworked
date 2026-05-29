@@ -121,6 +121,12 @@
                 <div id="lb-fl-anim-bg"></div>
             </div>
 
+            <!-- OUT text (item_1_17r0r0r0): 130×1100 at left:192, top:162
+                 JS-generated rows, one per car at 50px stride, hidden by default.
+                 Each row shows "OUT" — displayed for retired cars during a race.
+                 Placed before lb-drivers so the PI indicator renders on top. -->
+            <div id="lb-out"></div>
+
             <!-- Driver name slots (item_1_24r0r0 → item_1_24r0r0_49):
                  JS-generated rows, 310×50 per row at 50px stride, left:27, top:160
                  22 slots: abbrev, secondary/primary indicator, team logos, driver number,
@@ -150,11 +156,6 @@
                  JS-generated rows, one per car at 50px stride, hidden (opacity:0) by default.
                  Each row: gradient overlay + Finished_Logo.png image. Shown when car has Finished result. -->
             <div id="lb-finish"></div>
-
-            <!-- OUT text (item_1_17r0r0r0): 130×1100 at left:192, top:162
-                 JS-generated rows, one per car at 50px stride, hidden by default.
-                 Each row shows "OUT" — displayed for retired cars during a race. -->
-            <div id="lb-out"></div>
 
             <!-- Pit Status (item_1_19r0r0r0): 130×1100 at left:187, top:162
                  JS-generated rows, one per car at 50px stride, hidden by default.
@@ -404,9 +405,11 @@
         const elThickStrokeBg = document.getElementById('lb-thick-stroke-bg');
         const elFlagsBorder  = document.getElementById('lb-flags-border');
         const elBorderRect   = document.getElementById('lb-border-rect');
-        const elMainBg      = document.getElementById('lb-main-bg');
-        const elFormationBg = document.getElementById('lb-formation-bg');
-        const elPosColBg    = document.getElementById('lb-pos-col-bg');
+        const elMainBg              = document.getElementById('lb-main-bg');
+        const elFormationBg         = document.getElementById('lb-formation-bg');
+        const elPosColBg            = document.getElementById('lb-pos-col-bg');
+        const elGradientVertical    = document.getElementById('lb-gradient-vertical');
+        const elGradientVerticalFmn = document.getElementById('lb-gradient-vertical-formation');
         const elHeader      = document.getElementById('lb-header');
         const elScBanner    = document.getElementById('lb-sc-banner');
         const elScTeam      = document.getElementById('lb-sc-team');
@@ -802,6 +805,7 @@
         let totalLaps   = 0;
         let currentLap  = 0;
         let mfdActive        = false;
+        let isMfd4           = false;
         let showLastNames    = false;
         let showDriverNumbers = false; // false = team logo, true = race number
         let showLeaderGaps  = false;  // race: false = interval gaps, true = leader gaps
@@ -824,6 +828,8 @@
         let sessionDuration        = 0;
         let prevTimeLeft           = Infinity;
         let prevLapsRemaining      = Infinity;
+        let isRaceRestart          = false; // true between RDFL and 6s after the restart LGOT
+        let raceRestartTimer       = null;
 
         const TIME_TRIGGERS_S = [1200, 900, 600, 300, 120]; // 20, 15, 10, 5, 2 minutes in seconds
         const LAP_TRIGGERS    = [15, 10, 5, 3]; // TODO: Might need to add extra cases when there are less laps
@@ -1044,9 +1050,8 @@
             elLapCurrent.style.left = doubleDigitLap ? '70px'  : '73px';
             elLapTotal.style.left   = doubleDigitLap ? '125px' : '105px';
 
-            // lb-lap-total font size: pane1 OR (pane3 AND totalLaps > 9) → 20px, else 24px
-            // TODO: revisit this resize logic later, I think it should check pane 1 or 3, AND totalLaps > 9
-            const smallFont = (paneMode === 1) || (paneMode === 3 && totalLaps > 9);
+            // lb-lap-total font size: (pane1 OR pane3) AND totalLaps > 9 → 20px, else 24px
+            const smallFont = (paneMode === 1 || paneMode === 3) && totalLaps > 9;
             elLapTotal.style.fontSize = smallFont ? '20px' : '24px';
         }
 
@@ -1293,9 +1298,11 @@
             prevFastestLapMs = Infinity;
             fastestLapDisplayMs = 0;
             fastestLapDisplayPos = 0;
-            if (fastestLapTimer) { clearTimeout(fastestLapTimer); fastestLapTimer = null; }
-            if (flAnimTimer)     { clearTimeout(flAnimTimer);     flAnimTimer     = null; }
-            if (flRaceAnimTimer) { clearTimeout(flRaceAnimTimer); flRaceAnimTimer = null; }
+            if (fastestLapTimer)   { clearTimeout(fastestLapTimer);   fastestLapTimer   = null; }
+            if (flAnimTimer)       { clearTimeout(flAnimTimer);       flAnimTimer       = null; }
+            if (flRaceAnimTimer)   { clearTimeout(flRaceAnimTimer);   flRaceAnimTimer   = null; }
+            if (raceRestartTimer)  { clearTimeout(raceRestartTimer);  raceRestartTimer  = null; }
+            isRaceRestart = false;
             elFlAnim.style.width     = '0px';
             elFlRaceAnim.style.width = '0px';
             personalBestTimers.forEach(id => clearTimeout(id));
@@ -1477,8 +1484,8 @@
 
             // lb-formation-bg
             elFormationBg.style.width   = narrow ? '195px' : '315px';
-            elFormationBg.style.height  = `${(extendedGrid ? 1250 : 1150) - 124}px`;
-            elFormationBg.style.display = formationLap ? '' : 'none';
+            elFormationBg.style.height  = `${(extendedGrid ? 1126 : 1026)}px`;
+            elFormationBg.style.display = formationLap ? 'block' : 'none'; // changed to "block" to display the BG
 
             // lb-pos-col-bg
             elPosColBg.style.height = extendedGrid ? '1120px' : '1020px';
@@ -1490,6 +1497,24 @@
 
             // lb-timer-wrap (item_1_8r0r0r0_4): slides left in narrow pane
             elTimerWrap.style.left = narrow ? '24px' : '84px';
+
+            // lb-gradient-vertical (normal) — hidden during formation lap
+            const gradLeft = narrow ? '175px' : '295px';
+            const gradH    = isF2
+                ? (extendedGrid ? 1170 : 1070)   // F2: base + 125 - 75
+                : (extendedGrid ? 1245 : 1145);  // F1: base + 125
+            elGradientVertical.style.left            = gradLeft;
+            elGradientVertical.style.top             = isF2 ? '97px' : '21px';
+            elGradientVertical.style.height          = `${gradH}px`;
+            elGradientVertical.style.backgroundSize  = `38px ${gradH}px`;
+            elGradientVertical.style.display         = formationLap ? 'none' : '';
+
+            // lb-gradient-vertical-formation — shown only during formation lap
+            const gradFmnH = extendedGrid ? 1120 : 1020;
+            elGradientVerticalFmn.style.left           = gradLeft;
+            elGradientVerticalFmn.style.height         = `${gradFmnH}px`;
+            elGradientVerticalFmn.style.backgroundSize = `38px ${gradFmnH}px`;
+            elGradientVerticalFmn.style.display        = formationLap ? 'block' : 'none';
         }
 
         // ── Flags banner helper ────────────────────────────────────────────
@@ -1771,6 +1796,24 @@
             }
         }
 
+        // Re-hide timing and tyre columns for OUT/DNF/DSQ/retired drivers in race sessions.
+        // Called after applyIndicators() (which resets timing rows to display:'') both from
+        // the pid 2 post-processing and from the config handler (when playback is paused).
+        function hideOutDriverColumns() {
+            if (!isRace) return;
+            for (let carIdx = 0; carIdx < NUM_CARS; carIdx++) {
+                const pos = carPositions[carIdx];
+                if (pos < 1 || pos > NUM_CARS) continue;
+                const rs = carResultStatus[carIdx] ?? 0;
+                if (rs === 4 || rs === 5 || rs === 7) {
+                    const rowIdx = pos - 1;
+                    timingRows[rowIdx].iText.parentElement.style.display = 'none';
+                    timingRows[rowIdx].lText.parentElement.style.display = 'none';
+                    tyreRows[rowIdx].text.parentElement.style.display    = 'none';
+                }
+            }
+        }
+
         // ── Slot visibility ────────────────────────────────────────────────
         // Hide pre-allocated rows beyond the active car count for always-visible
         // containers. Conditionally-visible containers (inPit, finish, out,
@@ -1977,7 +2020,8 @@
                             pos > 1 &&
                             carDeltaFront[idx] === 0 &&
                             carDeltaLeader[idx] === 0 &&
-                            (car.m_resultStatus ?? 0) < 3;  // only show for active cars (not finished/retired)
+                            (car.m_resultStatus ?? 0) < 3 &&
+                            !isRaceRestart;  // only show for active cars (not finished/retired) and not if there is a Race Restart
                         // TODO: Also might need fixing for after Red Flag - "PIT EXIT" is triggered on race restart for all cars
                         const psRow = pitStatusRows[pos - 1];
                         if (racePit) {
@@ -2000,9 +2044,9 @@
                         // Store result status for battery visibility guard
                         carResultStatus[idx] = car.m_resultStatus ?? 0;
 
-                        // OUT text — show for DNF (4), DSQ (5), or retired (7) drivers
+                        // OUT text — show for DNF (4), DSQ (5), or retired (7) drivers; hidden when MFD4 is active
                         const isOut = carResultStatus[idx] === 4 || carResultStatus[idx] === 5 || carResultStatus[idx] === 7;
-                        outRows[pos - 1].row.style.display = isOut ? 'block' : 'none';
+                        outRows[pos - 1].row.style.display = (isOut && !isMfd4) ? 'block' : 'none';
                     }
                 });
 
@@ -2179,16 +2223,7 @@
                         qualiTimingRows[p].tText.parentElement.style.display = 'none';
                         tyreRows[p].text.parentElement.style.display         = 'none';
                     }
-                    // In race sessions, hide timing for DNF/DSQ/retired drivers so OUT text is visible
-                    for (let carIdx = 0; carIdx < NUM_CARS; carIdx++) {
-                        const pos = carPositions[carIdx];
-                        if (pos < 1 || pos > NUM_CARS) continue;
-                        const rowIdx = pos - 1;
-                        if (isRace && (carResultStatus[carIdx] === 4 || carResultStatus[carIdx] === 5 || carResultStatus[carIdx] === 7)) {
-                            timingRows[rowIdx].iText.parentElement.style.display = 'none';
-                            timingRows[rowIdx].lText.parentElement.style.display = 'none';
-                        }
-                    }
+                    hideOutDriverColumns();
                 }
 
                 // Re-hide tyre rows for any car currently in the pits. applyIndicators() unconditionally
@@ -2218,7 +2253,19 @@
                 }
                 // RDFL: red flag deployed — cleared by SCAR eventType 3 (Resume Race) or SSTA
                 if (data.m_eventStringCode === 'RDFL') {
+                    isRaceRestart = true;  // Setup for Race Restart timing
                     setFlagsBanner('rf');
+                }
+                // LGOT: lights out - official declaration of race start
+                // Used mainly for tracking Race Restarts
+                if (data.m_eventStringCode === 'LGOT') {
+                    if (isRaceRestart) {
+                        if (raceRestartTimer) clearTimeout(raceRestartTimer);
+                        raceRestartTimer = setTimeout(() => {
+                            isRaceRestart    = false;
+                            raceRestartTimer = null;
+                        }, 6000);
+                    }
                 }
                 // FTLP: fastest lap achieved - save vehicleIdx for faster identification
                 // This is the game's official fastest-lap announcement; takes priority over pid 11 recomputation.
@@ -2228,7 +2275,7 @@
                     updatePenaltyLayout();
                     updateFlLogoLayout();
                     if (!isRace) triggerFlAnim();
-                    if (isRace)  triggerFlRaceAnim();
+                    if (isRace && currentLap >= 2) triggerFlRaceAnim();
                 }
                 // CHQF is NOT thrown for some reason... Commented out until I can discover why
                 // If fixed, this would be an easy way to discover when the session ending is triggered, for now, I'll have to rely on driver result status
@@ -2410,7 +2457,8 @@
                         carPitStatus[carIdx] === 0 &&
                         pos > 1 &&
                         carDeltaFront[carIdx] === 0 &&
-                        carDeltaLeader[carIdx] === 0;
+                        carDeltaLeader[carIdx] === 0 &&
+                        !isRaceRestart;
                     const playerTeamId = playerCarIdx >= 0 ? (carTeamIds[playerCarIdx] ?? -2) : -2;
                     const isTeammateRow = showTeammateIndicator && playerCarIdx >= 0
                         && carIdx !== playerCarIdx
@@ -2451,7 +2499,7 @@
                             // Detect new fastest lap and trigger 6-second display
                             if (bestMs < prevFastestLapMs && fastestLapCarIdx >= 0) {
                                 const pos = carPositions[fastestLapCarIdx];
-                                if (pos >= 1) triggerFastestLapDisplay(bestMs, pos);
+                                if (pos >= 1 && currentLap > 2) triggerFastestLapDisplay(bestMs, pos);
                                 prevFastestLapMs = bestMs;
                             }
                             // Detect personal best improvement (for quali gaps display)
@@ -2481,6 +2529,7 @@
             // MFD page visibility — show the active page's header+data, hide all others
             const page = cfg.mfdPage || 'off';
             mfdActive = page !== 'off';
+            isMfd4    = page === 'mfd4';
             paneMode = cfg.pane ?? 0;
             elContainer.classList.toggle('pane-4', paneMode === 4);
             updateHeaderDisplay();
@@ -2500,6 +2549,15 @@
                 header.style.opacity = show ? '1' : '0';
                 data.style.opacity   = show ? '1' : '0';
             }
+
+            // OUT rows: hide when MFD4 is active (position-change column occupies the same area)
+            outRows.forEach(({ row }, p) => {
+                const carIdx = carPositions.indexOf(p + 1);
+                if (carIdx < 0) return;
+                const rs = carResultStatus[carIdx] ?? 0;
+                const isOut = rs === 4 || rs === 5 || rs === 7;
+                row.style.display = (isOut && !isMfd4) ? 'block' : 'none';
+            });
 
             // Reposition all rows: MFD stride when active, banner shift when flag is set, else normal
             updateAllRowPositions();
@@ -2564,6 +2622,7 @@
             showSecondaryPI       = !!cfg.showSecondaryPI;
             showTeammateIndicator = !!cfg.showTeammateIndicator;
             applyIndicators();
+            hideOutDriverColumns();
 
             // DRS indicators — hide all when toggle is off
             showDrsIndicators = !!cfg.showDrsIndicators;
