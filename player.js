@@ -219,7 +219,7 @@ async function playback(packets, socket) {
 
         if (state.paused || state.seekIndex !== null || !state.running) continue;
 
-        socket.send(Buffer.from(packet.d), 0, packet.d.length, targetPort, '127.0.0.1');
+        socket.send(packet.d, 0, packet.d.length, targetPort, '127.0.0.1');
         i++;
 
         const now = Date.now();
@@ -242,7 +242,7 @@ async function loadPackets(file) {
         let obj;
         try { obj = JSON.parse(line); } catch { continue; }
         if (obj.type === 'header') { capturedAt = obj.capturedAt; continue; }
-        packets.push(obj);
+        packets.push({ t: obj.t, d: Buffer.from(obj.d) });
         if (++count % 50_000 === 0) process.stdout.write('.');
     }
     if (count >= 50_000) process.stdout.write('\n');
