@@ -1,7 +1,7 @@
 {
   "0": {
     "ShortName": "Mercedes",
-    "FullName": "",
+    "FullName": "Mercedes-AMG Petronas F1 Team",
     "Logo": "2025mercedeslogowhite.svg"
   },
   "1": {
@@ -11,48 +11,59 @@
   },
   "2": {
     "ShortName": "Red Bull Racing",
-    "FullName": "",
+    "FullName": "Oracle Red Bull Racing",
     "Logo": "2025redbullracinglogo.svg"
   },
   "3": {
     "ShortName": "Williams",
-    "FullName": "",
+    "FullName": "Atlassian Williams Racing",
     "Logo": "2025williamslogo.svg"
   },
   "4": {
-    "ShortName": "Aston Martin",
-    "FullName": "",
+    "ShortName": "Aston Martin Aramco",
+    "FullName": "Aston Martin Aramco F1 Team",
     "Logo": "2025astonmartinlogowhite.svg"
   },
   "5": {
     "ShortName": "Alpine",
-    "FullName": "",
+    "FullName": "BWT Alpine F1 Team",
     "Logo": "2025alpinelogo.svg"
   },
   "6": {
-    "ShortName": "RB",
-    "FullName": "",
+    "ShortName": "Racing Bulls",
+    "FullName": "Visa Cash App Racing Bulls F1 Team",
     "Logo": "2025racingbullslogo.svg"
   },
   "7": {
     "ShortName": "Haas",
     "ShortName_Note": "The short team name that will be used in various overlays.",
+    "ShortName_2026": "TGR Haas",
+    "ShortName_year_Note": "You can specify a different short team name for different game year if necessary. If a specific year is not defined, the default ShortName will be used. Not implemented yet (TODO).",
     "FullName": "MoneyGram Haas F1 Team",
     "FullName_Note": "The full team name. Not used at the moment.",
+    "FullName_2026": "TGR Haas F1 Team",
+    "FullName_year_Note": "You can specify a different full team name for different game year if necessary. If a specific year is not defined, the default FullName will be used. Not implemented yet (TODO).",
     "Logo": "2025haaslogo.svg",
     "Logo_Note": "The filename of the team's logo image located in the /images/team-logos folder. Can also specify a subfolder, e.g., 'f2/teamlogo.png'.",
+    "Logo_2026": "2026haaslogo.svg",
+    "Logo_year_Note": "You can specify a different team logo for different game year if necessary. If a specific year is not defined, the default Logo will be used. Not implemented yet (TODO).",
     "OverridePrimaryColor": "#9C9FA2",
-    "OverridePrimaryColor_Note": "Use this field to set a custom primary color for any team if you're not satisfied with the primary color provided by the game."
+    "OverridePrimaryColor_Note": "Use this field to set a custom primary color for any team if you're not satisfied with the primary color provided by the game. Used only in F1 25.",
+    "TeamColor": "#9C9FA2",
+    "TeamColor_Note": "The team color to be used in overlays. Intended to be used with 2024 and older games that don't provide team colors via UDP. Currently not implemented."
   },
   "8": {
     "ShortName": "McLaren",
-    "FullName": "",
+    "FullName": "McLaren Formula 1 Team",
     "Logo": "2025mclarenlogo.svg"
   },
   "9": {
     "ShortName": "Kick Sauber",
-    "FullName": "",
-    "Logo": "2025kicksauberlogo.svg"
+    "ShortName_2026": "Audi",
+    "FullName": "Stake F1 Team Kick Sauber",
+    "FullName_2026": "Audi Revolut F1 Team",
+    "Logo": "2025kicksauberlogo.svg",
+    "Logo_2026": "2026audilogo.svg"
   },
   "41": {
     "ShortName": "F1 Generic",
@@ -62,7 +73,8 @@
   "104": {
     "ShortName": "F1 Custom Team",
     "FullName": "",
-    "Logo": "fia.png"
+    "Logo": "fia.png",
+    "Note": "As far as I know, this it the team that is used in MyTeam career mode. If you want to set up your team, edit this entry."
   },
   "129": {
     "ShortName": "Konnersport",
@@ -188,5 +200,170 @@
     "ShortName": "Sauber ‘24",
     "FullName": "",
     "Logo": "sauber.png"
+  },
+  "220": {
+    "ShortName": "Mercedes ‘26",
+    "FullName": "",
+    "Logo": "2026mercedeslogowhite.svg"
+  },
+  "221": {
+    "ShortName": "Ferrari ‘26",
+    "FullName": "",
+    "Logo": "2026ferrarilogo.svg"
+  },
+  "222": {
+    "ShortName": "Red Bull Racing ‘26",
+    "FullName": "",
+    "Logo": "2026redbullracinglogo.svg"
+  },
+  "223": {
+    "ShortName": "Williams ‘26",
+    "FullName": "",
+    "Logo": "2026williamslogo.svg"
+  },
+  "224": {
+    "ShortName": "Aston Martin ‘26",
+    "FullName": "",
+    "Logo": "2026astonmartinlogowhite.svg"
+  },
+  "225": {
+    "ShortName": "Alpine ‘26",
+    "FullName": "",
+    "Logo": "2026alpinelogo.svg"
+  },
+  "226": {
+    "ShortName": "RB ‘26",
+    "FullName": "",
+    "Logo": "2026racingbullslogo.svg"
+  },
+  "227": {
+    "ShortName": "Haas ‘26",
+    "FullName": "",
+    "Logo": "2026haaslogo.svg"
+  },
+  "228": {
+    "ShortName": "McLaren ‘26",
+    "FullName": "",
+    "Logo": "2026mclarenlogo.svg"
+  },
+  "229": {
+    "ShortName": "Audi ‘26",
+    "FullName": "",
+    "Logo": "2026audilogowhite.svg"
+  },
+  "230": {
+    "ShortName": "Cadillac ‘26",
+    "FullName": "",
+    "Logo": "2026cadillaclogowhite.svg"
+  },
+  "465": {
+    "ShortName": "Art GP ‘25",
+    "FullName": "",
+    "Logo": "f2/art.png"
+  },
+  "466": {
+    "ShortName": "Campos ‘25",
+    "FullName": "",
+    "Logo": "f2/campos.png"
+  },
+  "467": {
+    "ShortName": "Rodin Motorsport ‘25",
+    "FullName": "",
+    "Logo": "f2/rodin.png"
+  },
+  "468": {
+    "ShortName": "AIX Racing ‘25",
+    "FullName": "",
+    "Logo": "f2/phm.png"
+  },
+  "469": {
+    "ShortName": "DAMS ‘25",
+    "FullName": "",
+    "Logo": "f2/dams.png"
+  },
+  "470": {
+    "ShortName": "Hitech ‘25",
+    "FullName": "",
+    "Logo": "f2/hitech.png"
+  },
+  "471": {
+    "ShortName": "MP Motorsport ‘25",
+    "FullName": "",
+    "Logo": "f2/mp.png"
+  },
+  "472": {
+    "ShortName": "Prema ‘25",
+    "FullName": "",
+    "Logo": "f2/prema.png"
+  },
+  "473": {
+    "ShortName": "Trident ‘25",
+    "FullName": "",
+    "Logo": "f2/trident.png"
+  },
+  "474": {
+    "ShortName": "Van Amersfoort Racing ‘25",
+    "FullName": "",
+    "Logo": "f2/var.png"
+  },
+  "475": {
+    "ShortName": "Invicta ‘25",
+    "FullName": "",
+    "Logo": "f2/invicta.png"
+  },
+  "476": {
+    "ShortName": "Mercedes ‘26",
+    "FullName": "",
+    "Logo": "2026mercedeslogowhite.svg"
+  },
+  "477": {
+    "ShortName": "Ferrari ‘26",
+    "FullName": "",
+    "Logo": "2026ferrarilogo.svg"
+  },
+  "478": {
+    "ShortName": "Red Bull Racing ‘26",
+    "FullName": "",
+    "Logo": "2026redbullracinglogo.svg"
+  },
+  "479": {
+    "ShortName": "Williams ‘26",
+    "FullName": "",
+    "Logo": "2026williamslogo.svg"
+  },
+  "480": {
+    "ShortName": "Aston Martin ‘26",
+    "FullName": "",
+    "Logo": "2026astonmartinlogowhite.svg"
+  },
+  "481": {
+    "ShortName": "Alpine ‘26",
+    "FullName": "",
+    "Logo": "2026alpinelogo.svg"
+  },
+  "482": {
+    "ShortName": "RB ‘26",
+    "FullName": "",
+    "Logo": "2026racingbullslogo.svg"
+  },
+  "483": {
+    "ShortName": "Haas ‘26",
+    "FullName": "",
+    "Logo": "2026haaslogo.svg"
+  },
+  "484": {
+    "ShortName": "McLaren ‘26",
+    "FullName": "",
+    "Logo": "2026mclarenlogo.svg"
+  },
+  "485": {
+    "ShortName": "Audi ‘26",
+    "FullName": "",
+    "Logo": "2026audilogowhite.svg"
+  },
+  "486": {
+    "ShortName": "Cadillac ‘26",
+    "FullName": "",
+    "Logo": "2026cadillaclogowhite.svg"
   }
 }
