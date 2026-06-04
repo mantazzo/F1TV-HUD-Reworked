@@ -251,12 +251,18 @@
             <div id="lb-vsc-banner">
                 <!-- Background (item_1_33r0r0r0r0_19r0r0): SafetyCar_Banner.png 306×105 at left:0, top:0 -->
                 <div id="lb-vsc-bg"></div>
+                <!-- Shine sweep (item_1_33r0r0r0r0_26r0r0): golden blur overlay, one-shot on SC/VSC appear -->
+                <div id="lb-vsc-shine"></div>
                 <!-- Yellow Flag layer (item_1_33r0r0r0r0_1) -->
                 <div id="lb-yf-layer">
                     <!-- Top BG (item_1_33r0r0r0r0_2r0): YellowFlag_Banner.png 306×50 at top:0 -->
                     <div id="lb-yf-top-bg"></div>
                     <!-- "YELLOW FLAG" (item_1_33r0r0r0r0_3r0): 295×50 at left:0, top:0  30px ObliqueBold black centered -->
                     <div id="lb-yf-top-text">YELLOW FLAG</div>
+                    <!-- Shine sweep (item_1_33r0r0r0r0_8r0): white blur overlay, one-shot on flag appear -->
+                    <div id="lb-yf-shine"></div>
+                    <!-- Narrow pane "FLAG" (item_1_33r0r0r0r0_9r0): 210×50 at left:-10, shown in pane 1/3 -->
+                    <div id="lb-yf-top-text-pane">FLAG</div>
                     <!-- Bottom BG (item_1_33r0r0r0r0_4r0): Header_BG.png 306×55 at top:50 -->
                     <div id="lb-yf-bottom-bg"></div>
                     <!-- Sector label (item_1_33r0r0r0r0_6r0r0): 170×55 at left:10, top:50  26px gold right-aligned -->
@@ -270,6 +276,10 @@
                     <div id="lb-gf-top-bg"></div>
                     <!-- "GREEN FLAG" (item_1_33r0r0r0r0_12r0): 295×52 at left:0, top:0  30px ObliqueBold black centered -->
                     <div id="lb-gf-top-text">GREEN FLAG</div>
+                    <!-- Shine sweep (item_1_33r0r0r0r0_15r0): white blur overlay, one-shot on flag appear -->
+                    <div id="lb-gf-shine"></div>
+                    <!-- Narrow pane "FLAG" (item_1_33r0r0r0r0_16r0): 210×50 at left:-10, shown in pane 1/3 -->
+                    <div id="lb-gf-top-text-pane">FLAG</div>
                     <!-- Bottom BG (item_1_33r0r0r0r0_13r0): Header_BG.png 306×55 at top:50 -->
                     <div id="lb-gf-bottom-bg"></div>
                     <!-- "TRACK CLEAR" (item_1_33r0r0r0r0_14r0): 250×55 at left:27, top:50  28px lime centered -->
@@ -403,15 +413,30 @@
         const elMfd4         = document.getElementById('lb-mfd4');
         const elFinishedImg  = document.getElementById('lb-finished-img');
         const elVscBanner    = document.getElementById('lb-vsc-banner');
-        const elVscBg        = document.getElementById('lb-vsc-bg');
-        const elVscText      = document.getElementById('lb-vsc-text');
-        const elScText       = document.getElementById('lb-sc-text');
-        const elVscFiaLogo   = document.getElementById('lb-vsc-fia-logo');
+        const elVscBg            = document.getElementById('lb-vsc-bg');
+        const elVscShine         = document.getElementById('lb-vsc-shine');
+        const elVscText          = document.getElementById('lb-vsc-text');
+        const elVscTextVirtual   = document.getElementById('lb-vsc-text-virtual');
+        const elVscTextSafetyCar = document.getElementById('lb-vsc-text-safetycar');
+        const elScText           = document.getElementById('lb-sc-text');
+        const elScTextSafety     = document.getElementById('lb-sc-text-safety');
+        const elScTextCar        = document.getElementById('lb-sc-text-car');
+        const elVscFiaLogo       = document.getElementById('lb-vsc-fia-logo');
         const elRfLayer      = document.getElementById('lb-rf-layer');
-        const elYfLayer      = document.getElementById('lb-yf-layer');
-        const elYfSectorLabel = document.getElementById('lb-yf-sector-label');
-        const elYfSectorNum  = document.getElementById('lb-yf-sector-num');
-        const elGfLayer      = document.getElementById('lb-gf-layer');
+        const elRfText       = document.getElementById('lb-rf-text');
+        const elYfLayer        = document.getElementById('lb-yf-layer');
+        const elYfTopBg        = document.getElementById('lb-yf-top-bg');
+        const elYfTopText      = document.getElementById('lb-yf-top-text');
+        const elYfShine        = document.getElementById('lb-yf-shine');
+        const elYfTopTextPane  = document.getElementById('lb-yf-top-text-pane');
+        const elYfSectorLabel  = document.getElementById('lb-yf-sector-label');
+        const elYfSectorNum    = document.getElementById('lb-yf-sector-num');
+        const elGfLayer        = document.getElementById('lb-gf-layer');
+        const elGfTopBg        = document.getElementById('lb-gf-top-bg');
+        const elGfTopText      = document.getElementById('lb-gf-top-text');
+        const elGfShine        = document.getElementById('lb-gf-shine');
+        const elGfTopTextPane  = document.getElementById('lb-gf-top-text-pane');
+        const elGfBottomText   = document.getElementById('lb-gf-bottom-text');
         const elFlagsImg     = document.getElementById('lb-flags-img');
         const elDecoBorder      = document.getElementById('lb-deco-border');
         const elDecoBorderSc    = document.getElementById('lb-deco-border-sc');
@@ -1039,6 +1064,51 @@
             elScPaneLogo.style.display = isAston ? 'none' : '';
         }
 
+        // ── Yellow flag banner pane adjustments ───────────────────────────────────
+        // Called on pane change and when yellow mode activates; applies narrow-mode offsets.
+        function updateYellowFlagBanner() {
+            const narrow = paneMode === 1 || paneMode === 3;
+            elYfTopText.style.opacity      = narrow ? '0'     : '1';
+            elYfTopTextPane.style.display  = narrow ? 'flex'  : 'none';
+            elYfSectorLabel.style.left     = narrow ? '-48px' : '10px';
+            elYfSectorLabel.style.fontSize = narrow ? '24px'  : '26px';
+            elYfSectorNum.style.left       = narrow ? '130px' : '190px';
+            elYfSectorNum.style.fontSize   = narrow ? '30px'  : '40px';
+        }
+
+        // ── Green flag banner pane adjustments ────────────────────────────────────
+        function updateGreenFlagBanner() {
+            const narrow = paneMode === 1 || paneMode === 3;
+            elGfTopText.style.opacity     = narrow ? '0'     : '1';
+            elGfTopTextPane.style.opacity = narrow ? '1'     : '0';
+            elGfBottomText.style.left     = narrow ? '-33px' : '27px';
+            elGfBottomText.textContent    = narrow ? 'CLEAR' : 'TRACK CLEAR';
+        }
+
+        // ── SC/VSC banner pane adjustments ────────────────────────────────────────
+        // Handles narrow-mode text offsets, font sizes, and FIA logo visibility.
+        function updateScVscBanner() {
+            const narrow   = paneMode === 1 || paneMode === 3;
+            const scVscNow = flagsBannerMode === 'sc' || flagsBannerMode === 'vsc';
+            // FIA logo: hidden in narrow pane
+            elVscFiaLogo.style.display       = (scVscNow && !narrow) ? '' : 'none';
+            // VSC text offsets
+            elVscTextVirtual.style.left      = narrow ? '5px'   : '102px';
+            elVscTextVirtual.style.fontSize  = narrow ? '34px'  : '38px';
+            elVscTextSafetyCar.style.left    = narrow ? '3px'   : '100px';
+            elVscTextSafetyCar.style.fontSize = narrow ? '24px' : '26px';
+            // SC text offsets
+            elScTextSafety.style.left        = narrow ? '-8px'  : '100px';
+            elScTextCar.style.left           = narrow ? '2px'   : '110px';
+        }
+
+        // ── Red flag banner pane adjustments ──────────────────────────────────────
+        function updateRfBanner() {
+            const narrow = paneMode === 1 || paneMode === 3;
+            elRfText.style.left    = narrow ? '-63px' : '0px';
+            elRfText.textContent   = narrow ? 'FLAG'  : 'RED FLAG';
+        }
+
         // ── SC/VSC Ending banner (item_1_29r0r0r0) ────────────────────────────────
         // Shown when SC/VSC is returning (SCAR evtType 1, race only); hidden by evtType 3 or scStatus 0.
         // Overlays the lower portion of the SC/VSC banner to signal the car is pitting this lap.
@@ -1048,6 +1118,9 @@
             elScEndingBanner.style.width   = narrow ? '186px' : '306px';
             elScEndingText.style.left      = narrow ? '-48px' : '10px';
             elScEndingText.style.width     = narrow ? '277px' : '306px';
+            // VSC banner shifts up when ending banner is active; narrows in narrow pane
+            elVscBanner.style.top   = scEnding ? '95px'  : '145px';
+            elVscBanner.style.width = narrow   ? '186px' : '306px';
         }
 
         // ── Starting Tyres banner (item_1_31r0r0r0) ───────────────────────────────
@@ -1576,6 +1649,7 @@
         // ── Flags banner helper ────────────────────────────────────────────
         // sectors: array of sector numbers to display (for 'yellow' mode), or null
         function setFlagsBanner(mode, sectors = null) {
+            const prevMode = flagsBannerMode;
             flagsBannerMode = mode;
             updateAllRowPositions();
             updateBatteryLayout();
@@ -1585,7 +1659,6 @@
             elVscBanner.style.display    = (mode && !mfdActive) ? 'block' : 'none';
             const scVsc = mode === 'vsc' || mode === 'sc';
             elVscBg.style.display        = scVsc ? '' : 'none';
-            elVscFiaLogo.style.display   = scVsc ? '' : 'none';
             elVscText.style.display      = mode === 'vsc' ? 'block' : 'none';
             elScText.style.display       = mode === 'sc'  ? 'block' : 'none';
             elRfLayer.style.display      = mode === 'rf'  ? 'block' : 'none';
@@ -1621,8 +1694,83 @@
                 elYfSectorLabel.textContent = sectors.length > 1 ? 'SECTORS' : 'SECTOR';
                 elYfSectorNum.textContent   = sectors.join(' & ');
             }
+            if (mode === 'yellow') {
+                updateYellowFlagBanner();
+                if (prevMode !== 'yellow') {
+                    // Snap layer + top-bg + shine to start state, shared reflow, then trigger all transitions
+                    elYfLayer.style.transition = 'none';
+                    elYfLayer.style.opacity    = '0';
+                    elYfTopBg.style.transition = 'none';
+                    elYfTopBg.style.width      = '0px';
+                    elYfShine.style.transition = 'none';
+                    elYfShine.style.width      = '0px';
+                    elYfShine.style.opacity    = '1';
+                    void elYfShine.offsetWidth;
+                    elYfLayer.style.transition = '';
+                    elYfLayer.style.opacity    = '1';
+                    elYfTopBg.style.transition = '';
+                    elYfShine.style.transition = '';
+                    elYfTopBg.style.width      = '306px';
+                    elYfShine.style.width      = '305px';
+                    elYfShine.style.opacity    = '0';
+                }
+            }
+            if (mode === 'green') {
+                updateGreenFlagBanner();
+                if (prevMode !== 'green') {
+                    elGfLayer.style.transition = 'none';
+                    elGfLayer.style.opacity    = '0';
+                    elGfTopBg.style.transition = 'none';
+                    elGfTopBg.style.width      = '0px';
+                    elGfShine.style.transition = 'none';
+                    elGfShine.style.width      = '0px';
+                    elGfShine.style.opacity    = '1';
+                    void elGfShine.offsetWidth;
+                    elGfLayer.style.transition = '';
+                    elGfLayer.style.opacity    = '1';
+                    elGfTopBg.style.transition = '';
+                    elGfShine.style.transition = '';
+                    elGfTopBg.style.width      = '306px';
+                    elGfShine.style.width      = '305px';
+                    elGfShine.style.opacity    = '0';
+                }
+            }
+            if (scVsc && !(prevMode === 'sc' || prevMode === 'vsc')) {
+                // First SC/VSC activation: snap banner (if from no-flag), bg, and shine; shared reflow
+                if (!prevMode) {
+                    elVscBanner.style.transition = 'none';
+                    elVscBanner.style.opacity    = '0';
+                }
+                elVscBg.style.transition    = 'none';
+                elVscBg.style.width         = '0px';
+                elVscShine.style.transition = 'none';
+                elVscShine.style.width      = '0px';
+                elVscShine.style.opacity    = '1';
+                void elVscShine.offsetWidth;
+                if (!prevMode) {
+                    elVscBanner.style.transition = '';
+                    elVscBanner.style.opacity    = '1';
+                }
+                elVscBg.style.transition    = '';
+                elVscShine.style.transition = '';
+                elVscBg.style.width         = '305px';
+                elVscShine.style.width      = '305px';
+                elVscShine.style.opacity    = '0';
+            }
+            if (mode === 'rf') {
+                updateRfBanner();
+                if (prevMode !== 'rf') {
+                    // Fade in from opacity 0 on first rf activation
+                    elRfLayer.style.transition = 'none';
+                    elRfLayer.style.opacity    = '0';
+                    void elRfLayer.offsetWidth;
+                    elRfLayer.style.transition = '';
+                    elRfLayer.style.opacity    = '1';
+                }
+            }
             updateFlagsBorder();
             updateScBanner();
+            updateScVscBanner();
         }
 
         // ── Time/Laps Remaining banner helpers ────────────────────────────
@@ -2710,6 +2858,10 @@
             updateMainPanels();
             updateRaceLaps();
             updateScBanner();
+            updateScVscBanner();
+            updateRfBanner();
+            updateYellowFlagBanner();
+            updateGreenFlagBanner();
             updateScEndingBanner();
             updateFormationBanner();
             updateDataContainerLeft();
