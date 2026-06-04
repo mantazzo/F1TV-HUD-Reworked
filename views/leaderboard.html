@@ -304,15 +304,35 @@
                 </div>
             </div>
 
+            <!-- Starting Tyres Banner (item_1_31r0r0r0): 305×105 at left:29, top:145.5 — formation lap only -->
+            <div id="lb-formation-banner">
+                <!-- Background (item_1_31r0r0r0_1): LapBG.png 313×116 at left:0, top:-5, opacity:0.85 -->
+                <div id="lb-formation-banner-bg"></div>
+                <!-- "STARTING" (item_1_31r0r0r0_2): 295×40 at top:10  F1TV-2022 ObliqueBold 35px white centered -->
+                <div id="lb-formation-banner-line1">STARTING</div>
+                <!-- "GRID" (item_1_31r0r0r0_3): 295×40 at top:55  F1TV-2022 ObliqueBold 35px white centered -->
+                <div id="lb-formation-banner-line2">GRID</div>
+            </div>
+
+            <!-- SC/VSC Ending Banner (item_1_29r0r0r0): 306×55 at left:27.5, top:201 — hidden by default -->
+            <div id="lb-sc-ending-banner">
+                <!-- Background (item_1_29r0r0r0_1): Header_BG.png 306×55 -->
+                <div id="lb-sc-ending-bg"></div>
+                <!-- "ENDING" text (item_1_29r0r0r0_2): F1TV-2022 35px gold centered -->
+                <div id="lb-sc-ending-text">ENDING</div>
+            </div>
+
             <!-- Time/Laps Remaining banner (item_1_28r0r0r0): 306×105 at left:28, top:147 — hidden by default -->
             <div id="lb-timelaps-banner">
                 <!-- Background (item_1_28r0r0r0_2r0): TimeLapsRemBG.png 306×105 -->
                 <div id="lb-timelaps-bg"></div>
                 <!-- Number/value (item_1_28r0r0r0_3r0): 145×105 at left:15  80px red oblique bold -->
                 <div id="lb-timelaps-num"></div>
-                <!-- Label text (item_1_28r0r0r0_4r0): 140×85 at left:145, top:13  25px white bold centered -->
+                <!-- Label text — normal pane (item_1_28r0r0r0_4r0): 140×85 at left:145, top:13  25px white bold centered -->
                 <div id="lb-timelaps-label"></div>
-                <!-- Final Lap pane (item_1_28r0r0r0_6): shown instead of num+label on final lap -->
+                <!-- Label text — narrow pane (item_1_28r0r0r0_5r0): 170×20 at left:0, top:80  16px white bold centered -->
+                <div id="lb-timelaps-label-pane"></div>
+                <!-- Final Lap — narrow pane only (item_1_28r0r0r0_6): shown instead of num on final lap in pane 1/3 -->
                 <div id="lb-timelaps-finallap">
                     <div id="lb-timelaps-final">FINAL</div>
                     <div id="lb-timelaps-lap">LAP</div>
@@ -398,10 +418,11 @@
         const elDecoBorderSc2   = document.getElementById('lb-deco-border-sc-2');
         const elDecoBorderYellow = document.getElementById('lb-deco-border-yellow');
         const elDecoBorderGreen  = document.getElementById('lb-deco-border-green');
-        const elTimeLapsBanner   = document.getElementById('lb-timelaps-banner');
-        const elTimeLapsNum      = document.getElementById('lb-timelaps-num');
-        const elTimeLapsLabel    = document.getElementById('lb-timelaps-label');
-        const elTimeLapsFinalLap = document.getElementById('lb-timelaps-finallap');
+        const elTimeLapsBanner    = document.getElementById('lb-timelaps-banner');
+        const elTimeLapsNum       = document.getElementById('lb-timelaps-num');
+        const elTimeLapsLabel     = document.getElementById('lb-timelaps-label');
+        const elTimeLapsPaneLabel = document.getElementById('lb-timelaps-label-pane');
+        const elTimeLapsFinalLap  = document.getElementById('lb-timelaps-finallap');
         const elThickStrokeBg = document.getElementById('lb-thick-stroke-bg');
         const elFlagsBorder  = document.getElementById('lb-flags-border');
         const elBorderRect   = document.getElementById('lb-border-rect');
@@ -418,9 +439,14 @@
         const elScPane      = document.getElementById('lb-sc-pane');
         const elScPaneName  = document.getElementById('lb-sc-pane-name');
         const elScPaneLogo  = document.getElementById('lb-sc-pane-logo');
-        const elSprintLogo  = document.getElementById('lb-sprint-logo');
-        const elFlAnim      = document.getElementById('lb-fl-anim');
-        const elFlRaceAnim  = document.getElementById('lb-fl-race-anim');
+        const elSprintLogo      = document.getElementById('lb-sprint-logo');
+        const elFlAnim          = document.getElementById('lb-fl-anim');
+        const elFlRaceAnim      = document.getElementById('lb-fl-race-anim');
+        const elScEndingBanner       = document.getElementById('lb-sc-ending-banner');
+        const elScEndingText         = document.getElementById('lb-sc-ending-text');
+        const elFormationBanner      = document.getElementById('lb-formation-banner');
+        const elFormationBannerLine1 = document.getElementById('lb-formation-banner-line1');
+        const elFormationBannerLine2 = document.getElementById('lb-formation-banner-line2');
 
         let NUM_CARS = 22;  // Pre-allocate for max possible cars (20 standard, up to 22 in MyTeam/F2).
                             // Updated at runtime from packet 4 (m_numActiveCars).
@@ -825,11 +851,13 @@
         let paneMode               = 0;  // Pane 1: Narrow, Pane 2: Short, Pane 3: Narrow Short, Pane 4: Logo; // TODO: Implement Panes 1, 2 and 3 properly
         let timeLapsBannerActive   = false;
         let timeLapsBannerTimer    = null;
+        let timeLapsBannerType     = null; // 'minutes' | 'laps' | 'finallap' — for dynamic pane updates
         let sessionDuration        = 0;
         let prevTimeLeft           = Infinity;
         let prevLapsRemaining      = Infinity;
         let isRaceRestart          = false; // true between RDFL and 6s after the restart LGOT
         let raceRestartTimer       = null;
+        let scEnding               = false; // true when SC/VSC is returning (SCAR evtType 1); cleared by evtType 3 or scStatus 0
 
         const TIME_TRIGGERS_S = [1200, 900, 600, 300, 120]; // 20, 15, 10, 5, 2 minutes in seconds
         const LAP_TRIGGERS    = [15, 10, 5, 3]; // TODO: Might need to add extra cases when there are less laps
@@ -929,8 +957,8 @@
             }
 
             elRaceLaps.style.display    = isRace || isTT  ? 'block' : 'none';
-            elTiming.style.display      = (!mfdActive && !showLastNames && isRace && paneMode !== 1 && paneMode !== 3)  ? '' : 'none';
-            elQualiTiming.style.display = (!mfdActive && !showLastNames && !isRace && paneMode !== 1 && paneMode !== 3) ? '' : 'none';
+            elTiming.style.display      = (!mfdActive && !showLastNames && !formationLap && isRace && paneMode !== 1 && paneMode !== 3)  ? '' : 'none';
+            elQualiTiming.style.display = (!mfdActive && !showLastNames && !formationLap && !isRace && paneMode !== 1 && paneMode !== 3) ? '' : 'none';
             elBattery.style.display     = (showBattery && isRace) ? '' : 'none';
 
             updateRaceLaps();
@@ -1009,6 +1037,31 @@
             elScTeamLogo.style.display = isAston ? 'none' : '';
             elScPaneName.style.display = isAston ? '' : 'none';
             elScPaneLogo.style.display = isAston ? 'none' : '';
+        }
+
+        // ── SC/VSC Ending banner (item_1_29r0r0r0) ────────────────────────────────
+        // Shown when SC/VSC is returning (SCAR evtType 1, race only); hidden by evtType 3 or scStatus 0.
+        // Overlays the lower portion of the SC/VSC banner to signal the car is pitting this lap.
+        function updateScEndingBanner() {
+            const narrow = paneMode === 1 || paneMode === 3;
+            elScEndingBanner.style.display = (scEnding && !mfdActive) ? 'block' : 'none';
+            elScEndingBanner.style.width   = narrow ? '186px' : '306px';
+            elScEndingText.style.left      = narrow ? '-48px' : '10px';
+            elScEndingText.style.width     = narrow ? '277px' : '306px';
+        }
+
+        // ── Starting Tyres banner (item_1_31r0r0r0) ───────────────────────────────
+        // Shown (opacity 1) during Formation Lap (m_safetyCarStatus === 3), hidden otherwise.
+        function updateFormationBanner() {
+            const narrow   = paneMode === 1 || paneMode === 3;
+            const fontSize = narrow ? '25px' : '35px';
+            const textLeft = narrow ? '-58px' : '0px';
+            elFormationBanner.style.opacity          = formationLap ? '1' : '0';
+            elFormationBanner.style.width            = narrow ? '184px' : '305px';
+            elFormationBannerLine1.style.left        = textLeft;
+            elFormationBannerLine2.style.left        = textLeft;
+            elFormationBannerLine1.style.fontSize    = fontSize;
+            elFormationBannerLine2.style.fontSize    = fontSize;
         }
 
         // ── Race laps counter (item_1_8r0r0r0_5) ──────────────────────────────────
@@ -1303,6 +1356,9 @@
             if (flRaceAnimTimer)   { clearTimeout(flRaceAnimTimer);   flRaceAnimTimer   = null; }
             if (raceRestartTimer)  { clearTimeout(raceRestartTimer);  raceRestartTimer  = null; }
             isRaceRestart = false;
+            scEnding = false;
+            updateScEndingBanner();
+            updateFormationBanner();
             elFlAnim.style.width     = '0px';
             elFlRaceAnim.style.width = '0px';
             personalBestTimers.forEach(id => clearTimeout(id));
@@ -1422,7 +1478,7 @@
         // Returns the correct top px value for row at 0-based index i.
         // MFD mode takes priority (banner is hidden when MFD is active).
         function getRowTop(i) {
-            if (mfdActive)                               return i * 50 + Math.max(0, 47.5 - i * 2.5);
+            if (mfdActive || formationLap)               return i * 50 + Math.max(0, 47.5 - i * 2.5);
             if (flagsBannerMode || timeLapsBannerActive) return i * 50 + Math.max(0, 95   - i * 5);
             return i * 50;
         }
@@ -1489,7 +1545,7 @@
 
             // lb-pos-col-bg
             elPosColBg.style.height = extendedGrid ? '1120px' : '1020px';
-            // TODO: BackgroundColor from PositionBG setting (item_1_7r0r0r0)
+            // TODO: BackgroundColor from PositionBG setting (item_1_7r0r0r0) - if enabled, use #0a0a0f, if not - transparent
 
             // lb-header
             elHeader.style.width   = narrow ? '187px' : '306px';
@@ -1571,21 +1627,45 @@
 
         // ── Time/Laps Remaining banner helpers ────────────────────────────
         function showTimeLapsBanner(type, value) {
+            if (formationLap) return;
             if (timeLapsBannerTimer) clearTimeout(timeLapsBannerTimer);
+            const narrow     = paneMode === 1 || paneMode === 3;
+            const scVscActive = flagsBannerMode === 'sc' || flagsBannerMode === 'vsc';
             timeLapsBannerActive = true;
-            elTimeLapsBanner.style.display   = 'block';
-            elTimeLapsFinalLap.style.display = 'none';
-            elTimeLapsNum.style.display      = '';
-            elTimeLapsLabel.style.display    = '';
-            elTimeLapsNum.textContent        = value;
-            elTimeLapsLabel.textContent      = type === 'minutes' ? 'MINUTES\nTO GO' : 'LAPS\nTO GO';
+            timeLapsBannerType   = type;
+            elTimeLapsBanner.style.opacity    = '0';
+            elTimeLapsBanner.style.display    = 'block';
+            elTimeLapsBanner.style.top        = (type === 'laps' && scVscActive) ? '247px' : '';
+            elTimeLapsBanner.style.width      = narrow ? '185px' : '';
+            elTimeLapsFinalLap.style.display  = 'none';
+            elTimeLapsNum.style.display       = '';
+            elTimeLapsNum.textContent         = value;
+            elTimeLapsNum.style.color         = formulaType === 2 ? '#0090D0' : 'rgb(255, 0, 0)';
+            elTimeLapsNum.style.top           = narrow ? '-15px' : '';
+            elTimeLapsNum.style.left          = narrow ? '18px' : '';
+            // Normal label (hidden in narrow pane)
+            elTimeLapsLabel.style.display     = narrow ? 'none' : '';
+            elTimeLapsLabel.textContent       = type === 'minutes' ? 'MINUTES\nTO GO' : 'LAPS\nTO GO';
+            elTimeLapsLabel.style.width       = RACE_TYPES.has(sessionType) ? '110px' : '140px';
+            elTimeLapsLabel.style.left        = (type === 'laps' && (value === 15 || value === 10)) ? '150px' : '145px';
+            // Narrow pane label (hidden in normal pane)
+            elTimeLapsPaneLabel.style.display = narrow ? 'flex' : 'none';
+            elTimeLapsPaneLabel.textContent   = type === 'minutes' ? 'MINUTES TO GO' : 'LAPS TO GO';
+            requestAnimationFrame(() => requestAnimationFrame(() => { elTimeLapsBanner.style.opacity = '1'; }));
             updateAllRowPositions();
             updateBatteryLayout();
             updatePenaltyLayout();
             updateFlLogoLayout();
             timeLapsBannerTimer = setTimeout(() => {
                 timeLapsBannerActive = false;
-                elTimeLapsBanner.style.display = 'none';
+                timeLapsBannerType   = null;
+                elTimeLapsBanner.style.display    = 'none';
+                elTimeLapsBanner.style.opacity    = '';
+                elTimeLapsBanner.style.top        = '';
+                elTimeLapsBanner.style.width      = '';
+                elTimeLapsNum.style.top           = '';
+                elTimeLapsNum.style.left          = '';
+                elTimeLapsPaneLabel.style.display = '';
                 updateAllRowPositions();
                 updateBatteryLayout();
                 updatePenaltyLayout();
@@ -1594,26 +1674,89 @@
         }
 
         function showFinalLapBanner() {
+            if (formationLap) return;
             if (timeLapsBannerTimer) clearTimeout(timeLapsBannerTimer);
+            const narrow      = paneMode === 1 || paneMode === 3;
+            const scVscActive = flagsBannerMode === 'sc' || flagsBannerMode === 'vsc';
             timeLapsBannerActive = true;
-            elTimeLapsBanner.style.display   = 'block';
-            elTimeLapsFinalLap.style.display = 'block';
-            elTimeLapsNum.style.display      = 'none';
-            elTimeLapsLabel.style.display    = 'none';
+            timeLapsBannerType   = 'finallap';
+            elTimeLapsBanner.style.opacity    = '0';
+            elTimeLapsBanner.style.display    = 'block';
+            elTimeLapsBanner.style.top        = scVscActive ? '247px' : '';
+            elTimeLapsBanner.style.width      = narrow ? '185px' : '';
+            elTimeLapsLabel.style.display     = 'none';
+            elTimeLapsPaneLabel.style.display = 'none';
+            if (narrow) {
+                // Narrow pane: hide num, show FINAL/LAP stacked element
+                elTimeLapsNum.style.display      = 'none';
+                elTimeLapsFinalLap.style.display = 'block';
+            } else {
+                // Normal pane: num element shows "FINAL LAP" with adjusted styling
+                elTimeLapsFinalLap.style.display = 'none';
+                elTimeLapsNum.style.display      = '';
+                elTimeLapsNum.textContent        = 'FINAL LAP';
+                elTimeLapsNum.style.color        = 'rgb(255, 255, 255)';
+                elTimeLapsNum.style.fontSize     = '44px';
+                elTimeLapsNum.style.width        = '298px';
+                elTimeLapsNum.style.top          = '';
+                elTimeLapsNum.style.left         = '0px';
+            }
+            requestAnimationFrame(() => requestAnimationFrame(() => { elTimeLapsBanner.style.opacity = '1'; }));
             updateAllRowPositions();
             updateBatteryLayout();
             updatePenaltyLayout();
             updateFlLogoLayout();
             timeLapsBannerTimer = setTimeout(() => {
                 timeLapsBannerActive = false;
-                elTimeLapsBanner.style.display   = 'none';
-                elTimeLapsNum.style.display      = '';
-                elTimeLapsLabel.style.display    = '';
+                timeLapsBannerType   = null;
+                elTimeLapsBanner.style.display    = 'none';
+                elTimeLapsBanner.style.opacity    = '';
+                elTimeLapsBanner.style.top        = '';
+                elTimeLapsBanner.style.width      = '';
+                elTimeLapsNum.style.fontSize      = '';
+                elTimeLapsNum.style.width         = '';
+                elTimeLapsNum.style.top           = '';
+                elTimeLapsNum.style.left          = '';
+                elTimeLapsNum.style.color         = '';
+                elTimeLapsNum.style.display       = '';
+                elTimeLapsLabel.style.display     = '';
+                elTimeLapsPaneLabel.style.display = '';
+                elTimeLapsFinalLap.style.display  = '';
                 updateAllRowPositions();
                 updateBatteryLayout();
                 updatePenaltyLayout();
                 updateFlLogoLayout();
             }, 10000);
+        }
+
+        // ── Time/Laps banner — pane update (called on pane mode change) ──────
+        function updateTimeLapsBanner() {
+            if (!timeLapsBannerActive) return;
+            const narrow = paneMode === 1 || paneMode === 3;
+            elTimeLapsBanner.style.width = narrow ? '185px' : '';
+            if (timeLapsBannerType === 'finallap') {
+                elTimeLapsLabel.style.display     = 'none';
+                elTimeLapsPaneLabel.style.display = 'none';
+                if (narrow) {
+                    elTimeLapsNum.style.display      = 'none';
+                    elTimeLapsFinalLap.style.display = 'block';
+                } else {
+                    elTimeLapsFinalLap.style.display = 'none';
+                    elTimeLapsNum.style.display      = '';
+                    elTimeLapsNum.textContent        = 'FINAL LAP';
+                    elTimeLapsNum.style.color        = 'rgb(255, 255, 255)';
+                    elTimeLapsNum.style.fontSize     = '44px';
+                    elTimeLapsNum.style.width        = '298px';
+                    elTimeLapsNum.style.top          = '';
+                    elTimeLapsNum.style.left         = '0px';
+                }
+            } else {
+                elTimeLapsFinalLap.style.display  = 'none';
+                elTimeLapsNum.style.top           = narrow ? '-15px' : '';
+                elTimeLapsNum.style.left          = narrow ? '18px' : '';
+                elTimeLapsLabel.style.display     = narrow ? 'none' : '';
+                elTimeLapsPaneLabel.style.display = narrow ? 'flex' : 'none';
+            }
         }
 
         // ── Yellow flag sector helper ─────────────────────────────────────
@@ -1867,19 +2010,19 @@
                 updateHeaderDisplay();
                 updateKnockoutIndicators();
 
-                // Time/Laps remaining banner — timed sessions
-                if (TIMED_TYPES.has(sessionType)) {
+                // Time remaining banner — practice + standard qualifying only (types 1–8; not SQ/OSQ)
+                if (sessionType >= 1 && sessionType <= 8) {
                     for (const t of TIME_TRIGGERS_S) {
                         if (t < sessionDuration && prevTimeLeft > t && timeLeft <= t) {
                             showTimeLapsBanner('minutes', Math.round(t / 60));
                             break;
                         }
                     }
-                    // Timer hit zero — freeze timer display at 0:00 and show finished banner
-                    if (prevTimeLeft > 0 && timeLeft === 0) {
-                        elFinishedImg.style.opacity = '0.5';
-                        sessionEnded = true;
-                    }
+                }
+                // Timer hit zero — freeze timer display at 0:00 and show finished banner (all timed sessions)
+                if (TIMED_TYPES.has(sessionType) && prevTimeLeft > 0 && timeLeft === 0) {
+                    elFinishedImg.style.opacity = '0.5';
+                    sessionEnded = true;
                 }
                 updateTimerText(timeLeft);
                 prevTimeLeft = timeLeft;
@@ -1889,7 +2032,22 @@
                 const scStatus = data.m_safetyCarStatus ?? 0;
                 const wasFormationLap = formationLap;
                 formationLap = scStatus === 3;
-                if (formationLap !== wasFormationLap) { updateFlagsBorder(); updateFlagsImg(); updateThickStrokeBg(); updateBorderRect(); updateMainPanels(); updateRaceLaps(); updateDataContainerLeft(); }
+                if (formationLap !== wasFormationLap) {
+                    updateFlagsBorder(); updateFlagsImg(); updateThickStrokeBg(); updateBorderRect();
+                    updateMainPanels(); updateRaceLaps(); updateDataContainerLeft(); updateFormationBanner();
+                    updateHeaderDisplay();
+                    updateAllRowPositions(); updateBatteryLayout(); updatePenaltyLayout(); updateFlLogoLayout();
+                    // Formation Lap start: auto-show MFD1 data without header (wide mode only); end: hide if no MFD page active
+                    if (formationLap && paneMode !== 1 && paneMode !== 3) {
+                        elMfd1Header.style.opacity = '0';
+                        elMfd1.style.opacity       = '1';
+                    } else if (!mfdActive) {
+                        elMfd1.style.opacity = '0';
+                    }
+                    // Tyre column: hide during formation lap (overlay_config may not re-fire in time)
+                    const flTyreHidden = showLastNames || formulaType === 2 || formulaType === 7 || formationLap || paneMode === 1;
+                    elTyre.style.display = flTyreHidden ? 'none' : '';
+                }
                 if (scStatus === 1) {
                     setFlagsBanner('sc');
                 } else if (scStatus === 2) {
@@ -1902,6 +2060,11 @@
                     if (yellowSectors)          setFlagsBanner('yellow', yellowSectors);
                     else if (hasGreenFlag(data)) setFlagsBanner('green');
                     else                         setFlagsBanner(null);
+                }
+                // SC/VSC gone: clear the ENDING banner if it was still showing
+                if (scStatus === 0 && scEnding) {
+                    scEnding = false;
+                    updateScEndingBanner();
                 }
 
                 if (data.m_formula !== undefined && data.m_formula !== formulaType) {
@@ -2022,7 +2185,6 @@
                             carDeltaLeader[idx] === 0 &&
                             (car.m_resultStatus ?? 0) < 3 &&
                             !isRaceRestart;  // only show for active cars (not finished/retired) and not if there is a Race Restart
-                        // TODO: Also might need fixing for after Red Flag - "PIT EXIT" is triggered on race restart for all cars
                         const psRow = pitStatusRows[pos - 1];
                         if (racePit) {
                             psRow.text.textContent  = 'IN PIT';
@@ -2188,13 +2350,15 @@
                                 // Time/Laps remaining banner — lap triggers
                                 if (totalLaps > 0 && currentLap >= 2) {
                                     const lapsToGo = totalLaps - currentLap + 1;
-                                    if (lapsToGo === 1) {
-                                        if (prevLapsRemaining > 1) showFinalLapBanner();
-                                    } else {
-                                        for (const t of LAP_TRIGGERS) {
-                                            if (prevLapsRemaining > t && lapsToGo <= t) {
-                                                showTimeLapsBanner('laps', t);
-                                                break;
+                                    if (prevLapsRemaining !== Infinity) {
+                                        if (lapsToGo === 1) {
+                                            if (prevLapsRemaining > 1) showFinalLapBanner();
+                                        } else {
+                                            for (const t of LAP_TRIGGERS) {
+                                                if (prevLapsRemaining > t && lapsToGo <= t) {
+                                                    showTimeLapsBanner('laps', t);
+                                                    break;
+                                                }
                                             }
                                         }
                                     }
@@ -2247,9 +2411,17 @@
                 if (data.m_eventStringCode === 'SCAR') {
                     const scType  = data.m_eventDetails?.safetyCarType ?? -1;
                     const evtType = data.m_eventDetails?.eventType     ?? -1;
-                    if (evtType === 3) setFlagsBanner(null);  // Resume Race clears any flag banner (incl. red flag)
-                    else if (scType === 1) setFlagsBanner(evtType === 0 ? 'sc'  : null);
-                    else if (scType === 2) setFlagsBanner(evtType === 0 ? 'vsc' : null);
+                    if (evtType === 3) {
+                        setFlagsBanner(null);  // Resume Race clears any flag banner (incl. red flag)
+                        scEnding = false;
+                        updateScEndingBanner();
+                    } else if (scType === 1) {
+                        setFlagsBanner(evtType === 0 ? 'sc' : null);
+                        if (evtType === 1 && isRace) { scEnding = true; updateScEndingBanner(); }
+                    } else if (scType === 2) {
+                        setFlagsBanner(evtType === 0 ? 'vsc' : null);
+                        if (evtType === 1 && isRace) { scEnding = true; updateScEndingBanner(); }
+                    }
                 }
                 // RDFL: red flag deployed — cleared by SCAR eventType 3 (Resume Race) or SSTA
                 if (data.m_eventStringCode === 'RDFL') {
@@ -2533,10 +2705,13 @@
             paneMode = cfg.pane ?? 0;
             elContainer.classList.toggle('pane-4', paneMode === 4);
             updateHeaderDisplay();
+            updateTimeLapsBanner();
             updateFlagsBorder();
             updateMainPanels();
             updateRaceLaps();
             updateScBanner();
+            updateScEndingBanner();
+            updateFormationBanner();
             updateDataContainerLeft();
             const mfdPages = {
                 mfd1: [elMfd1Header, elMfd1],
@@ -2545,9 +2720,14 @@
                 mfd4: [elMfd4Header, elMfd4],
             };
             for (const [key, [header, data]] of Object.entries(mfdPages)) {
-                const show = key === page && (key === 'mfd1' || !formationLap);  // MFD1 can be shown during formation lap
+                const show = key === page && !formationLap;
                 header.style.opacity = show ? '1' : '0';
                 data.style.opacity   = show ? '1' : '0';
+            }
+            // Formation Lap: show MFD1 data (no header) in wide modes; hidden in narrow pane (1/3)
+            if (formationLap && paneMode !== 1 && paneMode !== 3) {
+                elMfd1Header.style.opacity = '0';
+                elMfd1.style.opacity       = '1';
             }
 
             // OUT rows: hide when MFD4 is active (position-change column occupies the same area)
@@ -2632,8 +2812,8 @@
 
             // Hide timing columns while any MFD page or Last Names mode is active;
             // when both are off, show the timing relevant to the current session type
-            elTiming.style.display      = (!mfdActive && !showLastNames && isRace && paneMode !== 1 && paneMode !== 3)   ? '' : 'none';
-            elQualiTiming.style.display = (!mfdActive && !showLastNames && !isRace && paneMode !== 1 && paneMode !== 3)  ? '' : 'none';
+            elTiming.style.display      = (!mfdActive && !showLastNames && !formationLap && isRace && paneMode !== 1 && paneMode !== 3)   ? '' : 'none';
+            elQualiTiming.style.display = (!mfdActive && !showLastNames && !formationLap && !isRace && paneMode !== 1 && paneMode !== 3)  ? '' : 'none';
             const isMfd2 = page === 'mfd2';
             const tyreHidden = showLastNames || formulaType === 2 || formulaType === 7 || formationLap || paneMode === 1;
             elTyre.style.display = tyreHidden ? 'none' : '';

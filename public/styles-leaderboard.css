@@ -552,6 +552,119 @@ body { background: black; overflow: hidden; }
 }
 
 /* ════════════════════════════════════════════════════════════════
+   STARTING TYRES BANNER — item_1_31r0r0r0
+   305×105 at left:29, top:145.5  opacity:0 by default; fades in during Formation Lap
+   ════════════════════════════════════════════════════════════════ */
+#lb-formation-banner {
+    left: 29px;
+    top: 95.5px; /* originally 145.5px, but moved up to fix layout a bit */
+    width: 305px;
+    height: 105px;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 333ms ease, width 300ms ease;
+}
+#lb-formation-banner > * { position: absolute; }
+
+/* Background (item_1_31r0r0r0_1): LapBG.png 313×116 at left:0, top:-5  opacity:0.85 */
+#lb-formation-banner-bg {
+    left: 0;
+    top: -5px;
+    width: 313px;
+    height: 116px;
+    background-image: url('/images/leaderboard/LapBG.png');
+    background-size: 313px 116px;
+    border-style: solid;
+    border-width: 6px 0 7px;
+    border-color: rgb(90, 93, 98);
+    opacity: 0.85;
+}
+
+/* "STARTING" (item_1_31r0r0r0_2): 295×40 at left:0, top:10  F1TV-2022 ObliqueBold 35px white centered */
+#lb-formation-banner-line1 {
+    box-sizing: border-box;
+    left: 0;
+    top: 10px;
+    width: 295px;
+    height: 40px;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 35px;
+    color: rgb(255, 255, 255);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+    transition: left 300ms ease, font-size 200ms ease;
+}
+
+/* "TYRES" (item_1_31r0r0r0_3): 295×40 at left:0, top:55  F1TV-2022 ObliqueBold 35px white centered */
+#lb-formation-banner-line2 {
+    box-sizing: border-box;
+    left: 0;
+    top: 55px;
+    width: 295px;
+    height: 40px;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 35px;
+    color: rgb(255, 255, 255);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+    transition: left 300ms ease, font-size 200ms ease;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SC/VSC ENDING BANNER — item_1_29r0r0r0
+   306×55 at left:27.5, top:201  hidden by default
+   Overlays the lower portion of the SC/VSC banner when SC/VSC is returning.
+   ════════════════════════════════════════════════════════════════ */
+#lb-sc-ending-banner {
+    display: none;
+    left: 27.5px;
+    top: 201px;
+    width: 306px;
+    height: 55px;
+    overflow: hidden;
+    transition: width 300ms ease, opacity 333ms ease;
+}
+#lb-sc-ending-banner > * { position: absolute; }
+
+/* Background (item_1_29r0r0r0_1): Header_BG.png 306×55 */
+#lb-sc-ending-bg {
+    left: 0;
+    top: 0;
+    width: 306px;
+    height: 55px;
+    background-image: url('/images/leaderboard/Header_BG.png');
+    background-size: 306px 55px;
+}
+
+/* "ENDING" text (item_1_29r0r0r0_2): 306×55 at left:10, top:-0.5
+   F1TV-2022 35px gold centered; left/width transition for pane changes */
+#lb-sc-ending-text {
+    box-sizing: border-box;
+    left: 10px;
+    top: -0.5px;
+    width: 306px;
+    height: 55px;
+    font-family: 'F1TV-2022';
+    font-weight: 400;
+    font-size: 35px;
+    color: rgb(255, 215, 0);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+    transition: left 200ms ease, width 250ms ease;
+}
+
+/* ════════════════════════════════════════════════════════════════
    VSC FLAGS BANNER — item_1_33r0r0r0r0
    306×105 at left:27.5, top:145
    ════════════════════════════════════════════════════════════════ */
@@ -714,7 +827,11 @@ body { background: black; overflow: hidden; }
     width: 306px;
     height: 105px;
     display: none;
+    transition: opacity 0.25s, width 300ms;
+    overflow: hidden;
 }
+#lb-timelaps-banner > * { position: absolute; }
+#lb-timelaps-finallap > * { position: absolute; }
 
 /* Background (item_1_28r0r0r0_2r0): TimeLapsRemBG.png 306×105 */
 #lb-timelaps-bg {
@@ -732,7 +849,7 @@ body { background: black; overflow: hidden; }
     top: 0;
     width: 145px;
     height: 105px;
-    font-family: 'Formula1 Display';
+    font-family: 'F1TV-2022';
     font-weight: 700;
     font-style: oblique;
     font-size: 80px;
@@ -749,7 +866,7 @@ body { background: black; overflow: hidden; }
     top: 13px;
     width: 140px;
     height: 85px;
-    font-family: 'Formula1 Display';
+    font-family: 'F1TVname';
     font-weight: 700;
     font-size: 25px;
     color: rgb(255, 255, 255);
@@ -760,7 +877,25 @@ body { background: black; overflow: hidden; }
     white-space: pre;
 }
 
-/* Final Lap pane (item_1_28r0r0r0_6): 306×105, hidden by default */
+/* Label text — narrow pane (item_1_28r0r0r0_5r0): 170×20 at left:0, top:80  16px white bold centered */
+#lb-timelaps-label-pane {
+    left: 0;
+    top: 80px;
+    width: 170px;
+    height: 20px;
+    font-family: 'F1TVname';
+    font-weight: 700;
+    font-size: 16px;
+    color: rgb(255, 255, 255);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    white-space: pre;
+    transition: opacity 200ms;
+}
+
+/* Final Lap — narrow pane only (item_1_28r0r0r0_6): 306×105, hidden by default */
 #lb-timelaps-finallap {
     left: 0;
     top: 0;
@@ -775,7 +910,7 @@ body { background: black; overflow: hidden; }
     top: -20px;
     width: 155px;
     height: 105px;
-    font-family: 'Formula1 Display';
+    font-family: 'F1TV-2022';
     font-weight: 700;
     font-style: oblique;
     font-size: 44px;
@@ -791,7 +926,7 @@ body { background: black; overflow: hidden; }
     top: 20px;
     width: 155px;
     height: 105px;
-    font-family: 'Formula1 Display';
+    font-family: 'F1TV-2022';
     font-weight: 700;
     font-style: oblique;
     font-size: 44px;
