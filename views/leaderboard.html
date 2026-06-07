@@ -238,9 +238,11 @@
                 <div id="lb-deco-border-formation"></div>
                 <!-- Race Finished: red CSS border (item_1_34r0r0r0r0_4r0) -->
                 <div id="lb-deco-border-finished"></div>
-                <!-- Safety Car / VSC: two copies of Border_SC.png for animation (item_1_34r0r0r0r0_6r0r0_1 & _2) -->
-                <div id="lb-deco-border-sc"></div>
-                <div id="lb-deco-border-sc-2"></div>
+                <!-- SC/VSC/RF container (item_1_34r0r0r0r0_6r0r0): clips to pane width, fades opacity on flag state -->
+                <div id="lb-deco-border-sc-container">
+                    <div id="lb-deco-border-sc"></div>
+                    <div id="lb-deco-border-sc-2"></div>
+                </div>
                 <!-- Yellow Flag: Border_Yellow.png, top portion only (item_1_34r0r0r0r0_8r0r0_1) -->
                 <div id="lb-deco-border-yellow"></div>
                 <!-- Green Flag: Border_Green.png, top portion only (item_1_34r0r0r0r0_10r0r0_1) -->
@@ -438,11 +440,15 @@
         const elGfTopTextPane  = document.getElementById('lb-gf-top-text-pane');
         const elGfBottomText   = document.getElementById('lb-gf-bottom-text');
         const elFlagsImg     = document.getElementById('lb-flags-img');
-        const elDecoBorder      = document.getElementById('lb-deco-border');
-        const elDecoBorderSc    = document.getElementById('lb-deco-border-sc');
-        const elDecoBorderSc2   = document.getElementById('lb-deco-border-sc-2');
-        const elDecoBorderYellow = document.getElementById('lb-deco-border-yellow');
-        const elDecoBorderGreen  = document.getElementById('lb-deco-border-green');
+        const elDecoBorderWidget      = document.getElementById('lb-deco-border-widget');
+        const elDecoBorder            = document.getElementById('lb-deco-border');
+        const elDecoBorderFormation   = document.getElementById('lb-deco-border-formation');
+        const elDecoBorderFinished    = document.getElementById('lb-deco-border-finished');
+        const elDecoBorderScContainer = document.getElementById('lb-deco-border-sc-container');
+        const elDecoBorderSc          = document.getElementById('lb-deco-border-sc');
+        const elDecoBorderSc2         = document.getElementById('lb-deco-border-sc-2');
+        const elDecoBorderYellow      = document.getElementById('lb-deco-border-yellow');
+        const elDecoBorderGreen       = document.getElementById('lb-deco-border-green');
         const elTimeLapsBanner    = document.getElementById('lb-timelaps-banner');
         const elTimeLapsNum       = document.getElementById('lb-timelaps-num');
         const elTimeLapsLabel     = document.getElementById('lb-timelaps-label');
@@ -1130,7 +1136,7 @@
             const fontSize = narrow ? '25px' : '35px';
             const textLeft = narrow ? '-58px' : '0px';
             elFormationBanner.style.opacity          = formationLap ? '1' : '0';
-            elFormationBanner.style.width            = narrow ? '184px' : '305px';
+            elFormationBanner.style.width            = narrow ? '184px' : '307px';
             elFormationBannerLine1.style.left        = textLeft;
             elFormationBannerLine2.style.left        = textLeft;
             elFormationBannerLine1.style.fontSize    = fontSize;
@@ -1600,6 +1606,61 @@
             elBorderRect.style.height = extendedGrid ? '1286.5px' : '1186.5px';
         }
 
+        function updateDecoBorders() {
+            const isF2   = formulaType === 2 || formulaType === 7;
+            const narrow = paneMode === 1 || paneMode === 3;
+            const mode   = flagsBannerMode;
+            const flagBorderActive = mode === 'sc' || mode === 'vsc' || mode === 'rf' || mode === 'yellow' || mode === 'green';
+            const scVscRfActive    = mode === 'sc' || mode === 'vsc' || mode === 'rf';
+
+            // Widget: narrows to 212px in narrow pane, 333px otherwise
+            elDecoBorderWidget.style.width = `${narrow ? 212 : 333}px`;
+
+            // Standard border: hidden when session ended, formation lap, or a flag-specific border is active
+            elDecoBorder.style.top    = `${isF2 ? 94 : 23}px`;
+            elDecoBorder.style.height = `${isF2 ? (extendedGrid ? 1170 : 1070) : (extendedGrid ? 1241 : 1140)}px`;
+            elDecoBorder.style.display = (sessionEnded || formationLap || flagBorderActive) ? 'none' : '';
+
+            // Formation border: shown only during formation lap, no transition
+            elDecoBorderFormation.style.height  = `${extendedGrid ? 1172 : 1072}px`;
+            elDecoBorderFormation.style.display = formationLap ? 'block' : 'none';
+
+            // Finished border: fades in (333ms) when session ends
+            elDecoBorderFinished.style.top    = `${isF2 ? 95 : 25}px`;
+            elDecoBorderFinished.style.height = `${isF2 ? (extendedGrid ? 1168 : 1068) : (extendedGrid ? 1238 : 1138)}px`;
+            elDecoBorderFinished.style.opacity = sessionEnded ? '1' : '0';
+
+            // SC/VSC/RF container: fades in (333ms) on flag state; hidden immediately when time/laps banner is active
+            elDecoBorderScContainer.style.top     = `${isF2 ? 95 : 24}px`;
+            elDecoBorderScContainer.style.width   = `${narrow ? 190 : 310}px`;
+            elDecoBorderScContainer.style.height  = `${extendedGrid ? 1239 : 1139}px`;
+            elDecoBorderScContainer.style.opacity = scVscRfActive ? '1' : '0';
+            elDecoBorderScContainer.style.display = timeLapsBannerActive ? 'none' : '';
+
+            // Individual SC borders: positioned within container, sized for extendedGrid + F2 top offset
+            const scH      = extendedGrid ? 1238 : 1139;
+            const scBgSize = `320px ${scH}px`;
+            const scTop    = `${isF2 ? -70 : 0}px`;
+            elDecoBorderSc.style.top             = scTop;
+            elDecoBorderSc.style.height          = `${scH}px`;
+            elDecoBorderSc.style.backgroundSize  = scBgSize;
+            elDecoBorderSc2.style.top            = scTop;
+            elDecoBorderSc2.style.height         = `${scH}px`;
+            elDecoBorderSc2.style.backgroundSize = scBgSize;
+
+            // Yellow flag border: top=75px (F2) or 24px; width clips to 5px in F2, transitions for narrow pane
+            const flagBorderTop   = `${isF2 ? 75 : 24}px`;
+            const flagBorderWidth = `${isF2 ? 5 : (narrow ? 190 : 326)}px`;
+            elDecoBorderYellow.style.top     = flagBorderTop;
+            elDecoBorderYellow.style.width   = flagBorderWidth;
+            elDecoBorderYellow.style.opacity = mode === 'yellow' ? '1' : '0';
+
+            // Green flag border: same layout as yellow, opacity tied to green flag mode
+            elDecoBorderGreen.style.top     = flagBorderTop;
+            elDecoBorderGreen.style.width   = flagBorderWidth;
+            elDecoBorderGreen.style.opacity = mode === 'green' ? '1' : '0';
+        }
+
         function updateMainPanels() {
             const isF2   = formulaType === 2 || formulaType === 7;
             const narrow = paneMode === 1 || paneMode === 3;
@@ -1644,6 +1705,8 @@
             elGradientVerticalFmn.style.height         = `${gradFmnH}px`;
             elGradientVerticalFmn.style.backgroundSize = `38px ${gradFmnH}px`;
             elGradientVerticalFmn.style.display        = formationLap ? 'block' : 'none';
+
+            updateDecoBorders();
         }
 
         // ── Flags banner helper ────────────────────────────────────────────
@@ -1665,19 +1728,16 @@
             elYfLayer.style.display      = mode === 'yellow' ? 'block' : 'none';
             elGfLayer.style.display      = mode === 'green'  ? 'block' : 'none';
 
-            // Deco borders — default is always shown unless a flag-specific one takes over
+            // Deco borders — updateDecoBorders handles standard/formation/finished; SC/RF/flag images handled below
             const scVscBorder = mode === 'sc' || mode === 'vsc';
             const rfBorder    = mode === 'rf';
-            elDecoBorder.style.display       = (scVscBorder || rfBorder || mode === 'yellow' || mode === 'green') ? 'none' : '';
+            updateDecoBorders();
             const scBorderImg = scVscBorder
                 ? (extendedGrid ? 'Border_SC_22.png' : 'Border_SC.png')
                 : 'Border_Red.png';
             elDecoBorderSc.style.backgroundImage  = `url('/images/leaderboard/${scBorderImg}')`;
             elDecoBorderSc2.style.backgroundImage = `url('/images/leaderboard/${scBorderImg}')`;
-            elDecoBorderSc.style.display     = (scVscBorder || rfBorder) ? 'block' : 'none';
-            elDecoBorderSc2.style.display    = (scVscBorder || rfBorder) ? 'block' : 'none';
-            elDecoBorderYellow.style.display = mode === 'yellow' ? 'block' : 'none';
-            elDecoBorderGreen.style.display  = mode === 'green'  ? 'block' : 'none';
+            // Yellow/green border opacity + sizing handled by updateDecoBorders() above
 
             const flagImgMap = {
                 rf:     'RedFlagThick.png',
@@ -1781,6 +1841,7 @@
             const scVscActive = flagsBannerMode === 'sc' || flagsBannerMode === 'vsc';
             timeLapsBannerActive = true;
             timeLapsBannerType   = type;
+            updateDecoBorders();
             elTimeLapsBanner.style.opacity    = '0';
             elTimeLapsBanner.style.display    = 'block';
             elTimeLapsBanner.style.top        = (type === 'laps' && scVscActive) ? '247px' : '';
@@ -1814,6 +1875,7 @@
                 elTimeLapsNum.style.top           = '';
                 elTimeLapsNum.style.left          = '';
                 elTimeLapsPaneLabel.style.display = '';
+                updateDecoBorders();
                 updateAllRowPositions();
                 updateBatteryLayout();
                 updatePenaltyLayout();
@@ -1828,6 +1890,7 @@
             const scVscActive = flagsBannerMode === 'sc' || flagsBannerMode === 'vsc';
             timeLapsBannerActive = true;
             timeLapsBannerType   = 'finallap';
+            updateDecoBorders();
             elTimeLapsBanner.style.opacity    = '0';
             elTimeLapsBanner.style.display    = 'block';
             elTimeLapsBanner.style.top        = scVscActive ? '247px' : '';
@@ -1870,6 +1933,7 @@
                 elTimeLapsLabel.style.display     = '';
                 elTimeLapsPaneLabel.style.display = '';
                 elTimeLapsFinalLap.style.display  = '';
+                updateDecoBorders();
                 updateAllRowPositions();
                 updateBatteryLayout();
                 updatePenaltyLayout();
@@ -2381,6 +2445,7 @@
                 if (showFinished && !sessionEnded) {
                     sessionEnded = true;
                     updateTimerText(0);
+                    updateDecoBorders();
                 }
 
                 // Apply timing deltas, position numbers, and driver identity to display rows.

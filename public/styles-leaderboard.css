@@ -335,6 +335,7 @@ body { background: black; overflow: hidden; }
     width: 333px;
     height: 1290px;
     overflow: hidden;
+    transition: width 300ms ease;
 }
 #lb-deco-border-widget > * { position: absolute; }
 
@@ -356,7 +357,7 @@ body { background: black; overflow: hidden; }
 #lb-deco-border-formation {
     display: none;
     left: 22px;
-    top: 143px;
+    top: 93px;
     width: 309px;
     height: 1138px;
     border-radius: 0 0 0 20px;
@@ -366,9 +367,10 @@ body { background: black; overflow: hidden; }
 }
 
 /* Race Finished: red CSS border (item_1_34r0r0r0r0_4r0):
-   309×1138 at left:22, top:25  hidden by default */
+   309×1138 at left:22, top:25  fades in via JS opacity transition */
 #lb-deco-border-finished {
-    display: none;
+    opacity: 0;
+    transition: opacity 333ms ease;
     left: 22px;
     top: 25px;
     width: 309px;
@@ -379,37 +381,51 @@ body { background: black; overflow: hidden; }
     border-color: rgb(255, 0, 0);
 }
 
+/* SC/VSC/RF container (item_1_34r0r0r0r0_6r0r0): 310×1139 at left:23, top:24
+   Clips child images to pane width; fades in via opacity on SC/VSC/RF state */
+#lb-deco-border-sc-container {
+    left: 23px;
+    top: 24px;
+    width: 310px;
+    height: 1139px;
+    opacity: 0;
+    overflow: hidden;
+    transition: opacity 333ms ease, width 300ms ease;
+}
+
 /* Safety Car / VSC: Border_SC.png — two copies for animation (item_1_34r0r0r0r0_6r0r0_1 & _2):
-   320×1139 at left:23.5, top:24  hidden by default */
+   320×1139 at left:0, top:0 within container */
 #lb-deco-border-sc,
 #lb-deco-border-sc-2 {
-    display: none;
-    left: 23.5px;
-    top: 24px;
+    position: absolute;
+    left: 0;
+    top: 0;
     width: 320px;
     height: 1139px;
     background-size: 320px 1139px;
 }
 
 /* Yellow Flag: Border_Yellow.png (item_1_34r0r0r0r0_8r0r0_1):
-   325×430 at left:23, top:24  hidden by default */
+   326×430 at left:23, top:24  fades in via JS opacity; width transitions for narrow/F2 pane */
 #lb-deco-border-yellow {
-    display: none;
+    opacity: 0;
+    transition: opacity 333ms ease, width 300ms ease;
     left: 23px;
     top: 24px;
-    width: 325px;
+    width: 326px;
     height: 430px;
     background-image: url('/images/leaderboard/Border_Yellow.png');
     background-size: 325px 430px;
 }
 
 /* Green Flag: Border_Green.png (item_1_34r0r0r0r0_10r0r0_1):
-   325×430 at left:23, top:24  hidden by default */
+   326×430 at left:23, top:24  fades in via JS opacity; width transitions for narrow/F2 pane */
 #lb-deco-border-green {
-    display: none;
+    opacity: 0;
+    transition: opacity 333ms ease, width 300ms ease;
     left: 23px;
     top: 24px;
-    width: 325px;
+    width: 326px;
     height: 430px;
     background-image: url('/images/leaderboard/Border_Green.png');
     background-size: 325px 430px;
@@ -556,9 +572,9 @@ body { background: black; overflow: hidden; }
    305×105 at left:29, top:145.5  opacity:0 by default; fades in during Formation Lap
    ════════════════════════════════════════════════════════════════ */
 #lb-formation-banner {
-    left: 29px;
+    left: 26px;
     top: 95.5px; /* originally 145.5px, but moved up to fix layout a bit */
-    width: 305px;
+    width: 307px;
     height: 105px;
     overflow: hidden;
     opacity: 0;
