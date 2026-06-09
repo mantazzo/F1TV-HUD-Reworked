@@ -16,7 +16,7 @@ body { background: black; overflow: hidden; }
     height: 1291px;
     overflow: hidden;
     opacity: 0;
-    transition: opacity 200ms;
+    transition: opacity 200ms, height 800ms ease;
 }
 .overlay-container.visible { opacity: 1; }
 
@@ -29,6 +29,7 @@ body { background: black; overflow: hidden; }
     height: 1291px;
     /* transform: scale(0.5);
     transform-origin: left top; */
+    transition: opacity 200ms ease;
 }
 #lb-container > * { position: absolute; }
 
@@ -568,12 +569,12 @@ body { background: black; overflow: hidden; }
 }
 
 /* ════════════════════════════════════════════════════════════════
-   STARTING TYRES BANNER — item_1_31r0r0r0
+   STARTING GRID BANNER — item_1_31r0r0r0
    305×105 at left:29, top:145.5  opacity:0 by default; fades in during Formation Lap
    ════════════════════════════════════════════════════════════════ */
 #lb-formation-banner {
     left: 26px;
-    top: 95.5px; /* originally 145.5px, but moved up to fix layout a bit */
+    top: 95.5px; /* originally 145.5px, but moved up to fix layout a bit; return later if I want to implement an edge case here */
     width: 307px;
     height: 105px;
     overflow: hidden;

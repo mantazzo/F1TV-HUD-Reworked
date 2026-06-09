@@ -876,6 +876,7 @@
         let flagsBannerMode        = null;  // null | 'vsc' | 'sc' | 'rf' | 'yellow' | 'green'
         let formationLap           = false; // true when m_safetyCarStatus === 3
         let trackId                = -1;    // m_trackId from session packet; -1 = unknown
+        let trackLength            = 0;     // m_trackLength from pid 1, metres; used for formation lap opacity
         let sessionEnded           = false; // true once session has ended (P1 finished in race / any finished in non-race / timer hit 0)
         let extendedGrid           = false;  // true when numActiveCars > 20 — selects _22 image variants
         let numActiveCars          = 22;     // actual active cars from pid 4 (m_numActiveCars), used for slot visibility
@@ -1014,16 +1015,18 @@
             }
 
             // Sprint logo (item_1_10r0r0r0): visible in any sprint session; opacity 0 in narrow pane
+            // Hidden during Formation Lap (m_safetyCarStatus === 3)
             const narrow = paneMode === 1 || paneMode === 3;
-            elSprintLogo.style.display = (isSQ || isSprintSession) ? 'block' : 'none';
+            elSprintLogo.style.display = (!formationLap && (isSQ || isSprintSession)) ? 'block' : 'none';
             elSprintLogo.style.opacity  = narrow ? '0' : '1';
 
             // Session name (item_1_11r0r0r0 / _12r0r0r0):
             // Hidden for F2 Practice (types 1-4) and F2 Qualifying (types 5-9),
             // and for any Sprint/SQ session. Opacity 0 in narrow pane.
+            // Also hidden during Formation Lap (m_safetyCarStatus === 3).
             const isF2Practice = formulaType === 2 && (sessionType >= 1 && sessionType <= 4);  // We cover all sessions, even though only Quick Practice is used (sessionType 4)
             const isF2Quali    = formulaType === 2 && (sessionType >= 5 && sessionType <= 9);  // We cover all sessions, even though only Short Q (sessionType 8) and OSQ (sessionType 9) are used
-            const hideSessionName = isSQ || isSprintSession || isF2Practice || isF2Quali;
+            const hideSessionName = formationLap || isSQ || isSprintSession || isF2Practice || isF2Quali;
             elSessionName.style.display = hideSessionName ? 'none' : 'block';
             elSessionName.style.opacity = narrow ? '0' : '1';
             elSessionName.style.top     = formulaType === 2 ? '40px' : '46px';
@@ -1141,6 +1144,79 @@
             elFormationBannerLine2.style.left        = textLeft;
             elFormationBannerLine1.style.fontSize    = fontSize;
             elFormationBannerLine2.style.fontSize    = fontSize;
+        }
+
+        // ── Formation lap container opacity ───────────────────────────────────────
+        // Hides #lb-container while the leader is between 25–80% of the formation lap
+        // (mirrors original: standings overlay occupies that window; we hide the leaderboard
+        // in its place for now, even without standings implemented).
+        // Outside formation lap: always visible (opacity reset to '').
+        function updateFormationLapContainerOpacity() {
+            if (!formationLap) {
+                elContainer.style.opacity = '';
+                return;
+            }
+            const leaderIdx = carPositions.indexOf(1);
+            if (leaderIdx < 0 || trackLength <= 0) {
+                elContainer.style.opacity = '';
+                return;
+            }
+            const pct = carLapDist[leaderIdx] / trackLength;
+            elContainer.style.opacity = (pct >= 0.25 && pct < 0.80) ? '0' : '';
+        }
+
+        // ── Overlay height (.overlay-container) ──────────────────────────────────
+        // Controls visible leaderboard height via overflow:hidden parent.
+        // All values are SimHub display px × 2 (native 482-wide scale).
+        // Pane2onLap1 and WDC/WCC standings conditions are deferred (not yet implemented).
+        function computeLeaderboardHeight() {
+            const hasFlag    = flagsBannerMode === 'yellow' || flagsBannerMode === 'green';
+            const hasTrigger = timeLapsBannerActive;
+
+            // Pane 2 (Short) or Pane 3 (Narrow Short): header-only; expands for yellow/green flags and time/lap triggers
+            if (paneMode === 2 || paneMode === 3) {
+                if (hasFlag && hasTrigger) return 355;   // 177.5 × 2
+                if (hasFlag || hasTrigger) return 250;   // 125 × 2
+                return 147;                              // 73.5 × 2
+            }
+
+            // Q3 (sessionType 7): always 10 drivers; time-trigger and flag heights override session size
+            if (sessionType === 7) {
+                if (hasTrigger) return 790;  // 395 × 2
+                if (hasFlag)    return 710;  // 355 × 2
+                return 690;                  // 345 × 2
+            }
+
+            // Q2 (sessionType 6) with time triggers: specific heights for 15/16 drivers
+            if (sessionType === 6 && hasTrigger && numActiveCars >= 15) {
+                return numActiveCars >= 16 ? 1080 : 1040;  // 540 × 2 : 520 × 2
+            }
+
+            // Pane 4 (Logo only): header area only
+            if (paneMode === 4) return 147;  // 73.5 × 2
+
+            // Sprint Q3 (sessionType 12, 10 drivers): same height as regular Q3
+            if (sessionType === 12 && numActiveCars === 10) return 690;  // 345 × 2
+
+            // Sprint Q2 (sessionType 11): specific heights for 15/16 drivers
+            if (sessionType === 11 && numActiveCars >= 15) {
+                return numActiveCars >= 16 ? 990 : 940;  // 495 × 2 : 470 × 2
+            }
+
+            // Q2 (sessionType 6, no trigger): specific heights for 15/16 drivers
+            if (sessionType === 6 && numActiveCars >= 15) {
+                return numActiveCars >= 16 ? 990 : 940;  // 495 × 2 : 470 × 2
+            }
+
+            // Generic: height based on active cars (formula: (25n + 140) × 2 native px, valid for n = 2..18)
+            if (numActiveCars >= 2 && numActiveCars <= 18) {
+                return 50 * numActiveCars + 280;
+            }
+            return 1290;  // 645 × 2 — full-height fallback for 19+ cars (standard F1 race, F2, etc.)
+        }
+
+        function updateOverlayHeight() {
+            elOverlay.style.height = computeLeaderboardHeight() + 'px';
         }
 
         // ── Race laps counter (item_1_8r0r0r0_5) ──────────────────────────────────
@@ -1831,6 +1907,7 @@
             updateFlagsBorder();
             updateScBanner();
             updateScVscBanner();
+            updateOverlayHeight();
         }
 
         // ── Time/Laps Remaining banner helpers ────────────────────────────
@@ -1841,6 +1918,7 @@
             const scVscActive = flagsBannerMode === 'sc' || flagsBannerMode === 'vsc';
             timeLapsBannerActive = true;
             timeLapsBannerType   = type;
+            updateOverlayHeight();
             updateDecoBorders();
             elTimeLapsBanner.style.opacity    = '0';
             elTimeLapsBanner.style.display    = 'block';
@@ -1880,6 +1958,7 @@
                 updateBatteryLayout();
                 updatePenaltyLayout();
                 updateFlLogoLayout();
+                updateOverlayHeight();
             }, 10000);
         }
 
@@ -1890,6 +1969,7 @@
             const scVscActive = flagsBannerMode === 'sc' || flagsBannerMode === 'vsc';
             timeLapsBannerActive = true;
             timeLapsBannerType   = 'finallap';
+            updateOverlayHeight();
             updateDecoBorders();
             elTimeLapsBanner.style.opacity    = '0';
             elTimeLapsBanner.style.display    = 'block';
@@ -1938,6 +2018,7 @@
                 updateBatteryLayout();
                 updatePenaltyLayout();
                 updateFlLogoLayout();
+                updateOverlayHeight();
             }, 10000);
         }
 
@@ -2202,6 +2283,7 @@
                 sessionType = data.m_sessionType    ?? 0;
                 totalLaps   = data.m_totalLaps      ?? 0;
                 sessionDuration = data.m_sessionDuration ?? sessionDuration;
+                trackLength     = data.m_trackLength     ?? trackLength;
                 const timeLeft = data.m_sessionTimeLeft ?? 0;
                 const newTrackId = data.m_trackId ?? -1;
                 if (newTrackId !== -1 && newTrackId !== trackId) {
@@ -2247,7 +2329,7 @@
                 if (formationLap !== wasFormationLap) {
                     updateFlagsBorder(); updateFlagsImg(); updateThickStrokeBg(); updateBorderRect();
                     updateMainPanels(); updateRaceLaps(); updateDataContainerLeft(); updateFormationBanner();
-                    updateHeaderDisplay();
+                    updateHeaderDisplay(); updateFormationLapContainerOpacity();
                     updateAllRowPositions(); updateBatteryLayout(); updatePenaltyLayout(); updateFlLogoLayout();
                     // Formation Lap start: auto-show MFD1 data without header (wide mode only); end: hide if no MFD page active
                     if (formationLap && paneMode !== 1 && paneMode !== 3) {
@@ -2257,7 +2339,7 @@
                         elMfd1.style.opacity = '0';
                     }
                     // Tyre column: hide during formation lap (overlay_config may not re-fire in time)
-                    const flTyreHidden = showLastNames || formulaType === 2 || formulaType === 7 || formationLap || paneMode === 1;
+                    const flTyreHidden = showLastNames || formulaType === 2 || formulaType === 7 || formationLap || paneMode === 1 || paneMode === 3;
                     elTyre.style.display = flTyreHidden ? 'none' : '';
                 }
                 if (scStatus === 1) {
@@ -2287,6 +2369,7 @@
                     updateDataContainerLeft();
                     updateHeaderDisplay(); // re-evaluate F1 vs F2 timer visibility
                 }
+                updateOverlayHeight();
             }
 
             // Packet ID 2 — Lap Data
@@ -2418,9 +2501,9 @@
                         // Store result status for battery visibility guard
                         carResultStatus[idx] = car.m_resultStatus ?? 0;
 
-                        // OUT text — show for DNF (4), DSQ (5), or retired (7) drivers; hidden when MFD4 is active
+                        // OUT text — show for DNF (4), DSQ (5), or retired (7) drivers; hidden when MFD4 is active or narrow pane
                         const isOut = carResultStatus[idx] === 4 || carResultStatus[idx] === 5 || carResultStatus[idx] === 7;
-                        outRows[pos - 1].row.style.display = (isOut && !isMfd4) ? 'block' : 'none';
+                        outRows[pos - 1].row.style.display = (isOut && !isMfd4 && !formationLap && paneMode !== 1 && paneMode !== 3) ? 'block' : 'none';
                     }
                 });
 
@@ -2431,10 +2514,12 @@
                 }
                 numActiveCars = maxPos; // NOTE: Seems to work for now, however, multiplayer check will be required later.
                 updateSlotVisibility();
+                updateOverlayHeight();
 
                 updateBatteryLayout();
                 updatePenaltyLayout();
                 updateFlLogoLayout();
+                if (formationLap) updateFormationLapContainerOpacity();
                 // Chequered flag banner:
                 // Races: show when the car in P1 has finished
                 // Non-race: show when any car has finished
@@ -2674,6 +2759,7 @@
                 const activeFromPacket = data.m_numActiveCars ?? 0;
                 if (activeFromPacket > numActiveCars) numActiveCars = activeFromPacket;
                 extendedGrid = numActiveCars > 20;
+                updateOverlayHeight();
                 updateFlagsImg();
                 updateThickStrokeBg();
                 updateBorderRect();
@@ -2816,11 +2902,13 @@
                             m1Row.row.style.color = compound.color;
                         }
                         // MFD1 visibility: hide for DSQ/retired, non-race with no best lap, or in pits
+                        // Exception: formation lap shows tyres for all cars regardless of result status
+                        // (game may temporarily report fake DSQ/retired during grid-slot parking)
                         const resultStatus = carResultStatus[carIdx] ?? 0;
                         const isNotActive = resultStatus < 2 || resultStatus > 3; // any status that is not "Active" or "Finished"
                         const hasBestLap = carBestLapMs[carIdx] > 0;
                         const inPits = (carPitStatus[carIdx] ?? 0) > 0 || (carDriverStatus[carIdx] ?? -1) === 0;
-                        const showMfd1 = !isNotActive && (isRace || hasBestLap) && !inPits;
+                        const showMfd1 = (formationLap || !isNotActive) && (isRace || hasBestLap) && !inPits;
                         m1Row.row.style.display = showMfd1 ? 'flex' : 'none';
                     }
 
@@ -2919,6 +3007,7 @@
             elContainer.classList.toggle('pane-4', paneMode === 4);
             updateHeaderDisplay();
             updateTimeLapsBanner();
+            updateOverlayHeight();
             updateFlagsBorder();
             updateMainPanels();
             updateRaceLaps();
@@ -2947,13 +3036,13 @@
                 elMfd1.style.opacity       = '1';
             }
 
-            // OUT rows: hide when MFD4 is active (position-change column occupies the same area)
+            // OUT rows: hide when MFD4 is active or narrow pane (position-change column / no space)
             outRows.forEach(({ row }, p) => {
                 const carIdx = carPositions.indexOf(p + 1);
                 if (carIdx < 0) return;
                 const rs = carResultStatus[carIdx] ?? 0;
                 const isOut = rs === 4 || rs === 5 || rs === 7;
-                row.style.display = (isOut && !isMfd4) ? 'block' : 'none';
+                row.style.display = (isOut && !isMfd4 && !formationLap && paneMode !== 1 && paneMode !== 3) ? 'block' : 'none';
             });
 
             // Reposition all rows: MFD stride when active, banner shift when flag is set, else normal
@@ -3032,7 +3121,7 @@
             elTiming.style.display      = (!mfdActive && !showLastNames && !formationLap && isRace && paneMode !== 1 && paneMode !== 3)   ? '' : 'none';
             elQualiTiming.style.display = (!mfdActive && !showLastNames && !formationLap && !isRace && paneMode !== 1 && paneMode !== 3)  ? '' : 'none';
             const isMfd2 = page === 'mfd2';
-            const tyreHidden = showLastNames || formulaType === 2 || formulaType === 7 || formationLap || paneMode === 1;
+            const tyreHidden = showLastNames || formulaType === 2 || formulaType === 7 || formationLap || paneMode === 1 || paneMode === 3;
             elTyre.style.display = tyreHidden ? 'none' : '';
             if (!tyreHidden) {
                 elTyre.style.opacity = (mfdActive && !isMfd2) ? '0' : '1';
