@@ -357,6 +357,8 @@
             <!-- Series logo F2 (item_1_37r0): F2.png  172.15×77.275 at left:20, top:24  hidden by default -->
             <div id="lb-series-logo-f2"></div>
 
+            <!-- TODO: Implement Championship Standings display and features -->
+
         </div>
     </div>
 
@@ -478,6 +480,8 @@
         const elFormationBanner      = document.getElementById('lb-formation-banner');
         const elFormationBannerLine1 = document.getElementById('lb-formation-banner-line1');
         const elFormationBannerLine2 = document.getElementById('lb-formation-banner-line2');
+        const elSeriesLogo   = document.getElementById('lb-series-logo');
+        const elSeriesLogoF2 = document.getElementById('lb-series-logo-f2');
 
         let NUM_CARS = 22;  // Pre-allocate for max possible cars (20 standard, up to 22 in MyTeam/F2).
                             // Updated at runtime from packet 4 (m_numActiveCars).
@@ -880,7 +884,7 @@
         let sessionEnded           = false; // true once session has ended (P1 finished in race / any finished in non-race / timer hit 0)
         let extendedGrid           = false;  // true when numActiveCars > 20 — selects _22 image variants
         let numActiveCars          = 22;     // actual active cars from pid 4 (m_numActiveCars), used for slot visibility
-        let paneMode               = 0;  // Pane 1: Narrow, Pane 2: Short, Pane 3: Narrow Short, Pane 4: Logo; // TODO: Implement Panes 1, 2 and 3 properly
+        let paneMode               = 0;  // Pane 1: Narrow, Pane 2: Short, Pane 3: Narrow+Short, Pane 4: Logo
         let timeLapsBannerActive   = false;
         let timeLapsBannerTimer    = null;
         let timeLapsBannerType     = null; // 'minutes' | 'laps' | 'finallap' — for dynamic pane updates
@@ -892,7 +896,7 @@
         let scEnding               = false; // true when SC/VSC is returning (SCAR evtType 1); cleared by evtType 3 or scStatus 0
 
         const TIME_TRIGGERS_S = [1200, 900, 600, 300, 120]; // 20, 15, 10, 5, 2 minutes in seconds
-        const LAP_TRIGGERS    = [15, 10, 5, 3]; // TODO: Might need to add extra cases when there are less laps
+        const LAP_TRIGGERS    = [15, 10, 5, 3]; // TODO: Might need to add extra cases when there are less laps; though doesn't seem to be a problem now
         // Tracks that use Aston Martin Safety Car branding (all others use Mercedes)
         const ASTON_MARTIN_TRACKS = new Set([0, 27, 4, 20, 6, 17, 9, 10, 11, 15, 19, 16]);
         let playerCarIdx          = -1;   // from m_header.m_playerCarIndex
@@ -1019,6 +1023,11 @@
             const narrow = paneMode === 1 || paneMode === 3;
             elSprintLogo.style.display = (!formationLap && (isSQ || isSprintSession)) ? 'block' : 'none';
             elSprintLogo.style.opacity  = narrow ? '0' : '1';
+
+            // Series logo: F2 logo for Formula 2 (formulaType 2 or 7), F1 logo otherwise
+            const isF2 = formulaType === 2 || formulaType === 7;
+            elSeriesLogo.style.display   = isF2 ? 'none' : '';
+            elSeriesLogoF2.style.display = isF2 ? 'block' : 'none';
 
             // Session name (item_1_11r0r0r0 / _12r0r0r0):
             // Hidden for F2 Practice (types 1-4) and F2 Qualifying (types 5-9),
@@ -1750,7 +1759,7 @@
 
             // lb-formation-bg
             elFormationBg.style.width   = narrow ? '195px' : '315px';
-            elFormationBg.style.height  = `${(extendedGrid ? 1126 : 1026)}px`;
+            elFormationBg.style.height  = `${(extendedGrid ? 1176 : 1076)}px`;
             elFormationBg.style.display = formationLap ? 'block' : 'none'; // changed to "block" to display the BG
 
             // lb-pos-col-bg
@@ -3002,7 +3011,7 @@
             // MFD page visibility — show the active page's header+data, hide all others
             const page = cfg.mfdPage || 'off';
             mfdActive = page !== 'off';
-            isMfd4    = page === 'mfd4';
+            isMfd4    = page === 'mfd4' && isRace;
             paneMode = cfg.pane ?? 0;
             elContainer.classList.toggle('pane-4', paneMode === 4);
             updateHeaderDisplay();
@@ -3026,7 +3035,7 @@
                 mfd4: [elMfd4Header, elMfd4],
             };
             for (const [key, [header, data]] of Object.entries(mfdPages)) {
-                const show = key === page && !formationLap;
+                const show = key === page && !formationLap && (key !== 'mfd4' || isRace);
                 header.style.opacity = show ? '1' : '0';
                 data.style.opacity   = show ? '1' : '0';
             }

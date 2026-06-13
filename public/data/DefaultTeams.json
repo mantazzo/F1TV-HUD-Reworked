@@ -68,12 +68,12 @@
   "41": {
     "ShortName": "F1 Generic",
     "FullName": "",
-    "Logo": "fia.png"
+    "Logo": "fia.svg"
   },
   "104": {
     "ShortName": "F1 Custom Team",
     "FullName": "",
-    "Logo": "fia.png",
+    "Logo": "fia.svg",
     "Note": "As far as I know, this it the team that is used in MyTeam career mode. If you want to set up your team, edit this entry."
   },
   "129": {
@@ -99,107 +99,162 @@
   "158": {
     "ShortName": "Art GP ‘24",
     "FullName": "",
-    "Logo": "f2/art.png"
+    "Logo": "f2/ART_Grand_Prix.svg"
   },
   "159": {
     "ShortName": "Campos ‘24",
     "FullName": "",
-    "Logo": "f2/campos.png"
+    "Logo": "f2/Campos_Racing.svg"
   },
   "160": {
     "ShortName": "Rodin Motorsport ‘24",
     "FullName": "",
-    "Logo": "f2/rodin.png"
+    "Logo": "f2/Rodin_Motorsport.svg"
   },
   "161": {
     "ShortName": "AIX Racing ‘24",
     "FullName": "",
-    "Logo": "f2/phm.png"
+    "Logo": "f2/AIX_Racing.svg"
   },
   "162": {
     "ShortName": "DAMS ‘24",
     "FullName": "",
-    "Logo": "f2/dams.png"
+    "Logo": "f2/DAMS.svg"
   },
   "163": {
     "ShortName": "Hitech ‘24",
     "FullName": "",
-    "Logo": "f2/hitech.png"
+    "Logo": "f2/Hitech_2024.svg"
   },
   "164": {
     "ShortName": "MP Motorsport ‘24",
     "FullName": "",
-    "Logo": "f2/mp.png"
+    "Logo": "f2/MP_Motorsport.svg"
   },
   "165": {
     "ShortName": "Prema ‘24",
     "FullName": "",
-    "Logo": "f2/prema.png"
+    "Logo": "f2/PREMA_Racing.svg"
   },
   "166": {
     "ShortName": "Trident ‘24",
     "FullName": "",
-    "Logo": "f2/trident.png"
+    "Logo": "f2/Trident_Motorsport.svg"
   },
   "167": {
     "ShortName": "Van Amersfoort Racing ‘24",
     "FullName": "",
-    "Logo": "f2/var.png"
+    "Logo": "f2/Van_Amersfoort_Racing.svg"
   },
   "168": {
     "ShortName": "Invicta ‘24",
     "FullName": "",
-    "Logo": "f2/invicta.png"
+    "Logo": "f2/Invicta_Racing.svg"
   },
   "185": {
     "ShortName": "Mercedes ‘24",
     "FullName": "",
-    "Logo": "mercedes.png"
+    "Logo": "2024mercedeslogo.svg"
   },
   "186": {
     "ShortName": "Ferrari ‘24",
     "FullName": "",
-    "Logo": "ferrari.png"
+    "Logo": "2024ferrarilogo.svg"
   },
   "187": {
     "ShortName": "Red Bull Racing ‘24",
     "FullName": "",
-    "Logo": "red_bull_racing.png"
+    "Logo": "2024redbullracinglogo.svg"
   },
   "188": {
     "ShortName": "Williams ‘24",
     "FullName": "",
-    "Logo": "williams.png"
+    "Logo": "2024williamslogo.svg"
   },
   "189": {
     "ShortName": "Aston Martin ‘24",
     "FullName": "",
-    "Logo": "aston_martin.png"
+    "Logo": "2024astonmartinlogo.svg"
   },
   "190": {
     "ShortName": "Alpine ‘24",
     "FullName": "",
-    "Logo": "alpine.png"
+    "Logo": "2024alpinelogo.svg"
   },
   "191": {
     "ShortName": "RB ‘24",
     "FullName": "",
-    "Logo": "rb.png"
+    "Logo": "2024rblogo.svg"
   },
   "192": {
     "ShortName": "Haas ‘24",
     "FullName": "",
-    "Logo": "haas.png"
+    "Logo": "2024haaslogo.svg"
   },
   "193": {
     "ShortName": "McLaren ‘24",
     "FullName": "",
-    "Logo": "mclaren.png"
+    "Logo": "2024mclarenlogo.svg"
   },
   "194": {
     "ShortName": "Sauber ‘24",
     "FullName": "",
-    "Logo": "sauber.png"
+    "Logo": "2024kicksauberlogo.svg"
+  },
+  "209": {
+    "ShortName": "Art GP ‘25",
+    "FullName": "",
+    "Logo": "F2/ART_Grand_Prix.svg"
+  },
+  "210": {
+    "ShortName": "Campos ‘25",
+    "FullName": "",
+    "Logo": "F2/Campos_Racing.svg"
+  },
+  "211": {
+    "ShortName": "Rodin Motorsport ‘25",
+    "FullName": "",
+    "Logo": "F2/Rodin_Motorsport.svg"
+  },
+  "212": {
+    "ShortName": "AIX Racing ‘25",
+    "FullName": "",
+    "Logo": "F2/AIX_Racing.svg"
+  },
+  "213": {
+    "ShortName": "DAMS ‘25",
+    "FullName": "",
+    "Logo": "F2/DAMS.svg"
+  },
+  "214": {
+    "ShortName": "Hitech ‘25",
+    "FullName": "",
+    "Logo": "F2/Hitech.svg"
+  },
+  "215": {
+    "ShortName": "MP Motorsport ‘25",
+    "FullName": "",
+    "Logo": "F2/MP_Motorsport.svg"
+  },
+  "216": {
+    "ShortName": "Prema ‘25",
+    "FullName": "",
+    "Logo": "F2/PREMA_Racing.svg"
+  },
+  "217": {
+    "ShortName": "Trident ‘25",
+    "FullName": "",
+    "Logo": "F2/Trident_Motorsport.svg"
+  },
+  "218": {
+    "ShortName": "Van Amersfoort Racing ‘25",
+    "FullName": "",
+    "Logo": "F2/Van_Amersfoort_Racing.svg"
+  },
+  "219": {
+    "ShortName": "Invicta ‘25",
+    "FullName": "",
+    "Logo": "F2/Invicta_Racing.svg"
   },
   "220": {
     "ShortName": "Mercedes ‘26",
@@ -259,57 +314,57 @@
   "465": {
     "ShortName": "Art GP ‘25",
     "FullName": "",
-    "Logo": "f2/art.png"
+    "Logo": "F2/ART_Grand_Prix.svg"
   },
   "466": {
     "ShortName": "Campos ‘25",
     "FullName": "",
-    "Logo": "f2/campos.png"
+    "Logo": "F2/Campos_Racing.svg"
   },
   "467": {
     "ShortName": "Rodin Motorsport ‘25",
     "FullName": "",
-    "Logo": "f2/rodin.png"
+    "Logo": "F2/Rodin_Motorsport.svg"
   },
   "468": {
     "ShortName": "AIX Racing ‘25",
     "FullName": "",
-    "Logo": "f2/phm.png"
+    "Logo": "F2/AIX_Racing.svg"
   },
   "469": {
     "ShortName": "DAMS ‘25",
     "FullName": "",
-    "Logo": "f2/dams.png"
+    "Logo": "F2/DAMS.svg"
   },
   "470": {
     "ShortName": "Hitech ‘25",
     "FullName": "",
-    "Logo": "f2/hitech.png"
+    "Logo": "F2/Hitech.svg"
   },
   "471": {
     "ShortName": "MP Motorsport ‘25",
     "FullName": "",
-    "Logo": "f2/mp.png"
+    "Logo": "F2/MP_Motorsport.svg"
   },
   "472": {
     "ShortName": "Prema ‘25",
     "FullName": "",
-    "Logo": "f2/prema.png"
+    "Logo": "F2/PREMA_Racing.svg"
   },
   "473": {
     "ShortName": "Trident ‘25",
     "FullName": "",
-    "Logo": "f2/trident.png"
+    "Logo": "F2/Trident_Motorsport.svg"
   },
   "474": {
     "ShortName": "Van Amersfoort Racing ‘25",
     "FullName": "",
-    "Logo": "f2/var.png"
+    "Logo": "F2/Van_Amersfoort_Racing.svg"
   },
   "475": {
     "ShortName": "Invicta ‘25",
     "FullName": "",
-    "Logo": "f2/invicta.png"
+    "Logo": "F2/Invicta_Racing.svg"
   },
   "476": {
     "ShortName": "Mercedes ‘26",

@@ -4,16 +4,15 @@
    ════════════════════════════════════════════════════════════════ */
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: black; overflow: hidden; }
-/* TODO: Revert to transparent background once overlay design is implemented properly */
+body { background: transparent; overflow: hidden; }
 
 /* ════════════════════════════════════════════════════════════════
    OVERLAY CONTAINER — 241×646 px
    ════════════════════════════════════════════════════════════════ */
 .overlay-container {
     position: relative;
-    width: 482px;
-    height: 1291px;
+    width: 241px;
+    height: 646px;
     overflow: hidden;
     opacity: 0;
     transition: opacity 200ms, height 800ms ease;
@@ -27,8 +26,8 @@ body { background: black; overflow: hidden; }
     position: absolute;
     width: 482px;
     height: 1291px;
-    /* transform: scale(0.5);
-    transform-origin: left top; */
+    transform: scale(0.5);
+    transform-origin: left top;
     transition: opacity 200ms ease;
 }
 #lb-container > * { position: absolute; }
@@ -120,9 +119,9 @@ body { background: black; overflow: hidden; }
 #lb-formation-bg {
     display: none;
     left: 19px;
-    top: 146px;
+    top: 95px;
     width: 315px;
-    height: 1026px;
+    height: 1076px;
     border-radius: 0 0 0 25px;
     background-color: rgb(18, 20, 24);
     transition: width 300ms ease, opacity 333ms ease;
@@ -466,7 +465,7 @@ body { background: black; overflow: hidden; }
    308×53 at left:0, top:0  hidden by default
    ════════════════════════════════════════════════════════════════ */
 /* Blink animation: visible for 4.5 s, hidden for 25.5 s, repeating every 30 s */
-/* TODO: check if the "blink" is accurate */
+/* TODO: check if the "blink" is accurate (eventually, feedback required) */
 @keyframes sc-banner-blink {
     0%    { opacity: 1; }
     15%   { opacity: 1; }
@@ -800,7 +799,7 @@ body { background: black; overflow: hidden; }
     width: 90px;
     height: 55px;
     font-family: 'Formula1 Display Wide';
-    font-weight: 300; /* TODO: might require adjustment to match the spec in fonts.css */
+    font-weight: 300;
     font-size: 40px;
     color: rgb(255, 215, 0);
     display: flex;
