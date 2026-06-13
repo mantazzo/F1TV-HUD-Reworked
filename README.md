@@ -46,7 +46,8 @@ This will execute the *"install.ps1"* Powershell script, which will download the
 This will execute the *"run.ps1"* Powershell script, which will run the project using the downloaded standalone binary. No other setup is required!
 
 ## Configuration
-- Ensure telemetry is enabled in F1 25 and set to port you entered in the Terminal.
+- Ensure telemetry is enabled in F1 25 and set to port you entered in the Terminal. 
+   - Additionally, **make sure the Telemetry Format in-game is set to 2025.** Currently, the project does not properly support the 2026 format.
 - If the overlays don't work, check the Terminal for error messages and/or verify telemetry settings.
 
 ## Future Improvements
@@ -58,5 +59,7 @@ This will execute the *"run.ps1"* Powershell script, which will run the project 
 This project is licensed under GNU GPLv3. Check the [LICENSE](https://github.com/mantazzo/F1TV-HUD-Reworked/blob/main/LICENSE) for more info.
 
 Assets used are licensed under a Custom license, check out [ASSETS_LICENSE.md](https://github.com/mantazzo/F1TV-HUD-Reworked/blob/main/ASSETS_LICENSE.md) for further information.
+
+Any contribution is greatly appreciated - they will be reviewed, and if deemed fit for the project, will be added.
 
 *(This README may be updated with visuals and additional details over time.)*
