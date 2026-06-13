@@ -13,8 +13,8 @@ This project is worked on with Windows systems in mind - it may work on other sy
 ## Installation
 
 1. **Install Node.js on Windows.**  
-   I would recommend using tools like [Nodist](https://github.com/nodists/nodist) (used personally) or [NVM for Windows](https://github.com/coreybutler/nvm-windows) for easier installation and version management. Any option works, as long as you can run commands like `node` or `npm`.  
-   I used the latest LTS version (v24.14.0 at the time of writing) when setting up, but most recent versions should work.
+   I would recommend using tools like [Nodist](https://github.com/nodists/nodist) (used personally) or [NVM for Windows](https://github.com/coreybutler/nvm-windows) or [Volta](https://volta.sh/) for easier installation and version management. Any option works, as long as you can run commands like `node` or `npm`.  
+   I used the latest LTS version (v24.16.0 at the time of writing) when setting up, but most recent versions should work.
 
 2. **Clone the repository or download the latest version.**  
    You can clone with `git clone https://github.com/mantazzo/F1TV-HUD-Reworked.git` or download the ZIP file [by clicking on the text here](https://github.com/mantazzo/F1TV-HUD-Reworked/archive/refs/heads/main.zip).

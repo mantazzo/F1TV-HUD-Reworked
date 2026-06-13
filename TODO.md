@@ -92,6 +92,17 @@
     - Current Tyre Compound and Tyre Age is shown as well
     - Additionally, the Title automatically hides after 8 seconds of showing up
     - Further improvements may be done in the future (like temperatures)
+- Leaderboard (Initials version)
+    - Original version remade to the best of my and AI capabilities (not fully completed yet)
+    - MFD pages are available (same as original)
+    - Resizing works as intended (Narrow - Pane 1, Short - Pane 2, Narrow+Short - Pane 3, Logo - Pane 4)
+    - All original features are available, with a few improvements/fixes where applicable
+    - Uses Initials for display
+    - Driver Numbers display can either use images (.svg or .png) or use a fallback to text version
+    - Flags Display is implemented and improved (displays according to marshall post data, instead of local car data)
+    - Time Remaining/Laps Remaining banner has also been implemented
+    - Standings (Driver and Team) haven't been implemented yet
+    - Some features haven't been implemented to the Controller yet
 
 ## Overlay Controllers
 
@@ -113,11 +124,11 @@
 
 ## Currently Working On
 
-Leaderboard (big project, will take time to get it working as intended)
+Leaderboard (Initials version) (bugfixes, plus implementing remaining missing features)
 
 ## Next Planned Overlay
 
-Leaderboard - Last Name version, then Driver Name
+Leaderboard - Last Name version, then Driver Name overlay
 
 ## Not started
 
@@ -130,6 +141,10 @@ In no particular order:
 
 ## Debatable
 
-- Data Channel
-- Race Classification
-- Halo HUD
+- Data Channel (haven't looked much into it so far)
+- Race Classification (could use data sent from the game, perhaps?)
+- Halo HUD (likely possible, but would probably require too much time)
+
+## Future / Low Priority Ideas
+
+- **MCP Server** - A locally running Model Context Protocol server that exposes live telemetry state (session, drivers, lap data, etc.) as queryable tools for AI-assisted debugging. Would allow direct inspection of live data during a session without having to manually relay debug page output. Suggested approach: add lightweight HTTP endpoints to `index.js` exposing in-memory state, then build a thin `mcp-server.js` wrapping those as MCP tools, registered via `.vscode/mcp.json`. (AI-written note - *editing note*)

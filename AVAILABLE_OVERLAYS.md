@@ -41,6 +41,9 @@ Use these overlays in recording software (e.g. OBS). Size is described in (Width
 - Car Damage
     - http://localhost:3000/car-damage
     - Size: 280 x 600
+- Leaderboard (Initials version)
+    - http://localhost:3000/leaderboard
+    - Size: 241 x 646
 - Position Debug **(DEBUG OVERLAY ONLY)**
     - http://localhost:3000/debug/position-debug
     - Debug only, useful for turn position setup

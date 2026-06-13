@@ -236,6 +236,8 @@ function startServer(portNumber, forwardAddresses) {
         io.emit('f1_data', convertBigInt(data));
     }); */
 
+    // TODO: Add packet 16 support commented out once UDP parser supports 2026 format, currently the parser is not updated (version 1.2.2 as of 2026-06-13 does not support 2026 format)
+
     // Error handling
     client.on('error', (err) => {
         console.error('UDP Client Error:', err);
