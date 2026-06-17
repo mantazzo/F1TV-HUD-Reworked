@@ -171,6 +171,51 @@
             border: 1px solid rgba(225,6,0,0.35);
             white-space: nowrap;
         }
+
+        /* Reference table */
+        table.ref-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        table.ref-table th {
+            text-align: left;
+            font-family: 'F1TV-2022', sans-serif;
+            font-size: 11px;
+            color: rgba(255,255,255,0.4);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 6px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+        }
+
+        table.ref-table td {
+            padding: 7px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            font-family: 'Segoe UI', sans-serif;
+            color: rgba(255,255,255,0.8);
+            vertical-align: top;
+        }
+
+        table.ref-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        table.ref-table td:first-child {
+            font-family: 'F1TV-2022', sans-serif;
+            color: rgba(255,255,255,0.6);
+            white-space: nowrap;
+        }
+
+        table.ref-table td code {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            background: rgba(77,171,247,0.1);
+            color: #74c0fc;
+            padding: 1px 5px;
+            border-radius: 3px;
+        }
     </style>
 </head>
 <body>
@@ -301,6 +346,53 @@
                     <div class="field-row"><span class="field-name">m_timeTrialPBCarIdx</span>    <span class="field-value value-na" id="f-ttPB">--</span></div>
                     <div class="field-row"><span class="field-name">m_timeTrialRivalCarIdx</span> <span class="field-value value-na" id="f-ttRival">--</span></div>
                 </div>
+            </div>
+
+            <!-- Field reference -->
+            <div class="section-card">
+                <div class="section-title">Field Reference</div>
+                <table class="ref-table">
+                    <thead>
+                        <tr>
+                            <th style="width:220px">Field</th>
+                            <th style="width:280px">UDP Field</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Car Position</td>           <td><code>m_carPosition</code></td>                  <td>Current race position of the car (uint8).</td></tr>
+                        <tr><td>Current Lap Num</td>         <td><code>m_currentLapNum</code></td>                <td>Current lap number (uint8).</td></tr>
+                        <tr><td>Grid Position</td>           <td><code>m_gridPosition</code></td>                 <td>Grid position the car started the race in (uint8).</td></tr>
+                        <tr><td>Sector</td>                  <td><code>m_sector</code></td>                       <td>0 = Sector 1, 1 = Sector 2, 2 = Sector 3.</td></tr>
+                        <tr><td>Current Lap Invalid</td>     <td><code>m_currentLapInvalid</code></td>            <td>0 = valid, 1 = invalid.</td></tr>
+                        <tr><td>Current Lap Time</td>        <td><code>m_currentLapTimeInMS</code></td>           <td>Current time around the lap in milliseconds (uint32).</td></tr>
+                        <tr><td>Last Lap Time</td>           <td><code>m_lastLapTimeInMS</code></td>              <td>Last lap time in milliseconds (uint32).</td></tr>
+                        <tr><td>Sector 1 Time</td>           <td><code>m_sector1TimeMSPart</code> / <code>m_sector1TimeMinutesPart</code></td>   <td>Sector 1 time, split into milliseconds part (uint16) and whole-minute part (uint8).</td></tr>
+                        <tr><td>Sector 2 Time</td>           <td><code>m_sector2TimeMSPart</code> / <code>m_sector2TimeMinutesPart</code></td>   <td>Sector 2 time, split into milliseconds part (uint16) and whole-minute part (uint8).</td></tr>
+                        <tr><td>Delta to Car in Front</td>   <td><code>m_deltaToCarInFrontMSPart</code> / <code>m_deltaToCarInFrontMinutesPart</code></td>   <td>Time delta to the car ahead, split into milliseconds (uint16) and whole-minute (uint8) parts.</td></tr>
+                        <tr><td>Delta to Race Leader</td>    <td><code>m_deltaToRaceLeaderMSPart</code> / <code>m_deltaToRaceLeaderMinutesPart</code></td>   <td>Time delta to the race leader, split into milliseconds (uint16) and whole-minute (uint8) parts.</td></tr>
+                        <tr><td>Safety Car Delta</td>        <td><code>m_safetyCarDelta</code></td>                <td>Delta in seconds for the safety car (float).</td></tr>
+                        <tr><td>Lap Distance</td>            <td><code>m_lapDistance</code></td>                  <td>Distance the car has covered around the current lap in metres; can be negative before crossing the line (float).</td></tr>
+                        <tr><td>Total Distance</td>          <td><code>m_totalDistance</code></td>                <td>Total distance travelled in the session in metres; can be negative before crossing the line (float).</td></tr>
+                        <tr><td>Pit Status</td>              <td><code>m_pitStatus</code></td>                    <td>0 = None, 1 = Pitting, 2 = In Pit Area.</td></tr>
+                        <tr><td>Num Pit Stops</td>           <td><code>m_numPitStops</code></td>                  <td>Number of pit stops taken so far this race (uint8).</td></tr>
+                        <tr><td>Pit Lane Timer Active</td>   <td><code>m_pitLaneTimerActive</code></td>           <td>0 = Inactive, 1 = Active.</td></tr>
+                        <tr><td>Pit Lane Time in Lane</td>   <td><code>m_pitLaneTimeInLaneInMS</code></td>        <td>If active, current time spent in the pit lane in ms (uint16).</td></tr>
+                        <tr><td>Should Serve Pen</td>        <td><code>m_pitStopShouldServePen</code></td>        <td>1 = car should serve a penalty at this stop, 0 = otherwise.</td></tr>
+                        <tr><td>Pit Stop Timer</td>          <td><code>m_pitStopTimerInMS</code></td>             <td>Time of the actual pit stop in ms (uint16).</td></tr>
+                        <tr><td>Driver Status</td>           <td><code>m_driverStatus</code></td>                 <td>0 = In Garage, 1 = Flying Lap, 2 = In Lap, 3 = Out Lap, 4 = On Track.</td></tr>
+                        <tr><td>Result Status</td>           <td><code>m_resultStatus</code></td>                 <td>0 = Invalid, 1 = Inactive, 2 = Active, 3 = Finished, 4 = Did Not Finish, 5 = Disqualified, 6 = Not Classified, 7 = Retired.</td></tr>
+                        <tr><td>Penalties</td>                <td><code>m_penalties</code></td>                    <td>Accumulated time penalties in seconds still to be added (uint8).</td></tr>
+                        <tr><td>Total Warnings</td>          <td><code>m_totalWarnings</code></td>                <td>Accumulated number of warnings issued (uint8).</td></tr>
+                        <tr><td>Corner Cutting Warnings</td> <td><code>m_cornerCuttingWarnings</code></td>        <td>Accumulated number of corner-cutting warnings issued (uint8).</td></tr>
+                        <tr><td>Unserved Drive-Throughs</td> <td><code>m_numUnservedDriveThroughPens</code></td>  <td>Number of drive-through penalties left to serve (uint8).</td></tr>
+                        <tr><td>Unserved Stop-Gos</td>       <td><code>m_numUnservedStopGoPens</code></td>        <td>Number of stop-go penalties left to serve (uint8).</td></tr>
+                        <tr><td>Speed Trap Fastest</td>      <td><code>m_speedTrapFastestSpeed</code></td>        <td>Fastest speed through the speed trap for this car, in km/h (float).</td></tr>
+                        <tr><td>Speed Trap Lap</td>          <td><code>m_speedTrapFastestLap</code></td>          <td>Lap number the fastest speed trap speed was achieved on; 255 = not set (uint8).</td></tr>
+                        <tr><td>Time Trial PB Car</td>       <td><code>m_timeTrialPBCarIdx</code></td>            <td>Packet-level field. Index of the Personal Best car in Time Trial; 255 = invalid (uint8).</td></tr>
+                        <tr><td>Time Trial Rival Car</td>    <td><code>m_timeTrialRivalCarIdx</code></td>         <td>Packet-level field. Index of the Rival car in Time Trial; 255 = invalid (uint8).</td></tr>
+                    </tbody>
+                </table>
             </div>
 
         </div>

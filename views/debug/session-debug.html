@@ -139,6 +139,51 @@
         }
 
         #mainContent { display: none; }
+
+        /* Reference table */
+        table.ref-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        table.ref-table th {
+            text-align: left;
+            font-family: 'F1TV-2022', sans-serif;
+            font-size: 11px;
+            color: rgba(255,255,255,0.4);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 6px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+        }
+
+        table.ref-table td {
+            padding: 7px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            font-family: 'Segoe UI', sans-serif;
+            color: rgba(255,255,255,0.8);
+            vertical-align: top;
+        }
+
+        table.ref-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        table.ref-table td:first-child {
+            font-family: 'F1TV-2022', sans-serif;
+            color: rgba(255,255,255,0.6);
+            white-space: nowrap;
+        }
+
+        table.ref-table td code {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            background: rgba(77,171,247,0.1);
+            color: #74c0fc;
+            padding: 1px 5px;
+            border-radius: 3px;
+        }
     </style>
 </head>
 <body>
@@ -215,6 +260,123 @@
                 <div id="marshalZoneContainer"><em style="color:rgba(255,255,255,0.3);font-size:13px">No marshal zone data yet</em></div>
             </div>
 
+            <!-- Active Aero Zones (2026) -->
+            <div class="section-card">
+                <div class="section-title">Active Aero Zones — Full Track (<span id="aeroFullCount">0</span> active)</div>
+                <div id="aeroFullContainer"><em style="color:rgba(255,255,255,0.3);font-size:13px">No active aero zone data yet (2026 format only)</em></div>
+            </div>
+
+            <div class="section-card">
+                <div class="section-title">Active Aero Zones — Partial Track (<span id="aeroPartialCount">0</span> active)</div>
+                <div id="aeroPartialContainer"><em style="color:rgba(255,255,255,0.3);font-size:13px">No active aero zone data yet (2026 format only)</em></div>
+            </div>
+
+            <!-- DRS Zones (2026) -->
+            <div class="section-card">
+                <div class="section-title">DRS Zones (<span id="drsZoneCount">0</span> active)</div>
+                <div id="drsZoneContainer"><em style="color:rgba(255,255,255,0.3);font-size:13px">No DRS zone data yet (2026 format only)</em></div>
+            </div>
+
+            <!-- Field reference -->
+            <div class="section-card">
+                <div class="section-title">Field Reference</div>
+                <table class="ref-table">
+                    <thead>
+                        <tr>
+                            <th style="width:220px">Field</th>
+                            <th style="width:280px">UDP Field</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Weather</td>                    <td><code>m_weather</code></td>                       <td>0 = Clear, 1 = Light Cloud, 2 = Overcast, 3 = Light Rain, 4 = Heavy Rain, 5 = Storm.</td></tr>
+                        <tr><td>Track Temperature</td>          <td><code>m_trackTemperature</code></td>              <td>Track temperature in degrees Celsius (int8).</td></tr>
+                        <tr><td>Air Temperature</td>             <td><code>m_airTemperature</code></td>                <td>Air temperature in degrees Celsius (int8).</td></tr>
+                        <tr><td>Track ID</td>                    <td><code>m_trackId</code></td>                       <td>-1 = unknown, otherwise see track appendix. Includes Madrid (42), new for 2026.</td></tr>
+                        <tr><td>Track Length</td>                <td><code>m_trackLength</code></td>                  <td>Track length in metres (uint16).</td></tr>
+                        <tr><td>Sector 2 Start Distance</td>     <td><code>m_sector2LapDistanceStart</code></td>      <td>Distance in metres around the track where sector 2 starts (float).</td></tr>
+                        <tr><td>Sector 3 Start Distance</td>     <td><code>m_sector3LapDistanceStart</code></td>      <td>Distance in metres around the track where sector 3 starts (float).</td></tr>
+                        <tr><td>Marshal Zones</td>               <td><code>m_numMarshalZones</code> / <code>m_marshalZones[21]</code></td>  <td>Number of active marshal zones and the zone list itself (start fraction + flag colour). Rendered in the table below.</td></tr>
+                        <tr><td>Active Aero Track Status</td>    <td><code>m_activeAeroTrackStatus</code></td>         <td><strong>New in 2026 format.</strong> 0 = Full, 1 = Partial. Indicates whether the active-aero zone layout below is the full or partial set.</td></tr>
+                        <tr><td>Active Aero Zones (Full)</td>    <td><code>m_numActiveAeroZonesFull</code> / <code>m_activeAeroZonesFull[8]</code></td>  <td><strong>New in 2026 format.</strong> Count and list of active-aero zones (start/end fraction of lap) used when track status is Full.</td></tr>
+                        <tr><td>Active Aero Zones (Partial)</td> <td><code>m_numActiveAeroZonesPartial</code> / <code>m_activeAeroZonesPartial[8]</code></td>  <td><strong>New in 2026 format.</strong> Count and list of active-aero zones used when track status is Partial.</td></tr>
+                        <tr><td>DRS Zones</td>                  <td><code>m_numDRSZones</code> / <code>m_drsZones[4]</code></td>  <td><strong>New in 2026 format.</strong> Count and list of DRS zones (start/end fraction of lap).</td></tr>
+                        <tr><td>Session Type</td>                <td><code>m_sessionType</code></td>                   <td>0 = Unknown, see session type appendix for practice/qualifying/sprint/race values.</td></tr>
+                        <tr><td>Formula</td>                     <td><code>m_formula</code></td>                      <td>0 = F1 Modern, 1 = F1 Classic, 2 = F2, 3 = F1 Generic, 4 = Beta, 6 = Esports, 8 = F1 World, 9 = F1 Elimination, 13 = F1 26 (new for 2026 format).</td></tr>
+                        <tr><td>Total Laps</td>                  <td><code>m_totalLaps</code></td>                    <td>Total number of laps in this race (uint8).</td></tr>
+                        <tr><td>Session Duration</td>            <td><code>m_sessionDuration</code></td>               <td>Session duration in seconds (uint16).</td></tr>
+                        <tr><td>Session Time Left</td>           <td><code>m_sessionTimeLeft</code></td>               <td>Time left in the session in seconds (uint16).</td></tr>
+                        <tr><td>Time of Day</td>                 <td><code>m_timeOfDay</code></td>                    <td>Local time of day, minutes since midnight (uint32).</td></tr>
+                        <tr><td>Session Length</td>              <td><code>m_sessionLength</code></td>                 <td>0 = None, 2 = Very Short, 3 = Short, 4 = Medium, 5 = Medium Long, 6 = Long, 7 = Full.</td></tr>
+                        <tr><td>Network Game</td>                <td><code>m_networkGame</code></td>                  <td>0 = Offline, 1 = Online.</td></tr>
+                        <tr><td>Game Paused</td>                 <td><code>m_gamePaused</code></td>                   <td>Whether the game is paused — network game only.</td></tr>
+                        <tr><td>Spectating</td>                  <td><code>m_isSpectating</code></td>                  <td>Whether the player is spectating.</td></tr>
+                        <tr><td>Spectator Car Index</td>         <td><code>m_spectatorCarIndex</code></td>            <td>Index of the car being spectated (uint8).</td></tr>
+                        <tr><td>SLI Pro Support</td>              <td><code>m_sliProNativeSupport</code></td>          <td>0 = Inactive, 1 = Active.</td></tr>
+                        <tr><td>AI Difficulty</td>               <td><code>m_aiDifficulty</code></td>                  <td>AI difficulty rating, 0-110 (uint8).</td></tr>
+                        <tr><td>Forecast Accuracy</td>           <td><code>m_forecastAccuracy</code></td>             <td>0 = Perfect, 1 = Approximate.</td></tr>
+                        <tr><td>Forecast Samples</td>            <td><code>m_numWeatherForecastSamples</code> / <code>m_weatherForecastSamples[64]</code></td>  <td>Count and list of weather forecast samples. Rendered in the table below.</td></tr>
+                        <tr><td>Sessions in Weekend</td>         <td><code>m_numSessionsInWeekend</code></td>          <td>Number of sessions in the following weekend structure array (uint8).</td></tr>
+                        <tr><td>Pit Window — Ideal Lap</td>      <td><code>m_pitStopWindowIdealLap</code></td>        <td>Ideal lap to pit on for the player's current strategy (uint8).</td></tr>
+                        <tr><td>Pit Window — Latest Lap</td>     <td><code>m_pitStopWindowLatestLap</code></td>       <td>Latest lap to pit on for the player's current strategy (uint8).</td></tr>
+                        <tr><td>Predicted Rejoin Position</td>   <td><code>m_pitStopRejoinPosition</code></td>        <td>Predicted position to rejoin at, for the player (uint8).</td></tr>
+                        <tr><td>Pit Speed Limit</td>             <td><code>m_pitSpeedLimit</code></td>                <td>Pit speed limit in km/h (uint8).</td></tr>
+                        <tr><td>Safety Car Status</td>           <td><code>m_safetyCarStatus</code></td>              <td>0 = None, 1 = Full, 2 = Virtual, 3 = Formation Lap.</td></tr>
+                        <tr><td>Safety Car Periods</td>          <td><code>m_numSafetyCarPeriods</code></td>          <td>Number of safety cars called during the session (uint8).</td></tr>
+                        <tr><td>Virtual SC Periods</td>          <td><code>m_numVirtualSafetyCarPeriods</code></td>   <td>Number of virtual safety cars called during the session (uint8).</td></tr>
+                        <tr><td>Red Flag Periods</td>            <td><code>m_numRedFlagPeriods</code></td>            <td>Number of red flags called during the session (uint8).</td></tr>
+                        <tr><td>Season Link ID</td>              <td><code>m_seasonLinkIdentifier</code></td>         <td>Identifier for the season; persists across saves (uint32).</td></tr>
+                        <tr><td>Weekend Link ID</td>             <td><code>m_weekendLinkIdentifier</code></td>        <td>Identifier for the weekend; persists across saves (uint32).</td></tr>
+                        <tr><td>Session Link ID</td>             <td><code>m_sessionLinkIdentifier</code></td>        <td>Identifier for the session; persists across saves (uint32).</td></tr>
+                        <tr><td>Steering Assist</td>             <td><code>m_steeringAssist</code></td>               <td>0 = Off, 1 = On.</td></tr>
+                        <tr><td>Braking Assist</td>              <td><code>m_brakingAssist</code></td>                <td>0 = Off, 1 = Low, 2 = Medium, 3 = High.</td></tr>
+                        <tr><td>Gearbox</td>                     <td><code>m_gearboxAssist</code></td>                <td>1 = Manual, 2 = Manual + Suggested Gear, 3 = Auto.</td></tr>
+                        <tr><td>Pit Assist</td>                  <td><code>m_pitAssist</code></td>                    <td>0 = Off, 1 = On.</td></tr>
+                        <tr><td>Pit Release Assist</td>          <td><code>m_pitReleaseAssist</code></td>             <td>0 = Off, 1 = On.</td></tr>
+                        <tr><td>ERS Assist</td>                  <td><code>m_ERSAssist</code></td>                    <td>0 = Off, 1 = On.</td></tr>
+                        <tr><td>DRS Assist</td>                  <td><code>m_DRSAssist</code></td>                    <td>0 = Off, 1 = On.</td></tr>
+                        <tr><td>Dynamic Racing Line</td>         <td><code>m_dynamicRacingLine</code></td>            <td>0 = Off, 1 = Corners Only, 2 = Full.</td></tr>
+                        <tr><td>Racing Line Type</td>            <td><code>m_dynamicRacingLineType</code></td>        <td>0 = 2D, 1 = 3D.</td></tr>
+                        <tr><td>Race Starts</td>                 <td><code>m_raceStarts</code></td>                   <td>0 = Manual, 1 = Assisted.</td></tr>
+                        <tr><td>Start Reaction Time</td>         <td><code>m_startReactionTime</code></td>            <td><strong>New in 2026 format.</strong> Driver's start reaction time in seconds; 0.0 if assisted starts (float).</td></tr>
+                        <tr><td>Recovery Mode</td>               <td><code>m_recoveryMode</code></td>                 <td>0 = None, 1 = Flashbacks, 2 = Auto-Recovery.</td></tr>
+                        <tr><td>Flashback Limit</td>             <td><code>m_flashbackLimit</code></td>               <td>0 = Low, 1 = Medium, 2 = High, 3 = Unlimited.</td></tr>
+                        <tr><td>Anti-Lock Brakes Assist</td>     <td><code>m_antiLockBrakesAssist</code></td>         <td><strong>New in 2026 format.</strong> 0 = Off, 1 = On.</td></tr>
+                        <tr><td>Traction Control Assist</td>     <td><code>m_tractionControlAssist</code></td>        <td><strong>New in 2026 format.</strong> 0 = Off, 1 = Medium, 2 = Full.</td></tr>
+                        <tr><td>Racing Line Hi-Vis</td>          <td><code>m_dynamicRacingLineHiVis</code></td>       <td><strong>New in 2026 format.</strong> 0 = Off, 1 = On.</td></tr>
+                        <tr><td>Racing Line Colour Blind</td>    <td><code>m_dynamicRacingLineColourBlind</code></td> <td><strong>New in 2026 format.</strong> 0 = Off, 1 = Protanopia, 2 = Deuteranopia, 3 = Tritanopia.</td></tr>
+                        <tr><td>Recurring Rewind Prompt</td>     <td><code>m_recurringRewindPrompt</code></td>        <td><strong>New in 2026 format.</strong> 0 = Off, 1 = On.</td></tr>
+                        <tr><td>Game Mode ID</td>                <td><code>m_gameMode</code></td>                     <td>Game mode identifier — see game mode appendix.</td></tr>
+                        <tr><td>Rule Set ID</td>                 <td><code>m_ruleSet</code></td>                      <td>0 = Practice & Qualifying, 1 = Race, 2 = Time Trial, 12 = Elimination.</td></tr>
+                        <tr><td>Equal Car Performance</td>       <td><code>m_equalCarPerformance</code></td>          <td>0 = Off, 1 = On.</td></tr>
+                        <tr><td>Car Damage</td>                  <td><code>m_carDamage</code></td>                    <td>0 = Off, 1 = Reduced, 2 = Standard, 3 = Simulation.</td></tr>
+                        <tr><td>Car Damage Rate</td>             <td><code>m_carDamageRate</code></td>                <td>0 = Reduced, 1 = Standard, 2 = Simulation.</td></tr>
+                        <tr><td>Collisions</td>                  <td><code>m_collisions</code></td>                   <td>0 = Off, 1 = Player-to-Player Off, 2 = On.</td></tr>
+                        <tr><td>Collisions Off Lap 1</td>        <td><code>m_collisionsOffForFirstLapOnly</code></td> <td>0 = Disabled, 1 = Enabled.</td></tr>
+                        <tr><td>MP Unsafe Pit Release</td>       <td><code>m_mpUnsafePitRelease</code></td>           <td>0 = On, 1 = Off (multiplayer).</td></tr>
+                        <tr><td>MP Off For Griefing</td>         <td><code>m_mpOffForGriefing</code></td>             <td>0 = Disabled, 1 = Enabled (multiplayer).</td></tr>
+                        <tr><td>Corner Cutting</td>              <td><code>m_cornerCuttingStringency</code></td>      <td>0 = Regular, 1 = Strict.</td></tr>
+                        <tr><td>Parc Fermé Rules</td>            <td><code>m_parcFermeRules</code></td>               <td>0 = Off, 1 = On.</td></tr>
+                        <tr><td>Pit Stop Experience</td>         <td><code>m_pitStopExperience</code></td>            <td>0 = Automatic, 1 = Broadcast, 2 = Immersive.</td></tr>
+                        <tr><td>Safety Car Frequency</td>        <td><code>m_safetyCar</code></td>                    <td>0 = Off, 1 = Reduced, 2 = Standard, 3 = Increased.</td></tr>
+                        <tr><td>Safety Car Experience</td>       <td><code>m_safetyCarExperience</code></td>          <td>0 = Broadcast, 1 = Immersive.</td></tr>
+                        <tr><td>Formation Lap</td>               <td><code>m_formationLap</code></td>                 <td>0 = Off, 1 = On.</td></tr>
+                        <tr><td>Formation Lap Exp.</td>          <td><code>m_formationLapExperience</code></td>       <td>0 = Broadcast, 1 = Immersive.</td></tr>
+                        <tr><td>Red Flags Frequency</td>         <td><code>m_redFlags</code></td>                     <td>0 = Off, 1 = Reduced, 2 = Standard, 3 = Increased.</td></tr>
+                        <tr><td>Affects Licence (Solo)</td>      <td><code>m_affectsLicenceLevelSolo</code></td>      <td>0 = Off, 1 = On.</td></tr>
+                        <tr><td>Affects Licence (MP)</td>        <td><code>m_affectsLicenceLevelMP</code></td>        <td>0 = Off, 1 = On.</td></tr>
+                        <tr><td>Surface Type</td>                <td><code>m_surfaceType</code></td>                  <td>0 = Simplified, 1 = Realistic.</td></tr>
+                        <tr><td>Low Fuel Mode</td>               <td><code>m_lowFuelMode</code></td>                  <td>0 = Easy, 1 = Hard.</td></tr>
+                        <tr><td>Tyre Temperature Model</td>      <td><code>m_tyreTemperature</code></td>              <td>0 = Surface Only, 1 = Surface & Carcass.</td></tr>
+                        <tr><td>Pit Lane Tyre Sim</td>           <td><code>m_pitLaneTyreSim</code></td>               <td>0 = On, 1 = Off.</td></tr>
+                        <tr><td>Speed Units (Lead)</td>          <td><code>m_speedUnitsLeadPlayer</code></td>         <td>0 = MPH, 1 = KPH.</td></tr>
+                        <tr><td>Temp Units (Lead)</td>           <td><code>m_temperatureUnitsLeadPlayer</code></td>   <td>0 = Celsius, 1 = Fahrenheit.</td></tr>
+                        <tr><td>Speed Units (Secondary)</td>     <td><code>m_speedUnitsSecondaryPlayer</code></td>    <td>0 = MPH, 1 = KPH.</td></tr>
+                        <tr><td>Temp Units (Secondary)</td>      <td><code>m_temperatureUnitsSecondaryPlayer</code></td> <td>0 = Celsius, 1 = Fahrenheit.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
         </div>
     </div>
 
@@ -226,8 +388,11 @@
 
         const WEATHER = { 0:'Clear', 1:'Light Cloud', 2:'Overcast', 3:'Light Rain', 4:'Heavy Rain', 5:'Storm' };
         const SESSION_TYPE = { 0:'Unknown', 1:'Practice 1', 2:'Practice 2', 3:'Practice 3', 4:'Short Practice', 5:'Qualifying 1', 6:'Qualifying 2', 7:'Qualifying 3', 8:'Short Qualifying', 9:'One-Shot Qualifying', 10:'Sprint Shootout 1', 11:'Sprint Shootout 2', 12:'Sprint Shootout 3', 13:'Short Sprint Shootout', 14:'One-Shot Sprint Shootout', 15:'Race', 16:'Race 2', 17:'Race 3', 18:'Time Trial' };
-        const FORMULA = { 0:'F1 Modern', 1:'F1 Classic', 2:'F2', 3:'F1 Generic', 4:'Beta', 6:'Esports', 8:'F1 World', 9:'F1 Elimination' };
-        const TRACK_ID = { 0:'Melbourne', 2:'Shanghai', 3:'Sakhir (Bahrain)', 4:'Catalunya', 5:'Monaco', 6:'Montreal', 7:'Silverstone', 9:'Hungaroring', 10:'Spa', 11:'Monza', 12:'Singapore', 13:'Suzuka', 14:'Abu Dhabi', 15:'Texas', 16:'Brazil', 17:'Austria', 19:'Mexico', 20:'Baku (Azerbaijan)', 26:'Zandvoort', 27:'Imola', 29:'Jeddah', 30:'Miami', 31:'Las Vegas', 32:'Losail', 39:'Silverstone (Reverse)', 40:'Austria (Reverse)', 41:'Zandvoort (Reverse)' };
+        const FORMULA = { 0:'F1 Modern', 1:'F1 Classic', 2:'F2', 3:'F1 Generic', 4:'Beta', 6:'Esports', 8:'F1 World', 9:'F1 Elimination', 13:'F1 26' };
+        const TRACK_ID = { 0:'Melbourne', 2:'Shanghai', 3:'Sakhir (Bahrain)', 4:'Catalunya', 5:'Monaco', 6:'Montreal', 7:'Silverstone', 9:'Hungaroring', 10:'Spa', 11:'Monza', 12:'Singapore', 13:'Suzuka', 14:'Abu Dhabi', 15:'Texas', 16:'Brazil', 17:'Austria', 19:'Mexico', 20:'Baku (Azerbaijan)', 26:'Zandvoort', 27:'Imola', 29:'Jeddah', 30:'Miami', 31:'Las Vegas', 32:'Losail', 39:'Silverstone (Reverse)', 40:'Austria (Reverse)', 41:'Zandvoort (Reverse)', 42:'Madrid' };
+        const AERO_TRACK_STATUS = { 0:'Full', 1:'Partial' };
+        const TRACTION_ASSIST = { 0:'Off', 1:'Medium', 2:'Full' };
+        const COLOUR_BLIND = { 0:'Off', 1:'Protanopia', 2:'Deuteranopia', 3:'Tritanopia' };
         const GAME_MODE = { 4:"Grand Prix '23", 5:'Time Trial', 6:'Splitscreen', 7:'Online Custom', 15:'Online Weekly Event', 17:'Story Mode (Braking Point)', 27:"My Team Career '25", 28:"Driver Career '25", 29:"Career '25 Online", 30:"Challenge Career '25", 75:'Story Mode (APXGP)', 127:'Benchmark' };
         const RULESET = { 0:'Practice & Qualifying', 1:'Race', 2:'Time Trial', 12:'Elimination' };
         const SAFETY_CAR = { 0:'None', 1:'Full Safety Car', 2:'Virtual Safety Car', 3:'Formation Lap' };
@@ -270,6 +435,7 @@
                 { key: 'm_sector2LapDistanceStart',    label: 'Sector 2 Start Distance',     unit: 'm', decimals: 1 },
                 { key: 'm_sector3LapDistanceStart',    label: 'Sector 3 Start Distance',     unit: 'm', decimals: 1 },
                 { key: 'm_numMarshalZones',            label: 'Marshal Zones',               unit: ' zones' },
+                { key: 'm_activeAeroTrackStatus',       label: 'Active Aero Track Status',    map: AERO_TRACK_STATUS, color: 'blue' },
             ],
             'section-session': [
                 { key: 'm_sessionType',               label: 'Session Type',   map: SESSION_TYPE, color: 'blue' },
@@ -317,8 +483,14 @@
                 { key: 'm_dynamicRacingLine',         label: 'Dynamic Racing Line',   map: RACE_LINE },
                 { key: 'm_dynamicRacingLineType',     label: 'Racing Line Type',      map: RACE_LINE_TYPE },
                 { key: 'm_raceStarts',                label: 'Race Starts',           map: STARTS },
+                { key: 'm_startReactionTime',         label: 'Start Reaction Time',   unit: 's', decimals: 3 },
                 { key: 'm_recoveryMode',              label: 'Recovery Mode',         map: RECOVERY },
                 { key: 'm_flashbackLimit',            label: 'Flashback Limit',       map: FLASHBACK },
+                { key: 'm_antiLockBrakesAssist',      label: 'Anti-Lock Brakes Assist', map: BOOL },
+                { key: 'm_tractionControlAssist',     label: 'Traction Control Assist', map: TRACTION_ASSIST },
+                { key: 'm_dynamicRacingLineHiVis',    label: 'Racing Line Hi-Vis',     map: BOOL },
+                { key: 'm_dynamicRacingLineColourBlind', label: 'Racing Line Colour Blind Mode', map: COLOUR_BLIND },
+                { key: 'm_recurringRewindPrompt',     label: 'Recurring Rewind Prompt', map: BOOL },
             ],
             'section-settings': [
                 { key: 'm_gameMode',                  label: 'Game Mode ID',  map: GAME_MODE, color: 'blue' },
@@ -519,6 +691,34 @@
             `;
         }
 
+        // ─── Active Aero / DRS zone tables (2026 format only) ────────────────
+
+        function renderZoneRangeTable(zones, count, containerId, countElId) {
+            document.getElementById(countElId).textContent = count;
+            const container = document.getElementById(containerId);
+            if (!zones || zones.length === 0 || count === 0) return;
+
+            const visible = zones.slice(0, Math.min(count, zones.length));
+            container.innerHTML = `
+                <table class="forecast-table">
+                    <thead>
+                        <tr>
+                            <th>Zone #</th>
+                            <th>Start (%)</th>
+                            <th>End (%)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${visible.map((z, i) => `<tr>
+                            <td>${i + 1}</td>
+                            <td>${(z.m_zoneStart * 100).toFixed(1)}</td>
+                            <td>${(z.m_zoneEnd * 100).toFixed(1)}</td>
+                        </tr>`).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
         // ─── Socket handler ──────────────────────────────────────────────────
 
         let totalPackets = 0;
@@ -553,6 +753,17 @@
             // Update marshal zones table
             if (data.m_marshalZones) {
                 renderMarshalZones(data.m_marshalZones, data.m_numMarshalZones || 0);
+            }
+
+            // Update Active Aero / DRS zone tables (2026 format only)
+            if (data.m_activeAeroZonesFull) {
+                renderZoneRangeTable(data.m_activeAeroZonesFull, data.m_numActiveAeroZonesFull || 0, 'aeroFullContainer', 'aeroFullCount');
+            }
+            if (data.m_activeAeroZonesPartial) {
+                renderZoneRangeTable(data.m_activeAeroZonesPartial, data.m_numActiveAeroZonesPartial || 0, 'aeroPartialContainer', 'aeroPartialCount');
+            }
+            if (data.m_drsZones) {
+                renderZoneRangeTable(data.m_drsZones, data.m_numDRSZones || 0, 'drsZoneContainer', 'drsZoneCount');
             }
         });
 

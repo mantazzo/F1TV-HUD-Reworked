@@ -239,13 +239,13 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr><td>#</td>                  <td><code>m_participants[i]</code></td>        <td>Car slot index (0–21). Red = Player 1, Blue = Player 2. Slots at or above <code>m_numActiveCars</code> are dimmed.</td></tr>
+                        <tr><td>#</td>                  <td><code>m_participants[i]</code></td>        <td>Car slot index (0–21, 0–23 if using 2026 specifications). Red = Player 1, Blue = Player 2. Slots at or above <code>m_numActiveCars</code> are dimmed.</td></tr>
                         <tr><td>Name</td>               <td><code>m_name</code></td>                   <td>Participant name in UTF-8. Truncated with … if longer than 32 characters.</td></tr>
                         <tr><td>Car #</td>              <td><code>m_raceNumber</code></td>             <td>Race number displayed on the car.</td></tr>
                         <tr><td>Type</td>               <td><code>m_aiControlled</code></td>           <td>0 = Human, 1 = AI.</td></tr>
                         <tr><td>Team</td>               <td><code>m_teamId</code></td>                 <td>Team identifier. Resolved to a team name via DefaultTeams.json; falls back to "Team N" if unknown.</td></tr>
                         <tr><td>My Team</td>            <td><code>m_myTeam</code></td>                 <td>1 = car is the player's My Team entry, 0 = otherwise.</td></tr>
-                        <tr><td>Driver ID</td>          <td><code>m_driverId</code></td>               <td>Driver identifier from the game's driver roster. Resolved to full name + abbreviation. 255 = network human (no fixed driver ID).</td></tr>
+                        <tr><td>Driver ID</td>          <td><code>m_driverId</code></td>               <td>Driver identifier from the game's driver roster. Resolved to full name + abbreviation. 255 = network human (no fixed driver ID). Also applies to ID 65535 if using 2026 specifications.</td></tr>
                         <tr><td>Network ID</td>         <td><code>m_networkId</code></td>              <td>Unique identifier for network players. Not meaningful in offline sessions.</td></tr>
                         <tr><td>Nationality</td>        <td><code>m_nationality</code></td>            <td>Driver nationality code, resolved to a country name. The actual ID is shown as a small subtag.</td></tr>
                         <tr><td>Telemetry</td>          <td><code>m_yourTelemetry</code></td>          <td>The player's UDP telemetry restriction setting. 0 = Restricted, 1 = Public.</td></tr>

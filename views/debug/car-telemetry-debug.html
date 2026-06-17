@@ -465,7 +465,7 @@
                         <tr><td>Brake Temp</td>          <td><code>m_brakesTemperature[4]</code></td>            <td>Brake disc temperature in °C for each corner. Order: RL, RR, FL, FR (uint16[4]).</td></tr>
                         <tr><td>Tyre Surface Temp</td>   <td><code>m_tyresSurfaceTemperature[4]</code></td>      <td>Tyre surface temperature in °C. Order: RL, RR, FL, FR (uint8[4]).</td></tr>
                         <tr><td>Tyre Inner Temp</td>     <td><code>m_tyresInnerTemperature[4]</code></td>        <td>Tyre inner (carcass) temperature in °C. Order: RL, RR, FL, FR (uint8[4]).</td></tr>
-                        <tr><td>Engine Temp</td>         <td><code>m_engineTemperature</code></td>               <td>Engine coolant temperature in °C (uint16).</td></tr>
+                        <tr><td>Engine Temp</td>         <td><code>m_engineTemperature</code></td>               <td>Engine coolant temperature in °C (changed to uint8 in 2026 specifications, was uint16).</td></tr>
                         <tr><td>Tyre Pressure</td>       <td><code>m_tyresPressure[4]</code></td>                <td>Tyre pressure in PSI for each corner. Order: RL, RR, FL, FR (float[4]).</td></tr>
                         <tr><td>Surface Type</td>        <td><code>m_surfaceType[4]</code></td>                  <td>Driving surface under each tyre. Order: RL, RR, FL, FR. See SURFACES constant (uint8[4]).</td></tr>
                         <tr><td>MFD Panel</td>           <td><code>m_mfdPanelIndex</code></td>                   <td>Open MFD panel index for Player 1. 255 = closed. Race: 0=Setup, 1=Pits, 2=Damage, 3=Engine, 4=Temps.</td></tr>

@@ -1,0 +1,1022 @@
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/drivers.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/drivers.js
+index f0c6134..2dc0004 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/drivers.js
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/drivers.js
+@@ -169,7 +169,20 @@ exports.DRIVERS = {
+     174: { abbreviation: 'TSO', firstName: 'Nikola', lastName: 'Tsolov' },
+     175: { abbreviation: 'TRA', firstName: 'Tim', lastName: 'Tramnitz' },
+     185: { abbreviation: 'COR', firstName: 'Luca', lastName: 'Cortez' },
++    186: { abbreviation: 'BRO', firstName: 'Luke', lastName: 'Browning' },
++    187: { abbreviation: 'SHI', firstName: 'Cian', lastName: 'Shields' },
++    188: { abbreviation: 'LIN', firstName: 'Arvid', lastName: 'Lindblad' },
++    189: { abbreviation: 'BEG', firstName: 'Dino', lastName: 'Beganovic' },
++    190: { abbreviation: 'FOR', firstName: 'Leonardo', lastName: 'Fornaroli' },
++    191: { abbreviation: 'GOE', firstName: 'Oliver', lastName: 'Goethe' },
++    192: { abbreviation: 'MIN', firstName: 'Gabriele', lastName: 'Minì' },
++    193: { abbreviation: 'MON', firstName: 'Sebastián', lastName: 'Montoya' },
++    194: { abbreviation: 'DUN', firstName: 'Alexander', lastName: 'Dunne' },
++    195: { abbreviation: 'EST', firstName: 'Max', lastName: 'Esterson' },
++    196: { abbreviation: 'MEG', firstName: 'Sami', lastName: 'Meguetounif' },
++    197: { abbreviation: 'BEN', firstName: 'John', lastName: 'Bennett' },
+     255: { abbreviation: 'DRV', firstName: 'Network', lastName: 'Human' },
++    65535: { abbreviation: 'DRV', firstName: 'Network', lastName: 'Human' },
+ };
+ exports.AI_DRIVER_NAMES = [
+     'VETTEL',
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/ersDeployMode.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/ersDeployMode.js
+index 3c219ce..82a2395 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/ersDeployMode.js
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/ersDeployMode.js
+@@ -5,6 +5,6 @@ exports.ERS_DEPLOY_MODE = [
+     'None',
+     'Medium',
+     'Hotlap',
+-    'Overtake',
++    'Boost',
+ ];
+ //# sourceMappingURL=ersDeployMode.js.map
+\ No newline at end of file
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/formulas.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/formulas.js
+index 50cf924..3ef6526 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/formulas.js
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/formulas.js
+@@ -12,5 +12,9 @@ exports.FORMULAS = [
+     { name: 'F2 2021', weight: 787 },
+     { name: 'F1 World Car', weight: 796 },
+     { name: 'F1 Elimination', weight: 0 },
++    { name: 'Unused 10', weight: 0 },
++    { name: 'Unused 11', weight: 0 },
++    { name: 'Unused 12', weight: 0 },
++    { name: 'F1 26', weight: 768 },
+ ];
+ //# sourceMappingURL=formulas.js.map
+\ No newline at end of file
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/packetSizes.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/packetSizes.js
+index f48aabc..d5a5476 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/packetSizes.js
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/packetSizes.js
+@@ -2,21 +2,22 @@
+ Object.defineProperty(exports, "__esModule", { value: true });
+ exports.PACKET_SIZES = void 0;
+ exports.PACKET_SIZES = {
+-    motion: { 2025: 1349, 2024: 1349, 2023: 1349, 2022: 1464 },
+-    session: { 2025: 753, 2024: 753, 2023: 644, 2022: 632 },
+-    lapData: { 2025: 1285, 2024: 1285, 2023: 1131, 2022: 972 },
+-    event: { 2025: 45, 2024: 45, 2023: 45, 2022: 40 },
+-    participants: { 2025: 1284, 2024: 1350, 2023: 1306, 2022: 1257 },
+-    carSetups: { 2025: 1133, 2024: 1133, 2023: 1107, 2022: 1102 },
+-    carTelemetry: { 2025: 1352, 2024: 1352, 2023: 1352, 2022: 1347 },
+-    carStatus: { 2025: 1239, 2024: 1239, 2023: 1239, 2022: 1058 },
+-    finalClassification: { 2025: 1042, 2024: 1020, 2023: 1020, 2022: 1015 },
+-    lobbyInfo: { 2025: 954, 2024: 1306, 2023: 1218, 2022: 1191 },
+-    carDamage: { 2025: 1041, 2024: 953, 2023: 953, 2022: 948 },
+-    sessionHistory: { 2025: 1460, 2024: 1460, 2023: 1460, 2022: 1155 },
+-    tyreSets: { 2025: 231, 2024: 231, 2023: 231 },
+-    motionEx: { 2025: 273, 2024: 237, 2023: 217 },
+-    timeTrial: { 2025: 101, 2024: 101 },
+-    lapPositions: { 2025: 1131 }
++    motion: { 2026: 1325, 2025: 1349, 2024: 1349, 2023: 1349, 2022: 1464 },
++    session: { 2026: 926, 2025: 753, 2024: 753, 2023: 644, 2022: 632 },
++    lapData: { 2026: 1399, 2025: 1285, 2024: 1285, 2023: 1131, 2022: 972 },
++    event: { 2026: 45, 2025: 45, 2024: 45, 2023: 45, 2022: 40 },
++    participants: { 2026: 1470, 2025: 1284, 2024: 1350, 2023: 1306, 2022: 1257 },
++    carSetups: { 2026: 1233, 2025: 1133, 2024: 1133, 2023: 1107, 2022: 1102 },
++    carTelemetry: { 2026: 1448, 2025: 1352, 2024: 1352, 2023: 1352, 2022: 1347 },
++    carStatus: { 2026: 1445, 2025: 1239, 2024: 1239, 2023: 1239, 2022: 1058 },
++    finalClassification: { 2026: 1134, 2025: 1042, 2024: 1020, 2023: 1020, 2022: 1015 },
++    lobbyInfo: { 2026: 1062, 2025: 954, 2024: 1306, 2023: 1218, 2022: 1191 },
++    carDamage: { 2026: 1133, 2025: 1041, 2024: 953, 2023: 953, 2022: 948 },
++    sessionHistory: { 2026: 1460, 2025: 1460, 2024: 1460, 2023: 1460, 2022: 1155 },
++    tyreSets: { 2026: 231, 2025: 231, 2024: 231, 2023: 231 },
++    motionEx: { 2026: 273, 2025: 273, 2024: 237, 2023: 217 },
++    timeTrial: { 2026: 104, 2025: 101, 2024: 101 },
++    lapPositions: { 2026: 1231, 2025: 1131 },
++    carTelemetry2: { 2026: 269 }
+ };
+ //# sourceMappingURL=packetSizes.js.map
+\ No newline at end of file
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/packets.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/packets.js
+index a0df0d6..5c28b3c 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/packets.js
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/packets.js
+@@ -18,5 +18,6 @@ exports.PACKETS = {
+     motionEx: 'motionEx',
+     timeTrial: 'timeTrial',
+     lapPositions: 'lapPositions',
++    carTelemetry2: 'carTelemetry2',
+ };
+ //# sourceMappingURL=packets.js.map
+\ No newline at end of file
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/sessionTypes.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/sessionTypes.js
+index c37763c..07b0846 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/sessionTypes.js
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/sessionTypes.js
+@@ -60,5 +60,26 @@ exports.SESSION_TYPES = {
+         17: { short: 'R3', long: 'Race 3' },
+         18: { short: 'TT', long: 'Time Trial' },
+     },
++    2026: {
++        0: { short: 'UNK', long: 'Unknown' },
++        1: { short: 'FP1', long: 'Free Practice 1' },
++        2: { short: 'FP2', long: 'Free Practice 2' },
++        3: { short: 'FP3', long: 'Free Practice 3' },
++        4: { short: 'ShortFP', long: 'Short Free Practice' },
++        5: { short: 'Q1', long: 'Qualifying 1' },
++        6: { short: 'Q2', long: 'Qualifying 2' },
++        7: { short: 'Q3', long: 'Qualifying 3' },
++        8: { short: 'ShortQ', long: 'Short Qualifying' },
++        9: { short: 'OneShotQ', long: 'One Shot Qualifying' },
++        10: { short: 'S1', long: 'Sprint Shootout 1' },
++        11: { short: 'S2', long: 'Sprint Shootout 2' },
++        12: { short: 'S3', long: 'Sprint Shootout 3' },
++        13: { short: 'ShortS', long: 'Short Sprint Shootout' },
++        14: { short: 'OneShotS', long: 'One-Shot Sprint Shootout' },
++        15: { short: 'R', long: 'Race' },
++        16: { short: 'R2', long: 'Race 2' },
++        17: { short: 'R3', long: 'Race 3' },
++        18: { short: 'TT', long: 'Time Trial' },
++    },
+ };
+ //# sourceMappingURL=sessionTypes.js.map
+\ No newline at end of file
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/teams.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/teams.js
+index 7c1040f..57c74ec 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/teams.js
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/teams.js
+@@ -171,6 +171,89 @@ exports.TEAMS = {
+         192: { name: 'Haas 24', color: HAAS_COLOR },
+         193: { name: 'McLaren 24', color: MCLAREN_COLOR },
+         194: { name: 'Sauber 24', color: ALFA_ROMEO_COLOR },
++        209: { name: "Art GP '25", color: ART_GRAND_PRIX_COLOR },
++        210: { name: "Campos '25", color: CAMPOS_VEXATEC_COLOR },
++        211: { name: "Rodin Motorsport '25", color: '#FFFFFF' },
++        212: { name: "AIX Racing '25", color: '#FFFFFF' },
++        213: { name: "DAMS '25", color: DAMS_COLOR },
++        214: { name: "Hitech '25", color: HITECH_COLOR },
++        215: { name: "MP Motorsport '25", color: MP_MOTORSPORT_COLOR },
++        216: { name: "Prema '25", color: PREMA_COLOR },
++        217: { name: "Trident '25", color: TRIDENT_COLOR },
++        218: { name: "Van Amersfoort Racing '25", color: '#FFFFFF' },
++        219: { name: "Invicta '25", color: '#FFFFFF' },
++        220: { name: "Mercedes '26", color: MERCEDES_COLOR },
++        221: { name: "Ferrari '26", color: FERRARI_COLOR },
++        222: { name: "Red Bull Racing '26", color: RED_BULL_COLOR },
++        223: { name: "Williams '26", color: WILLIAMS_COLOR },
++        224: { name: "Aston Martin '26", color: ASTON_MARTIN_COLOR },
++        225: { name: "Alpine '26", color: ALPINE_COLOR },
++        226: { name: "RB '26", color: ALPHA_TAURI_COLOR },
++        227: { name: "Haas '26", color: HAAS_COLOR },
++        228: { name: "McLaren '26", color: MCLAREN_COLOR },
++        229: { name: "Audi '26", color: '#FF2D00' },
++        230: { name: "Cadillac '26", color: '#AAAAAD' },
++    },
++    2026: {
++        0: { name: 'Mercedes', color: MERCEDES_COLOR },
++        1: { name: 'Ferrari', color: FERRARI_COLOR },
++        2: { name: 'Red Bull Racing', color: RED_BULL_COLOR },
++        3: { name: 'Williams', color: WILLIAMS_COLOR },
++        4: { name: 'Aston Martin', color: ASTON_MARTIN_COLOR },
++        5: { name: 'Alpine', color: ALPINE_COLOR },
++        6: { name: 'RB', color: ALPHA_TAURI_COLOR },
++        7: { name: 'Haas', color: HAAS_COLOR },
++        8: { name: 'McLaren', color: MCLAREN_COLOR },
++        9: { name: 'Sauber', color: ALFA_ROMEO_COLOR },
++        41: { name: 'F1 Generic', color: '#FFFFFF' },
++        104: { name: 'F1 Custom Team', color: '#FFFFFF' },
++        129: { name: 'Konnersport', color: MERCEDES_COLOR },
++        142: { name: 'APXGP 24', color: '#FFFFFF' },
++        154: { name: 'APXGP 25', color: '#FFFFFF' },
++        155: { name: 'Konnersport 24', color: MERCEDES_COLOR },
++        158: { name: "Art GP '24", color: ART_GRAND_PRIX_COLOR },
++        159: { name: "Campos '24", color: CAMPOS_VEXATEC_COLOR },
++        160: { name: 'Rodin Motorsport 24', color: '#FFFFFF' },
++        161: { name: 'AIX Racing 24', color: '#FFFFFF' },
++        162: { name: 'DAMS 24', color: DAMS_COLOR },
++        163: { name: 'Hitech 24', color: HITECH_COLOR },
++        164: { name: 'MP Motorsport 24', color: MP_MOTORSPORT_COLOR },
++        165: { name: 'Prema 24', color: PREMA_COLOR },
++        166: { name: 'Trident 24', color: TRIDENT_COLOR },
++        167: { name: 'Van Amersfoort Racing 24', color: '#FFFFFF' },
++        168: { name: 'Invicta 24', color: '#FFFFFF' },
++        185: { name: 'Mercedes 24', color: MERCEDES_COLOR },
++        186: { name: 'Ferrari 24', color: FERRARI_COLOR },
++        187: { name: 'Red Bull Racing 24', color: RED_BULL_COLOR },
++        188: { name: 'Williams 24', color: WILLIAMS_COLOR },
++        189: { name: 'Aston Martin 24', color: ASTON_MARTIN_COLOR },
++        190: { name: 'Alpine 24', color: ALPINE_COLOR },
++        191: { name: 'RB 24', color: ALPHA_TAURI_COLOR },
++        192: { name: 'Haas 24', color: HAAS_COLOR },
++        193: { name: 'McLaren 24', color: MCLAREN_COLOR },
++        194: { name: 'Sauber 24', color: ALFA_ROMEO_COLOR },
++        465: { name: "Art GP '25", color: ART_GRAND_PRIX_COLOR },
++        466: { name: "Campos '25", color: CAMPOS_VEXATEC_COLOR },
++        467: { name: "Rodin Motorsport '25", color: '#FFFFFF' },
++        468: { name: "AIX Racing '25", color: '#FFFFFF' },
++        469: { name: "DAMS '25", color: DAMS_COLOR },
++        470: { name: "Hitech '25", color: HITECH_COLOR },
++        471: { name: "MP Motorsport '25", color: MP_MOTORSPORT_COLOR },
++        472: { name: "Prema '25", color: PREMA_COLOR },
++        473: { name: "Trident '25", color: TRIDENT_COLOR },
++        474: { name: "Van Amersfoort Racing '25", color: '#FFFFFF' },
++        475: { name: "Invicta '25", color: '#FFFFFF' },
++        476: { name: "Mercedes '26", color: MERCEDES_COLOR },
++        477: { name: "Ferrari '26", color: FERRARI_COLOR },
++        478: { name: "Red Bull Racing '26", color: RED_BULL_COLOR },
++        479: { name: "Williams '26", color: WILLIAMS_COLOR },
++        480: { name: "Aston Martin '26", color: ASTON_MARTIN_COLOR },
++        481: { name: "Alpine '26", color: ALPINE_COLOR },
++        482: { name: "RB '26", color: ALPHA_TAURI_COLOR },
++        483: { name: "Haas '26", color: HAAS_COLOR },
++        484: { name: "McLaren '26", color: MCLAREN_COLOR },
++        485: { name: "Audi '26", color: '#FF2D00' },
++        486: { name: "Cadillac '26", color: '#AAAAAD' },
+     },
+ };
+ //# sourceMappingURL=teams.js.map
+\ No newline at end of file
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/tracks.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/tracks.js
+index 8be154d..7c8c6f7 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/tracks.js
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/tracks.js
+@@ -43,6 +43,7 @@ exports.TRACKS = [
+     { name: '38', lat: 0, lon: 0 },
+     { name: 'Silverstone Reverse', lat: 52.06922421, lon: -1.02226861 },
+     { name: 'Austria Reverse', lat: 47.22031495, lon: 14.76673126 },
+-    { name: 'Zandvoort Reverse', lat: 52.388851, lon: 4.5407599 }
++    { name: 'Zandvoort Reverse', lat: 52.388851, lon: 4.5407599 },
++    { name: 'Madrid', lat: 40.465278, lon: -3.615278 }
+ ];
+ //# sourceMappingURL=tracks.js.map
+\ No newline at end of file
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/index.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/index.js
+index e191222..6c3e44d 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/index.js
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/index.js
+@@ -141,6 +141,8 @@ class F1TelemetryClient extends events_1.EventEmitter {
+                 return packets_1.PacketTimeTrialDataParser;
+             case PACKETS.lapPositions:
+                 return packets_1.PacketLapPositionsDataParser;
++            case PACKETS.carTelemetry2:
++                return packets_1.PacketCarTelemetry2DataParser;
+             default:
+                 return null;
+         }
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/ActiveAeroZoneParser.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/ActiveAeroZoneParser.js
+new file mode 100644
+index 0000000..7faa3a4
+--- /dev/null
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/ActiveAeroZoneParser.js
+@@ -0,0 +1,12 @@
++"use strict";
++Object.defineProperty(exports, "__esModule", { value: true });
++exports.ActiveAeroZoneParser = void 0;
++const F1Parser_1 = require("../F1Parser");
++class ActiveAeroZoneParser extends F1Parser_1.F1Parser {
++    constructor() {
++        super();
++        this.endianess('little').floatle('m_zoneStart').floatle('m_zoneEnd');
++    }
++}
++exports.ActiveAeroZoneParser = ActiveAeroZoneParser;
++//# sourceMappingURL=ActiveAeroZoneParser.js.map
+\ No newline at end of file
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/CarDamageDataParser.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/CarDamageDataParser.js
+index 35210b3..cdc53d0 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/CarDamageDataParser.js
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/CarDamageDataParser.js
+@@ -18,8 +18,8 @@ class CarDamageDataParser extends F1Parser_1.F1Parser {
+             length: 4,
+             type: new binary_parser_1.Parser().uint8(''),
+         });
+-        // 2025 m_tyreBlisters[4]
+-        if (packetFormat === 2025) {
++        // 2025/2026 m_tyreBlisters[4]
++        if (packetFormat === 2025 || packetFormat === 2026) {
+             this.array('m_tyreBlisters', {
+                 length: 4,
+                 type: new binary_parser_1.Parser().uint8(''),
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/CarMotionDataParser.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/CarMotionDataParser.js
+index 4d12ca2..e575beb 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/CarMotionDataParser.js
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/CarMotionDataParser.js
+@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
+ exports.CarMotionDataParser = void 0;
+ const F1Parser_1 = require("../F1Parser");
+ class CarMotionDataParser extends F1Parser_1.F1Parser {
+-    constructor() {
++    constructor(packetFormat) {
+         super();
+         this.floatle('m_worldPositionX')
+             .floatle('m_worldPositionY')
+@@ -16,11 +16,18 @@ class CarMotionDataParser extends F1Parser_1.F1Parser {
+             .int16le('m_worldForwardDirZ')
+             .int16le('m_worldRightDirX')
+             .int16le('m_worldRightDirY')
+-            .int16le('m_worldRightDirZ')
+-            .floatle('m_gForceLateral')
+-            .floatle('m_gForceLongitudinal')
+-            .floatle('m_gForceVertical')
+-            .floatle('m_yaw')
++            .int16le('m_worldRightDirZ');
++        if (packetFormat === 2026) {
++            this.int16le('m_gForceLateral')
++                .int16le('m_gForceLongitudinal')
++                .int16le('m_gForceVertical');
++        }
++        else {
++            this.floatle('m_gForceLateral')
++                .floatle('m_gForceLongitudinal')
++                .floatle('m_gForceVertical');
++        }
++        this.floatle('m_yaw')
+             .floatle('m_pitch')
+             .floatle('m_roll');
+     }
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/CarSetupDataParser.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/CarSetupDataParser.js
+index 52a901f..ffbda3f 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/CarSetupDataParser.js
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/CarSetupDataParser.js
+@@ -21,7 +21,7 @@ class CarSetupDataParser extends F1Parser_1.F1Parser {
+             .uint8('m_rearSuspensionHeight')
+             .uint8('m_brakePressure')
+             .uint8('m_brakeBias');
+-        if (packetFormat === 2024 || packetFormat === 2025) {
++        if (packetFormat === 2024 || packetFormat === 2025 || packetFormat === 2026) {
+             this.uint8('m_engineBraking');
+         }
+         this.floatle('m_rearLeftTyrePressure')
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/CarStatusDataParser.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/CarStatusDataParser.js
+index b3b4935..4524184 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/CarStatusDataParser.js
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/CarStatusDataParser.js
+@@ -21,7 +21,7 @@ class CarStatusDataParser extends F1Parser_1.F1Parser {
+             .uint8('m_actualTyreCompound')
+             .uint8('m_visualTyreCompound')
+             .uint8('m_tyresAgeLaps');
+-        if (packetFormat === 2023 || packetFormat === 2024 || packetFormat === 2025) {
++        if (packetFormat === 2023 || packetFormat === 2024 || packetFormat === 2025 || packetFormat === 2026) {
+             this.int8('m_vehicleFiaFlags')
+                 .floatle('m_enginePowerICE')
+                 .floatle('m_enginePowerMGUK');
+@@ -32,8 +32,11 @@ class CarStatusDataParser extends F1Parser_1.F1Parser {
+         this.floatle('m_ersStoreEnergy')
+             .uint8('m_ersDeployMode')
+             .floatle('m_ersHarvestedThisLapMGUK')
+-            .floatle('m_ersHarvestedThisLapMGUH')
+-            .floatle('m_ersDeployedThisLap')
++            .floatle('m_ersHarvestedThisLapMGUH');
++        if (packetFormat === 2026) {
++            this.floatle('m_ersHarvestedLimitPerLap');
++        }
++        this.floatle('m_ersDeployedThisLap')
+             .uint8('m_networkPaused');
+     }
+ }
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/CarTelemetry2DataParser.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/CarTelemetry2DataParser.js
+new file mode 100644
+index 0000000..0ea445c
+--- /dev/null
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/CarTelemetry2DataParser.js
+@@ -0,0 +1,20 @@
++"use strict";
++Object.defineProperty(exports, "__esModule", { value: true });
++exports.CarTelemetry2DataParser = void 0;
++const F1Parser_1 = require("../F1Parser");
++class CarTelemetry2DataParser extends F1Parser_1.F1Parser {
++    constructor() {
++        super();
++        this.endianess('little')
++            .uint8('m_activeAeroMode')
++            .uint8('m_activeAeroAvailable')
++            .uint16le('m_activeAeroActivationDistance')
++            .uint8('m_overtakeAvailable')
++            .uint8('m_overtakeActive')
++            .uint16le('m_overtakeActivationDistance')
++            .uint8('m_2026Regulations')
++            .uint8('m_drivingWrongWay');
++    }
++}
++exports.CarTelemetry2DataParser = CarTelemetry2DataParser;
++//# sourceMappingURL=CarTelemetry2DataParser.js.map
+\ No newline at end of file
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/CarTelemetryDataParser.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/CarTelemetryDataParser.js
+index ed3b8c7..996febf 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/CarTelemetryDataParser.js
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/CarTelemetryDataParser.js
+@@ -4,7 +4,7 @@ exports.CarTelemetryDataParser = void 0;
+ const binary_parser_1 = require("binary-parser");
+ const F1Parser_1 = require("../F1Parser");
+ class CarTelemetryDataParser extends F1Parser_1.F1Parser {
+-    constructor() {
++    constructor(packetFormat) {
+         super();
+         this.uint16le('m_speed')
+             .floatle('m_throttle')
+@@ -27,9 +27,14 @@ class CarTelemetryDataParser extends F1Parser_1.F1Parser {
+             .array('m_tyresInnerTemperature', {
+             length: 4,
+             type: new binary_parser_1.Parser().uint8(''),
+-        })
+-            .uint16le('m_engineTemperature')
+-            .array('m_tyresPressure', {
++        });
++        if (packetFormat === 2026) {
++            this.uint8('m_engineTemperature');
++        }
++        else {
++            this.uint16le('m_engineTemperature');
++        }
++        this.array('m_tyresPressure', {
+             length: 4,
+             type: new binary_parser_1.Parser().floatle(''),
+         })
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/DRSZoneParser.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/DRSZoneParser.js
+new file mode 100644
+index 0000000..ba081c2
+--- /dev/null
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/DRSZoneParser.js
+@@ -0,0 +1,12 @@
++"use strict";
++Object.defineProperty(exports, "__esModule", { value: true });
++exports.DRSZoneParser = void 0;
++const F1Parser_1 = require("../F1Parser");
++class DRSZoneParser extends F1Parser_1.F1Parser {
++    constructor() {
++        super();
++        this.endianess('little').floatle('m_zoneStart').floatle('m_zoneEnd');
++    }
++}
++exports.DRSZoneParser = DRSZoneParser;
++//# sourceMappingURL=DRSZoneParser.js.map
+\ No newline at end of file
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/FinalClassificationDataParser.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/FinalClassificationDataParser.js
+index b2447a1..77dcc6c 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/FinalClassificationDataParser.js
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/FinalClassificationDataParser.js
+@@ -12,8 +12,8 @@ class FinalClassificationDataParser extends F1Parser_1.F1Parser {
+             .uint8('m_points')
+             .uint8('m_numPitStops')
+             .uint8('m_resultStatus');
+-        // 2025 m_resultReason
+-        if (packetFormat === 2025) {
++        // 2025/2026 m_resultReason
++        if (packetFormat === 2025 || packetFormat === 2026) {
+             this.uint8('m_resultReason');
+         }
+         this.uint32le('m_bestLapTimeInMS')
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/LapDataParser.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/LapDataParser.js
+index 8a6660b..c848c0e 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/LapDataParser.js
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/LapDataParser.js
+@@ -15,7 +15,7 @@ class LapDataParser extends F1Parser_1.F1Parser {
+                 .uint16le('m_deltaToCarInFrontInMS')
+                 .uint16le('m_deltaToRaceLeaderInMS');
+         }
+-        else if (packetFormat === 2024 || packetFormat === 2025) {
++        else if (packetFormat === 2024 || packetFormat === 2025 || packetFormat === 2026) {
+             this.uint16le('m_sector1TimeMSPart')
+                 .uint8('m_sector1TimeMinutesPart')
+                 .uint16le('m_sector2TimeMSPart')
+@@ -38,7 +38,7 @@ class LapDataParser extends F1Parser_1.F1Parser {
+             .uint8('m_sector')
+             .uint8('m_currentLapInvalid')
+             .uint8('m_penalties');
+-        if (packetFormat === 2023 || packetFormat === 2024 || packetFormat === 2025) {
++        if (packetFormat === 2023 || packetFormat === 2024 || packetFormat === 2025 || packetFormat === 2026) {
+             this.uint8('m_totalWarnings').uint8('m_cornerCuttingWarnings');
+         }
+         else {
+@@ -53,7 +53,7 @@ class LapDataParser extends F1Parser_1.F1Parser {
+             .uint16le('m_pitLaneTimeInLaneInMS')
+             .uint16le('m_pitStopTimerInMS')
+             .uint8('m_pitStopShouldServePen');
+-        if (packetFormat === 2024 || packetFormat === 2025) {
++        if (packetFormat === 2024 || packetFormat === 2025 || packetFormat === 2026) {
+             this.floatle('m_speedTrapFastestSpeed').uint8('m_speedTrapFastestLap');
+         }
+     }
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/LapHistoryDataParser.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/LapHistoryDataParser.js
+index f53d77d..b8391c5 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/LapHistoryDataParser.js
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/LapHistoryDataParser.js
+@@ -6,7 +6,7 @@ class LapHistoryDataParser extends F1Parser_1.F1Parser {
+     constructor(packetFormat) {
+         super();
+         this.endianess('little').uint32('m_lapTimeInMS');
+-        if (packetFormat === 2024 || packetFormat === 2025) {
++        if (packetFormat === 2024 || packetFormat === 2025 || packetFormat === 2026) {
+             this.uint16le('m_sector1TimeMSPart')
+                 .uint8('m_sector1TimeMinutesPart')
+                 .uint16le('m_sector2TimeMSPart')
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/LobbyInfoDataParser.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/LobbyInfoDataParser.js
+index c8da4ac..38a722b 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/LobbyInfoDataParser.js
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/LobbyInfoDataParser.js
+@@ -5,12 +5,19 @@ const F1Parser_1 = require("../F1Parser");
+ class LobbyInfoDataParser extends F1Parser_1.F1Parser {
+     constructor(packetFormat) {
+         super();
+-        this.uint8('m_aiControlled').uint8('m_teamId').uint8('m_nationality');
+-        if (packetFormat === 2023 || packetFormat === 2024 || packetFormat === 2025) {
++        this.uint8('m_aiControlled');
++        if (packetFormat === 2026) {
++            this.uint16le('m_teamId');
++        }
++        else {
++            this.uint8('m_teamId');
++        }
++        this.uint8('m_nationality');
++        if (packetFormat === 2023 || packetFormat === 2024 || packetFormat === 2025 || packetFormat === 2026) {
+             this.uint8('m_platform');
+         }
+-        // Name length: 32 in 2025, 48 in 2024 and earlier
+-        if (packetFormat === 2025) {
++        // Name length: 32 in 2025/2026, 48 in 2024 and earlier
++        if (packetFormat === 2025 || packetFormat === 2026) {
+             this.string('m_name', {
+                 length: 32,
+                 stripNull: true,
+@@ -23,7 +30,7 @@ class LobbyInfoDataParser extends F1Parser_1.F1Parser {
+             });
+         }
+         this.uint8('m_carNumber');
+-        if (packetFormat === 2024 || packetFormat === 2025) {
++        if (packetFormat === 2024 || packetFormat === 2025 || packetFormat === 2026) {
+             this.uint8('m_yourTelemetry')
+                 .uint8('m_showOnlineNames')
+                 .uint16le('m_techLevel');
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketCarDamageDataParser.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketCarDamageDataParser.js
+index 307d350..9a2375c 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketCarDamageDataParser.js
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketCarDamageDataParser.js
+@@ -13,7 +13,7 @@ class PacketCarDamageDataParser extends F1Parser_1.F1Parser {
+             type: new PacketHeaderParser_1.PacketHeaderParser(packetFormat),
+         })
+             .array('m_carDamageData', {
+-            length: 22,
++            length: packetFormat === 2026 ? 24 : 22,
+             type: new CarDamageDataParser_1.CarDamageDataParser(packetFormat),
+         });
+         this.data = this.fromBuffer(buffer);
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketCarSetupDataParser.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketCarSetupDataParser.js
+index 1069b73..5bcb0f2 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketCarSetupDataParser.js
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketCarSetupDataParser.js
+@@ -13,10 +13,10 @@ class PacketCarSetupDataParser extends F1Parser_1.F1Parser {
+             type: new PacketHeaderParser_1.PacketHeaderParser(packetFormat),
+         })
+             .array('m_carSetups', {
+-            length: 22,
++            length: packetFormat === 2026 ? 24 : 22,
+             type: new CarSetupDataParser_1.CarSetupDataParser(packetFormat),
+         });
+-        if (packetFormat === 2024 || packetFormat === 2025) {
++        if (packetFormat === 2024 || packetFormat === 2025 || packetFormat === 2026) {
+             this.floatle('m_nextFrontWingValue');
+         }
+         this.data = this.fromBuffer(buffer);
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketCarStatusDataParser.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketCarStatusDataParser.js
+index 93de3a1..5cab8bb 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketCarStatusDataParser.js
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketCarStatusDataParser.js
+@@ -13,7 +13,7 @@ class PacketCarStatusDataParser extends F1Parser_1.F1Parser {
+             type: new PacketHeaderParser_1.PacketHeaderParser(packetFormat),
+         })
+             .array('m_carStatusData', {
+-            length: 22,
++            length: packetFormat === 2026 ? 24 : 22,
+             type: new CarStatusDataParser_1.CarStatusDataParser(packetFormat),
+         });
+         this.data = this.fromBuffer(buffer);
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketCarTelemetry2DataParser.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketCarTelemetry2DataParser.js
+new file mode 100644
+index 0000000..90e787e
+--- /dev/null
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketCarTelemetry2DataParser.js
+@@ -0,0 +1,23 @@
++"use strict";
++Object.defineProperty(exports, "__esModule", { value: true });
++exports.PacketCarTelemetry2DataParser = void 0;
++const F1Parser_1 = require("../F1Parser");
++const CarTelemetry2DataParser_1 = require("./CarTelemetry2DataParser");
++const PacketHeaderParser_1 = require("./PacketHeaderParser");
++class PacketCarTelemetry2DataParser extends F1Parser_1.F1Parser {
++    data;
++    constructor(buffer, packetFormat) {
++        super();
++        this.endianess('little')
++            .nest('m_header', {
++            type: new PacketHeaderParser_1.PacketHeaderParser(packetFormat),
++        })
++            .array('m_carTelemetry2Data', {
++            length: packetFormat === 2026 ? 24 : 22,
++            type: new CarTelemetry2DataParser_1.CarTelemetry2DataParser(),
++        });
++        this.data = this.fromBuffer(buffer);
++    }
++}
++exports.PacketCarTelemetry2DataParser = PacketCarTelemetry2DataParser;
++//# sourceMappingURL=PacketCarTelemetry2DataParser.js.map
+\ No newline at end of file
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketCarTelemetryDataParser.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketCarTelemetryDataParser.js
+index b92f964..1f84192 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketCarTelemetryDataParser.js
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketCarTelemetryDataParser.js
+@@ -13,8 +13,8 @@ class PacketCarTelemetryDataParser extends F1Parser_1.F1Parser {
+             type: new PacketHeaderParser_1.PacketHeaderParser(packetFormat),
+         })
+             .array('m_carTelemetryData', {
+-            length: 22,
+-            type: new CarTelemetryDataParser_1.CarTelemetryDataParser(),
++            length: packetFormat === 2026 ? 24 : 22,
++            type: new CarTelemetryDataParser_1.CarTelemetryDataParser(packetFormat),
+         });
+         this.uint8('m_mfdPanelIndex')
+             .uint8('m_mfdPanelIndexSecondaryPlayer')
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketEventDataParser.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketEventDataParser.js
+index 1d0bfc0..3972661 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketEventDataParser.js
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketEventDataParser.js
+@@ -1,6 +1,6 @@
+ "use strict";
+ Object.defineProperty(exports, "__esModule", { value: true });
+-exports.PacketEventDataParser = exports.CollisionParser = exports.SafetyCarParser = exports.OvertakeParser = exports.ButtonsParser = exports.FlashbackParser = exports.StopGoPenaltyServedParser2025 = exports.StopGoPenaltyServedParser = exports.DriveThroughPenaltyServedParser = exports.StartLightsParser = exports.SpeedTrapParser = exports.PenaltyParser = exports.RaceWinnerParser = exports.TeamMateInPitsParser = exports.DRSDisabledParser = exports.RetirementParser2025 = exports.RetirementParser = exports.FastestLapParser = void 0;
++exports.PacketEventDataParser = exports.CollisionParser2026 = exports.CollisionParser = exports.SafetyCarParser = exports.OvertakeParser = exports.ButtonsParser = exports.FlashbackParser = exports.StopGoPenaltyServedParser2025 = exports.StopGoPenaltyServedParser = exports.DriveThroughPenaltyServedParser = exports.StartLightsParser = exports.SpeedTrapParser = exports.PenaltyParser = exports.RaceWinnerParser = exports.TeamMateInPitsParser = exports.DRSDisabledParser = exports.RetirementParser2025 = exports.RetirementParser = exports.FastestLapParser = void 0;
+ const binary_parser_1 = require("binary-parser");
+ const constants_1 = require("../../constants");
+ const F1Parser_1 = require("../F1Parser");
+@@ -143,6 +143,16 @@ class CollisionParser extends F1Parser_1.F1Parser {
+     }
+ }
+ exports.CollisionParser = CollisionParser;
++class CollisionParser2026 extends F1Parser_1.F1Parser {
++    constructor() {
++        super();
++        this.endianess('little')
++            .uint8('vehicle1Idx')
++            .uint8('vehicle2Idx')
++            .uint8('severity');
++    }
++}
++exports.CollisionParser2026 = CollisionParser2026;
+ class PacketEventDataParser extends F1Parser_1.F1Parser {
+     data;
+     constructor(buffer, packetFormat) {
+@@ -163,6 +173,9 @@ class PacketEventDataParser extends F1Parser_1.F1Parser {
+         if (packetFormat === 2025) {
+             this.unpack2025Format(buffer, packetFormat);
+         }
++        if (packetFormat === 2026) {
++            this.unpack2026Format(buffer, packetFormat);
++        }
+         this.data = this.fromBuffer(buffer);
+     }
+     unpack2022Format = (buffer, packetFormat) => {
+@@ -341,6 +354,56 @@ class PacketEventDataParser extends F1Parser_1.F1Parser {
+             this.nest('m_eventDetails', { type: new CollisionParser() });
+         }
+     };
++    unpack2026Format = (buffer, packetFormat) => {
++        const eventStringCode = this.getEventStringCode(buffer, packetFormat);
++        if (eventStringCode === constants_1.EVENT_CODES.FastestLap) {
++            this.nest('m_eventDetails', { type: new FastestLapParser() });
++        }
++        else if (eventStringCode === constants_1.EVENT_CODES.Retirement) {
++            this.nest('m_eventDetails', { type: new RetirementParser2025() });
++        }
++        else if (eventStringCode === constants_1.EVENT_CODES.DRSDisabled) {
++            this.nest('m_eventDetails', { type: new DRSDisabledParser() });
++        }
++        else if (eventStringCode === constants_1.EVENT_CODES.TeammateInPits) {
++            this.nest('m_eventDetails', { type: new TeamMateInPitsParser() });
++        }
++        else if (eventStringCode === constants_1.EVENT_CODES.RaceWinner) {
++            this.nest('m_eventDetails', { type: new RaceWinnerParser() });
++        }
++        else if (eventStringCode === constants_1.EVENT_CODES.PenaltyIssued) {
++            this.nest('m_eventDetails', { type: new PenaltyParser() });
++        }
++        else if (eventStringCode === constants_1.EVENT_CODES.SpeedTrapTriggered) {
++            this.nest('m_eventDetails', { type: new SpeedTrapParser() });
++        }
++        else if (eventStringCode === constants_1.EVENT_CODES.StartLights) {
++            this.nest('m_eventDetails', { type: new StartLightsParser() });
++        }
++        else if (eventStringCode === constants_1.EVENT_CODES.DriveThroughServed) {
++            this.nest('m_eventDetails', {
++                type: new DriveThroughPenaltyServedParser(),
++            });
++        }
++        else if (eventStringCode === constants_1.EVENT_CODES.StopGoServed) {
++            this.nest('m_eventDetails', { type: new StopGoPenaltyServedParser2025() });
++        }
++        else if (eventStringCode === constants_1.EVENT_CODES.Flashback) {
++            this.nest('m_eventDetails', { type: new FlashbackParser() });
++        }
++        else if (eventStringCode === constants_1.EVENT_CODES.ButtonStatus) {
++            this.nest('m_eventDetails', { type: new ButtonsParser() });
++        }
++        else if (eventStringCode === constants_1.EVENT_CODES.Overtake) {
++            this.nest('m_eventDetails', { type: new OvertakeParser() });
++        }
++        else if (eventStringCode === constants_1.EVENT_CODES.SafetyCar) {
++            this.nest('m_eventDetails', { type: new SafetyCarParser() });
++        }
++        else if (eventStringCode === constants_1.EVENT_CODES.Collision) {
++            this.nest('m_eventDetails', { type: new CollisionParser2026() });
++        }
++    };
+     getEventStringCode = (buffer, packetFormat) => {
+         const headerParser = new binary_parser_1.Parser()
+             .endianess('little')
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketFinalClassificationDataParser.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketFinalClassificationDataParser.js
+index dc89f53..f543166 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketFinalClassificationDataParser.js
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketFinalClassificationDataParser.js
+@@ -14,7 +14,7 @@ class PacketFinalClassificationDataParser extends F1Parser_1.F1Parser {
+         })
+             .uint8('m_numCars')
+             .array('m_classificationData', {
+-            length: 22,
++            length: packetFormat === 2026 ? 24 : 22,
+             type: new FinalClassificationDataParser_1.FinalClassificationDataParser(packetFormat),
+         });
+         this.data = this.fromBuffer(buffer);
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketHeaderParser.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketHeaderParser.js
+index 652aa52..01d3613 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketHeaderParser.js
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketHeaderParser.js
+@@ -6,7 +6,7 @@ class PacketHeaderParser extends F1Parser_1.F1Parser {
+     constructor(packetFormat) {
+         super();
+         this.endianess('little').uint16le('m_packetFormat');
+-        if (packetFormat === 2023 || packetFormat === 2024 || packetFormat === 2025) {
++        if (packetFormat === 2023 || packetFormat === 2024 || packetFormat === 2025 || packetFormat === 2026) {
+             this.uint8('m_gameYear');
+         }
+         this.uint8('m_gameMajorVersion')
+@@ -16,7 +16,7 @@ class PacketHeaderParser extends F1Parser_1.F1Parser {
+             .uint64('m_sessionUID')
+             .floatle('m_sessionTime')
+             .uint32('m_frameIdentifier');
+-        if (packetFormat === 2023 || packetFormat === 2024 || packetFormat === 2025) {
++        if (packetFormat === 2023 || packetFormat === 2024 || packetFormat === 2025 || packetFormat === 2026) {
+             this.uint32('m_overallFrameIdentifier');
+         }
+         this.uint8('m_playerCarIndex').uint8('m_secondaryPlayerCarIndex');
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketLapDataParser.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketLapDataParser.js
+index e7173db..e15b28b 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketLapDataParser.js
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketLapDataParser.js
+@@ -13,7 +13,7 @@ class PacketLapDataParser extends F1Parser_1.F1Parser {
+             type: new PacketHeaderParser_1.PacketHeaderParser(packetFormat),
+         })
+             .array('m_lapData', {
+-            length: 22,
++            length: packetFormat === 2026 ? 24 : 22,
+             type: new LapDataParser_1.LapDataParser(packetFormat),
+         });
+         this.uint8('m_timeTrialPBCarIdx').uint8('m_timeTrialRivalCarIdx');
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketLapPositionsDataParser.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketLapPositionsDataParser.js
+index 1b02412..a7f62e1 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketLapPositionsDataParser.js
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketLapPositionsDataParser.js
+@@ -17,7 +17,10 @@ class PacketLapPositionsDataParser extends F1Parser_1.F1Parser {
+             .uint8('m_lapStart')
+             .array('m_positionForVehicleIdx', {
+             length: 50,
+-            type: new F1Parser_1.F1Parser().array('', { length: 22, type: new F1Parser_1.F1Parser().uint8('') }), // 22 cars
++            type: new F1Parser_1.F1Parser().array('', {
++                length: packetFormat === 2026 ? 24 : 22,
++                type: new F1Parser_1.F1Parser().uint8(''),
++            }),
+         });
+         this.data = this.fromBuffer(buffer);
+     }
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketLobbyInfoDataParser.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketLobbyInfoDataParser.js
+index b08d16e..3674e1a 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketLobbyInfoDataParser.js
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketLobbyInfoDataParser.js
+@@ -14,7 +14,7 @@ class PacketLobbyInfoDataParser extends F1Parser_1.F1Parser {
+         })
+             .uint8('m_numPlayers')
+             .array('m_lobbyPlayers', {
+-            length: 22,
++            length: packetFormat === 2026 ? 24 : 22,
+             type: new LobbyInfoDataParser_1.LobbyInfoDataParser(packetFormat),
+         });
+         this.data = this.fromBuffer(buffer);
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketMotionDataParser.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketMotionDataParser.js
+index 03ac58f..3e072b3 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketMotionDataParser.js
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketMotionDataParser.js
+@@ -14,8 +14,8 @@ class PacketMotionDataParser extends F1Parser_1.F1Parser {
+             type: new PacketHeaderParser_1.PacketHeaderParser(packetFormat),
+         })
+             .array('m_carMotionData', {
+-            length: 22,
+-            type: new CarMotionDataParser_1.CarMotionDataParser(),
++            length: packetFormat === 2026 ? 24 : 22,
++            type: new CarMotionDataParser_1.CarMotionDataParser(packetFormat),
+         });
+         if (packetFormat === 2022) {
+             this.array('m_suspensionPosition', {
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketMotionExDataParser.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketMotionExDataParser.js
+index a9b4d10..1c6b355 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketMotionExDataParser.js
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketMotionExDataParser.js
+@@ -59,14 +59,14 @@ class PacketMotionExDataParser extends F1Parser_1.F1Parser {
+             length: 4,
+             type: new binary_parser_1.Parser().floatle(''),
+         });
+-        if (packetFormat === 2024 || packetFormat === 2025) {
++        if (packetFormat === 2024 || packetFormat === 2025 || packetFormat === 2026) {
+             this.floatle('m_frontAeroHeight')
+                 .floatle('m_rearAeroHeight')
+                 .floatle('m_frontRollAngle')
+                 .floatle('m_rearRollAngle')
+                 .floatle('m_chassisYaw');
+         }
+-        if (packetFormat === 2025) {
++        if (packetFormat === 2025 || packetFormat === 2026) {
+             this.floatle('m_chassisPitch')
+                 .array('m_wheelCamber', {
+                 length: 4,
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketParticipantsDataParser.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketParticipantsDataParser.js
+index 2b1b506..7dcc8c3 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketParticipantsDataParser.js
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketParticipantsDataParser.js
+@@ -13,7 +13,7 @@ class PacketParticipantsDataParser extends F1Parser_1.F1Parser {
+         });
+         this.uint8('m_numActiveCars');
+         this.array('m_participants', {
+-            length: 22,
++            length: packetFormat === 2026 ? 24 : 22,
+             type: new ParticipantDataParser_1.ParticipantDataParser(packetFormat),
+         });
+         this.data = this.fromBuffer(buffer);
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketSessionDataParser.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketSessionDataParser.js
+index dd64fdc..8af8cda 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketSessionDataParser.js
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketSessionDataParser.js
+@@ -3,6 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
+ exports.PacketSessionDataParser = void 0;
+ const binary_parser_1 = require("binary-parser");
+ const F1Parser_1 = require("../F1Parser");
++const ActiveAeroZoneParser_1 = require("./ActiveAeroZoneParser");
++const DRSZoneParser_1 = require("./DRSZoneParser");
+ const MarshalZoneParser_1 = require("./MarshalZoneParser");
+ const PacketHeaderParser_1 = require("./PacketHeaderParser");
+ const WeatherForecastSampleParser_1 = require("./WeatherForecastSampleParser");
+@@ -40,7 +42,7 @@ class PacketSessionDataParser extends F1Parser_1.F1Parser {
+                 type: new WeatherForecastSampleParser_1.WeatherForecastSampleParser(),
+             });
+         }
+-        if (packetFormat === 2024 || packetFormat === 2025) {
++        if (packetFormat === 2024 || packetFormat === 2025 || packetFormat === 2026) {
+             this.array('m_weatherForecastSamples', {
+                 length: 64,
+                 type: new WeatherForecastSampleParser_1.WeatherForecastSampleParser(),
+@@ -76,7 +78,7 @@ class PacketSessionDataParser extends F1Parser_1.F1Parser {
+                 .uint8('m_numVirtualSafetyCarPeriods')
+                 .uint8('m_numRedFlagPeriods');
+         }
+-        if (packetFormat === 2024 || packetFormat === 2025) {
++        if (packetFormat === 2024 || packetFormat === 2025 || packetFormat === 2026) {
+             this.uint8('m_speedUnitsLeadPlayer')
+                 .uint8('m_temperatureUnitsLeadPlayer')
+                 .uint8('m_speedUnitsSecondaryPlayer')
+@@ -116,6 +118,30 @@ class PacketSessionDataParser extends F1Parser_1.F1Parser {
+                 .floatle('m_sector2LapDistanceStart')
+                 .floatle('m_sector3LapDistanceStart');
+         }
++        if (packetFormat === 2026) {
++            this.uint8('m_activeAeroTrackStatus')
++                .uint8('m_numActiveAeroZonesFull')
++                .array('m_activeAeroZonesFull', {
++                length: 8,
++                type: new ActiveAeroZoneParser_1.ActiveAeroZoneParser(),
++            })
++                .uint8('m_numActiveAeroZonesPartial')
++                .array('m_activeAeroZonesPartial', {
++                length: 8,
++                type: new ActiveAeroZoneParser_1.ActiveAeroZoneParser(),
++            })
++                .uint8('m_numDRSZones')
++                .array('m_drsZones', {
++                length: 4,
++                type: new DRSZoneParser_1.DRSZoneParser(),
++            })
++                .floatle('m_startReactionTime')
++                .uint8('m_antiLockBrakesAssist')
++                .uint8('m_tractionControlAssist')
++                .uint8('m_dynamicRacingLineHiVis')
++                .uint8('m_dynamicRacingLineColourBlind')
++                .uint8('m_recurringRewindPrompt');
++        }
+         this.data = this.fromBuffer(buffer);
+     }
+ }
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketTimeTrialDataParser.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketTimeTrialDataParser.js
+index 5ed7827..88c2d60 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketTimeTrialDataParser.js
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketTimeTrialDataParser.js
+@@ -12,13 +12,13 @@ class PacketTimeTrialDataParser extends F1Parser_1.F1Parser {
+             type: new PacketHeaderParser_1.PacketHeaderParser(packetFormat),
+         });
+         this.nest('m_playerSessionBestDataSet', {
+-            type: new TimeTrialDataSetParser_1.TimeTrialDataSetParser(),
++            type: new TimeTrialDataSetParser_1.TimeTrialDataSetParser(packetFormat),
+         });
+         this.nest('m_personalBestDataSet', {
+-            type: new TimeTrialDataSetParser_1.TimeTrialDataSetParser(),
++            type: new TimeTrialDataSetParser_1.TimeTrialDataSetParser(packetFormat),
+         });
+         this.nest('m_rivalDataSet', {
+-            type: new TimeTrialDataSetParser_1.TimeTrialDataSetParser(),
++            type: new TimeTrialDataSetParser_1.TimeTrialDataSetParser(packetFormat),
+         });
+         this.data = this.fromBuffer(buffer);
+     }
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/ParticipantDataParser.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/ParticipantDataParser.js
+index 362e188..4fbe308 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/ParticipantDataParser.js
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/ParticipantDataParser.js
+@@ -6,15 +6,22 @@ const LiveryColourParser_1 = require("./LiveryColourParser");
+ class ParticipantDataParser extends F1Parser_1.F1Parser {
+     constructor(packetFormat) {
+         super();
+-        this.uint8('m_aiControlled')
+-            .uint8('m_driverId')
+-            .uint8('m_networkId')
+-            .uint8('m_teamId')
+-            .uint8('m_myTeam')
++        this.uint8('m_aiControlled');
++        if (packetFormat === 2026) {
++            this.uint16le('m_driverId')
++                .uint16le('m_networkId')
++                .uint16le('m_teamId');
++        }
++        else {
++            this.uint8('m_driverId')
++                .uint8('m_networkId')
++                .uint8('m_teamId');
++        }
++        this.uint8('m_myTeam')
+             .uint8('m_raceNumber')
+             .uint8('m_nationality');
+-        // Name length: 32 in 2025, 48 in 2024 and earlier
+-        if (packetFormat === 2025) {
++        // Name length: 32 in 2025/2026, 48 in 2024 and earlier
++        if (packetFormat === 2025 || packetFormat === 2026) {
+             this.string('m_name', {
+                 length: 32,
+                 stripNull: true,
+@@ -36,7 +43,7 @@ class ParticipantDataParser extends F1Parser_1.F1Parser {
+                 .uint16le('m_techLevel')
+                 .uint8('m_platform');
+         }
+-        if (packetFormat === 2025) {
++        if (packetFormat === 2025 || packetFormat === 2026) {
+             this.uint8('m_showOnlineNames')
+                 .uint16le('m_techLevel')
+                 .uint8('m_platform')
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/TimeTrialDataSetParser.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/TimeTrialDataSetParser.js
+index 2221c41..5e89996 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/TimeTrialDataSetParser.js
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/TimeTrialDataSetParser.js
+@@ -3,12 +3,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
+ exports.TimeTrialDataSetParser = void 0;
+ const F1Parser_1 = require("../F1Parser");
+ class TimeTrialDataSetParser extends F1Parser_1.F1Parser {
+-    constructor() {
++    constructor(packetFormat) {
+         super();
+-        this.endianess('little')
+-            .uint8('m_carIdx')
+-            .uint8('m_teamId')
+-            .uint32('m_lapTimeInMS')
++        this.endianess('little').uint8('m_carIdx');
++        if (packetFormat === 2026) {
++            this.uint16le('m_teamId');
++        }
++        else {
++            this.uint8('m_teamId');
++        }
++        this.uint32('m_lapTimeInMS')
+             .uint32('m_sector1TimeInMS')
+             .uint32('m_sector2TimeInMS')
+             .uint32('m_sector3TimeInMS')
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/index.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/index.js
+index 12fa901..658702f 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/index.js
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/index.js
+@@ -9,6 +9,8 @@ const PacketCarStatusDataParser_1 = require("./PacketCarStatusDataParser");
+ Object.defineProperty(exports, "PacketCarStatusDataParser", { enumerable: true, get: function () { return PacketCarStatusDataParser_1.PacketCarStatusDataParser; } });
+ const PacketCarTelemetryDataParser_1 = require("./PacketCarTelemetryDataParser");
+ Object.defineProperty(exports, "PacketCarTelemetryDataParser", { enumerable: true, get: function () { return PacketCarTelemetryDataParser_1.PacketCarTelemetryDataParser; } });
++const PacketCarTelemetry2DataParser_1 = require("./PacketCarTelemetry2DataParser");
++Object.defineProperty(exports, "PacketCarTelemetry2DataParser", { enumerable: true, get: function () { return PacketCarTelemetry2DataParser_1.PacketCarTelemetry2DataParser; } });
+ const PacketEventDataParser_1 = require("./PacketEventDataParser");
+ Object.defineProperty(exports, "PacketEventDataParser", { enumerable: true, get: function () { return PacketEventDataParser_1.PacketEventDataParser; } });
+ const PacketFinalClassificationDataParser_1 = require("./PacketFinalClassificationDataParser");

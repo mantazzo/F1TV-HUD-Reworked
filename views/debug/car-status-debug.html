@@ -419,6 +419,7 @@
                     <div class="field-row"><span class="field-name">m_ersStoreEnergy (kJ)<span class="rest-mark">R</span></span>            <span class="field-value value-na" id="f-ersStore">--</span></div>
                     <div class="field-row"><span class="field-name">m_ersHarvestedThisLapMGUK (kJ)<span class="rest-mark">R</span></span>  <span class="field-value value-na" id="f-harvestK">--</span></div>
                     <div class="field-row"><span class="field-name">m_ersHarvestedThisLapMGUH (kJ)<span class="rest-mark">R</span></span>  <span class="field-value value-na" id="f-harvestH">--</span></div>
+                    <div class="field-row"><span class="field-name">m_ersHarvestedLimitPerLap (kJ)</span>                                <span class="field-value value-na" id="f-harvestLimit">--</span></div>
                     <div class="field-row"><span class="field-name">m_ersDeployedThisLap (kJ)<span class="rest-mark">R</span></span>       <span class="field-value value-na" id="f-ersDeploy">--</span></div>
                 </div>
                 <!-- ERS store bar -->
@@ -463,9 +464,10 @@
                         <tr><td>ICE Power</td>              <td><code>m_enginePowerICE</code></td>             <td>Power output of the internal combustion engine in Watts; displayed in kW (float).</td></tr>
                         <tr><td>MGU-K Power</td>            <td><code>m_enginePowerMGUK</code></td>            <td>Power output of the MGU-K in Watts; displayed in kW (float).</td></tr>
                         <tr><td>ERS Store</td>              <td><code>m_ersStoreEnergy</code></td>             <td>Energy currently held in the ERS battery in Joules; displayed in kJ. Max is ~4,000 kJ (float).</td></tr>
-                        <tr><td>ERS Deploy Mode</td>        <td><code>m_ersDeployMode</code></td>              <td>0 = None, 1 = Medium, 2 = Hotlap, 3 = Overtake (uint8).</td></tr>
+                        <tr><td>ERS Deploy Mode</td>        <td><code>m_ersDeployMode</code></td>              <td>0 = None, 1 = Medium, 2 = Hotlap, 3 = Boost (uint8). Renamed from "Overtake" in the 2026 format to avoid confusion with the new Overtake Mode.</td></tr>
                         <tr><td>Harvested MGU-K</td>        <td><code>m_ersHarvestedThisLapMGUK</code></td>   <td>ERS energy harvested by the MGU-K this lap in Joules; displayed in kJ (float).</td></tr>
                         <tr><td>Harvested MGU-H</td>        <td><code>m_ersHarvestedThisLapMGUH</code></td>   <td>ERS energy harvested by the MGU-H this lap in Joules; displayed in kJ (float).</td></tr>
+                        <tr><td>Harvest Limit / Lap</td>    <td><code>m_ersHarvestedLimitPerLap</code></td>   <td><strong>New in 2026 format.</strong> ERS energy harvest limit for this lap in Joules; displayed in kJ (float). Not part of the restricted telemetry list.</td></tr>
                         <tr><td>ERS Deployed</td>           <td><code>m_ersDeployedThisLap</code></td>        <td>ERS energy deployed (used) this lap in Joules; displayed in kJ (float).</td></tr>
                         <tr><td>Network Paused</td>         <td><code>m_networkPaused</code></td>             <td>1 = this car is paused in a network game, 0 = otherwise (uint8).</td></tr>
                     </tbody>
@@ -483,7 +485,7 @@
 
         const TC_MAP       = { 0: ['Off', 'grey'], 1: ['Medium', 'yellow'], 2: ['Full', 'green'] };
         const FUEL_MIX_MAP = { 0: ['Lean', 'blue'], 1: ['Standard', 'green'], 2: ['Rich', 'yellow'], 3: ['Max', 'red'] };
-        const ERS_MODE_MAP = { 0: ['None', 'grey'], 1: ['Medium', 'blue'], 2: ['Hotlap', 'yellow'], 3: ['Overtake', 'red'] };
+        const ERS_MODE_MAP = { 0: ['None', 'grey'], 1: ['Medium', 'blue'], 2: ['Hotlap', 'yellow'], 3: ['Boost', 'red'] };
 
         const ACTUAL_COMPOUND = {
             7: ['Inter', '#00b4d8', 'I'],
@@ -706,9 +708,11 @@
 
             const hK = car.m_ersHarvestedThisLapMGUK;
             const hH = car.m_ersHarvestedThisLapMGUH;
+            const hLimit = car.m_ersHarvestedLimitPerLap;
             const dep = car.m_ersDeployedThisLap;
             setField('f-harvestK', hK  !== undefined ? `${(hK  / 1000).toFixed(1)} kJ` : null);
             setField('f-harvestH', hH  !== undefined ? `${(hH  / 1000).toFixed(1)} kJ` : null);
+            setField('f-harvestLimit', hLimit !== undefined ? `${(hLimit / 1000).toFixed(1)} kJ` : null);
             setField('f-ersDeploy', dep !== undefined ? `${(dep / 1000).toFixed(1)} kJ` : null);
         }
 
