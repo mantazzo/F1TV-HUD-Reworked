@@ -185,6 +185,13 @@
             </div>
             <div class="option-row">
                 <label class="toggle-label">
+                    <input type="checkbox" id="pane-2-on-lap-1-toggle" class="toggle-checkbox">
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-text">[Race] Pane 2 on Lap 1</span>
+                </label>
+            </div>
+            <div class="option-row">
+                <label class="toggle-label">
                     <input type="checkbox" id="show-last-names-toggle" class="toggle-checkbox">
                     <span class="toggle-slider"></span>
                     <span class="toggle-text">Show Last Names</span>
@@ -251,6 +258,13 @@
                     <input type="checkbox" id="show-penalties-toggle" class="toggle-checkbox">
                     <span class="toggle-slider"></span>
                     <span class="toggle-text">[Race] Show Penalties</span>
+                </label>
+            </div>
+            <div class="option-row">
+                <label class="toggle-label">
+                    <input type="checkbox" id="position-bg-toggle" class="toggle-checkbox">
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-text">Position Column Background</span>
                 </label>
             </div>
         </section>
@@ -607,6 +621,15 @@
             updateLeaderboardOptions();
         });
 
+        // Pane 2 on Lap 1 toggle handling
+        const pane2OnLap1Toggle = document.getElementById('pane-2-on-lap-1-toggle');
+        pane2OnLap1Toggle.addEventListener('change', () => {
+            const newVal = pane2OnLap1Toggle.checked;
+            socket.emit('config_update', { overlay: 'leaderboard', property: 'pane2OnLap1', value: newVal });
+            if (currentConfig?.overlays?.leaderboard) currentConfig.overlays.leaderboard.pane2OnLap1 = newVal;
+            updateLeaderboardOptions();
+        });
+
         // Show Last Names toggle handling
         const showLastNamesToggle = document.getElementById('show-last-names-toggle');
         showLastNamesToggle.addEventListener('change', () => {
@@ -697,6 +720,15 @@
             updateLeaderboardOptions();
         });
 
+        // Position Column Background toggle handling
+        const positionBgToggle = document.getElementById('position-bg-toggle');
+        positionBgToggle.addEventListener('change', () => {
+            const newVal = positionBgToggle.checked;
+            socket.emit('config_update', { overlay: 'leaderboard', property: 'positionBg', value: newVal });
+            if (currentConfig?.overlays?.leaderboard) currentConfig.overlays.leaderboard.positionBg = newVal;
+            updateLeaderboardOptions();
+        });
+
         function updateLeaderboardOptions() {
             if (!currentConfig?.overlays?.leaderboard) return;
             const lb   = currentConfig.overlays.leaderboard;
@@ -718,6 +750,8 @@
             showDrsIndicatorsToggle.checked        = !!lb.showDrsIndicators;
             showBatteryToggle.checked              = !!lb.showBattery;
             showPenaltiesToggle.checked            = !!lb.showPenalties;
+            pane2OnLap1Toggle.checked              = !!lb.pane2OnLap1;
+            positionBgToggle.checked               = !!lb.positionBg;
         }
 
         // Override renderOverlayButtons to also update options

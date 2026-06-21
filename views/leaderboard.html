@@ -885,6 +885,8 @@
         let extendedGrid           = false;  // true when numActiveCars > 20 — selects _22 image variants
         let numActiveCars          = 22;     // actual active cars from pid 4 (m_numActiveCars), used for slot visibility
         let paneMode               = 0;  // Pane 1: Narrow, Pane 2: Short, Pane 3: Narrow+Short, Pane 4: Logo
+        let pane2OnLap1            = false; // overrides height to Short-pane during race lap 1 (until leader's best lap is set), regardless of paneMode
+        let positionBg             = false; // tints lb-pos-col-bg with a dark background when enabled
         let timeLapsBannerActive   = false;
         let timeLapsBannerTimer    = null;
         let timeLapsBannerType     = null; // 'minutes' | 'laps' | 'finallap' — for dynamic pane updates
@@ -1181,6 +1183,15 @@
         function computeLeaderboardHeight() {
             const hasFlag    = flagsBannerMode === 'yellow' || flagsBannerMode === 'green';
             const hasTrigger = timeLapsBannerActive;
+
+            // Pane 2 on Lap 1: force Short-pane (header-only) height during the race's first lap,
+            // regardless of the selected pane mode. "Lap 1" is detected the same way as the original
+            // SimHub plugin — leader has no recorded best lap yet. Mirrors original Pane2onLap1 setting.
+            if (pane2OnLap1 && isRace && !mfdActive && !formationLap) {
+                const leaderIdx = carPositions.indexOf(1);
+                const leaderHasBestLap = leaderIdx >= 0 && carBestLapMs[leaderIdx] > 0;
+                if (!leaderHasBestLap) return hasFlag ? 250 : 147; // 125×2 : 73.5×2
+            }
 
             // Pane 2 (Short) or Pane 3 (Narrow Short): header-only; expands for yellow/green flags and time/lap triggers
             if (paneMode === 2 || paneMode === 3) {
@@ -1763,8 +1774,8 @@
             elFormationBg.style.display = formationLap ? 'block' : 'none'; // changed to "block" to display the BG
 
             // lb-pos-col-bg
-            elPosColBg.style.height = extendedGrid ? '1120px' : '1020px';
-            // TODO: BackgroundColor from PositionBG setting (item_1_7r0r0r0) - if enabled, use #0a0a0f, if not - transparent
+            elPosColBg.style.height          = extendedGrid ? '1120px' : '1020px';
+            elPosColBg.style.backgroundColor = positionBg ? '#0a0a0f' : 'transparent';
 
             // lb-header
             elHeader.style.width   = narrow ? '187px' : '306px';
@@ -2276,6 +2287,20 @@
                     child.style.display = i < numActiveCars ? '' : 'none';
                 });
             }
+        }
+
+        // ── Image fallback cascade ─────────────────────────────────────────
+        // Tries each URL in order (e.g. team-specific design → flat default SVG → PNG),
+        // calling onSuccess with the first one that loads, or onFail if none do.
+        function preloadImageCascade(urls, onSuccess, onFail) {
+            const tryNext = (i) => {
+                if (i >= urls.length) { onFail(); return; }
+                const img = new Image();
+                img.onload  = () => onSuccess(urls[i]);
+                img.onerror = () => tryNext(i + 1);
+                img.src = urls[i];
+            };
+            tryNext(0);
         }
 
         // ── Packet handling ────────────────────────────────────────────────
@@ -2791,28 +2816,28 @@
                         const lastNameStr = DriverUtils.getDriverLastName(participant, aiDrivers, customDrivers, teamNames);
                         carLastNames[carIdx] = lastNameStr;
 
-                        // Race number + image preload (SVG preferred, PNG fallback)
+                        // Team lookup (needed up front: race number image resolution depends on it)
+                        const teamId      = participant.m_teamId;
+                        const teamData    = teamNames[teamId];
+                        const teamChanged = carTeamIds[carIdx] !== teamId;
+                        carTeamIds[carIdx] = teamId;
+
+                        // Race number + image preload: team-curated design → flat default SVG → PNG → text
+                        // Re-resolves on team change too (not just number change) — career-mode team swaps
+                        // can keep the same personal number but need the new team's design.
                         const raceNum = participant.m_raceNumber ?? 0;
-                        if (raceNum > 0 && carRaceNumbers[carIdx] !== raceNum) {
+                        if (raceNum > 0 && (carRaceNumbers[carIdx] !== raceNum || teamChanged)) {
                             carNumImgUrl[carIdx] = null;
-                            const svgSrc = `/images/driver-numbers/${raceNum}.svg`;
-                            const pngSrc = `/images/driver-numbers/${raceNum}.png`;
-                            const preload = new Image();
-                            preload.onload  = () => { carNumImgUrl[carIdx] = svgSrc; };
-                            preload.onerror = () => {
-                                const pngPreload = new Image();
-                                pngPreload.onload  = () => { carNumImgUrl[carIdx] = pngSrc; };
-                                pngPreload.onerror = () => { carNumImgUrl[carIdx] = false; };
-                                pngPreload.src = pngSrc;
-                            };
-                            preload.src = svgSrc;
+                            const candidates = DriverUtils.getDriverNumberImageCandidates(raceNum, teamData);
+                            preloadImageCascade(
+                                candidates,
+                                (url) => { carNumImgUrl[carIdx] = url; },
+                                ()    => { carNumImgUrl[carIdx] = false; }
+                            );
                         }
                         carRaceNumbers[carIdx] = raceNum;
 
                         // Team primary color: OverridePrimaryColor → livery[0] → fallback white
-                        const teamId   = participant.m_teamId;
-                        const teamData = teamNames[teamId];
-                        carTeamIds[carIdx] = teamId;
                         if (teamData?.OverridePrimaryColor) {
                             carPrimaryColors[carIdx] = teamData.OverridePrimaryColor;
                         } else {
@@ -2996,6 +3021,7 @@
                             updateBatteryLayout();
                             updatePenaltyLayout();
                             updateFlLogoLayout();
+                            if (pane2OnLap1) updateOverlayHeight();
                         }
                     }
                 }
@@ -3013,6 +3039,8 @@
             mfdActive = page !== 'off';
             isMfd4    = page === 'mfd4' && isRace;
             paneMode = cfg.pane ?? 0;
+            pane2OnLap1 = !!cfg.pane2OnLap1;
+            positionBg  = !!cfg.positionBg;
             elContainer.classList.toggle('pane-4', paneMode === 4);
             updateHeaderDisplay();
             updateTimeLapsBanner();

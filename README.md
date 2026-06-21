@@ -40,14 +40,15 @@ This project is worked on with Windows systems in mind - it may work on other sy
 If you're not feeling comfortable with all the extensive setup, I have now provided an alternative quicker approach:
 
 1. **Run the "install.bat" script.** 
-This will execute the *"install.ps1"* Powershell script, which will download the standalone binary of Node.js (latest LTS version, currently it's v24.14.0) and set it up in a "runtime/" folder, and also will set up the project's dependencies.
+This will execute the *"install.ps1"* Powershell script, which will download the standalone binary of Node.js (latest LTS version, currently it's v24.16.0) and set it up in a "runtime/" folder, and also will set up the project's dependencies. 
+If you ever need to do a module update, just rerun the script - it will update the modules as well, and install required patches (if any are required). 
 
 2. **Run the "run.bat" script.** 
 This will execute the *"run.ps1"* Powershell script, which will run the project using the downloaded standalone binary. No other setup is required!
 
 ## Configuration
 - Ensure telemetry is enabled in F1 25 and set to port you entered in the Terminal. 
-   - Additionally, **make sure the Telemetry Format in-game is set to 2025.** Currently, the project does not properly support the 2026 format.
+   - While there is support for 2026 Telemetry format, it is unofficial, so bugs might happen.
 - If the overlays don't work, check the Terminal for error messages and/or verify telemetry settings.
 
 ## Future Improvements

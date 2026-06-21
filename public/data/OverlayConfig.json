@@ -63,6 +63,8 @@
       "name": "Leaderboard",
       "mfdPage": "off",
       "pane": 0,
+      "pane2OnLap1": false,
+      "positionBg": false,
       "showLastNames": false,
       "showQualiTimes": false,
       "showDriverNumbers": false,

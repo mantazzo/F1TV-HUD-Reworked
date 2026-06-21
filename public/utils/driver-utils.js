@@ -340,8 +340,30 @@ const DriverUtils = {
     },
 
     /**
+     * Build the ordered list of candidate image URLs for a driver's race number,
+     * most specific first: team-curated design (DefaultTeams.json "NumberDesign_<num>")
+     * before the flat default. Caller tries each in order until one loads.
+     *
+     * Note: a year-suffixed variant ("NumberDesign_<num>_<year>") is intentionally not
+     * checked here — most team IDs aren't reused across game years (only a handful like
+     * 0-9/41/104/129 are), so it's deferred until older-game-year support is needed.
+     *
+     * @param {number} raceNum - Driver's race number
+     * @param {Object} teamData - This driver's team entry from DefaultTeams.json
+     * @returns {string[]} Ordered candidate URLs
+     */
+    getDriverNumberImageCandidates(raceNum, teamData) {
+        const candidates = [];
+        const teamFile = teamData?.[`NumberDesign_${raceNum}`];
+        if (teamFile) candidates.push(`/images/driver-numbers/${teamFile}`);
+        candidates.push(`/images/driver-numbers/${raceNum}.svg`);
+        candidates.push(`/images/driver-numbers/${raceNum}.png`);
+        return candidates;
+    },
+
+    /**
      * Check if a position is in the knockout zone for qualifying sessions
-     * 
+     *
      * @param {number} position - Driver's current position
      * @param {number} sessionType - Current session type
      * @param {number} numActiveCars - Number of active cars in session
