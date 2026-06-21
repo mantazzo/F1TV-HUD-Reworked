@@ -95,6 +95,16 @@ index f48aabc..d5a5476 100644
  };
  //# sourceMappingURL=packetSizes.js.map
 \ No newline at end of file
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/packets.d.ts b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/packets.d.ts
+index 7ecd6d2..a8d1aa7 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/packets.d.ts
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/packets.d.ts
+@@ -15,4 +15,5 @@ export declare const PACKETS: {
+     motionEx: string;
+     timeTrial: string;
+     lapPositions: string;
++    carTelemetry2: string;
+ };
 diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/packets.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/packets.js
 index a0df0d6..5c28b3c 100644
 --- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/packets.js

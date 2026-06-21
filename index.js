@@ -236,7 +236,13 @@ function startServer(portNumber, forwardAddresses) {
         io.emit('f1_data', convertBigInt(data));
     }); */
 
-    // TODO: Add packet 16 support commented out once UDP parser supports 2026 format, currently the parser is not updated (version 1.2.2 as of 2026-06-13 does not support 2026 format)
+    // TODO: Add packet 16 support commented out once UDP parser supports 2026 format, currently the parser is not updated (version 1.2.2 as of 2026-06-21 does not support 2026 format)
+
+    // Listen for Car Telemetry 2 packets (ID 16)
+    // Unofficial addition at the moment; uncomment if you need data about 2026 Overtake Mode and Active Aero Mode use for all cars
+    /* client.on(PACKETS.carTelemetry2, (data) => {
+        io.emit('f1_data', convertBigInt(data));
+    }); */
 
     // Error handling
     client.on('error', (err) => {
