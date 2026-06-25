@@ -23,7 +23,7 @@ I made these pages for analyzing live data from the game. These can be useful fo
 - Time Trial Packet Debug (ID 14)
     - http://localhost:3000/debug/time-trial-debug
 
-Currently not made, might be added in the future:
+Pages currently not made, might be added in the future:
 - Motion Packet Debug (ID 0)
 - Car Setup Packet Debug (ID 5)
 - Final Classification Packet Debug (ID 8)
@@ -31,3 +31,4 @@ Currently not made, might be added in the future:
 - Tyre Sets Packet Debug (ID 12)
 - Motion Ex Packet Debug (ID 13)
 - Lap Position Packet Debug (ID 15)
+- Car Telemetry 2 Debug (ID 16) (2026 UDP spec)
