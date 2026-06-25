@@ -7,12 +7,13 @@
 body { background: transparent; overflow: hidden; }
 
 /* ════════════════════════════════════════════════════════════════
-   OVERLAY CONTAINER — 241×646 px
+   OVERLAY CONTAINER — 241×646 px resized, 482x1292 px full-size
+   Note: Resized .overlay-container is causing issues for Pane 2/3 resizing, might need to reinvestigate how to proceed
    ════════════════════════════════════════════════════════════════ */
 .overlay-container {
     position: relative;
-    width: 241px;
-    height: 646px;
+    width: 482px;
+    height: 1292px;
     overflow: hidden;
     opacity: 0;
     transition: opacity 200ms, height 800ms ease;
@@ -26,8 +27,9 @@ body { background: transparent; overflow: hidden; }
     position: absolute;
     width: 482px;
     height: 1291px;
+    /* Transform is disabled until I'm sure how to proceed with the resizing
     transform: scale(0.5);
-    transform-origin: left top;
+    transform-origin: left top; */
     transition: opacity 200ms ease;
 }
 #lb-container > * { position: absolute; }
