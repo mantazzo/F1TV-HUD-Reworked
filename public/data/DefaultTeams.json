@@ -339,9 +339,9 @@
     "ShortName": "McLaren ‘26",
     "FullName": "McLaren Mastercard F1 Team",
     "Logo": "2026mclarenlogo.svg",
-    "NumberDesign_1": "2026mclarenlannor01number.svg",
-    "NumberDesign_4": "2026mclarenlannor01number.svg",
-    "NumberDesign_81": "2026mclarenoscpia01number.svg"
+    "NumberDesign_1": "2026mclarenlannor01numberwhite.svg",
+    "NumberDesign_4": "2026mclarenlannor01numberwhite.svg",
+    "NumberDesign_81": "2026mclarenoscpia01numberwhite.svg"
   },
   "229": {
     "ShortName": "Audi ‘26",
@@ -472,9 +472,9 @@
     "ShortName": "McLaren ‘26",
     "FullName": "McLaren Mastercard F1 Team",
     "Logo": "2026mclarenlogo.svg",
-    "NumberDesign_1": "2026mclarenlannor01number.svg",
-    "NumberDesign_4": "2026mclarenlannor01number.svg",
-    "NumberDesign_81": "2026mclarenoscpia01number.svg"
+    "NumberDesign_1": "2026mclarenlannor01numberwhite.svg",
+    "NumberDesign_4": "2026mclarenlannor01numberwhite.svg",
+    "NumberDesign_81": "2026mclarenoscpia01numberwhite.svg"
   },
   "485": {
     "ShortName": "Audi ‘26",
@@ -494,5 +494,11 @@
     "ShortName": "F1 Generic ‘26",
     "FullName": "F1 World Car '26",
     "Logo": "fia.svg"
+  },
+  "65535": {
+    "ShortName": "F1 Custom Team ‘26",
+    "FullName": "My Team Custom Team '26",
+    "Logo": "fia.svg",
+    "Note": "This is the Custom My Team Team that is used when playing the My Team '26 season. Edit this entry to change the name of your dream, or to change the logo, or to change some other settings."
   }
 }
