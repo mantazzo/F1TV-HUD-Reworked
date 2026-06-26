@@ -3,6 +3,9 @@
  * Shared utility functions for driver name matching and data loading
  */
 
+// Driver IDs that indicate a human/custom driver (255 = pre-2026, 65535 = 2026+ extended DB)
+const CUSTOM_DRIVER_IDS = new Set([255, 65535]);
+
 const DriverUtils = {
     /**
      * Session Type Constants
@@ -142,7 +145,7 @@ const DriverUtils = {
         }
 
         // Custom driver (player or custom roster)
-        if (participant.m_driverId === 255) {
+        if (CUSTOM_DRIVER_IDS.has(participant.m_driverId)) {
             const customMatch = this.matchCustomDriver(participant, customDrivers, teamNames);
             if (customMatch) {
                 return customMatch.LastName || customMatch.DisplayName || 'PLAYER';
@@ -175,7 +178,7 @@ const DriverUtils = {
         }
 
         // Custom driver (player or custom roster)
-        if (participant.m_driverId === 255) {
+        if (CUSTOM_DRIVER_IDS.has(participant.m_driverId)) {
             const customMatch = this.matchCustomDriver(participant, customDrivers, teamNames);
             if (customMatch) {
                 return customMatch.FirstName || '';
@@ -211,7 +214,7 @@ const DriverUtils = {
         }
 
         // Custom driver
-        if (participant.m_driverId === 255) {
+        if (CUSTOM_DRIVER_IDS.has(participant.m_driverId)) {
             const customMatch = this.matchCustomDriver(participant, customDrivers, teamNames);
             if (customMatch) {
                 const first = customMatch.FirstName || '';
@@ -247,7 +250,7 @@ const DriverUtils = {
         if (!participant) return '';
 
         // Custom driver
-        if (participant.m_driverId === 255) {
+        if (CUSTOM_DRIVER_IDS.has(participant.m_driverId)) {
             const customMatch = this.matchCustomDriver(participant, customDrivers, teamNames);
             if (customMatch) {
                 return customMatch.LastName || customMatch.DisplayName || 'PLAYER';
@@ -281,7 +284,7 @@ const DriverUtils = {
         }
 
         // Custom driver (player or custom roster)
-        if (participant.m_driverId === 255) {
+        if (CUSTOM_DRIVER_IDS.has(participant.m_driverId)) {
             const customMatch = this.matchCustomDriver(participant, customDrivers, teamNames);
             if (customMatch) {
                 // Check if custom driver has abbreviation defined
