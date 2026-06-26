@@ -12,8 +12,7 @@
 </head>
 <body>
     <!--
-    Overlay canvas: 241×646 px  (native 482×1291 at scale 0.5).
-    All coordinates inside #lb-container are native (pre-scale) SimHub values.
+    Overlay canvas: 428x1390 px
     -->
     <div class="overlay-container" id="lb-overlay">
         <div id="lb-container">
@@ -483,9 +482,8 @@
         const elSeriesLogo   = document.getElementById('lb-series-logo');
         const elSeriesLogoF2 = document.getElementById('lb-series-logo-f2');
 
-        let NUM_CARS = 22;  // Pre-allocate for max possible cars (20 standard, up to 22 in MyTeam/F2).
+        let NUM_CARS = 24;  // Pre-allocate for max possible cars (20 standard, up to 22 in MyTeam/F2, 24 in 2026 season).
                             // Updated at runtime from packet 4 (m_numActiveCars).
-                            // NOTE, pre-F1 26 Season Pack DLC release: Max Number will increase to 24 with 2026 DLC, code will get changes accordingly later on when the parser gets updated.
 
         // Hidden elements by default — overlay_config will reveal them if no MFD page is active
         elTiming.style.display      = 'none';
@@ -883,6 +881,7 @@
         let trackLength            = 0;     // m_trackLength from pid 1, metres; used for formation lap opacity
         let sessionEnded           = false; // true once session has ended (P1 finished in race / any finished in non-race / timer hit 0)
         let extendedGrid           = false;  // true when numActiveCars > 20 — selects _22 image variants
+        let extendedGrid2026       = false;  // true when numActiveCars > 22 — selects _24 image variants (2026 season)
         let numActiveCars          = 22;     // actual active cars from pid 4 (m_numActiveCars), used for slot visibility
         let paneMode               = 0;  // Pane 1: Narrow, Pane 2: Short, Pane 3: Narrow+Short, Pane 4: Logo
         let pane2OnLap1            = false; // overrides height to Short-pane during race lap 1 (until leader's best lap is set), regardless of paneMode
@@ -1232,7 +1231,8 @@
             if (numActiveCars >= 2 && numActiveCars <= 18) {
                 return 50 * numActiveCars + 280;
             }
-            return 1290;  // 645 × 2 — full-height fallback for 19+ cars (standard F1 race, F2, etc.)
+            if (numActiveCars > 22) return 1390;  // 695 × 2 — 23-24 car grid (2026 season)
+            return 1290;  // 645 × 2 — full-height fallback for 19-22 cars (standard F1 race, F2, etc.)
         }
 
         function updateOverlayHeight() {
@@ -1552,6 +1552,7 @@
             playerCarIdx = -1;
             numActiveCars = 0;
             extendedGrid = false;
+            extendedGrid2026 = false;
 
             // Reset chequered flag banner
             elFinishedImg.style.opacity = '';
@@ -1678,28 +1679,29 @@
         // ── Flags border state helper ──────────────────────────────────────
         // Syncs top (RF shift), width (narrow pane), and visibility (formula)
         function updateFlagsBorder() {
-            elFlagsBorder.style.top   = formationLap ? '144px' : '1.5px';
-            elFlagsBorder.style.width = (paneMode === 1 || paneMode === 3) ? '212px' : '331px';
+            elFlagsBorder.style.top    = formationLap ? '144px' : '1.5px';
+            elFlagsBorder.style.width  = (paneMode === 1 || paneMode === 3) ? '212px' : '331px';
+            elFlagsBorder.style.height = extendedGrid2026 ? '1390px' : '1290px';
             elFlagsBorder.style.display = (formulaType === 2 || formulaType === 7) ? 'none' : '';
         }
 
         function updateFlagsImg() {
             elFlagsImg.style.top = formationLap ? '-142px' : '1px';
-            const h = extendedGrid ? '1287px' : '1187px';
+            const h = extendedGrid2026 ? '1387px' : extendedGrid ? '1287px' : '1187px';
             elFlagsImg.style.height = h;
             elFlagsImg.style.backgroundSize = `333px ${h}`;
         }
 
         function updateThickStrokeBg() {
             elThickStrokeBg.style.top = formationLap ? '-142px' : '1px';
-            const h = extendedGrid ? '1286px' : '1186px';
+            const h = extendedGrid2026 ? '1386px' : extendedGrid ? '1286px' : '1186px';
             elThickStrokeBg.style.height = h;
             elThickStrokeBg.style.backgroundSize = `332px ${h}`;
         }
 
         function updateBorderRect() {
             elBorderRect.style.top    = formationLap ? '-142px' : '1px';
-            elBorderRect.style.height = extendedGrid ? '1286.5px' : '1186.5px';
+            elBorderRect.style.height = extendedGrid2026 ? '1386.5px' : extendedGrid ? '1286.5px' : '1186.5px';
         }
 
         function updateDecoBorders() {
@@ -1709,32 +1711,33 @@
             const flagBorderActive = mode === 'sc' || mode === 'vsc' || mode === 'rf' || mode === 'yellow' || mode === 'green';
             const scVscRfActive    = mode === 'sc' || mode === 'vsc' || mode === 'rf';
 
-            // Widget: narrows to 212px in narrow pane, 333px otherwise
-            elDecoBorderWidget.style.width = `${narrow ? 212 : 333}px`;
+            // Widget: narrows to 212px in narrow pane, 333px otherwise; grows 100px for 2026 grid
+            elDecoBorderWidget.style.width  = `${narrow ? 212 : 333}px`;
+            elDecoBorderWidget.style.height = extendedGrid2026 ? '1390px' : '1290px';
 
             // Standard border: hidden when session ended, formation lap, or a flag-specific border is active
             elDecoBorder.style.top    = `${isF2 ? 94 : 23}px`;
-            elDecoBorder.style.height = `${isF2 ? (extendedGrid ? 1170 : 1070) : (extendedGrid ? 1241 : 1140)}px`;
+            elDecoBorder.style.height = `${isF2 ? (extendedGrid2026 ? 1270 : extendedGrid ? 1170 : 1070) : (extendedGrid2026 ? 1341 : extendedGrid ? 1241 : 1140)}px`;
             elDecoBorder.style.display = (sessionEnded || formationLap || flagBorderActive) ? 'none' : '';
 
             // Formation border: shown only during formation lap, no transition
-            elDecoBorderFormation.style.height  = `${extendedGrid ? 1172 : 1072}px`;
+            elDecoBorderFormation.style.height  = `${extendedGrid2026 ? 1272 : extendedGrid ? 1172 : 1072}px`;
             elDecoBorderFormation.style.display = formationLap ? 'block' : 'none';
 
             // Finished border: fades in (333ms) when session ends
             elDecoBorderFinished.style.top    = `${isF2 ? 95 : 25}px`;
-            elDecoBorderFinished.style.height = `${isF2 ? (extendedGrid ? 1168 : 1068) : (extendedGrid ? 1238 : 1138)}px`;
+            elDecoBorderFinished.style.height = `${isF2 ? (extendedGrid2026 ? 1268 : extendedGrid ? 1168 : 1068) : (extendedGrid2026 ? 1338 : extendedGrid ? 1238 : 1138)}px`;
             elDecoBorderFinished.style.opacity = sessionEnded ? '1' : '0';
 
             // SC/VSC/RF container: fades in (333ms) on flag state; hidden immediately when time/laps banner is active
             elDecoBorderScContainer.style.top     = `${isF2 ? 95 : 24}px`;
             elDecoBorderScContainer.style.width   = `${narrow ? 190 : 310}px`;
-            elDecoBorderScContainer.style.height  = `${extendedGrid ? 1239 : 1139}px`;
+            elDecoBorderScContainer.style.height  = `${extendedGrid2026 ? 1339 : extendedGrid ? 1239 : 1139}px`;
             elDecoBorderScContainer.style.opacity = scVscRfActive ? '1' : '0';
             elDecoBorderScContainer.style.display = timeLapsBannerActive ? 'none' : '';
 
             // Individual SC borders: positioned within container, sized for extendedGrid + F2 top offset
-            const scH      = extendedGrid ? 1238 : 1139;
+            const scH      = extendedGrid2026 ? 1338 : extendedGrid ? 1238 : 1139;
             const scBgSize = `320px ${scH}px`;
             const scTop    = `${isF2 ? -70 : 0}px`;
             elDecoBorderSc.style.top             = scTop;
@@ -1764,17 +1767,17 @@
             // lb-main-bg
             elMainBg.style.top     = isF2 ? '97px' : '22px';
             elMainBg.style.width   = narrow ? '195px' : '315px';  // no transition effect noted here - might need to check on how it's called
-            const baseH = extendedGrid ? 1252 : 1152;
+            const baseH = extendedGrid2026 ? 1352 : extendedGrid ? 1252 : 1152;
             elMainBg.style.height  = `${(isF2 ? baseH - 74 : baseH) - 3}px`;
             elMainBg.style.display = formationLap ? 'none' : '';
 
             // lb-formation-bg
             elFormationBg.style.width   = narrow ? '195px' : '315px';
-            elFormationBg.style.height  = `${(extendedGrid ? 1176 : 1076)}px`;
+            elFormationBg.style.height  = `${extendedGrid2026 ? 1276 : extendedGrid ? 1176 : 1076}px`;
             elFormationBg.style.display = formationLap ? 'block' : 'none'; // changed to "block" to display the BG
 
             // lb-pos-col-bg
-            elPosColBg.style.height          = extendedGrid ? '1120px' : '1020px';
+            elPosColBg.style.height          = extendedGrid2026 ? '1220px' : extendedGrid ? '1120px' : '1020px';
             elPosColBg.style.backgroundColor = positionBg ? '#0a0a0f' : 'transparent';
 
             // lb-header
@@ -1787,8 +1790,8 @@
             // lb-gradient-vertical (normal) — hidden during formation lap
             const gradLeft = narrow ? '175px' : '295px';
             const gradH    = isF2
-                ? (extendedGrid ? 1170 : 1070)   // F2: base + 125 - 75
-                : (extendedGrid ? 1245 : 1145);  // F1: base + 125
+                ? (extendedGrid2026 ? 1270 : extendedGrid ? 1170 : 1070)   // F2: base + 125 - 75
+                : (extendedGrid2026 ? 1345 : extendedGrid ? 1245 : 1145);  // F1: base + 125
             elGradientVertical.style.left            = gradLeft;
             elGradientVertical.style.top             = isF2 ? '97px' : '21px';
             elGradientVertical.style.height          = `${gradH}px`;
@@ -1796,7 +1799,7 @@
             elGradientVertical.style.display         = formationLap ? 'none' : '';
 
             // lb-gradient-vertical-formation — shown only during formation lap
-            const gradFmnH = extendedGrid ? 1120 : 1020;
+            const gradFmnH = extendedGrid2026 ? 1220 : extendedGrid ? 1120 : 1020;
             elGradientVerticalFmn.style.left           = gradLeft;
             elGradientVerticalFmn.style.height         = `${gradFmnH}px`;
             elGradientVerticalFmn.style.backgroundSize = `38px ${gradFmnH}px`;
@@ -1828,17 +1831,15 @@
             const scVscBorder = mode === 'sc' || mode === 'vsc';
             const rfBorder    = mode === 'rf';
             updateDecoBorders();
-            const scBorderImg = scVscBorder
-                ? (extendedGrid ? 'Border_SC_22.png' : 'Border_SC.png')
-                : 'Border_Red.png';
+            const scBorderImg = scVscBorder ? 'Border_SC.png' : 'Border_Red.png';
             elDecoBorderSc.style.backgroundImage  = `url('/images/leaderboard/${scBorderImg}')`;
             elDecoBorderSc2.style.backgroundImage = `url('/images/leaderboard/${scBorderImg}')`;
             // Yellow/green border opacity + sizing handled by updateDecoBorders() above
 
             const flagImgMap = {
                 rf:     'RedFlagThick.png',
-                sc:     extendedGrid ? 'SC_VSC_22.png' : 'SC_VSC.png',
-                vsc:    extendedGrid ? 'SC_VSC_22.png' : 'SC_VSC.png',
+                sc:     extendedGrid2026 ? 'SC_VSC_24.png' : extendedGrid ? 'SC_VSC_22.png' : 'SC_VSC.png',
+                vsc:    extendedGrid2026 ? 'SC_VSC_24.png' : extendedGrid ? 'SC_VSC_22.png' : 'SC_VSC.png',
                 yellow: 'YellowFlag.png',
                 green:  'GreenFlag.png',
             };
@@ -2793,13 +2794,17 @@
                 const activeFromPacket = data.m_numActiveCars ?? 0;
                 if (activeFromPacket > numActiveCars) numActiveCars = activeFromPacket;
                 extendedGrid = numActiveCars > 20;
+                extendedGrid2026 = numActiveCars > 22;
                 updateOverlayHeight();
+                updateFlagsBorder();
                 updateFlagsImg();
                 updateThickStrokeBg();
                 updateBorderRect();
                 updateMainPanels();
                 updateDataContainerLeft();
-                elThickStrokeBg.style.backgroundImage = extendedGrid
+                elThickStrokeBg.style.backgroundImage = extendedGrid2026
+                    ? "url('/images/leaderboard/BG_24.png')"
+                    : extendedGrid
                     ? "url('/images/leaderboard/BG_22.png')"
                     : "url('/images/leaderboard/BG.png')";
 
