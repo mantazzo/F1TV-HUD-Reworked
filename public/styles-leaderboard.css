@@ -4,7 +4,8 @@
    ════════════════════════════════════════════════════════════════ */
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: transparent; overflow: hidden; }
+body { background: black; overflow: hidden; }
+/* Note for myself: Use "background: black;" when debugging/working on overlay and use "background: transparent;" when testing/shipping final versions */
 
 /* ════════════════════════════════════════════════════════════════
    OVERLAY CONTAINER — 482x1292 px
@@ -2349,4 +2350,417 @@ body { background: transparent; overflow: hidden; }
     justify-content: center;
     text-align: center;
     align-items: center;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   CHAMPIONSHIP STANDINGS — item_1_39
+   482×1291 at left:0, top:0 — hidden by default (opacity toggled with
+   the Leaderboard). Height may grow to ~1390px later to fit 24 drivers.
+   ════════════════════════════════════════════════════════════════ */
+#lb-standings {
+    left: 0;
+    top: 0;
+    width: 482px;
+    height: 1291px;
+    opacity: 0;
+    transition: opacity 200ms ease;
+}
+#lb-standings > * { position: absolute; }
+
+/* Background container (item_1_40r0): 482×1291 */
+#lb-standings-bg {
+    left: 0;
+    top: 0;
+    width: 482px;
+    height: 1291px;
+}
+#lb-standings-bg > * { position: absolute; }
+
+/* Series logo (item_1_41r0r0): F1.png 156.8×40.18 at left:35, top:46 */
+#lb-standings-logo {
+    left: 35px;
+    top: 46px;
+    width: 156.8px;
+    height: 40.18px;
+    background-image: url('/images/other-logos/F1.png');
+    background-size: 156.8px 40.18px;
+}
+
+/* Panel background (item_1_42r0r0): 405×945 at left:18, top:225, opacity:0.85 */
+#lb-standings-panel-bg {
+    left: 18px;
+    top: 225px;
+    width: 405px;
+    height: 945px;
+    border-radius: 0 0 0 25px;
+    background-color: rgb(18, 20, 24);
+    opacity: 0.85;
+}
+
+/* Position# column background (item_1_43r0r0): 48×1020 at left:25, top:140, opacity:0.75 */
+#lb-standings-pos-col-bg {
+    left: 25px;
+    top: 140px;
+    width: 48px;
+    height: 1020px;
+    border-radius: 0 0 0 15px;
+    border-right: 1px solid rgb(36, 35, 38);
+    background-color: rgb(18, 20, 24);
+    opacity: 0.75;
+}
+
+/* Column separator (item_1_44r0r0): 48×1020 at left:353, top:140, opacity:0.75 */
+#lb-standings-separator {
+    left: 353px;
+    top: 140px;
+    width: 48px;
+    height: 1020px;
+    border-left: 1px solid rgba(74, 74, 74, 0.78);
+    opacity: 0.75;
+}
+
+/* Header background (item_1_45r0r0): 405×121 at left:18, top:105 */
+#lb-standings-header-bg {
+    left: 18px;
+    top: 105px;
+    width: 405px;
+    height: 121px;
+    background-color: rgb(18, 20, 24);
+}
+
+/* Header gradient 1 (item_1_46r0r0): 404.8×30 at left:18, top:105, opacity:0.5 */
+#lb-standings-header-gradient-1 {
+    left: 18px;
+    top: 105px;
+    width: 404.8px;
+    height: 30px;
+    background-image: url('/images/common/Gradient.png');
+    background-size: 404.8px 30px;
+    opacity: 0.5;
+}
+
+/* Header gradient 2 (item_1_47r0r0): 404.8×20 at left:18, top:205, rotated 180deg */
+#lb-standings-header-gradient-2 {
+    left: 18px;
+    top: 205px;
+    width: 404.8px;
+    height: 20px;
+    background-image: url('/images/common/Gradient.png');
+    background-size: 404.8px 20px;
+    transform: rotate(180deg);
+}
+
+/* Decorative border (item_1_48r0r0): 400×1060 at left:23, top:105 */
+#lb-standings-border {
+    left: 23px;
+    top: 105px;
+    width: 400px;
+    height: 1060px;
+    border-radius: 0 0 0 20px;
+    border-bottom: 4px solid rgb(88, 91, 92);
+    border-left: 4px solid rgb(88, 91, 92);
+}
+
+/* Header title — DRIVERS'/CONSTRUCTORS' (item_1_49r0r0 / item_1_52r0r0 combined):
+   390×40 at left:26, top:120  F1TV-2022 ObliqueBold 34px white centered */
+#lb-standings-title {
+    left: 26px;
+    top: 120px;
+    width: 390px;
+    height: 40px;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 34px;
+    color: rgb(255, 255, 255);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+}
+
+/* "CHAMPIONSHIP" (item_1_53r0r0): 390×40 at left:26, top:165  F1TV-2022 ObliqueBold 34px white centered */
+#lb-standings-subtitle {
+    left: 26px;
+    top: 165px;
+    width: 390px;
+    height: 40px;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 34px;
+    color: rgb(255, 255, 255);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+}
+
+/* FIA logo glyph (item_1_50r0r0): F1TV-2022-Logos 'f' 100×75 at left:171, top:30 */
+#lb-standings-fia-logo {
+    left: 171px;
+    top: 30px;
+    width: 100px;
+    height: 75px;
+    font-family: 'F1TV-2022-Logos';
+    font-weight: 400;
+    font-size: 55px;
+    color: rgb(255, 255, 255);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+}
+
+/* FIA series name (item_1_51r0r0): 226×50 at left:253, top:40  Formula1 Display 18px white centered
+   Wraps naturally (no forced line break) into "FIA Formula One" / "World Championship™" */
+#lb-standings-fia-text {
+    left: 253px;
+    top: 40px;
+    width: 226px;
+    height: 50px;
+    font-family: 'Formula1 Display';
+    font-weight: 400;
+    font-size: 18px;
+    color: rgb(255, 255, 255);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    white-space: normal;
+}
+
+/* Vertical Gradient (item_1_54r0): 36.8×945 at left:385, top:225, opacity:0.75
+   Sibling of the BG container, not part of it */
+#lb-standings-gradient-vertical {
+    left: 385px;
+    top: 225px;
+    width: 36.8px;
+    height: 945px;
+    background-image: url('/images/leaderboard/Gradient_Vertical.png');
+    background-size: 36.8px 945px;
+    opacity: 0.75;
+}
+
+/* Standings Container (item_1_55r0): 415×1025 at left:27, top:225
+   Sibling of the BG container, holds either Driver or Constructor standings */
+#lb-standings-standings {
+    left: 27px;
+    top: 225px;
+    width: 415px;
+    height: 1025px;
+}
+#lb-standings-standings > * { position: absolute; }
+
+/* Driver Standings Container (item_1_55r0_1): 415×1025 at left:0, top:0 — rows appended via JS */
+#lb-standings-drivers {
+    left: 0;
+    top: 0;
+    width: 415px;
+    height: 1025px;
+}
+#lb-standings-drivers > * { position: absolute; }
+
+/* Driver Row Container (item_1_55r0_2r0 etc.): 415×50, one per driver slot, top set via JS
+   (46.5px stride — 20 rows × 46.5 = 930px, well within the 1025px container) */
+.lb-standings-row {
+    left: 0;
+    width: 415px;
+    height: 50px;
+}
+.lb-standings-row > * { position: absolute; }
+
+/* Position Number (item_1_55r0_3r0r0 etc.): 40×50 at left:0, top:0 */
+.lb-standings-pos {
+    left: 0;
+    top: 0;
+    width: 40px;
+    height: 50px;
+    font-family: 'F1TV-2022-Position';
+    font-weight: 400;
+    font-size: 21px;
+    color: rgb(192, 192, 192);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+}
+
+/* Team Logo (item_1_55r0_5r0r0r0 etc.): img 55×50 at left:45, top:0 */
+.lb-standings-team-logo {
+    left: 45px;
+    top: 0;
+    width: 55px;
+    height: 50px;
+    object-fit: contain;
+    padding: 5px;
+}
+
+/* Driver Name (item_1_55r0_7r0r0 etc.): 245×50 at left:100, top:0 */
+.lb-standings-name {
+    left: 100px;
+    top: 0;
+    width: 245px;
+    height: 50px;
+    font-family: 'F1TV-2022';
+    font-weight: 400;
+    font-style: normal;
+    font-size: 23px;
+    color: rgb(255, 255, 255);
+    display: flex;
+    justify-content: flex-start;
+    text-align: left;
+    align-items: center;
+    white-space: pre;
+}
+
+/* Driver Points (item_1_55r0_8r0r0 etc.): 80×50 at left:320, top:0 */
+.lb-standings-points {
+    left: 320px;
+    top: 0;
+    width: 80px;
+    height: 50px;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 26px;
+    color: rgb(255, 255, 255);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+}
+
+/* Constructor Standings Container (item_1_55r0_156): 415×1025 at left:0, top:0
+   Hidden by default — Drivers is the default view */
+#lb-standings-constructors {
+    display: none;
+    left: 0;
+    top: 0;
+    width: 415px;
+    height: 1025px;
+}
+#lb-standings-constructors > * { position: absolute; }
+
+/* Constructor Row Container (item_1_55r0_157r0 etc.): 415×102.5, one per team slot, top set via JS
+   (102.5px stride — 10 rows × 102.5 = 1025px, fills the container exactly.
+   11-team seasons use a tighter 93.2px stride instead — not handled yet.) */
+.lb-standings-constructor-row {
+    left: 0;
+    width: 415px;
+    height: 102.5px;
+}
+.lb-standings-constructor-row > * { position: absolute; }
+
+/* Position Number (item_1_55r0_158r0r0 etc.): 40×65 at left:0, top:0 */
+.lb-standings-constructor-pos {
+    left: 0;
+    top: 0;
+    width: 40px;
+    height: 65px;
+    font-family: 'F1TV-2022-Position';
+    font-weight: 400;
+    font-size: 21px;
+    color: rgb(192, 192, 192);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+}
+
+/* Team Logo (item_1_55r0_160r0r0r0 etc.): img 75×70 at left:45, top:0 */
+.lb-standings-constructor-logo {
+    left: 45px;
+    top: 0;
+    width: 75px;
+    height: 70px;
+    object-fit: contain;
+    padding: 5px;
+}
+
+/* Team Name (item_1_55r0_162r0r0 etc.): 195×80 at left:125, top:20
+   Wraps naturally across up to 2 lines (e.g. "RED BULL RACING" / "RBPT") — not a forced <br> */
+.lb-standings-constructor-name {
+    left: 125px;
+    top: 0px;
+    width: 195px;
+    height: 80px;
+    font-family: 'F1TV-2022';
+    font-weight: 400;
+    font-style: normal;
+    font-size: 23px;
+    color: rgb(255, 255, 255);
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    text-align: left;
+    white-space: normal;
+}
+
+/* Team Points (item_1_55r0_163r0r0 etc.): 80×65 at left:320, top:0 */
+.lb-standings-constructor-points {
+    left: 320px;
+    top: 0;
+    width: 80px;
+    height: 65px;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 26px;
+    color: rgb(255, 255, 255);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+}
+
+/* Thick Stroke BG (item_1_56r0): 332×1190 at left:2, top:-1, opacity:0.05
+   Decorative texture, sibling of the BG container, not part of it */
+#lb-standings-thick-stroke-bg {
+    left: 2px;
+    top: -1px;
+    width: 332px;
+    height: 1190px;
+    background-image: url('/images/leaderboard/BG.png');
+    background-size: 332px 1190px;
+    opacity: 0.05;
+}
+
+/* Thick Stroke BG extension (item_1_57r0): 90×1287 clipped viewport at left:334, top:-1
+   Extends the ThickStrokeBG texture along the right edge that the original doesn't cover */
+#lb-standings-thick-stroke-side {
+    left: 334px;
+    top: -1px;
+    width: 90px;
+    height: 1287px;
+    overflow: hidden;
+}
+#lb-standings-thick-stroke-side > * { position: absolute; }
+
+/* Extension image (item_1_57r0_1): 332×1190 at left:-40, top:0, opacity:0.05 — same BG.png texture,
+   shifted left so only the slice within the 90px viewport is visible */
+#lb-standings-thick-stroke-side-img {
+    left: -40px;
+    top: 0;
+    width: 332px;
+    height: 1190px;
+    background-image: url('/images/leaderboard/BG.png');
+    background-size: 332px 1190px;
+    opacity: 0.05;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   TEMP DEV PREVIEW — Championship Standings
+   Remove once the real Leaderboard ⇄ Standings switch logic exists.
+   Forces Standings visible and hides the rest of the Leaderboard.
+   Uses opacity (not display:none) so elements keep their layout box —
+   display:none collapses width to 0, which breaks textFit's static-width
+   check on #lb-session-name and throws before the rest of the init
+   script (including the overlay_config listener) can run.
+   ════════════════════════════════════════════════════════════════ */
+#lb-container > *:not(#lb-standings) {
+    opacity: 0 !important;
+}
+#lb-standings {
+    opacity: 1 !important;
 }

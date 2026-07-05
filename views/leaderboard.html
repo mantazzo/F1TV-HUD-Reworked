@@ -356,7 +356,85 @@
             <!-- Series logo F2 (item_1_37r0): F2.png  172.15×77.275 at left:20, top:24  hidden by default -->
             <div id="lb-series-logo-f2"></div>
 
-            <!-- TODO: Implement Championship Standings display and features -->
+            <!-- ══ Championship Standings (item_1_39): 482×1291 at left:0, top:0 ══
+                 Toggles with Leaderboard via opacity (200ms ease) — hides Leaderboard
+                 content when active. Kept at original height for now; may grow to
+                 ~1390px later to fit 24 drivers. Hidden by default until switch logic
+                 (Leaderboard ⇄ Standings, Drivers ⇄ Constructors) is implemented. -->
+            <div id="lb-standings">
+                <!-- Background container (item_1_40r0): 482×1291 -->
+                <div id="lb-standings-bg">
+                    <!-- Series logo (item_1_41r0r0): F1.png 156.8×40.18 at left:35, top:46 -->
+                    <div id="lb-standings-logo"></div>
+
+                    <!-- Panel background (item_1_42r0r0): 405×945 at left:18, top:225, opacity:0.85 -->
+                    <div id="lb-standings-panel-bg"></div>
+
+                    <!-- Position# column background (item_1_43r0r0): 48×1020 at left:25, top:140, opacity:0.75 -->
+                    <div id="lb-standings-pos-col-bg"></div>
+
+                    <!-- Column separator (item_1_44r0r0): 48×1020 at left:353, top:140, opacity:0.75 -->
+                    <div id="lb-standings-separator"></div>
+
+                    <!-- Header background (item_1_45r0r0): 405×121 at left:18, top:105 -->
+                    <div id="lb-standings-header-bg"></div>
+
+                    <!-- Header gradient 1 (item_1_46r0r0): 404.8×30 at left:18, top:105, opacity:0.5 -->
+                    <div id="lb-standings-header-gradient-1"></div>
+
+                    <!-- Header gradient 2 (item_1_47r0r0): 404.8×20 at left:18, top:205, rotated 180deg -->
+                    <div id="lb-standings-header-gradient-2"></div>
+
+                    <!-- Decorative border (item_1_48r0r0): 400×1060 at left:23, top:105 -->
+                    <div id="lb-standings-border"></div>
+
+                    <!-- Header title — DRIVERS'/CONSTRUCTORS' (item_1_49r0r0 / item_1_52r0r0 combined
+                         into one element): 390×40 at left:26, top:120  F1TV-2022 ObliqueBold 34px white
+                         centered. Defaults to DRIVERS'; Drivers/Constructors switch logic is TODO. -->
+                    <div id="lb-standings-title">DRIVERS'</div>
+
+                    <!-- "CHAMPIONSHIP" (item_1_53r0r0): 390×40 at left:26, top:165  F1TV-2022 ObliqueBold 34px white centered -->
+                    <div id="lb-standings-subtitle">CHAMPIONSHIP</div>
+
+                    <!-- FIA logo glyph (item_1_50r0r0): F1TV-2022-Logos 'f' 100×75 at left:171, top:30 -->
+                    <div id="lb-standings-fia-logo">f</div>
+
+                    <!-- FIA series name (item_1_51r0r0): 226×50 at left:253, top:40  Formula1 Display 18px
+                         white centered. Wraps naturally (no forced line break) to two lines:
+                         "FIA Formula One" / "World Championship™" -->
+                    <div id="lb-standings-fia-text">FIA Formula One World Championship&trade;</div>
+                </div>
+
+                <!-- Vertical Gradient (item_1_54r0): 36.8×945 at left:385, top:225, opacity:0.75 — separate from BG -->
+                <div id="lb-standings-gradient-vertical"></div>
+
+                <!-- Standings Container (item_1_55r0): 415×1025 at left:27, top:225 — holds either
+                     Driver or Constructor standings; rows are JS-generated (see standingsDriverRows). -->
+                <div id="lb-standings-standings">
+                    <!-- Driver Standings Container (item_1_55r0_1): 415×1025 at left:0, top:0
+                         Supports up to 22 drivers (original's current max, currently using 20 —
+                         see NUM_STANDINGS_ROWS). Shown by default since it matches the DRIVERS'
+                         default title. -->
+                    <div id="lb-standings-drivers"></div>
+
+                    <!-- Constructor Standings Container (item_1_55r0_156): 415×1025 at left:0, top:0
+                         Supports up to 11 teams (original's current max). Hidden by default — Drivers
+                         is the default view (mirrors the header title defaulting to DRIVERS'). -->
+                    <div id="lb-standings-constructors"></div>
+                </div>
+
+                <!-- Thick Stroke BG (item_1_56r0): 332×1190 at left:2, top:-1, opacity:0.05 — decorative texture, separate from BG -->
+                <div id="lb-standings-thick-stroke-bg"></div>
+
+                <!-- Thick Stroke BG extension (item_1_57r0 / item_1_57r0_1): 90×1287 clipped viewport at
+                     left:334, top:-1, showing a left-shifted slice (left:-40) of the same 332×1190 BG.png
+                     texture (opacity:0.05) — original doesn't cover the full Standings width, so this
+                     extends it along the right edge. Simplified from SimHub's nested widget/scaling
+                     wrapper down to a plain clipped viewport + offset image. -->
+                <div id="lb-standings-thick-stroke-side">
+                    <div id="lb-standings-thick-stroke-side-img"></div>
+                </div>
+            </div>
 
         </div>
     </div>
@@ -481,6 +559,8 @@
         const elFormationBannerLine2 = document.getElementById('lb-formation-banner-line2');
         const elSeriesLogo   = document.getElementById('lb-series-logo');
         const elSeriesLogoF2 = document.getElementById('lb-series-logo-f2');
+        const elStandingsDrivers = document.getElementById('lb-standings-drivers');
+        const elStandingsConstructors = document.getElementById('lb-standings-constructors');
 
         let NUM_CARS = 24;  // Pre-allocate for max possible cars (20 standard, up to 22 in MyTeam/F2, 24 in 2026 season).
                             // Updated at runtime from packet 4 (m_numActiveCars).
@@ -857,6 +937,73 @@
             row.appendChild(text);
             elMfd4.appendChild(row);
             return { arrow, text };
+        });
+
+        // ── Standings driver rows — 20 slots (original background fits 20; up to 22 possible) ──
+        // TODO: placeholder content only (design-stage) — wire up real standings
+        // data (position, team logo, driver name, points) once available.
+        const NUM_STANDINGS_ROWS = 20;
+        const standingsDriverRows = Array.from({ length: NUM_STANDINGS_ROWS }, (_, i) => {
+            const row = document.createElement('div');
+            row.className = 'lb-standings-row';
+            row.style.top = `${i * 46.5}px`;
+
+            const pos = document.createElement('div');
+            pos.className = 'lb-standings-pos';
+            pos.textContent = `${i + 1}`;
+
+            const logo = document.createElement('img');
+            logo.className = 'lb-standings-team-logo';
+            logo.src = '/images/team-logos/FIA.svg';
+
+            const name = document.createElement('div');
+            name.className = 'lb-standings-name';
+            name.textContent = 'VERSTAPPEN';
+
+            const points = document.createElement('div');
+            points.className = 'lb-standings-points';
+            points.textContent = '100';
+
+            row.appendChild(pos);
+            row.appendChild(logo);
+            row.appendChild(name);
+            row.appendChild(points);
+            elStandingsDrivers.appendChild(row);
+            return { row, pos, logo, name, points };
+        });
+
+        // ── Standings constructor rows — 10 slots (11-team seasons use a tighter
+        // 93.2px stride instead of 102.5px — not handled yet, revisit if/when needed) ──
+        // TODO: placeholder content only (design-stage) — wire up real standings
+        // data (position, team logo, team name, points) once available.
+        const NUM_STANDINGS_CONSTRUCTOR_ROWS = 10;
+        const standingsConstructorRows = Array.from({ length: NUM_STANDINGS_CONSTRUCTOR_ROWS }, (_, i) => {
+            const row = document.createElement('div');
+            row.className = 'lb-standings-constructor-row';
+            row.style.top = `${i * 93.2}px`;
+
+            const pos = document.createElement('div');
+            pos.className = 'lb-standings-constructor-pos';
+            pos.textContent = `${i + 1}`;
+
+            const logo = document.createElement('img');
+            logo.className = 'lb-standings-constructor-logo';
+            logo.src = '/images/team-logos/FIA.svg';
+
+            const name = document.createElement('div');
+            name.className = 'lb-standings-constructor-name';
+            name.textContent = 'RED BULL RACING RBPT';
+
+            const points = document.createElement('div');
+            points.className = 'lb-standings-constructor-points';
+            points.textContent = '100';
+
+            row.appendChild(pos);
+            row.appendChild(logo);
+            row.appendChild(name);
+            row.appendChild(points);
+            elStandingsConstructors.appendChild(row);
+            return { row, pos, logo, name, points };
         });
 
         // ── State ──────────────────────────────────────────────────────────
