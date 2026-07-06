@@ -1,0 +1,25 @@
+[
+  {
+    "TeamID_Note": "Team ID from DefaultTeams.json (use this season's ID block, e.g. the '26 entries).",
+    "TeamID": 222,
+    "CustomTeamLogo_Note": "Overrides the TeamID logo lookup when set. Filename only, resolved against /images/team-logos/.",
+    "CustomTeamLogo": null,
+    "CustomTeamName_Note": "Overrides the TeamID name lookup when set. Falls back to the TeamID entry's FullName, then its ShortName if FullName is missing/empty.",
+    "CustomTeamName": null,
+    "Points_Note": "Mandatory. A row only renders if this is set (0 counts as set) — omit entirely to keep a row inactive/staged.",
+    "Points": null,
+    "Other_Notes": "This is the template entry — copy it for new rows and delete the _Note fields. Position on screen is this entry's position in the array (top to bottom), not the Points value — sort the array yourself, highest points first."
+  },
+  { "TeamID": 228, "Points": 474 },
+  { "TeamID": 220, "Points": 408 },
+  { "TeamID": 221, "Points": 363 },
+  { "TeamID": 222, "Points": 349 },
+  { "TeamID": 224, "Points": 240 },
+  { "TeamID": 223, "Points": 160 },
+  { "TeamID": 225, "Points": 114 },
+  { "TeamID": 227, "Points": 82 },
+  { "TeamID": 229, "Points": 59 },
+  { "CustomTeamName": "TEST OVERRIDE", "CustomTeamLogo": "FIA.svg", "Points": 35 },
+  { "TeamID": 226, "Points": 30 },
+  { "TeamID": 230, "Points": 8 }
+]

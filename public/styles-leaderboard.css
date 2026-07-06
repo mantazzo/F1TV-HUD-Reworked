@@ -2600,7 +2600,7 @@ body { background: black; overflow: hidden; }
 .lb-standings-name {
     left: 100px;
     top: 0;
-    width: 245px;
+    width: 227px;
     height: 50px;
     font-family: 'F1TV-2022';
     font-weight: 400;
@@ -2632,9 +2632,12 @@ body { background: black; overflow: hidden; }
 }
 
 /* Constructor Standings Container (item_1_55r0_156): 415×1025 at left:0, top:0
-   Hidden by default — Drivers is the default view */
+   Hidden by default (opacity, not display:none — Drivers/Constructors overlap the
+   same box, and both need to stay genuinely laid out at all times so their textFit
+   calls, which fire independently of which one is currently selected, always get a
+   real clientWidth/clientHeight to measure against instead of throwing). */
 #lb-standings-constructors {
-    display: none;
+    opacity: 0;
     left: 0;
     top: 0;
     width: 415px;
@@ -2649,6 +2652,7 @@ body { background: black; overflow: hidden; }
     left: 0;
     width: 415px;
     height: 102.5px;
+    overflow: hidden;
 }
 .lb-standings-constructor-row > * { position: absolute; }
 
@@ -2749,18 +2753,15 @@ body { background: black; overflow: hidden; }
     opacity: 0.05;
 }
 
-/* ════════════════════════════════════════════════════════════════
-   TEMP DEV PREVIEW — Championship Standings
-   Remove once the real Leaderboard ⇄ Standings switch logic exists.
-   Forces Standings visible and hides the rest of the Leaderboard.
-   Uses opacity (not display:none) so elements keep their layout box —
-   display:none collapses width to 0, which breaks textFit's static-width
-   check on #lb-session-name and throws before the rest of the init
-   script (including the overlay_config listener) can run.
-   ════════════════════════════════════════════════════════════════ */
-#lb-container > *:not(#lb-standings) {
+/* Leaderboard ⇄ Standings — #lb-standings occupies the same position/size as the
+   main leaderboard content, so only one is ever meant to be visible at a time.
+   Toggled via #lb-container.standings-active from the standingsMode overlay_config
+   property (see the socket.on('overlay_config', ...) handler). Uses opacity, not
+   display:none — display:none collapses width to 0, which breaks textFit's static-
+   width checks (#lb-session-name, standings name fields) on whatever it's applied to.
+   !important is required here: many children (e.g. #lb-session-name) manage their own
+   opacity via inline styles elsewhere (pane-mode, session state, etc.), and a plain
+   class rule loses to any inline style regardless of selector specificity. */
+#lb-container.standings-active > *:not(#lb-standings) {
     opacity: 0 !important;
-}
-#lb-standings {
-    opacity: 1 !important;
 }

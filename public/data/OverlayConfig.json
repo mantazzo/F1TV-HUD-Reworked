@@ -74,7 +74,8 @@
       "showLeaderGaps": false,
       "showDrsIndicators": false,
       "showBattery": false,
-      "showPenalties": false
+      "showPenalties": false,
+      "standingsMode": "off"
     }
   }
 }

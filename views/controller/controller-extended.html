@@ -184,6 +184,14 @@
                 </div>
             </div>
             <div class="option-row">
+                <span class="select-text">Standings:</span>
+                <div class="mfd-button-group" id="standings-button-group">
+                    <button class="mfd-button" data-standings="off">Off</button>
+                    <button class="mfd-button" data-standings="drivers">Drivers</button>
+                    <button class="mfd-button" data-standings="constructors">Constructors</button>
+                </div>
+            </div>
+            <div class="option-row">
                 <label class="toggle-label">
                     <input type="checkbox" id="pane-2-on-lap-1-toggle" class="toggle-checkbox">
                     <span class="toggle-slider"></span>
@@ -621,6 +629,16 @@
             updateLeaderboardOptions();
         });
 
+        // Standings mode button handling
+        document.getElementById('standings-button-group').addEventListener('click', (e) => {
+            const btn = e.target.closest('.mfd-button');
+            if (!btn) return;
+            const mode = btn.dataset.standings;
+            socket.emit('config_update', { overlay: 'leaderboard', property: 'standingsMode', value: mode });
+            if (currentConfig?.overlays?.leaderboard) currentConfig.overlays.leaderboard.standingsMode = mode;
+            updateLeaderboardOptions();
+        });
+
         // Pane 2 on Lap 1 toggle handling
         const pane2OnLap1Toggle = document.getElementById('pane-2-on-lap-1-toggle');
         pane2OnLap1Toggle.addEventListener('change', () => {
@@ -739,6 +757,10 @@
             const pane = lb.pane ?? 0;
             document.querySelectorAll('#pane-button-group .mfd-button').forEach(btn => {
                 btn.classList.toggle('active', Number(btn.dataset.pane) === pane);
+            });
+            const standingsMode = lb.standingsMode || 'off';
+            document.querySelectorAll('#standings-button-group .mfd-button').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.standings === standingsMode);
             });
             showLastNamesToggle.checked            = !!lb.showLastNames;
             showDriverNumbersToggle.checked        = !!lb.showDriverNumbers;

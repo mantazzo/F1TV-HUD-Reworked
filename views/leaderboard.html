@@ -559,6 +559,8 @@
         const elFormationBannerLine2 = document.getElementById('lb-formation-banner-line2');
         const elSeriesLogo   = document.getElementById('lb-series-logo');
         const elSeriesLogoF2 = document.getElementById('lb-series-logo-f2');
+        const elStandings = document.getElementById('lb-standings');
+        const elStandingsTitle = document.getElementById('lb-standings-title');
         const elStandingsDrivers = document.getElementById('lb-standings-drivers');
         const elStandingsConstructors = document.getElementById('lb-standings-constructors');
 
@@ -940,8 +942,8 @@
         });
 
         // ── Standings driver rows — 20 slots (original background fits 20; up to 22 possible) ──
-        // TODO: placeholder content only (design-stage) — wire up real standings
-        // data (position, team logo, driver name, points) once available.
+        // Initial content below is a placeholder shown only until loadDriverStandings() resolves
+        // and renderDriverStandings() (further down) overwrites it with real data.
         const NUM_STANDINGS_ROWS = 20;
         const standingsDriverRows = Array.from({ length: NUM_STANDINGS_ROWS }, (_, i) => {
             const row = document.createElement('div');
@@ -972,10 +974,78 @@
             return { row, pos, logo, name, points };
         });
 
+        // ── Driver Standings data — loaded from a static JSON file (not UDP telemetry,
+        // the game has no championship data). Resolution priority per entry:
+        //   Name: CustomDriverLastName → DriverID (aiDrivers lookup) → blank
+        //   Logo: CustomTeamLogo → TeamID (teamNames lookup) → hidden
+        // A row is only shown if Points is present (0 counts) — array order = position,
+        // so inactive/unset rows can be staged without leaving gaps in the visible list.
+        let driverStandings = [];
+
+        async function loadDriverStandings() {
+            try {
+                const response = await fetch('/data/DriverStandings.json');
+                driverStandings = await response.json();
+            } catch (e) {
+                console.error('[Leaderboard] Error loading driver standings:', e);
+                driverStandings = [];
+            }
+            renderDriverStandings();
+        }
+        loadDriverStandings();
+
+        // Same custom-font race as Constructor Standings (see comment near
+        // loadConstructorStandings()) — re-fit once fonts are confirmed loaded.
+        if (document.fonts?.ready) {
+            document.fonts.ready.then(() => renderDriverStandings());
+        }
+
+        function renderDriverStandings() {
+            const activeEntries = driverStandings.filter(e => e.Points !== null && e.Points !== undefined);
+
+            standingsDriverRows.forEach((row, i) => {
+                const entry = activeEntries[i];
+                if (!entry) {
+                    row.row.style.display = 'none';
+                    return;
+                }
+                row.row.style.display = '';
+
+                let name = '';
+                if (entry.CustomDriverLastName) {
+                    name = entry.CustomDriverLastName;
+                } else if (entry.DriverID != null) {
+                    name = aiDrivers[entry.DriverID]?.lastName ?? '';
+                }
+                row.name.textContent = name ? name.toUpperCase() : '';
+                try {
+                    textFit(row.name, { minFontSize: 12, maxFontSize: 23, multiLine: false, widthOnly: true });
+                } catch (e) {
+                    // Defensive only, see the equivalent try/catch in renderConstructorStandings().
+                }
+
+                let logoFile = null;
+                if (entry.CustomTeamLogo) {
+                    logoFile = entry.CustomTeamLogo;
+                } else if (entry.TeamID != null) {
+                    logoFile = teamNames[entry.TeamID]?.Logo ?? null;
+                }
+                if (logoFile) {
+                    row.logo.src = `/images/team-logos/${logoFile}`;
+                    row.logo.style.display = '';
+                } else {
+                    row.logo.removeAttribute('src');
+                    row.logo.style.display = 'none';
+                }
+
+                row.points.textContent = String(entry.Points);
+            });
+        }
+
         // ── Standings constructor rows — 10 slots (11-team seasons use a tighter
         // 93.2px stride instead of 102.5px — not handled yet, revisit if/when needed) ──
-        // TODO: placeholder content only (design-stage) — wire up real standings
-        // data (position, team logo, team name, points) once available.
+        // Initial content below is a placeholder shown only until loadConstructorStandings()
+        // resolves and renderConstructorStandings() (further down) overwrites it with real data.
         const NUM_STANDINGS_CONSTRUCTOR_ROWS = 10;
         const standingsConstructorRows = Array.from({ length: NUM_STANDINGS_CONSTRUCTOR_ROWS }, (_, i) => {
             const row = document.createElement('div');
@@ -1005,6 +1075,77 @@
             elStandingsConstructors.appendChild(row);
             return { row, pos, logo, name, points };
         });
+
+        // ── Constructor Standings data — same pattern as Driver Standings, no DriverID
+        // involved since a constructor row is entirely team-based. Resolution priority:
+        //   Name: CustomTeamName → teamNames[TeamID].FullName → teamNames[TeamID].ShortName → blank
+        //   Logo: CustomTeamLogo → TeamID (teamNames lookup) → hidden
+        let constructorStandings = [];
+
+        async function loadConstructorStandings() {
+            try {
+                const response = await fetch('/data/ConstructorStandings.json');
+                constructorStandings = await response.json();
+            } catch (e) {
+                console.error('[Leaderboard] Error loading constructor standings:', e);
+                constructorStandings = [];
+            }
+            renderConstructorStandings();
+        }
+        loadConstructorStandings();
+
+        // textFit measures against whatever font is active at call time. If the custom
+        // F1TV-2022 @font-face is still downloading when renderConstructorStandings() first
+        // runs, it fits against the fallback font's (narrower/wider) metrics, then the real
+        // font swaps in afterwards without a re-fit — re-run once fonts are confirmed loaded.
+        if (document.fonts?.ready) {
+            document.fonts.ready.then(() => renderConstructorStandings());
+        }
+
+        function renderConstructorStandings() {
+            const activeEntries = constructorStandings.filter(e => e.Points !== null && e.Points !== undefined);
+
+            standingsConstructorRows.forEach((row, i) => {
+                const entry = activeEntries[i];
+                if (!entry) {
+                    row.row.style.display = 'none';
+                    return;
+                }
+                row.row.style.display = '';
+
+                const teamData = entry.TeamID != null ? teamNames[entry.TeamID] : null;
+                let name = '';
+                if (entry.CustomTeamName) {
+                    name = entry.CustomTeamName;
+                } else if (teamData) {
+                    name = teamData.FullName || teamData.ShortName || '';
+                }
+                row.name.textContent = name ? name.toUpperCase() : '';
+                try {
+                    textFit(row.name, { minFontSize: 12, maxFontSize: 23, multiLine: true });
+                } catch (e) {
+                    // Defensive only — shouldn't fire now that #lb-standings-constructors
+                    // is confirmed visible, but keeps one row's failure from aborting the
+                    // whole loop and leaving every other row stuck on placeholder data.
+                }
+
+                let logoFile = null;
+                if (entry.CustomTeamLogo) {
+                    logoFile = entry.CustomTeamLogo;
+                } else if (teamData) {
+                    logoFile = teamData.Logo ?? null;
+                }
+                if (logoFile) {
+                    row.logo.src = `/images/team-logos/${logoFile}`;
+                    row.logo.style.display = '';
+                } else {
+                    row.logo.removeAttribute('src');
+                    row.logo.style.display = 'none';
+                }
+
+                row.points.textContent = String(entry.Points);
+            });
+        }
 
         // ── State ──────────────────────────────────────────────────────────
         let sessionType = 0;
@@ -1091,6 +1232,8 @@
                 const data = await DriverUtils.loadDriverData(formulaType);
                 customDrivers = data.customDrivers;
                 teamNames     = data.teamNames;
+                renderDriverStandings();
+                renderConstructorStandings();
             } catch (e) {
                 console.error('[Leaderboard] Error loading driver data:', e);
             }
@@ -2454,6 +2597,7 @@
         // ── Packet handling ────────────────────────────────────────────────
         socket.on('drivers_data', (data) => {
             aiDrivers = data;
+            renderDriverStandings();
         });
 
         socket.on('f1_data', (data) => {
@@ -3185,6 +3329,19 @@
             const cfg = config?.overlays?.leaderboard;
             if (!cfg) return;
             elOverlay.classList.toggle('visible', !!cfg.visible);
+
+            // Standings — Off/Drivers/Constructors. Off↔any-mode fades #lb-standings itself
+            // (opacity, 200ms ease per its CSS). Drivers↔Constructors is also opacity (not
+            // display:none) despite being an instant, non-transitioned swap — both sub-panels
+            // need to stay genuinely laid out at all times so their independently-triggered
+            // textFit calls always get a real size to measure against (see the CSS comment
+            // on #lb-standings-constructors for the full reasoning).
+            const standingsMode = cfg.standingsMode || 'off';
+            elContainer.classList.toggle('standings-active', standingsMode !== 'off');
+            elStandings.style.opacity = standingsMode === 'off' ? '0' : '1';
+            elStandingsDrivers.style.opacity      = standingsMode === 'drivers'      ? '1' : '0';
+            elStandingsConstructors.style.opacity = standingsMode === 'constructors' ? '1' : '0';
+            elStandingsTitle.textContent = standingsMode === 'constructors' ? "CONSTRUCTORS'" : "DRIVERS'";
 
             // MFD page visibility — show the active page's header+data, hide all others
             const page = cfg.mfdPage || 'off';
