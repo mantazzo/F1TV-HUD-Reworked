@@ -38,11 +38,11 @@
     - An overlay showing current weather and weather forecast for the next 5, 10, 15 and 30 minutes
     - Forecast can be toggled using the Extended Controller
     - Primary units change depending on the default temperature units set by the player
-        - Units can be overwritten in Extended Controller, or use Automatic from the game
+        - Units can be overwritten in Extended Controller or use Automatic from the game
     - Also includes night icons for potential use at night tracks (needs some more testing)
 - Turn Indicator
-    - Very simple, shows current Turn
-    - Needs data set up by user (examples provided)
+    - A very basic overlay that shows current Turn
+    - Needs data set up by the user (examples provided)
     - Can use different data depending on game year (potential older game support in the future?)
     - Needs data for all remaining tracks still
 - Fastest Sectors
@@ -71,7 +71,7 @@
         - F2 can use a different Event Name, falls back to F1 Event Name if not found
         - Year can be set by JSON file or it will use game's year by default
     - Can be set to just be a toggle, or have automatic hiding (after 10 seconds)
-        - Also has the ability to show up for 10 seconds after every session start as well
+        - Can be changed to show up for 10 seconds after every session start as well
     - Includes "alt" background flags for certain tracks
 - Pit Window
     - Fully Remade
@@ -79,37 +79,42 @@
         - When no more pitstops are scheduled, or when not in a race session, Pit Window will be shown as "N/A"
     - Uses current tyre compound colors for various text and decorations
     - Blinking animation is also active for 2 seconds after overlay is shown
-    - Has an automatic display option as well (same as in original SimHub version)
+    - Has an automatic display option as well (same as in the original SimHub version)
     - Might need some extra work in the future - F2 SuperSoft was not considered currently and there's no real F2 support anyway
 - Car Damage
     - Fully Remade and Upgraded
-    - Shows either current tyre wear, or remaining tyre life (controlled through the Extended Controller)
+    - Shows either current tyre wear or remaining tyre life (controlled through the Extended Controller)
     - Shows damage to Wings, Sidepods, Floor, Diffuser, Rear Wing, Engine (overall) and Brakes (will likely be 0% all the time, but may be useful with some game mods...)
     - Can hide automatically after showing up (extra option toggle, controlled through Extended Controller)
     - Can show up automatically on any car part damage received (any Wings (Front + Rear) or Diffuser damage, 25%+ damage on Sidepods and Floor)
         - Or it can show up on any damage - that will include tyre wear! (Will show up every 5% of highest worn tyre, additionally)
     - Driver Name uses textFit to fit the field and also uses Primary Color from the game (can be overwritten in JSON) or uses White color as default
-    - Current Tyre Compound and Tyre Age is shown as well
+    - Current Tyre Compound and Tyre Age are shown as well
     - Additionally, the Title automatically hides after 8 seconds of showing up
     - Further improvements may be done in the future (like temperatures)
-- Leaderboard (Initials version)
-    - Original version remade to the best of my and AI capabilities (not fully completed yet)
-    - MFD pages are available (same as original)
+- Leaderboard ("Initials" version)
+    - Original version, remade to the best of mine and AI abilities and extended to support up to 24 drivers
+    - MFD pages are available (same as the original)
     - Resizing works as intended (Narrow - Pane 1, Short - Pane 2, Narrow+Short - Pane 3, Logo - Pane 4)
     - All original features are available, with a few improvements/fixes where applicable
     - Uses Initials for display
     - Driver Numbers display can either use images (.svg or .png) or use a fallback to text version
-    - Flags Display is implemented and improved (displays according to marshall post data, instead of local car data)
+      - You can also use different Driver Number styles per team!
+    - Flags Display is implemented and improved (displayed according to marshall post data, instead of local car data)
     - Time Remaining/Laps Remaining banner has also been implemented
-    - Standings (Driver and Team) haven't been implemented yet
-    - Some features haven't been implemented to the Controller yet
+    - Standings (Driver and Team) have been implemented (as of v0.6.5)
+      - Support is added for up to 24 drivers and 12 teams (with individual controls!)
+      - You can use ID data for automatic assignment or add overrides for Drivers or Teams Logos and/or Names
+      - Can be shown automatically during Formation Lap
+      - Name displays use textFit library to fit names better for display
+    - Likely feature complete, but may get a few improvements to support F1 '26 cars a bit better
 
 ## Overlay Controllers
 
 - Original Controller
     - Not available currently, will probably be done once I get most overlays working
 - Extended Controller
-    - Self-made Controller, with primary aim of introducing more functions or controls while keeping the setup relatively easy
+    - Self-made Controller, with the primary aim of introducing more functions or controls while keeping the setup relatively easy
     - Somewhat limited functionality at the moment, but hey, it works, and it's pretty easy to expand!
     - Will hopefully be expanded with various functionality from F1TV plugin settings later on
     - Also offers a simple "Shutdown" button
@@ -124,7 +129,7 @@
 
 ## Currently Working On
 
-Leaderboard (Initials version) (bugfixes, plus implementing remaining missing features)
+Bugfixes and Improvements for the older overlays (need to go back through old overlays to make sure all of them work with 2026 UDP format properly)
 
 ## Next Planned Overlay
 
@@ -136,7 +141,7 @@ In no particular order:
 - Battery Level (from older version, so might need some extra work)
 - Driver Ahead and Behind (the three versions of the overlay)
 - Driver Name (and relevant info extensions like fastest lap and stuff)
-- Leaderboard (Last Name version is much older and might need to be reworked to an extent; probably most difficult overlay to do)
+- Leaderboard - Last Name version (much older and might need to be reworked to an extent, but with the "main" version complete, this might be easier to do now)
 - Control Dashboard (original version, likely saved for last)
 
 ## Debatable
