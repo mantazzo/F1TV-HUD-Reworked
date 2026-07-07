@@ -4,7 +4,7 @@
    ════════════════════════════════════════════════════════════════ */
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: black; overflow: hidden; }
+body { background: transparent; overflow: hidden; }
 /* Note for myself: Use "background: black;" when debugging/working on overlay and use "background: transparent;" when testing/shipping final versions */
 
 /* ════════════════════════════════════════════════════════════════
