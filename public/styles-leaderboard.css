@@ -68,6 +68,7 @@ body { background: black; overflow: hidden; }
     background-size: 333px 1187px;
     opacity: 0.95;
     display: none; /* JS drives background-image, top, height, background-size, and visibility */
+    transition: top 300ms ease, height 300ms ease, background-size 300ms ease;
 }
 
 /* ThickStroke texture (item_1_4r0r0r0_2): 332×(1186|1286) at top:(1|-142), opacity:0.05
@@ -80,6 +81,7 @@ body { background: black; overflow: hidden; }
     background-image: url('/images/leaderboard/BG.png');
     background-size: 332px 1186px;
     opacity: 0.05;
+    transition: top 300ms ease, height 300ms ease, background-size 300ms ease;
 }
 
 /* Blurred border rectangle (item_1_4r0r0r0_3): 332×(1186.5|1286.5) at top:(1|-142), opacity:0.1
@@ -94,6 +96,7 @@ body { background: black; overflow: hidden; }
     border-right-width: 0;
     opacity: 0.1;
     filter: blur(1.5px);
+    transition: top 300ms ease, height 300ms ease;
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -747,7 +750,10 @@ body { background: black; overflow: hidden; }
     transition: width 500ms ease, opacity 500ms ease;
 }
 
-/* Narrow pane "FLAG" (item_1_33r0r0r0r0_9r0): 210×50 at left:-10, top:0 — shown instead of full text */
+/* Narrow pane "FLAG" (item_1_33r0r0r0r0_9r0): 210×50 at left:-10, top:0 — shown instead of full text.
+   Toggled via display:none/flex (snaps instantly), unlike the equivalent Green Flag element
+   (#lb-gf-top-text-pane) which fades via opacity+transition — kept as originally built for now,
+   but could be switched to the same opacity+transition approach later for a smoother pane swap. */
 #lb-yf-top-text-pane {
     display: none;
     left: -10px;
@@ -2354,29 +2360,31 @@ body { background: black; overflow: hidden; }
 
 /* ════════════════════════════════════════════════════════════════
    CHAMPIONSHIP STANDINGS — item_1_39
-   482×1291 at left:0, top:0 — hidden by default (opacity toggled with
-   the Leaderboard). Height may grow to ~1390px later to fit 24 drivers.
+   482×1390 at left:0, top:0 — hidden by default
+   (opacity toggled with the Leaderboard)
    ════════════════════════════════════════════════════════════════ */
 #lb-standings {
     left: 0;
     top: 0;
     width: 482px;
-    height: 1291px;
+    height: 1390px;
     opacity: 0;
     transition: opacity 200ms ease;
 }
 #lb-standings > * { position: absolute; }
 
-/* Background container (item_1_40r0): 482×1291 */
+/* Background container (item_1_40r0): 482×1390 */
 #lb-standings-bg {
     left: 0;
     top: 0;
     width: 482px;
-    height: 1291px;
+    height: 1390px;
 }
 #lb-standings-bg > * { position: absolute; }
 
-/* Series logo (item_1_41r0r0): F1.png 156.8×40.18 at left:35, top:46 */
+/* Series logo (item_1_41r0r0): F1.png 156.8×40.18 at left:35, top:46
+   AutoSizeScale (0.88 Sprint / 0.98 otherwise) applied via JS transform; anchored top-left
+   so the logo scales in place rather than around its center. */
 #lb-standings-logo {
     left: 35px;
     top: 46px;
@@ -2384,6 +2392,7 @@ body { background: black; overflow: hidden; }
     height: 40.18px;
     background-image: url('/images/other-logos/F1.png');
     background-size: 156.8px 40.18px;
+    transform-origin: top left;
 }
 
 /* Panel background (item_1_42r0r0): 405×945 at left:18, top:225, opacity:0.85 */
@@ -2395,6 +2404,7 @@ body { background: black; overflow: hidden; }
     border-radius: 0 0 0 25px;
     background-color: rgb(18, 20, 24);
     opacity: 0.85;
+    transition: height 800ms ease;
 }
 
 /* Position# column background (item_1_43r0r0): 48×1020 at left:25, top:140, opacity:0.75 */
@@ -2407,6 +2417,7 @@ body { background: black; overflow: hidden; }
     border-right: 1px solid rgb(36, 35, 38);
     background-color: rgb(18, 20, 24);
     opacity: 0.75;
+    transition: height 800ms ease;
 }
 
 /* Column separator (item_1_44r0r0): 48×1020 at left:353, top:140, opacity:0.75 */
@@ -2417,6 +2428,7 @@ body { background: black; overflow: hidden; }
     height: 1020px;
     border-left: 1px solid rgba(74, 74, 74, 0.78);
     opacity: 0.75;
+    transition: height 800ms ease;
 }
 
 /* Header background (item_1_45r0r0): 405×121 at left:18, top:105 */
@@ -2459,6 +2471,7 @@ body { background: black; overflow: hidden; }
     border-radius: 0 0 0 20px;
     border-bottom: 4px solid rgb(88, 91, 92);
     border-left: 4px solid rgb(88, 91, 92);
+    transition: height 800ms ease;
 }
 
 /* Header title — DRIVERS'/CONSTRUCTORS' (item_1_49r0r0 / item_1_52r0r0 combined):
@@ -2540,6 +2553,7 @@ body { background: black; overflow: hidden; }
     background-image: url('/images/leaderboard/Gradient_Vertical.png');
     background-size: 36.8px 945px;
     opacity: 0.75;
+    transition: height 800ms ease, background-size 800ms ease;
 }
 
 /* Standings Container (item_1_55r0): 415×1025 at left:27, top:225
@@ -2549,6 +2563,7 @@ body { background: black; overflow: hidden; }
     top: 225px;
     width: 415px;
     height: 1025px;
+    transition: height 800ms ease;
 }
 #lb-standings-standings > * { position: absolute; }
 
@@ -2562,7 +2577,8 @@ body { background: black; overflow: hidden; }
 #lb-standings-drivers > * { position: absolute; }
 
 /* Driver Row Container (item_1_55r0_2r0 etc.): 415×50, one per driver slot, top set via JS
-   (46.5px stride — 20 rows × 46.5 = 930px, well within the 1025px container) */
+   (46.5px stride at every tier — 20×46.5=930px / 22×46.5=1023px / 24×46.5=1116px, all within
+   the container's own height, 1025px normally or 1120px at the 24-driver tier) */
 .lb-standings-row {
     left: 0;
     width: 415px;
@@ -2645,9 +2661,10 @@ body { background: black; overflow: hidden; }
 }
 #lb-standings-constructors > * { position: absolute; }
 
-/* Constructor Row Container (item_1_55r0_157r0 etc.): 415×102.5, one per team slot, top set via JS
-   (102.5px stride — 10 rows × 102.5 = 1025px, fills the container exactly.
-   11-team seasons use a tighter 93.2px stride instead — not handled yet.) */
+/* Constructor Row Container (item_1_55r0_157r0 etc.): 415×102.5, one per team slot, top set via JS.
+   Uses a user-tuned 93.2px stride (not the original 102.5px) at every tier —
+   10×93.2=932px / 11×93.2=1025.2px / 12×93.2=1118.4px, all within the container's own height,
+   1025px normally or 1120px at the 12-team tier. */
 .lb-standings-constructor-row {
     left: 0;
     width: 415px;
@@ -2728,6 +2745,7 @@ body { background: black; overflow: hidden; }
     background-image: url('/images/leaderboard/BG.png');
     background-size: 332px 1190px;
     opacity: 0.05;
+    transition: height 800ms ease, background-size 800ms ease;
 }
 
 /* Thick Stroke BG extension (item_1_57r0): 90×1287 clipped viewport at left:334, top:-1
@@ -2738,6 +2756,7 @@ body { background: black; overflow: hidden; }
     width: 90px;
     height: 1287px;
     overflow: hidden;
+    transition: height 800ms ease;
 }
 #lb-standings-thick-stroke-side > * { position: absolute; }
 
@@ -2751,6 +2770,7 @@ body { background: black; overflow: hidden; }
     background-image: url('/images/leaderboard/BG.png');
     background-size: 332px 1190px;
     opacity: 0.05;
+    transition: height 800ms ease, background-size 800ms ease;
 }
 
 /* Leaderboard ⇄ Standings — #lb-standings occupies the same position/size as the

@@ -193,6 +193,29 @@
             </div>
             <div class="option-row">
                 <label class="toggle-label">
+                    <input type="checkbox" id="standings-formation-lap-toggle" class="toggle-checkbox">
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-text">Show Standings on Formation Lap</span>
+                </label>
+            </div>
+            <div class="option-row">
+                <span class="select-text">Standings Driver Count:</span>
+                <div class="mfd-button-group" id="standings-driver-count-button-group">
+                    <button class="mfd-button" data-standings-driver-count="20">20</button>
+                    <button class="mfd-button" data-standings-driver-count="22">22</button>
+                    <button class="mfd-button" data-standings-driver-count="24">24</button>
+                </div>
+            </div>
+            <div class="option-row">
+                <span class="select-text">Standings Team Count:</span>
+                <div class="mfd-button-group" id="standings-team-count-button-group">
+                    <button class="mfd-button" data-standings-team-count="10">10</button>
+                    <button class="mfd-button" data-standings-team-count="11">11</button>
+                    <button class="mfd-button" data-standings-team-count="12">12</button>
+                </div>
+            </div>
+            <div class="option-row">
+                <label class="toggle-label">
                     <input type="checkbox" id="pane-2-on-lap-1-toggle" class="toggle-checkbox">
                     <span class="toggle-slider"></span>
                     <span class="toggle-text">[Race] Pane 2 on Lap 1</span>
@@ -639,6 +662,35 @@
             updateLeaderboardOptions();
         });
 
+        // Standings Driver Count button handling
+        document.getElementById('standings-driver-count-button-group').addEventListener('click', (e) => {
+            const btn = e.target.closest('.mfd-button');
+            if (!btn) return;
+            const count = Number(btn.dataset.standingsDriverCount);
+            socket.emit('config_update', { overlay: 'leaderboard', property: 'standingsDriverCount', value: count });
+            if (currentConfig?.overlays?.leaderboard) currentConfig.overlays.leaderboard.standingsDriverCount = count;
+            updateLeaderboardOptions();
+        });
+
+        // Standings Team Count button handling
+        document.getElementById('standings-team-count-button-group').addEventListener('click', (e) => {
+            const btn = e.target.closest('.mfd-button');
+            if (!btn) return;
+            const count = Number(btn.dataset.standingsTeamCount);
+            socket.emit('config_update', { overlay: 'leaderboard', property: 'standingsTeamCount', value: count });
+            if (currentConfig?.overlays?.leaderboard) currentConfig.overlays.leaderboard.standingsTeamCount = count;
+            updateLeaderboardOptions();
+        });
+
+        // Show Standings on Formation Lap toggle handling
+        const standingsFormationLapToggle = document.getElementById('standings-formation-lap-toggle');
+        standingsFormationLapToggle.addEventListener('change', () => {
+            const newVal = standingsFormationLapToggle.checked;
+            socket.emit('config_update', { overlay: 'leaderboard', property: 'standingsFormationLap', value: newVal });
+            if (currentConfig?.overlays?.leaderboard) currentConfig.overlays.leaderboard.standingsFormationLap = newVal;
+            updateLeaderboardOptions();
+        });
+
         // Pane 2 on Lap 1 toggle handling
         const pane2OnLap1Toggle = document.getElementById('pane-2-on-lap-1-toggle');
         pane2OnLap1Toggle.addEventListener('change', () => {
@@ -762,6 +814,14 @@
             document.querySelectorAll('#standings-button-group .mfd-button').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.standings === standingsMode);
             });
+            const standingsDriverCount = lb.standingsDriverCount || 20;
+            document.querySelectorAll('#standings-driver-count-button-group .mfd-button').forEach(btn => {
+                btn.classList.toggle('active', Number(btn.dataset.standingsDriverCount) === standingsDriverCount);
+            });
+            const standingsTeamCount = lb.standingsTeamCount || 10;
+            document.querySelectorAll('#standings-team-count-button-group .mfd-button').forEach(btn => {
+                btn.classList.toggle('active', Number(btn.dataset.standingsTeamCount) === standingsTeamCount);
+            });
             showLastNamesToggle.checked            = !!lb.showLastNames;
             showDriverNumbersToggle.checked        = !!lb.showDriverNumbers;
             showLeaderGapsToggle.checked           = !!lb.showLeaderGaps;
@@ -774,6 +834,7 @@
             showPenaltiesToggle.checked            = !!lb.showPenalties;
             pane2OnLap1Toggle.checked              = !!lb.pane2OnLap1;
             positionBgToggle.checked               = !!lb.positionBg;
+            standingsFormationLapToggle.checked    = !!lb.standingsFormationLap;
         }
 
         // Override renderOverlayButtons to also update options

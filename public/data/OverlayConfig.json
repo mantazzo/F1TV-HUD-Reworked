@@ -75,7 +75,10 @@
       "showDrsIndicators": false,
       "showBattery": false,
       "showPenalties": false,
-      "standingsMode": "off"
+      "standingsMode": "off",
+      "standingsFormationLap": false,
+      "standingsDriverCount": 20,
+      "standingsTeamCount": 10
     }
   }
 }

@@ -390,7 +390,7 @@
 
                     <!-- Header title — DRIVERS'/CONSTRUCTORS' (item_1_49r0r0 / item_1_52r0r0 combined
                          into one element): 390×40 at left:26, top:120  F1TV-2022 ObliqueBold 34px white
-                         centered. Defaults to DRIVERS'; Drivers/Constructors switch logic is TODO. -->
+                         centered. Defaults to DRIVERS'. -->
                     <div id="lb-standings-title">DRIVERS'</div>
 
                     <!-- "CHAMPIONSHIP" (item_1_53r0r0): 390×40 at left:26, top:165  F1TV-2022 ObliqueBold 34px white centered -->
@@ -560,9 +560,19 @@
         const elSeriesLogo   = document.getElementById('lb-series-logo');
         const elSeriesLogoF2 = document.getElementById('lb-series-logo-f2');
         const elStandings = document.getElementById('lb-standings');
+        const elStandingsLogo = document.getElementById('lb-standings-logo');
         const elStandingsTitle = document.getElementById('lb-standings-title');
         const elStandingsDrivers = document.getElementById('lb-standings-drivers');
         const elStandingsConstructors = document.getElementById('lb-standings-constructors');
+        const elStandingsPanelBg = document.getElementById('lb-standings-panel-bg');
+        const elStandingsPosColBg = document.getElementById('lb-standings-pos-col-bg');
+        const elStandingsSeparator = document.getElementById('lb-standings-separator');
+        const elStandingsBorder = document.getElementById('lb-standings-border');
+        const elStandingsStandings = document.getElementById('lb-standings-standings');
+        const elStandingsGradientVertical = document.getElementById('lb-standings-gradient-vertical');
+        const elStandingsThickStrokeBg = document.getElementById('lb-standings-thick-stroke-bg');
+        const elStandingsThickStrokeSide = document.getElementById('lb-standings-thick-stroke-side');
+        const elStandingsThickStrokeSideImg = document.getElementById('lb-standings-thick-stroke-side-img');
 
         let NUM_CARS = 24;  // Pre-allocate for max possible cars (20 standard, up to 22 in MyTeam/F2, 24 in 2026 season).
                             // Updated at runtime from packet 4 (m_numActiveCars).
@@ -941,10 +951,12 @@
             return { arrow, text };
         });
 
-        // ── Standings driver rows — 20 slots (original background fits 20; up to 22 possible) ──
+        // ── Standings driver rows — 24 slots created (max Controller-selectable count); how many
+        // are actually shown is capped per-render by standingsDriverCount (see renderDriverStandings).
+        // Stride stays 46.5px at every tier — 24 × 46.5 = 1116px fits the 1120px expanded container.
         // Initial content below is a placeholder shown only until loadDriverStandings() resolves
         // and renderDriverStandings() (further down) overwrites it with real data.
-        const NUM_STANDINGS_ROWS = 20;
+        const NUM_STANDINGS_ROWS = 24;
         const standingsDriverRows = Array.from({ length: NUM_STANDINGS_ROWS }, (_, i) => {
             const row = document.createElement('div');
             row.className = 'lb-standings-row';
@@ -1004,7 +1016,7 @@
             const activeEntries = driverStandings.filter(e => e.Points !== null && e.Points !== undefined);
 
             standingsDriverRows.forEach((row, i) => {
-                const entry = activeEntries[i];
+                const entry = i < standingsDriverCount ? activeEntries[i] : undefined;
                 if (!entry) {
                     row.row.style.display = 'none';
                     return;
@@ -1042,11 +1054,13 @@
             });
         }
 
-        // ── Standings constructor rows — 10 slots (11-team seasons use a tighter
-        // 93.2px stride instead of 102.5px — not handled yet, revisit if/when needed) ──
+        // ── Standings constructor rows — 12 slots created (max Controller-selectable count); how
+        // many are actually shown is capped per-render by standingsTeamCount (see
+        // renderConstructorStandings). Stride stays the user-tuned 93.2px at every tier —
+        // 12 × 93.2 = 1118.4px fits the 1120px expanded container.
         // Initial content below is a placeholder shown only until loadConstructorStandings()
         // resolves and renderConstructorStandings() (further down) overwrites it with real data.
-        const NUM_STANDINGS_CONSTRUCTOR_ROWS = 10;
+        const NUM_STANDINGS_CONSTRUCTOR_ROWS = 12;
         const standingsConstructorRows = Array.from({ length: NUM_STANDINGS_CONSTRUCTOR_ROWS }, (_, i) => {
             const row = document.createElement('div');
             row.className = 'lb-standings-constructor-row';
@@ -1106,7 +1120,7 @@
             const activeEntries = constructorStandings.filter(e => e.Points !== null && e.Points !== undefined);
 
             standingsConstructorRows.forEach((row, i) => {
-                const entry = activeEntries[i];
+                const entry = i < standingsTeamCount ? activeEntries[i] : undefined;
                 if (!entry) {
                     row.row.style.display = 'none';
                     return;
@@ -1167,6 +1181,12 @@
         let formationLap           = false; // true when m_safetyCarStatus === 3
         let trackId                = -1;    // m_trackId from session packet; -1 = unknown
         let trackLength            = 0;     // m_trackLength from pid 1, metres; used for formation lap opacity
+        let standingsMode          = 'off'; // config: 'off' | 'drivers' | 'constructors'
+        let standingsFormationLap  = false; // config: auto-show Standings during the formation lap window
+        let standingsDriverCount   = 20;    // config: 20 | 22 | 24 — selects the Drivers-content BG height tier
+        let standingsTeamCount     = 10;    // config: 10 | 11 | 12 — selects the Constructors-content BG height tier
+        let standingsVisible       = false; // set by updateStandingsVisibility(); read by updateOverlayHeight()
+        let standingsRequiredHeight = 0;    // bottom edge (px) of the tallest Standings BG element for the active tier
         let sessionEnded           = false; // true once session has ended (P1 finished in race / any finished in non-race / timer hit 0)
         let extendedGrid           = false;  // true when numActiveCars > 20 — selects _22 image variants
         let extendedGrid2026       = false;  // true when numActiveCars > 22 — selects _24 image variants (2026 season)
@@ -1185,7 +1205,7 @@
         let scEnding               = false; // true when SC/VSC is returning (SCAR evtType 1); cleared by evtType 3 or scStatus 0
 
         const TIME_TRIGGERS_S = [1200, 900, 600, 300, 120]; // 20, 15, 10, 5, 2 minutes in seconds
-        const LAP_TRIGGERS    = [15, 10, 5, 3]; // TODO: Might need to add extra cases when there are less laps; though doesn't seem to be a problem now
+        const LAP_TRIGGERS    = [15, 10, 5, 3];
         // Tracks that use Aston Martin Safety Car branding (all others use Mercedes)
         const ASTON_MARTIN_TRACKS = new Set([0, 27, 4, 20, 6, 17, 9, 10, 11, 15, 19, 16]);
         let playerCarIdx          = -1;   // from m_header.m_playerCarIndex
@@ -1315,10 +1335,16 @@
             elSprintLogo.style.display = (!formationLap && (isSQ || isSprintSession)) ? 'block' : 'none';
             elSprintLogo.style.opacity  = narrow ? '0' : '1';
 
-            // Series logo: F2 logo for Formula 2 (formulaType 2 or 7), F1 logo otherwise
-            const isF2 = formulaType === 2 || formulaType === 7;
+            // Series logo: F2 logo for Formula 2 (formulaType 2), F1 logo otherwise
+            const isF2 = formulaType === 2;
             elSeriesLogo.style.display   = isF2 ? 'none' : '';
             elSeriesLogoF2.style.display = isF2 ? 'block' : 'none';
+
+            // Standings series logo (item_1_41r0r0): hidden entirely for F2 sessions (no F2 variant
+            // here, unlike the main header logo — matches original, which also hid it for Custom Logo,
+            // not yet implemented). AutoSizeScale: 0.88 during Sprint Race sessions, 0.98 otherwise.
+            elStandingsLogo.style.display   = isF2 ? 'none' : '';
+            elStandingsLogo.style.transform = `scale(${isSprintSession ? 0.88 : 0.98})`;
 
             // Session name (item_1_11r0r0r0 / _12r0r0r0):
             // Hidden for F2 Practice (types 1-4) and F2 Qualifying (types 5-9),
@@ -1446,29 +1472,104 @@
             elFormationBannerLine2.style.fontSize    = fontSize;
         }
 
-        // ── Formation lap container opacity ───────────────────────────────────────
-        // Hides #lb-container while the leader is between 25–80% of the formation lap
-        // (mirrors original: standings overlay occupies that window; we hide the leaderboard
-        // in its place for now, even without standings implemented).
-        // Outside formation lap: always visible (opacity reset to '').
-        function updateFormationLapContainerOpacity() {
-            if (!formationLap) {
-                elContainer.style.opacity = '';
-                return;
+        // 3-tier background height table, keyed by the Drivers row count (20/22/24). Team-row
+        // counts (10/11/12) map onto the same tiers (10↔20, 11↔22, 12↔24) — Constructor
+        // standings used to always need the extended tier in the original SimHub source
+        // ("constructor standings were bigger"), but this project's layout already fits 10
+        // teams into the normal/945 tier, so it now just follows whichever team count is
+        // selected like Drivers does. gradientVertical shares panelBg's values (same numbers
+        // given for both); thickStroke covers both lb-standings-thick-stroke-bg and
+        // -thick-stroke-side-img (identical values for both per spec).
+        const STANDINGS_TIER_HEIGHTS = {
+            20: { panelBg: 945,  posCol: 1020, border: 1060, thickStroke: 1190 },
+            22: { panelBg: 1040, posCol: 1115, border: 1155, thickStroke: 1286 },
+            24: { panelBg: 1135, posCol: 1210, border: 1250, thickStroke: 1382 }, // eyeballed per user's note — not yet visually tuned
+        };
+        const STANDINGS_TEAM_TIER = { 10: 20, 11: 22, 12: 24 };
+
+        // ── Standings container visibility + background height ───────────────────
+        // #lb-standings is shown (fading out the rest of #lb-container via .standings-active,
+        // same mechanism as the manual Standings mode) when:
+        //   - standingsMode is 'drivers' or 'constructors' (manual override), OR
+        //   - "Show Standings on Formation Lap" is enabled AND we're in the formation lap AND
+        //     the leader is between 25–80% through it (auto-trigger)
+        // Content mode follows standingsMode when set. The auto-trigger alone (manual mode
+        // 'off') switches between the two: Drivers from 25–60% through the formation lap,
+        // Constructors from 60% onward — mirrors the original WDCStandingsFormation property
+        // switching to Constructor standings partway through the formation lap.
+        // The shared background (panel/pos-col/separator/border) sizes itself to whichever
+        // content is effectively active, via the tier table above.
+        function updateStandingsVisibility() {
+            let pct = null;
+            if (formationLap) {
+                const leaderIdx = carPositions.indexOf(1);
+                if (leaderIdx >= 0 && trackLength > 0) pct = carLapDist[leaderIdx] / trackLength;
             }
-            const leaderIdx = carPositions.indexOf(1);
-            if (leaderIdx < 0 || trackLength <= 0) {
-                elContainer.style.opacity = '';
-                return;
+            const autoTriggered = standingsFormationLap && formationLap && pct !== null && pct > 0.25 && pct < 0.80;
+
+            let effectiveMode = 'off';
+            if (standingsMode !== 'off') {
+                effectiveMode = standingsMode;
+            } else if (autoTriggered) {
+                effectiveMode = pct > 0.60 ? 'constructors' : 'drivers';
             }
-            const pct = carLapDist[leaderIdx] / trackLength;
-            elContainer.style.opacity = (pct >= 0.25 && pct < 0.80) ? '0' : '';
+            const visible = effectiveMode !== 'off';
+
+            elContainer.classList.toggle('standings-active', visible);
+            elStandings.style.opacity             = visible ? '1' : '0';
+            elStandingsDrivers.style.opacity      = effectiveMode === 'drivers'      ? '1' : '0';
+            elStandingsConstructors.style.opacity = effectiveMode === 'constructors' ? '1' : '0';
+            elStandingsTitle.textContent          = effectiveMode === 'constructors' ? "CONSTRUCTORS'" : "DRIVERS'";
+
+            const activeCount = effectiveMode === 'constructors'
+                ? (STANDINGS_TEAM_TIER[standingsTeamCount] ?? 20)
+                : standingsDriverCount;
+            const tier = STANDINGS_TIER_HEIGHTS[activeCount] ?? STANDINGS_TIER_HEIGHTS[20];
+            elStandingsPanelBg.style.height          = `${tier.panelBg}px`;
+            elStandingsPosColBg.style.height         = `${tier.posCol}px`;
+            elStandingsSeparator.style.height        = `${tier.posCol}px`;
+            elStandingsBorder.style.height           = `${tier.border}px`;
+            // These three are background-image textures with a fixed background-size — resizing
+            // just the element's height leaves background-repeat (default) to tile the leftover
+            // space instead of stretching the image, so background-size must grow to match.
+            elStandingsGradientVertical.style.height         = `${tier.panelBg}px`;
+            elStandingsGradientVertical.style.backgroundSize = `36.8px ${tier.panelBg}px`;
+            elStandingsThickStrokeBg.style.height            = `${tier.thickStroke}px`;
+            elStandingsThickStrokeBg.style.backgroundSize    = `332px ${tier.thickStroke}px`;
+            elStandingsThickStrokeSideImg.style.height         = `${tier.thickStroke}px`;
+            elStandingsThickStrokeSideImg.style.backgroundSize = `332px ${tier.thickStroke}px`;
+            // Thick Stroke BG extension viewport: not part of the original 22-driver formula
+            // (22 drivers fit within its default size) — only the 24/12 tier needs it taller.
+            const thickStrokeSideHeight = activeCount === 24 ? 1383 : 1287;
+            elStandingsThickStrokeSide.style.height = `${thickStrokeSideHeight}px`;
+            // Row container: also not part of the original 22-driver formula (fits 22 rows by
+            // default) — only the 24/12 tier expands it, same binary pattern as thick-stroke-side.
+            const standingsRowsHeight = activeCount === 24 ? 1120 : 1025;
+            elStandingsStandings.style.height = `${standingsRowsHeight}px`;
+
+            // .overlay-container's height is otherwise driven purely by the actual race grid
+            // size (computeLeaderboardHeight()), which has no idea how tall the Standings panel
+            // needs to be — e.g. a 24-driver/12-team tier selected during a 20-car race would get
+            // clipped by a grid-sized container. Track the furthest-down bottom edge across every
+            // sized BG element (each element's own top offset + its current height — the tallest one
+            // varies by tier, e.g. thick-stroke-side's unchanged 1287px default outgrows the
+            // tier-scaled panel-bg at the 20/22 tiers) so updateOverlayHeight() can grow the
+            // container to fit whenever Standings is visible.
+            standingsVisible = visible;
+            standingsRequiredHeight = visible ? Math.max(
+                225 + tier.panelBg,       // panel-bg / gradient-vertical
+                140 + tier.posCol,        // pos-col-bg / separator
+                105 + tier.border,        // border
+                -1 + tier.thickStroke,    // thick-stroke-bg
+                0 + tier.thickStroke,     // thick-stroke-side-img
+                -1 + thickStrokeSideHeight, // thick-stroke-side
+                225 + standingsRowsHeight, // row container (lb-standings-standings)
+            ) : 0;
         }
 
         // ── Overlay height (.overlay-container) ──────────────────────────────────
         // Controls visible leaderboard height via overflow:hidden parent.
         // All values are SimHub display px × 2 (native 482-wide scale).
-        // Pane2onLap1 and WDC/WCC standings conditions are deferred (not yet implemented).
         function computeLeaderboardHeight() {
             const hasFlag    = flagsBannerMode === 'yellow' || flagsBannerMode === 'green';
             const hasTrigger = timeLapsBannerActive;
@@ -1526,7 +1627,12 @@
         }
 
         function updateOverlayHeight() {
-            elOverlay.style.height = computeLeaderboardHeight() + 'px';
+            // Standings can need more room than the actual race grid does (e.g. a 24-driver
+            // tier selected during a 20-car race) — grow to fit it, never shrink below it.
+            const height = standingsVisible
+                ? Math.max(computeLeaderboardHeight(), standingsRequiredHeight)
+                : computeLeaderboardHeight();
+            elOverlay.style.height = height + 'px';
         }
 
         // ── Race laps counter (item_1_8r0r0r0_5) ──────────────────────────────────
@@ -1972,7 +2078,7 @@
             elFlagsBorder.style.top    = formationLap ? '144px' : '1.5px';
             elFlagsBorder.style.width  = (paneMode === 1 || paneMode === 3) ? '212px' : '331px';
             elFlagsBorder.style.height = extendedGrid2026 ? '1390px' : '1290px';
-            elFlagsBorder.style.display = (formulaType === 2 || formulaType === 7) ? 'none' : '';
+            elFlagsBorder.style.display = (formulaType === 2) ? 'none' : '';
         }
 
         function updateFlagsImg() {
@@ -1995,7 +2101,7 @@
         }
 
         function updateDecoBorders() {
-            const isF2   = formulaType === 2 || formulaType === 7;
+            const isF2   = formulaType === 2;
             const narrow = paneMode === 1 || paneMode === 3;
             const mode   = flagsBannerMode;
             const flagBorderActive = mode === 'sc' || mode === 'vsc' || mode === 'rf' || mode === 'yellow' || mode === 'green';
@@ -2051,7 +2157,7 @@
         }
 
         function updateMainPanels() {
-            const isF2   = formulaType === 2 || formulaType === 7;
+            const isF2   = formulaType === 2;
             const narrow = paneMode === 1 || paneMode === 3;
 
             // lb-main-bg
@@ -2655,7 +2761,7 @@
                 if (formationLap !== wasFormationLap) {
                     updateFlagsBorder(); updateFlagsImg(); updateThickStrokeBg(); updateBorderRect();
                     updateMainPanels(); updateRaceLaps(); updateDataContainerLeft(); updateFormationBanner();
-                    updateHeaderDisplay(); updateFormationLapContainerOpacity();
+                    updateHeaderDisplay(); updateStandingsVisibility();
                     updateAllRowPositions(); updateBatteryLayout(); updatePenaltyLayout(); updateFlLogoLayout();
                     // Formation Lap start: auto-show MFD1 data without header (wide mode only); end: hide if no MFD page active
                     if (formationLap && paneMode !== 1 && paneMode !== 3) {
@@ -2665,7 +2771,7 @@
                         elMfd1.style.opacity = '0';
                     }
                     // Tyre column: hide during formation lap (overlay_config may not re-fire in time)
-                    const flTyreHidden = showLastNames || formulaType === 2 || formulaType === 7 || formationLap || paneMode === 1 || paneMode === 3;
+                    const flTyreHidden = showLastNames || formulaType === 2 || formationLap || paneMode === 1 || paneMode === 3;
                     elTyre.style.display = flTyreHidden ? 'none' : '';
                 }
                 if (scStatus === 1) {
@@ -2724,7 +2830,7 @@
                         const isRace = RACE_TYPES.has(sessionType);
                         mfd3Rows[pos - 1].row.textContent = isRace
                             ? (car.m_numPitStops ?? 0)
-                            : (car.m_currentLapNum - 1 ?? 0);
+                            : Math.max(0, (car.m_currentLapNum ?? 0) - 1);
                         // MFD3 visibility: hide for DSQ/retired, non-race with no best lap, or in pits
                         const resultStatus = car.m_resultStatus ?? 0;
                         const isNotActive = resultStatus < 2 || resultStatus > 3; // any status that is not "Active" or "Finished"
@@ -2840,12 +2946,12 @@
                 }
                 numActiveCars = maxPos; // NOTE: Seems to work for now, however, multiplayer check will be required later.
                 updateSlotVisibility();
+                if (formationLap) updateStandingsVisibility(); // before updateOverlayHeight(): height depends on its output
                 updateOverlayHeight();
 
                 updateBatteryLayout();
                 updatePenaltyLayout();
                 updateFlLogoLayout();
-                if (formationLap) updateFormationLapContainerOpacity();
                 // Chequered flag banner:
                 // Races: show when the car in P1 has finished
                 // Non-race: show when any car has finished
@@ -3330,18 +3436,20 @@
             if (!cfg) return;
             elOverlay.classList.toggle('visible', !!cfg.visible);
 
-            // Standings — Off/Drivers/Constructors. Off↔any-mode fades #lb-standings itself
+            // Standings — Off/Drivers/Constructors, plus an auto-trigger during the formation
+            // lap (see updateStandingsVisibility). Off↔any-mode fades #lb-standings itself
             // (opacity, 200ms ease per its CSS). Drivers↔Constructors is also opacity (not
             // display:none) despite being an instant, non-transitioned swap — both sub-panels
             // need to stay genuinely laid out at all times so their independently-triggered
             // textFit calls always get a real size to measure against (see the CSS comment
             // on #lb-standings-constructors for the full reasoning).
-            const standingsMode = cfg.standingsMode || 'off';
-            elContainer.classList.toggle('standings-active', standingsMode !== 'off');
-            elStandings.style.opacity = standingsMode === 'off' ? '0' : '1';
-            elStandingsDrivers.style.opacity      = standingsMode === 'drivers'      ? '1' : '0';
-            elStandingsConstructors.style.opacity = standingsMode === 'constructors' ? '1' : '0';
-            elStandingsTitle.textContent = standingsMode === 'constructors' ? "CONSTRUCTORS'" : "DRIVERS'";
+            standingsMode         = cfg.standingsMode || 'off';
+            standingsFormationLap = !!cfg.standingsFormationLap;
+            standingsDriverCount  = cfg.standingsDriverCount || 20;
+            standingsTeamCount    = cfg.standingsTeamCount || 10;
+            updateStandingsVisibility();
+            renderDriverStandings();      // re-apply the standingsDriverCount cap to already-loaded data
+            renderConstructorStandings(); // re-apply the standingsTeamCount cap to already-loaded data
 
             // MFD page visibility — show the active page's header+data, hide all others
             const page = cfg.mfdPage || 'off';
@@ -3467,7 +3575,7 @@
             elTiming.style.display      = (!mfdActive && !showLastNames && !formationLap && isRace && paneMode !== 1 && paneMode !== 3)   ? '' : 'none';
             elQualiTiming.style.display = (!mfdActive && !showLastNames && !formationLap && !isRace && paneMode !== 1 && paneMode !== 3)  ? '' : 'none';
             const isMfd2 = page === 'mfd2';
-            const tyreHidden = showLastNames || formulaType === 2 || formulaType === 7 || formationLap || paneMode === 1 || paneMode === 3;
+            const tyreHidden = showLastNames || formulaType === 2 || formationLap || paneMode === 1 || paneMode === 3;
             elTyre.style.display = tyreHidden ? 'none' : '';
             if (!tyreHidden) {
                 elTyre.style.opacity = (mfdActive && !isMfd2) ? '0' : '1';
