@@ -184,6 +184,37 @@
             padding: 1px 5px;
             border-radius: 3px;
         }
+
+        /* Zone distance display toggle */
+        .zone-toggle-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: none;
+            margin-bottom: 6px;
+            padding-bottom: 0;
+        }
+
+        .zone-toggle-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.75);
+            text-transform: none;
+            letter-spacing: normal;
+            font-weight: 400;
+            cursor: pointer;
+        }
+
+        .zone-toggle-label input {
+            cursor: pointer;
+        }
+
+        .zone-toggle-hint {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.35);
+        }
     </style>
 </head>
 <body>
@@ -252,6 +283,18 @@
             <div class="section-card">
                 <div class="section-title">Weather Forecast Samples (<span id="forecastCount">0</span> samples)</div>
                 <div id="forecastContainer"><em style="color:rgba(255,255,255,0.3);font-size:13px">No forecast data yet</em></div>
+            </div>
+
+            <!-- Zone Distance Display Toggle -->
+            <div class="section-card">
+                <div class="section-title zone-toggle-title">
+                    <span>Zone Distance Display</span>
+                    <label class="zone-toggle-label">
+                        <input type="checkbox" id="zoneDistanceToggle">
+                        Show calculated distance (m) instead of % of lap
+                    </label>
+                </div>
+                <div class="zone-toggle-hint">Applies to Marshal Zones, Active Aero Zones, and DRS Zones tables below. Distance is <code>zone fraction × m_trackLength</code> — approximate, not the exact in-game marker.</div>
             </div>
 
             <!-- Marshal Zones -->
@@ -660,7 +703,22 @@
             3:    'background:#7a6000;color:#ffe066'
         };
 
-        function renderMarshalZones(zones, count) {
+        let showZoneDistance = false;
+        let lastSessionData = null;
+
+        function formatZonePos(fraction, trackLength) {
+            if (showZoneDistance) {
+                if (!trackLength) return '—';
+                return Math.round(fraction * trackLength);
+            }
+            return (fraction * 100).toFixed(1);
+        }
+
+        function zonePosUnit() {
+            return showZoneDistance ? 'm' : '%';
+        }
+
+        function renderMarshalZones(zones, count, trackLength) {
             document.getElementById('marshalZoneCount').textContent = count;
             const container = document.getElementById('marshalZoneContainer');
             if (!zones || zones.length === 0 || count === 0) return;
@@ -671,7 +729,7 @@
                     <thead>
                         <tr>
                             <th>Zone #</th>
-                            <th>Start (%)</th>
+                            <th>Start (${zonePosUnit()})</th>
                             <th>Flag</th>
                         </tr>
                     </thead>
@@ -682,7 +740,7 @@
                             const style = MARSHAL_FLAG_STYLE[flagKey] ?? 'background:rgba(255,255,255,0.15);color:#aaa';
                             return `<tr>
                                 <td>${i + 1}</td>
-                                <td>${(z.m_zoneStart * 100).toFixed(1)}</td>
+                                <td>${formatZonePos(z.m_zoneStart, trackLength)}</td>
                                 <td><span class="badge" style="${style};padding:1px 7px;border-radius:4px;font-size:12px">${label}</span></td>
                             </tr>`;
                         }).join('')}
@@ -693,7 +751,7 @@
 
         // ─── Active Aero / DRS zone tables (2026 format only) ────────────────
 
-        function renderZoneRangeTable(zones, count, containerId, countElId) {
+        function renderZoneRangeTable(zones, count, containerId, countElId, trackLength) {
             document.getElementById(countElId).textContent = count;
             const container = document.getElementById(containerId);
             if (!zones || zones.length === 0 || count === 0) return;
@@ -704,20 +762,40 @@
                     <thead>
                         <tr>
                             <th>Zone #</th>
-                            <th>Start (%)</th>
-                            <th>End (%)</th>
+                            <th>Start (${zonePosUnit()})</th>
+                            <th>End (${zonePosUnit()})</th>
                         </tr>
                     </thead>
                     <tbody>
                         ${visible.map((z, i) => `<tr>
                             <td>${i + 1}</td>
-                            <td>${(z.m_zoneStart * 100).toFixed(1)}</td>
-                            <td>${(z.m_zoneEnd * 100).toFixed(1)}</td>
+                            <td>${formatZonePos(z.m_zoneStart, trackLength)}</td>
+                            <td>${formatZonePos(z.m_zoneEnd, trackLength)}</td>
                         </tr>`).join('')}
                     </tbody>
                 </table>
             `;
         }
+
+        function renderAllZoneTables(data) {
+            if (data.m_marshalZones) {
+                renderMarshalZones(data.m_marshalZones, data.m_numMarshalZones || 0, data.m_trackLength);
+            }
+            if (data.m_activeAeroZonesFull) {
+                renderZoneRangeTable(data.m_activeAeroZonesFull, data.m_numActiveAeroZonesFull || 0, 'aeroFullContainer', 'aeroFullCount', data.m_trackLength);
+            }
+            if (data.m_activeAeroZonesPartial) {
+                renderZoneRangeTable(data.m_activeAeroZonesPartial, data.m_numActiveAeroZonesPartial || 0, 'aeroPartialContainer', 'aeroPartialCount', data.m_trackLength);
+            }
+            if (data.m_drsZones) {
+                renderZoneRangeTable(data.m_drsZones, data.m_numDRSZones || 0, 'drsZoneContainer', 'drsZoneCount', data.m_trackLength);
+            }
+        }
+
+        document.getElementById('zoneDistanceToggle').addEventListener('change', (e) => {
+            showZoneDistance = e.target.checked;
+            if (lastSessionData) renderAllZoneTables(lastSessionData);
+        });
 
         // ─── Socket handler ──────────────────────────────────────────────────
 
@@ -750,21 +828,9 @@
                 renderForecast(data.m_weatherForecastSamples, data.m_numWeatherForecastSamples || 0);
             }
 
-            // Update marshal zones table
-            if (data.m_marshalZones) {
-                renderMarshalZones(data.m_marshalZones, data.m_numMarshalZones || 0);
-            }
-
-            // Update Active Aero / DRS zone tables (2026 format only)
-            if (data.m_activeAeroZonesFull) {
-                renderZoneRangeTable(data.m_activeAeroZonesFull, data.m_numActiveAeroZonesFull || 0, 'aeroFullContainer', 'aeroFullCount');
-            }
-            if (data.m_activeAeroZonesPartial) {
-                renderZoneRangeTable(data.m_activeAeroZonesPartial, data.m_numActiveAeroZonesPartial || 0, 'aeroPartialContainer', 'aeroPartialCount');
-            }
-            if (data.m_drsZones) {
-                renderZoneRangeTable(data.m_drsZones, data.m_numDRSZones || 0, 'drsZoneContainer', 'drsZoneCount');
-            }
+            // Update marshal / active aero / DRS zone tables
+            lastSessionData = data;
+            renderAllZoneTables(data);
         });
 
         console.log('[SessionDebug] Debug page loaded');
