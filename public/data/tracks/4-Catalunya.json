@@ -1,0 +1,109 @@
+{
+    "trackId": 4,
+    "trackName": "Circuit de Barcelona-Catalunya",
+    "eventName": "FORMULA 1 ARAMCO GRAN PREMIO DE ESPAÑA",
+    "eventName_2026": "FORMULA 1 MSC CRUISES GRAN PREMIO DE BARCELONA-CATALUNYA",
+    "eventName_F2": "FIA FORMULA 2 GRAN PREMIO DE ESPAÑA",
+    "location": "Montmelo, Spain",
+    "year": null,
+    "trackLength": 4664,
+    "comment": "Generic default variant for Spanish (Barcelona-Catalunya) GP - works across multiple game versions unless specific year file exists. Values in meters.",
+    "turns": [
+        {
+            "number": 1,
+            "trigger": 705,
+            "end": 890,
+            "name": ""
+        },
+        {
+            "number": 2,
+            "trigger": 890,
+            "end": 1020,
+            "name": ""
+        },
+        {
+            "number": 3,
+            "trigger": 1030,
+            "end": 1505,
+            "name": ""
+        },
+        {
+            "number": 4,
+            "trigger": 1600,
+            "end": 1960,
+            "name": ""
+        },
+        {
+            "number": 5,
+            "trigger": 2010,
+            "end": 2240,
+            "name": ""
+        },
+        {
+            "number": 6,
+            "trigger": 2280,
+            "end": 2450,
+            "name": ""
+        },
+        {
+            "number": 7,
+            "trigger": 2470,
+            "end": 2600,
+            "name": ""
+        },
+        {
+            "number": 8,
+            "trigger": 2600,
+            "end": 2730,
+            "name": ""
+        },
+        {
+            "number": 9,
+            "trigger": 2800,
+            "end": 3060,
+            "name": ""
+        },
+        {
+            "number": 10,
+            "trigger": 3380,
+            "end": 3575,
+            "name": ""
+        },
+        {
+            "number": 11,
+            "trigger": 3575,
+            "end": 3670,
+            "name": ""
+        },
+        {
+            "number": 12,
+            "trigger": 3680,
+            "end": 3940,
+            "name": ""
+        },{
+            "number": 13,
+            "trigger": 3980,
+            "end": 4185,
+            "name": ""
+        },{
+            "number": 14,
+            "trigger": 4250,
+            "end": 4500,
+            "name": ""
+        }
+    ],
+    "drsZones": [
+        {
+            "zone": 1,
+            "start": 3019,
+            "end": 3456,
+            "comment": "Zone 1 - between Turns 9 and 10"
+        },
+        {
+            "zone": 2,
+            "start": 4591,
+            "end": 765,
+            "comment": "Zone 2 - Start/Finish Straight"
+        }
+    ]
+}
