@@ -2,6 +2,7 @@
   "trackId": 17,
   "trackName": "Red Bull Ring",
   "eventName": "FORMULA 1 MSC CRUISES AUSTRIAN GRAND PRIX",
+  "eventName_2026": "FORMULA 1 LENOVO AUSTRIAN GRAND PRIX",
   "eventName_F2": "FIA FORMULA 2 AUSTRIAN GRAND PRIX",
   "location": "Spielberg, Austria",
   "year": null,
@@ -86,7 +87,7 @@
       "zone": 3,
       "start": 4142,
       "end": 343,
-      "comment": "Zone 3 - start/finish straight"
+      "comment": "Zone 3 - Start/Finish Straight"
     }
   ]
 }

@@ -1,6 +1,10 @@
 {
   "trackId": 0,
   "trackName": "Melbourne Grand Prix Circuit",
+  "eventName": "FORMULA 1 LOUIS VUITTON AUSTRALIAN GRAND PRIX",
+  "eventName_2026": "FORMULA 1 QATAR AIRWAYS AUSTRALIAN GRAND PRIX",
+  "eventName_F2": "FIA FORMULA 2 AUSTRALIAN GRAND PRIX",
+  "location": "Melbourne, Australia",
   "year": null,
   "trackLength": 5276,
   "comment": "Generic default variant for Australian GP - works across multiple game versions unless specific year file exists. Values in meters.",
@@ -95,25 +99,25 @@
       "zone": 1,
       "start": 2550,
       "end": 3264,
-      "comment": "Zone 1A - between turns 8 and 9"
+      "comment": "Zone 1A - between Turns 8 and 9"
     },
     {
       "zone": 2,
       "start": 3558,
       "end": 4113,
-      "comment": "Zone 1B - between turns 10 and 11"
+      "comment": "Zone 1B - between Turns 10 and 11"
     },
     {
       "zone": 3,
       "start": 4890,
       "end": 330,
-      "comment": "Zone 2A - main straight between turn 14 and turn 1"
+      "comment": "Zone 2A - Start/Finish Straight"
     },
     {
       "zone": 4,
       "start": 586,
       "end": 1056,
-      "comment": "Zone 2B - between turns 2 and 3"
+      "comment": "Zone 2B - between Turns 2 and 3"
     }
   ]
 }

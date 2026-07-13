@@ -15,7 +15,7 @@
       "number": 2,
       "trigger": 945,
       "end": 1030,
-      "name": ""
+      "name": "Variante del Rettifilo"
     },
     {
       "number": 3,
@@ -33,7 +33,7 @@
       "number": 5,
       "trigger": 2170,
       "end": 2275,
-      "name": ""
+      "name": "Variante della Roggia"
     },
     {
       "number": 6,
@@ -51,7 +51,7 @@
       "number": 8,
       "trigger": 3850,
       "end": 4000,
-      "name": ""
+      "name": "Variante Ascari"
     },
     {
       "number": 9,
@@ -63,7 +63,7 @@
       "number": 10,
       "trigger": 4110,
       "end": 4260,
-      "name": ""
+      "name": "Variante Ascari"
     },
     {
       "number": 11,
@@ -77,13 +77,13 @@
       "zone": 1,
       "start": 3057,
       "end": 3890,
-      "comment": "Zone 1 - after Lesmo 2 (turn 7) and before Ascari (turns 8-9-10)"
+      "comment": "Zone 1 - from Lesmo 2 (Turn 7) to Ascari (Turns 8-9-10)"
     },
     {
       "zone": 2,
       "start": 10,
       "end": 882,
-      "comment": "Zone 2 - start/finish straight into Turn 1"
+      "comment": "Zone 2 - Start/Finish Straight"
     }
   ]
 }

@@ -1,0 +1,120 @@
+{
+    "trackId": 3,
+    "trackName": "Bahrain International Circuit",
+    "eventName": "FORMULA 1 GULF AIR BAHRAIN GRAND PRIX",
+    "eventName_2026": "FORMULA 1 GULF AIR BAHRAIN GRAND PRIX",
+    "eventName_F2": "FIA FORMULA 2 BAHRAIN GRAND PRIX",
+    "location": "Sakhir, Bahrain",
+    "year": null,
+    "trackLength": 5408,
+    "comment": "Generic default variant for Bahrain GP - works across multiple game versions unless specific year file exists. Values in meters.",
+    "turns": [
+        {
+            "number": 1,
+            "trigger": 575,
+            "end": 780,
+            "name": ""
+        },
+        {
+            "number": 2,
+            "trigger": 785,
+            "end": 900,
+            "name": ""
+        },
+        {
+            "number": 3,
+            "trigger": 900,
+            "end": 1085,
+            "name": ""
+        },
+        {
+            "number": 4,
+            "trigger": 1420,
+            "end": 1670,
+            "name": ""
+        },
+        {
+            "number": 5,
+            "trigger": 1680,
+            "end": 1830,
+            "name": ""
+        },
+        {
+            "number": 6,
+            "trigger": 1840,
+            "end": 1975,
+            "name": ""
+        },
+        {
+            "number": 7,
+            "trigger": 1975,
+            "end": 2135,
+            "name": ""
+        },
+        {
+            "number": 8,
+            "trigger": 2180,
+            "end": 2365,
+            "name": ""
+        },
+        {
+            "number": 9,
+            "trigger": 2560,
+            "end": 2700,
+            "name": ""
+        },
+        {
+            "number": 10,
+            "trigger": 2700,
+            "end": 2810,
+            "name": ""
+        },
+        {
+            "number": 11,
+            "trigger": 3340,
+            "end": 3690,
+            "name": ""
+        },
+        {
+            "number": 12,
+            "trigger": 3710,
+            "end": 4010,
+            "name": ""
+        },{
+            "number": 13,
+            "trigger": 4020,
+            "end": 4240,
+            "name": ""
+        },{
+            "number": 14,
+            "trigger": 4825,
+            "end": 4985,
+            "name": ""
+        },{
+            "number": 15,
+            "trigger": 4985,
+            "end": 5100,
+            "name": ""
+        }
+    ],
+    "drsZones": [
+        {
+            "zone": 1,
+            "start": 1005,
+            "end": 1477,
+            "comment": "Zone 1 - between Turns 3 and 4"
+        },
+        {
+            "zone": 2,
+            "start": 2812,
+            "end": 3397,
+            "comment": "Zone 2 - Back Straight between Turns 10 and 11"
+        },
+        {
+            "zone": 3,
+            "start": 5300,
+            "end": 682,
+            "comment": "Zone 3 - Start/Finish Straight"
+        }
+    ]
+}

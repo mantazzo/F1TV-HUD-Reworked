@@ -1,6 +1,10 @@
 {
   "trackId": 2,
   "trackName": "Shanghai International Circuit",
+  "eventName": "FORMULA 1 HEINEKEN CHINESE GRAND PRIX",
+  "eventName_2026": "FORMULA 1 HEINEKEN CHINESE GRAND PRIX",
+  "eventName_F2": "FIA FORMULA 2 CHINESE GRAND PRIX",
+  "location": "Shanghai, China",
   "year": null,
   "trackLength": 5441,
   "comment": "Generic default variant for Chinese GP - works across multiple game versions unless specific year file exists. Values in meters.",
@@ -113,7 +117,7 @@
       "zone": 2,
       "start": 5283,
       "end": 446,
-      "comment": "Zone 2 - Start/Finish Straight into Turn 1"
+      "comment": "Zone 2 - Start/Finish Straight"
     }
   ]
 }
