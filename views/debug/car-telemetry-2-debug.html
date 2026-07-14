@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>F1 Car Telemetry 2 Packet Debug</title>
+    <link rel="stylesheet" href="/fonts.css">
+    <link rel="stylesheet" href="/styles-event-debug.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        .section-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-family: 'F1TV-2022', sans-serif;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.55);
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            margin-bottom: 14px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        .section-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 2px 0;
+        }
+
+        .field-row {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            padding: 7px 10px;
+            border-radius: 5px;
+            transition: background 0.15s;
+        }
+
+        .field-row:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .field-name {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #4dabf7;
+            white-space: nowrap;
+            min-width: 240px;
+            flex-shrink: 0;
+        }
+
+        .field-value {
+            font-family: 'F1TV-2022', monospace;
+            font-size: 15px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .field-value.value-na {
+            color: rgba(255, 255, 255, 0.2);
+            font-weight: 400;
+            font-size: 13px;
+        }
+
+        .field-value.value-updated {
+            animation: flashValue 0.4s ease;
+        }
+
+        @keyframes flashValue {
+            0%   { color: #ffd43b; }
+            100% { color: #ffffff; }
+        }
+
+        .badge {
+            display: inline-block;
+            font-size: 11px;
+            font-family: 'Segoe UI', sans-serif;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 3px;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        .badge-green  { background: rgba(0, 200, 100, 0.2);  color: #69db7c; }
+        .badge-yellow { background: rgba(255, 200, 0, 0.2);  color: #ffd43b; }
+        .badge-red    { background: rgba(225, 6, 0, 0.2);    color: #ff8787; }
+        .badge-blue   { background: rgba(77, 171, 247, 0.2); color: #74c0fc; }
+        .badge-purple { background: rgba(180,100,255,0.2);   color: #cc99ff; }
+        .badge-orange { background: rgba(255,120,0,0.2);     color: #ff922b; }
+        .badge-grey   { background: rgba(255,255,255,0.08);  color: rgba(255,255,255,0.45); }
+
+        /* Car selector bar */
+        .car-selector-bar {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            padding: 14px 20px;
+            margin-bottom: 20px;
+        }
+
+        .car-selector-label {
+            font-family: 'F1TV-2022', sans-serif;
+            font-size: 13px;
+            color: rgba(255,255,255,0.55);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            white-space: nowrap;
+        }
+
+        .car-selector-select {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 6px;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            padding: 6px 12px;
+            cursor: pointer;
+            outline: none;
+            min-width: 100px;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+
+        .car-selector-select:focus {
+            border-color: rgba(77,171,247,0.6);
+        }
+
+        .car-selector-select option {
+            background: #1a1a2e;
+            color: #fff;
+        }
+
+        .player-pill {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 12px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .player-pill.p1 { background: rgba(225,6,0,0.25); color: #ff8787; border: 1px solid rgba(225,6,0,0.4); }
+        .player-pill.p2 { background: rgba(77,171,247,0.2); color: #74c0fc; border: 1px solid rgba(77,171,247,0.35); }
+
+        .selector-spacer { flex: 1; }
+
+        /* Format notice */
+        #formatNotice {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(77, 171, 247, 0.08);
+            border: 1px solid rgba(77, 171, 247, 0.3);
+            border-radius: 10px;
+            padding: 12px 18px;
+            margin-bottom: 20px;
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 13px;
+            color: #74c0fc;
+        }
+
+        /* Column reference table */
+        table.ref-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        table.ref-table th {
+            text-align: left;
+            font-family: 'F1TV-2022', sans-serif;
+            font-size: 11px;
+            color: rgba(255,255,255,0.4);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 6px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+        }
+
+        table.ref-table td {
+            padding: 7px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            font-family: 'Segoe UI', sans-serif;
+            color: rgba(255,255,255,0.8);
+            vertical-align: top;
+        }
+
+        table.ref-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        table.ref-table td:first-child {
+            font-family: 'F1TV-2022', sans-serif;
+            color: rgba(255,255,255,0.6);
+            white-space: nowrap;
+        }
+
+        table.ref-table td code {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            background: rgba(77,171,247,0.1);
+            color: #74c0fc;
+            padding: 1px 5px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-header">
+        <h1>Car Telemetry 2 Packet Debug</h1>
+        <span class="debug-badge">Packet ID 16</span>
+    </div>
+
+    <div class="debug-content">
+
+        <div id="formatNotice">
+            <span>2026 Season Pack only — this packet carries per-car Active Aero &amp; Overtake Mode state and is not sent under earlier UDP formats.</span>
+        </div>
+
+        <div id="waitingMsg" class="waiting-msg">
+            <div class="waiting-spinner"></div>
+            <div>Waiting for Car Telemetry 2 packets (ID&nbsp;16)...</div>
+        </div>
+
+        <div id="mainContent" style="display:none">
+
+            <!-- Status bar -->
+            <div class="status-bar" style="margin-bottom:16px">
+                <span>Total packets: <strong id="totalPackets">0</strong></span>
+                <span>Last update: <strong id="lastPacketTime">--</strong></span>
+                <span>Player car: <strong id="playerCarIdx">--</strong></span>
+                <span>Secondary player: <strong id="secondaryCarIdx">--</strong></span>
+            </div>
+
+            <!-- Car selector -->
+            <div class="car-selector-bar">
+                <span class="car-selector-label">Car Index</span>
+                <select class="car-selector-select" id="carSelect">
+                    <!-- populated on first packet -->
+                </select>
+                <span id="playerIndicator"></span>
+                <span class="selector-spacer"></span>
+                <span style="font-family:'Segoe UI',sans-serif;font-size:12px;color:rgba(255,255,255,0.3)">
+                    Showing data for one car slot — switch with dropdown
+                </span>
+            </div>
+
+            <!-- 1. Active Aero -->
+            <div class="section-card">
+                <div class="section-title">Active Aero</div>
+                <div class="section-grid">
+                    <div class="field-row"><span class="field-name">m_activeAeroMode</span>                <span class="field-value value-na" id="f-aeroMode">--</span></div>
+                    <div class="field-row"><span class="field-name">m_activeAeroAvailable</span>           <span class="field-value value-na" id="f-aeroAvailable">--</span></div>
+                    <div class="field-row"><span class="field-name">m_activeAeroActivationDistance</span>  <span class="field-value value-na" id="f-aeroDistance">--</span></div>
+                </div>
+            </div>
+
+            <!-- 2. Overtake Mode -->
+            <div class="section-card">
+                <div class="section-title">Overtake Mode</div>
+                <div class="section-grid">
+                    <div class="field-row"><span class="field-name">m_overtakeAvailable</span>             <span class="field-value value-na" id="f-overtakeAvailable">--</span></div>
+                    <div class="field-row"><span class="field-name">m_overtakeActive</span>                <span class="field-value value-na" id="f-overtakeActive">--</span></div>
+                    <div class="field-row"><span class="field-name">m_overtakeActivationDistance</span>    <span class="field-value value-na" id="f-overtakeDistance">--</span></div>
+                </div>
+            </div>
+
+            <!-- 3. Regulations & Flags -->
+            <div class="section-card">
+                <div class="section-title">Regulations &amp; Flags</div>
+                <div class="section-grid">
+                    <div class="field-row"><span class="field-name">m_2026Regulations</span>               <span class="field-value value-na" id="f-regs2026">--</span></div>
+                    <div class="field-row"><span class="field-name">m_drivingWrongWay</span>                <span class="field-value value-na" id="f-wrongWay">--</span></div>
+                </div>
+            </div>
+
+            <!-- Field reference -->
+            <div class="section-card">
+                <div class="section-title">Field Reference</div>
+                <table class="ref-table">
+                    <thead>
+                        <tr>
+                            <th style="width:200px">Section / Field</th>
+                            <th style="width:300px">UDP Field</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Active Aero Mode</td>       <td><code>m_activeAeroMode</code></td>               <td>0 = Corner mode, 1 = Straight mode (uint8).</td></tr>
+                        <tr><td>Active Aero Available</td>  <td><code>m_activeAeroAvailable</code></td>          <td>0 = not available, 1 = available (uint8).</td></tr>
+                        <tr><td>Active Aero Distance</td>   <td><code>m_activeAeroActivationDistance</code></td> <td>0 = Active Aero not available, non-zero = Active Aero will be available in [X] metres (uint16).</td></tr>
+                        <tr><td>Overtake Available</td>      <td><code>m_overtakeAvailable</code></td>            <td>0 = not available, 1 = available (uint8).</td></tr>
+                        <tr><td>Overtake Active</td>         <td><code>m_overtakeActive</code></td>               <td>0 = not active, 1 = active (uint8).</td></tr>
+                        <tr><td>Overtake Distance</td>       <td><code>m_overtakeActivationDistance</code></td>  <td>0 = Overtake Mode not available, non-zero = Overtake Mode will be available in [X] metres (uint16).</td></tr>
+                        <tr><td>2026 Regulations</td>        <td><code>m_2026Regulations</code></td>              <td>0 = vehicle conforms to pre-2026 regulations, 1 = 2026 regulations applicable (uint8).</td></tr>
+                        <tr><td>Driving Wrong Way</td>       <td><code>m_drivingWrongWay</code></td>              <td>Whether the car is currently driving the wrong way around the circuit (uint8).</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        socket.emit('identify', 'Car Telemetry 2 Debug');
+
+        // --- Helpers ----------------------------------------------------------
+
+        function badge(text, cls) {
+            return `<span class="badge badge-${cls}">${text}</span>`;
+        }
+
+        function setField(id, html) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (html === null || html === undefined) {
+                el.innerHTML = '--';
+                el.classList.add('value-na');
+                el.classList.remove('value-updated');
+                return;
+            }
+            el.innerHTML = html;
+            el.classList.remove('value-na', 'value-updated');
+            void el.offsetWidth;
+            el.classList.add('value-updated');
+        }
+
+        // --- Car selector ------------------------------------------------------
+
+        let selectedCar   = 0;
+        let playerIdx     = 255;
+        let player2Idx    = 255;
+        let selectorBuilt = false;
+
+        function buildSelector(count) {
+            const sel = document.getElementById('carSelect');
+            sel.innerHTML = '';
+            for (let i = 0; i < count; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = `Car ${i}`;
+                sel.appendChild(opt);
+            }
+            if (playerIdx < count) {
+                sel.value = playerIdx;
+                selectedCar = playerIdx;
+            }
+            selectorBuilt = true;
+        }
+
+        document.getElementById('carSelect').addEventListener('change', (e) => {
+            selectedCar = parseInt(e.target.value, 10);
+            updatePlayerIndicator();
+            if (latestData && latestData.m_carTelemetry2Data) {
+                renderCar(latestData.m_carTelemetry2Data[selectedCar]);
+            }
+        });
+
+        function updatePlayerIndicator() {
+            const el = document.getElementById('playerIndicator');
+            if (selectedCar === playerIdx) {
+                el.innerHTML = '<span class="player-pill p1">Player 1</span>';
+            } else if (selectedCar === player2Idx && player2Idx !== 255) {
+                el.innerHTML = '<span class="player-pill p2">Player 2</span>';
+            } else {
+                el.innerHTML = '';
+            }
+        }
+
+        // --- Render one CarTelemetry2Data entry ---------------------------------
+
+        // 0 = not available (right now), non-zero = distance in metres until it becomes available.
+        // Independent of the paired *Available flag — that flag can be 0 while this still counts down.
+        function renderActivationDistance(distance) {
+            if (distance === undefined) return null;
+            return distance === 0 ? badge('Not Available', 'grey') : `${distance} m`;
+        }
+
+        // Active Aero: mode flips to Straight (1) once activated, at which point m_activeAeroAvailable
+        // drops back to 0 — so "currently usable" means either flag independently reads as active.
+        function renderAeroDistance(distance, mode, available) {
+            if (mode === 1 || available === 1) return badge('Active Zone', 'green');
+            return renderActivationDistance(distance);
+        }
+
+        // Overtake Mode: once m_overtakeActive is set the car is already using it, so show that
+        // directly rather than falling through to the raw distance countdown.
+        function renderOvertakeDistance(distance, active) {
+            if (active === 1) return badge('Now Available', 'green');
+            return renderActivationDistance(distance);
+        }
+
+        function renderCar(car) {
+            if (!car) return;
+
+            // Active Aero
+            const aeroMode = car.m_activeAeroMode;
+            setField('f-aeroMode', aeroMode !== undefined
+                ? badge(aeroMode === 1 ? 'Straight Mode' : 'Corner Mode', aeroMode === 1 ? 'blue' : 'purple')
+                : null);
+
+            const aeroAvail = car.m_activeAeroAvailable;
+            setField('f-aeroAvailable', aeroAvail !== undefined
+                ? (aeroAvail ? badge('Available', 'green') : badge('Not Available', 'grey'))
+                : null);
+
+            setField('f-aeroDistance', renderAeroDistance(car.m_activeAeroActivationDistance, aeroMode, aeroAvail));
+
+            // Overtake Mode
+            const otAvail = car.m_overtakeAvailable;
+            setField('f-overtakeAvailable', otAvail !== undefined
+                ? (otAvail ? badge('Available', 'green') : badge('Not Available', 'grey'))
+                : null);
+
+            const otActive = car.m_overtakeActive;
+            setField('f-overtakeActive', otActive !== undefined
+                ? (otActive ? badge('ACTIVE', 'green') : badge('Off', 'grey'))
+                : null);
+
+            setField('f-overtakeDistance', renderOvertakeDistance(car.m_overtakeActivationDistance, otActive));
+
+            // Regulations & flags
+            const regs = car.m_2026Regulations;
+            setField('f-regs2026', regs !== undefined
+                ? (regs ? badge('2026 Regulations', 'blue') : badge('Pre-2026', 'grey'))
+                : null);
+
+            const wrongWay = car.m_drivingWrongWay;
+            setField('f-wrongWay', wrongWay !== undefined
+                ? (wrongWay ? badge('WRONG WAY', 'red') : badge('OK', 'grey'))
+                : null);
+        }
+
+        // --- Socket handler ------------------------------------------------------
+
+        let built        = false;
+        let totalPackets = 0;
+        let latestData   = null;
+
+        socket.on('f1_data', (data) => {
+            if (!data.m_header || data.m_header.m_packetId !== 16) return;
+
+            if (!built) {
+                document.getElementById('waitingMsg').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                built = true;
+            }
+
+            totalPackets++;
+            document.getElementById('totalPackets').textContent = totalPackets;
+            document.getElementById('lastPacketTime').textContent = new Date().toLocaleTimeString();
+
+            playerIdx  = data.m_header.m_playerCarIndex          ?? 255;
+            player2Idx = data.m_header.m_secondaryPlayerCarIndex  ?? 255;
+            document.getElementById('playerCarIdx').textContent    = playerIdx  === 255 ? '--' : playerIdx;
+            document.getElementById('secondaryCarIdx').textContent = player2Idx === 255 ? '--' : player2Idx;
+
+            const cars = data.m_carTelemetry2Data;
+            if (!cars) return;
+
+            if (!selectorBuilt) buildSelector(cars.length);
+
+            latestData = data;
+            updatePlayerIndicator();
+
+            renderCar(cars[selectedCar]);
+        });
+
+        console.log('[CarTelemetry2Debug] Debug page loaded');
+    </script>
+</body>
+</html>

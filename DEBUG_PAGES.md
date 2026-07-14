@@ -22,6 +22,8 @@ I made these pages for analyzing live data from the game. These can be useful fo
     - http://localhost:3000/debug/session-history-debug
 - Time Trial Packet Debug (ID 14)
     - http://localhost:3000/debug/time-trial-debug
+- Car Telemetry 2 Packet Debug (ID 16)
+    - http://localhost:3000/debug/car-telemetry-2-debug
 
 Pages currently not made, might be added in the future:
 - Motion Packet Debug (ID 0)
@@ -31,4 +33,3 @@ Pages currently not made, might be added in the future:
 - Tyre Sets Packet Debug (ID 12)
 - Motion Ex Packet Debug (ID 13)
 - Lap Position Packet Debug (ID 15)
-- Car Telemetry 2 Debug (ID 16) (2026 UDP spec)
