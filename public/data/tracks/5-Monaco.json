@@ -1,0 +1,128 @@
+{
+    "trackId": 5,
+    "trackName": "Circuit de Monaco",
+    "eventName": "FORMULA 1 TAG HEUER GRAND PRIX DE MONACO",
+    "eventName_2026": "FORMULA 1 LOUIS VUITTON GRAND PRIX DE MONACO",
+    "eventName_F2": "FIA FORMULA 2 GRAND PRIX DE MONACO",
+    "location": "Monte Carlo, Monaco",
+    "year": null,
+    "trackLength": 3323,
+    "comment": "Generic default variant for Monaco GP - works across multiple game versions unless specific year file exists. Values in meters.",
+    "turns": [
+        {
+            "number": 1,
+            "trigger": 140,
+            "end": 300,
+            "name": "Sainte Devote"
+        },
+        {
+            "number": 2,
+            "trigger": 520,
+            "end": 655,
+            "name": "Beau Rivage"
+        },
+        {
+            "number": 3,
+            "trigger": 670,
+            "end": 850,
+            "name": "Massenet"
+        },
+        {
+            "number": 4,
+            "trigger": 860,
+            "end": 980,
+            "name": "Casino Square"
+        },
+        {
+            "number": 5,
+            "trigger": 1070,
+            "end": 1195,
+            "name": "Mirabeau Haute"
+        },
+        {
+            "number": 6,
+            "trigger": 1220,
+            "end": 1310,
+            "name": "Hairpin"
+        },
+        {
+            "number": 7,
+            "trigger": 1315,
+            "end": 1395,
+            "name": "Mirabeau Bas"
+        },
+        {
+            "number": 8,
+            "trigger": 1405,
+            "end": 1490,
+            "name": "Portier"
+        },
+        {
+            "number": 9,
+            "trigger": 1660,
+            "end": 1860,
+            "name": "Tunnel"
+        },
+        {
+            "number": 10,
+            "trigger": 2025,
+            "end": 2110,
+            "name": "Nouvelle Chicane"
+        },
+        {
+            "number": 11,
+            "trigger": 2110,
+            "end": 2210,
+            "name": "Nouvelle Chicane"
+        },
+        {
+            "number": 12,
+            "trigger": 2325,
+            "end": 2435,
+            "name": "Tabac"
+        },{
+            "number": 13,
+            "trigger": 2490,
+            "end": 2560,
+            "name": "Louis Chiron"
+        },{
+            "number": 14,
+            "trigger": 2560,
+            "end": 2630,
+            "name": "Piscine"
+        },{
+            "number": 15,
+            "trigger": 2650,
+            "end": 2720,
+            "name": "Piscine"
+        },{
+            "number": 16,
+            "trigger": 2720,
+            "end": 2780,
+            "name": "Piscine"
+        },{
+            "number": 17,
+            "trigger": 2785,
+            "end": 2865,
+            "name": ""
+        },{
+            "number": 18,
+            "trigger": 2870,
+            "end": 2970,
+            "name": "La Rascasse"
+        },{
+            "number": 19,
+            "trigger": 2980,
+            "end": 3070,
+            "name": "Anthony Noghès"
+        }
+    ],
+    "drsZones": [
+        {
+            "zone": 1,
+            "start": 3047,
+            "end": 172,
+            "comment": "Start/Finish Straight"
+        }
+    ]
+}
