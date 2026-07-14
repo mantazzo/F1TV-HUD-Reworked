@@ -236,13 +236,11 @@ function startServer(portNumber, forwardAddresses) {
         io.emit('f1_data', convertBigInt(data));
     }); */
 
-    // TODO: Add packet 16 support commented out once UDP parser supports 2026 format, currently the parser is not updated (version 1.2.2 as of 2026-06-21 does not support 2026 format)
-
     // Listen for Car Telemetry 2 packets (ID 16)
-    // Unofficial addition at the moment; uncomment if you need data about 2026 Overtake Mode and Active Aero Mode use for all cars
-    /* client.on(PACKETS.carTelemetry2, (data) => {
+    // 2026 Season Pack only — carries per-car Active Aero / Overtake Mode state
+    client.on(PACKETS.carTelemetry2, (data) => {
         io.emit('f1_data', convertBigInt(data));
-    }); */
+    });
 
     // Error handling
     client.on('error', (err) => {
@@ -296,6 +294,7 @@ function startServer(portNumber, forwardAddresses) {
     app.get('/debug/car-damage-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'car-damage-debug.html')));            // Car Damage packet (ID 10)
     app.get('/debug/session-history-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'session-history-debug.html')));  // Session History packet (ID 11)
     app.get('/debug/time-trial-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'time-trial-debug.html')));            // Time Trial packet (ID 14)
+    app.get('/debug/car-telemetry-2-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'car-telemetry-2-debug.html')));   // Car Telemetry 2 packet (ID 16, 2026 Season Pack only)
 
     // Other Debug pages
     app.get('/debug/fonts-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'fonts-debug.html'))); // A page to test the fonts
@@ -307,65 +306,73 @@ function startServer(portNumber, forwardAddresses) {
 }
 
 // ── Startup prompt chain ──────────────────────────────────────────────────────
-prompt.start();
+const TEST_MODE = process.argv.includes('--test') || process.env.F1TV_TEST_MODE === '1';
 
-prompt.get({
-    properties: {
-        port: {
-            description: 'Please enter the Game Port that you want to use',
-            type: 'integer',
-            default: 20777,
-            required: false
-        }
-    }
-}, (err, result) => {
-    if (err) {
-        console.error('Error getting port:', err);
-        process.exit(1);
-    }
-    const portNumber = result.port || 20777;
-    console.log(`Using port ${portNumber} for telemetry`);
+if (TEST_MODE) {
+    const testPort = parseInt(process.env.F1TV_TEST_PORT, 10) || 20799;
+    console.log(`Test mode active — skipping startup prompts, using port ${testPort} for telemetry.`);
+    startServer(testPort, []);
+} else {
+    prompt.start();
 
     prompt.get({
         properties: {
-            setupForwarding: {
-                description: 'Set up UDP Forwarding? (y/n)',
-                type: 'string',
-                default: 'n',
-                pattern: /^[yYnN]$/,
-                message: 'Please enter y or n',
+            port: {
+                description: 'Please enter the Game Port that you want to use',
+                type: 'integer',
+                default: 20777,
                 required: false
             }
         }
     }, (err, result) => {
         if (err) {
-            console.error('Error during forwarding prompt:', err);
+            console.error('Error getting port:', err);
             process.exit(1);
         }
-
-        if ((result.setupForwarding || 'n').toLowerCase() !== 'y') {
-            startServer(portNumber, []);
-            return;
-        }
+        const portNumber = result.port || 20777;
+        console.log(`Using port ${portNumber} for telemetry`);
 
         prompt.get({
             properties: {
-                count: {
-                    description: 'How many forwarding targets?',
-                    type: 'integer',
-                    default: 1,
-                    minimum: 1,
-                    required: true
+                setupForwarding: {
+                    description: 'Set up UDP Forwarding? (y/n)',
+                    type: 'string',
+                    default: 'n',
+                    pattern: /^[yYnN]$/,
+                    message: 'Please enter y or n',
+                    required: false
                 }
             }
         }, (err, result) => {
             if (err) {
-                console.error('Error getting forwarding count:', err);
+                console.error('Error during forwarding prompt:', err);
                 process.exit(1);
             }
-            collectForwardAddresses(result.count || 1, [], (addresses) => {
-                startServer(portNumber, addresses);
+
+            if ((result.setupForwarding || 'n').toLowerCase() !== 'y') {
+                startServer(portNumber, []);
+                return;
+            }
+
+            prompt.get({
+                properties: {
+                    count: {
+                        description: 'How many forwarding targets?',
+                        type: 'integer',
+                        default: 1,
+                        minimum: 1,
+                        required: true
+                    }
+                }
+            }, (err, result) => {
+                if (err) {
+                    console.error('Error getting forwarding count:', err);
+                    process.exit(1);
+                }
+                collectForwardAddresses(result.count || 1, [], (addresses) => {
+                    startServer(portNumber, addresses);
+                });
             });
         });
     });
-});
+}
