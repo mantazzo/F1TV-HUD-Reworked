@@ -1234,6 +1234,8 @@
         const carDriverStatus = new Array(NUM_CARS).fill(-1); // carIdx → m_driverStatus from pid 2 (-1=unknown, 0=in garage, 1=flying lap, 2=in lap, 3=out lap, 4=on track)
         const carPitStatus    = new Array(NUM_CARS).fill(0);  // carIdx → m_pitStatus from pid 2 (0=none, 1=pitting, 2=pit lane)
         const carNumPitStops  = new Array(NUM_CARS).fill(0);  // carIdx → m_numPitStops from pid 2
+        const carOvertakeActive  = new Array(NUM_CARS).fill(false); // carIdx → m_overtakeActive from pid 16 (2026 Season Pack only)
+        const car2026Regulations = new Array(NUM_CARS).fill(-1);    // carIdx → m_2026Regulations from pid 16 (-1=no pid 16 data yet, 0=pre-2026, 1=2026 regs)
         let fastestLapCarIdx = -1; // carIdx with the fastest lap (updated from pid 11)
         let prevFastestLapMs = Infinity; // previous session fastest lap time (for change detection)
         let fastestLapDisplayMs = 0;     // fastest lap time to display (0 = not showing)
@@ -1917,6 +1919,8 @@
             carResultStatus.fill(0);
             carDriverStatus.fill(-1);
             carPitStatus.fill(0);
+            carOvertakeActive.fill(false);
+            car2026Regulations.fill(-1);
             prevPersonalBestMs.fill(0);
             fastestLapCarIdx = -1;
             prevFastestLapMs = Infinity;
@@ -1997,7 +2001,7 @@
             });
 
             // Clear DRS rows
-            drsRows.forEach(({ row }) => { row.style.display = 'none'; });
+            drsRows.forEach(({ row }) => { row.style.display = 'none'; row.classList.remove('lb-drs-row--overtake'); });
 
             // Clear battery rows
             batteryRows.forEach(({ row }) => { row.style.display = 'none'; });
@@ -2815,7 +2819,18 @@
                 // Update carIdx → position and delta arrays
                 lapData.forEach((car, idx) => {
                     if (idx >= NUM_CARS) return;
-                    carPositions[idx]   = car.m_carPosition ?? 0;
+
+                    // Time Trial: the Lap Data array also carries ghost/personal-best/rival slots
+                    // (see PacketTimeTrialData) alongside a duplicate of the player's own entry, and
+                    // their raw m_carPosition can collide with the player's — later entries in the
+                    // same packet would silently overwrite the player's position-keyed rows (DRS, tyre,
+                    // MFD, etc). There's only ever one real competitor to show in TT, so bypass the raw
+                    // field entirely: the player gets position 1, everything else is treated as inactive.
+                    const pos = isTT
+                        ? (idx === playerCarIdx ? 1 : 0)
+                        : (car.m_carPosition ?? 0);
+
+                    carPositions[idx]   = pos;
                     carDeltaFront[idx]  = (car.m_deltaToCarInFrontMinutesPart  ?? 0) * 60000 + (car.m_deltaToCarInFrontMSPart  ?? 0);
                     carDeltaLeader[idx] = (car.m_deltaToRaceLeaderMinutesPart  ?? 0) * 60000 + (car.m_deltaToRaceLeaderMSPart  ?? 0);
                     carLapNum[idx]      = car.m_currentLapNum ?? 0;
@@ -2825,7 +2840,6 @@
                     carNumPitStops[idx]  = car.m_numPitStops ?? 0;
 
                     // MFD3 — laps completed (non-race) or tyre changes / pit stops (race)
-                    const pos = car.m_carPosition ?? 0;
                     if (pos >= 1 && pos <= NUM_CARS) {
                         const isRace = RACE_TYPES.has(sessionType);
                         mfd3Rows[pos - 1].row.textContent = isRace
@@ -3283,14 +3297,33 @@
                 updateKnockoutIndicators();
             }
 
-            // Packet ID 6 — Car Telemetry: DRS active per car
+            // Packet ID 6 — Car Telemetry: DRS / Overtake Mode active per car
             if (pid === 6) {
                 const telData = data.m_carTelemetryData;
                 if (!Array.isArray(telData)) return;
                 telData.forEach((car, carIdx) => {
                     const pos = carPositions[carIdx];
                     if (pos < 1 || pos > NUM_CARS) return;
-                    drsRows[pos - 1].row.style.display = (showDrsIndicators && car.m_drs === 1) ? 'block' : 'none';
+
+                    // 2026 Season Pack: show Overtake Mode active (turquoise) instead of DRS (green) once
+                    // pid 16 has told us this car runs 2026 regs. Falls back to the classic DRS check when
+                    // that's unknown (-1) — older UDP formats never send pid 16 at all.
+                    const useOvertake = car2026Regulations[carIdx] === 1;
+                    const active = useOvertake ? carOvertakeActive[carIdx] : car.m_drs === 1;
+
+                    const rowEl = drsRows[pos - 1].row;
+                    rowEl.classList.toggle('lb-drs-row--overtake', useOvertake);
+                    rowEl.style.display = (showDrsIndicators && active) ? 'block' : 'none';
+                });
+            }
+
+            // Packet ID 16 — Car Telemetry 2: Overtake Mode / 2026 Regulations per car (2026 Season Pack only)
+            if (pid === 16) {
+                const tel2Data = data.m_carTelemetry2Data;
+                if (!Array.isArray(tel2Data)) return;
+                tel2Data.forEach((car, carIdx) => {
+                    carOvertakeActive[carIdx]  = car.m_overtakeActive === 1;
+                    car2026Regulations[carIdx] = car.m_2026Regulations ?? -1;
                 });
             }
 

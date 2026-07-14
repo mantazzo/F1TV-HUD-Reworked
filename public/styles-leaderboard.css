@@ -1962,6 +1962,11 @@ body { background: transparent; overflow: hidden; }
     transition: top 333ms ease;
 }
 
+/* 2026 Season Pack: Overtake Mode active (in place of DRS) — game HUD uses approx. #0eace6 */
+.lb-drs-row--overtake {
+    background-color: rgb(14, 172, 230);
+}
+
 /* ════════════════════════════════════════════════════════════════
    MFD1 — CURRENT TYRES PAGE (item_1_20r0r0r0 group)
    Header BG (item_1_30r0r0r0_1): 310×105 at left:27, top:145
