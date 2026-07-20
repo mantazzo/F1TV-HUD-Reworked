@@ -1,6 +1,10 @@
 {
   "trackId": 11,
-  "trackName": "Monza",
+  "trackName": "Autodromo Nazionale Monza",
+  "eventName": "FORMULA 1 PIRELLI GRAN PREMIO D'ITALIA",
+  "eventName_2026": "FORMULA 1 PIRELLI GRAN PREMIO D'ITALIA",
+  "eventName_F2": "FIA FORMULA 2 GRAN PREMIO D'ITALIA",
+  "location": "Monza, Italy",
   "year": null,
   "trackLength": 5798,
   "comment": "Generic default variant for Italian GP (Monza) - works across multiple game versions unless specific year file exists. Values in meters.",
@@ -75,14 +79,14 @@
   "drsZones": [
     {
       "zone": 1,
-      "start": 3057,
-      "end": 3890,
+      "start": 3056,
+      "end": 3889,
       "comment": "Zone 1 - from Lesmo 2 (Turn 7) to Ascari (Turns 8-9-10)"
     },
     {
       "zone": 2,
-      "start": 10,
-      "end": 882,
+      "start": 9,
+      "end": 881,
       "comment": "Zone 2 - Start/Finish Straight"
     }
   ]

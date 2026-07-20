@@ -13,7 +13,7 @@
       "number": 1,
       "trigger": 350,
       "end": 560,
-      "name": ""
+      "name": "Niki Lauda Kurve"
     },
     {
       "number": 2,
@@ -25,13 +25,13 @@
       "number": 3,
       "trigger": 1270,
       "end": 1490,
-      "name": ""
+      "name": "Remus"
     },
     {
       "number": 4,
       "trigger": 2090,
       "end": 2315,
-      "name": ""
+      "name": "Schlossgold"
     },
     {
       "number": 5,
@@ -43,13 +43,13 @@
       "number": 6,
       "trigger": 2615,
       "end": 2890,
-      "name": ""
+      "name": "Rauch"
     },
     {
       "number": 7,
       "trigger": 2940,
       "end": 3155,
-      "name": ""
+      "name": "Würth"
     },
     {
       "number": 8,
@@ -61,32 +61,32 @@
       "number": 9,
       "trigger": 3680,
       "end": 3905,
-      "name": ""
+      "name": "Rindt"
     },
     {
       "number": 10,
       "trigger": 3940,
       "end": 4140,
-      "name": ""
+      "name": "Red Bull Mobile"
     }
   ],
   "drsZones": [
     {
       "zone": 1,
-      "start": 566,
-      "end": 1291,
+      "start": 565,
+      "end": 1290,
       "comment": "Zone 1 - from Turn 1 to Turn 3"
     },
     {
       "zone": 2,
-      "start": 1523,
-      "end": 2155,
+      "start": 1522,
+      "end": 2154,
       "comment": "Zone 2 - between Turns 3 and 4"
     },
     {
       "zone": 3,
-      "start": 4142,
-      "end": 343,
+      "start": 4141,
+      "end": 342,
       "comment": "Zone 3 - Start/Finish Straight"
     }
   ]
