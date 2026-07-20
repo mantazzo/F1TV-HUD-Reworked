@@ -1,0 +1,113 @@
+{
+  "trackId": 6,
+  "trackName": "Circuit Gilles Villeneuve",
+  "eventName": "FORMULA 1 PIRELLI GRAND PRIX DU CANADA",
+  "eventName_2026": "FORMULA 1 LENOVO GRAND PRIX DU CANADA",
+  "eventName_F2": "FIA FORMULA 2 GRAND PRIX DU CANADA",
+  "location": "Montreal, Canada",
+  "year": null,
+  "trackLength": 4371,
+  "comment": "Generic default variant for Canadian GP - works across multiple game versions unless specific year file exists. Values in meters.",
+  "turns": [
+    {
+      "number": 1,
+      "trigger": 185,
+      "end": 295,
+      "name": ""
+    },
+    {
+      "number": 2,
+      "trigger": 300,
+      "end": 460,
+      "name": "Virage Senna"
+    },
+    {
+      "number": 3,
+      "trigger": 660,
+      "end": 765,
+      "name": ""
+    },
+    {
+      "number": 4,
+      "trigger": 770,
+      "end": 890,
+      "name": ""
+    },
+    {
+      "number": 5,
+      "trigger": 960,
+      "end": 1150,
+      "name": ""
+    },
+    {
+      "number": 6,
+      "trigger": 1170,
+      "end": 1305,
+      "name": ""
+    },
+    {
+      "number": 7,
+      "trigger": 1310,
+      "end": 1480,
+      "name": ""
+    },
+    {
+      "number": 8,
+      "trigger": 1940,
+      "end": 2055,
+      "name": ""
+    },
+    {
+      "number": 9,
+      "trigger": 2055,
+      "end": 2185,
+      "name": ""
+    },
+    {
+      "number": 10,
+      "trigger": 2600,
+      "end": 2785,
+      "name": "L'Epingle (The Hairpin)"
+    },
+    {
+      "number": 11,
+      "trigger": 2790,
+      "end": 2900,
+      "name": ""
+    },
+    {
+      "number": 12,
+      "trigger": 3150,
+      "end": 3300,
+      "name": ""
+    },{
+      "number": 13,
+      "trigger": 3830,
+      "end": 3935,
+      "name": ""
+    },{
+      "number": 14,
+      "trigger": 3935,
+      "end": 4025,
+      "name": "Wall of Champions"
+    }
+  ],
+  "drsZones": [
+    {
+      "zone": 1,
+      "start": 1473,
+      "end": 1972,
+      "comment": "Zone 1 - between Turns 7 and 8"
+    },{
+      "zone": 2,
+      "start": 3089,
+      "end": 3877,
+      "comment": "Zone 2A - Back Straight between Turns 11 and 13"
+    },{
+      "zone": 3,
+      "start": 4031,
+      "end": 214,
+      "comment": "Zone 2B - Start/Finish Straight"
+    }
+  ]
+}

@@ -1,0 +1,128 @@
+{
+  "trackId": 7,
+  "trackName": "Silverstone Circuit",
+  "eventName": "FORMULA 1 QATAR AIRWAYS BRITISH GRAND PRIX",
+  "eventName_2026": "FORMULA 1 PIRELLI BRITISH GRAND PRIX",
+  "eventName_F2": "FIA FORMULA 2 BRITISH GRAND PRIX",
+  "location": "Silverstone, United Kingdom",
+  "year": null,
+  "trackLength": 5890,
+  "comment": "Generic default variant for British GP - works across multiple game versions unless specific year file exists. Values in meters.",
+  "turns": [
+    {
+      "number": 1,
+      "trigger": 325,
+      "end": 530,
+      "name": "Abbey"
+    },
+    {
+      "number": 2,
+      "trigger": 540,
+      "end": 770,
+      "name": "Farm"
+    },
+    {
+      "number": 3,
+      "trigger": 810,
+      "end": 975,
+      "name": "Village"
+    },
+    {
+      "number": 4,
+      "trigger": 1000,
+      "end": 1145,
+      "name": "The Loop"
+    },
+    {
+      "number": 5,
+      "trigger": 1185,
+      "end": 1370,
+      "name": "Aintree"
+    },
+    {
+      "number": 6,
+      "trigger": 1860,
+      "end": 2080,
+      "name": "Brooklands"
+    },
+    {
+      "number": 7,
+      "trigger": 2090,
+      "end": 2340,
+      "name": "Luffield"
+    },
+    {
+      "number": 8,
+      "trigger": 2405,
+      "end": 2735,
+      "name": "Woodcote"
+    },
+    {
+      "number": 9,
+      "trigger": 2980,
+      "end": 3265,
+      "name": "Copse"
+    },
+    {
+      "number": 10,
+      "trigger": 3505,
+      "end": 3690,
+      "name": "Maggotts"
+    },
+    {
+      "number": 11,
+      "trigger": 3690,
+      "end": 3800,
+      "name": "Maggotts"
+    },
+    {
+      "number": 12,
+      "trigger": 3820,
+      "end": 3965,
+      "name": "Becketts"
+    },{
+      "number": 13,
+      "trigger": 3965,
+      "end": 4155,
+      "name": "Becketts"
+    },{
+      "number": 14,
+      "trigger": 4155,
+      "end": 4320,
+      "name": "Chapel"
+    },{
+      "number": 15,
+      "trigger": 4900,
+      "end": 5280,
+      "name": "Stowe"
+    },{
+      "number": 16,
+      "trigger": 5440,
+      "end": 5575,
+      "name": "Vale"
+    },{
+      "number": 17,
+      "trigger": 5575,
+      "end": 5675,
+      "name": "Club"
+    },{
+      "number": 18,
+      "trigger": 5710,
+      "end": 5880,
+      "name": "Club"
+    }
+  ],
+  "drsZones": [
+    {
+      "zone": 1,
+      "start": 1317,
+      "end": 1883,
+      "comment": "Zone 1 - Wellington Straight (between Turns 5 and 6)"
+    },{
+      "zone": 2,
+      "start": 4202,
+      "end": 4916,
+      "comment": "Zone 2 - Hangar Straight (between Turns 14 and 15)"
+    }
+  ]
+}
