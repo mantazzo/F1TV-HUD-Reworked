@@ -80,12 +80,14 @@
             "trigger": 3680,
             "end": 3940,
             "name": ""
-        },{
+        },
+        {
             "number": 13,
             "trigger": 3980,
             "end": 4185,
             "name": ""
-        },{
+        },
+        {
             "number": 14,
             "trigger": 4250,
             "end": 4500,
