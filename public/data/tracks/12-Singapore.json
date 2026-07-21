@@ -1,0 +1,153 @@
+{
+    "trackId": 12,
+    "trackName": "Marina Bay Street Circuit",
+    "eventName": "FORMULA 1 SINGAPORE AIRLINES SINGAPORE GRAND PRIX",
+    "eventName_2026": "FORMULA 1 SINGAPORE AIRLINES SINGAPORE GRAND PRIX",
+    "eventName_F2": "FIA FORMULA 2 SINGAPORE GRAND PRIX",
+    "location": "Marina Bay, Singapore",
+    "year": null,
+    "trackLength": 4928,
+    "comment": "Generic default variant for Singapore GP - works across multiple game versions unless specific year file exists. Values in meters.",
+    "turns": [
+        {
+            "number": 1,
+            "trigger": 360,
+            "end": 470,
+            "name": "Sheares Corner"
+        },
+        {
+            "number": 2,
+            "trigger": 475,
+            "end": 540,
+            "name": ""
+        },
+        {
+            "number": 3,
+            "trigger": 540,
+            "end": 660,
+            "name": ""
+        },
+        {
+            "number": 4,
+            "trigger": 670,
+            "end": 775,
+            "name": ""
+        },
+        {
+            "number": 5,
+            "trigger": 910,
+            "end": 1100,
+            "name": ""
+        },
+        {
+            "number": 6,
+            "trigger": 1375,
+            "end": 1580,
+            "name": ""
+        },
+        {
+            "number": 7,
+            "trigger": 1730,
+            "end": 1890,
+            "name": "Memorial Corner"
+        },
+        {
+            "number": 8,
+            "trigger": 1980,
+            "end": 2100,
+            "name": ""
+        },
+        {
+            "number": 9,
+            "trigger": 2170,
+            "end": 2320,
+            "name": ""
+        },
+        {
+            "number": 10,
+            "trigger": 2610,
+            "end": 2720,
+            "name": "Singapore Sling"
+        },
+        {
+            "number": 11,
+            "trigger": 2745,
+            "end": 2840,
+            "name": ""
+        },
+        {
+            "number": 12,
+            "trigger": 2845,
+            "end": 2945,
+            "name": ""
+        },
+        {
+            "number": 13,
+            "trigger": 3030,
+            "end": 3140,
+            "name": "Anderson Bridge Hairpin"
+        },
+        {
+            "number": 14,
+            "trigger": 3555,
+            "end": 3690,
+            "name": ""
+        },
+        {
+            "number": 15,
+            "trigger": 3810,
+            "end": 3985,
+            "name": ""
+        },
+        {
+            "number": 16,
+            "trigger": 4300,
+            "end": 4385,
+            "name": ""
+        },
+        {
+            "number": 17,
+            "trigger": 4385,
+            "end": 4505,
+            "name": ""
+        },
+        {
+            "number": 18,
+            "trigger": 4670,
+            "end": 4775,
+            "name": ""
+        },
+        {
+            "number": 19,
+            "trigger": 4780,
+            "end": 4900,
+            "name": ""
+        }
+    ],
+    "drsZones": [
+        {
+            "zone": 1,
+            "start": 1091,
+            "end": 1776,
+            "comment": "Zone 1 - from Turn 5 to Turn 7"
+        },
+        {
+            "zone": 2,
+            "start": 3165,
+            "end": 3591,
+            "comment": "Zone 2A - from Turn 13 to Turn 14"
+        },
+        {
+            "zone": 3,
+            "start": 3740,
+            "end": 4335,
+            "comment": "Zone 2B - from Turn 14 to Turn 16"
+        },
+        {
+            "zone": 4,
+            "start": 4881,
+            "end": 375,
+            "comment": "Zone 3 - Start/Finish Straight"
+        }
+    ]
+}

@@ -1,0 +1,129 @@
+{
+    "trackId": 13,
+    "trackName": "Suzuka Circuit",
+    "eventName": "FORMULA 1 LENOVO JAPANESE GRAND PRIX",
+    "eventName_2026": "FORMULA 1 ARAMCO JAPANESE GRAND PRIX",
+    "eventName_F2": "FIA FORMULA 2 JAPANESE GRAND PRIX",
+    "location": "Suzuka, Japan",
+    "year": null,
+    "trackLength": 5809,
+    "comment": "Generic default variant for Japanese GP - works across multiple game versions unless specific year file exists. Values in meters.",
+    "turns": [
+        {
+            "number": 1,
+            "trigger": 615,
+            "end": 765,
+            "name": "First Curve"
+        },
+        {
+            "number": 2,
+            "trigger": 765,
+            "end": 970,
+            "name": "Second Curve"
+        },
+        {
+            "number": 3,
+            "trigger": 1050,
+            "end": 1160,
+            "name": "'S' Curves"
+        },
+        {
+            "number": 4,
+            "trigger": 1165,
+            "end": 1305,
+            "name": "'S' Curves"
+        },
+        {
+            "number": 5,
+            "trigger": 1315,
+            "end": 1475,
+            "name": "'S' Curves"
+        },
+        {
+            "number": 6,
+            "trigger": 1480,
+            "end": 1665,
+            "name": "'S' Curves/Anti-Banked Curve"
+        },
+        {
+            "number": 7,
+            "trigger": 1680,
+            "end": 2190,
+            "name": "'S' Curves/Dunlop"
+        },
+        {
+            "number": 8,
+            "trigger": 2250,
+            "end": 2375,
+            "name": "Degner 1"
+        },
+        {
+            "number": 9,
+            "trigger": 2405,
+            "end": 2545,
+            "name": "Degner 2"
+        },
+        {
+            "number": 10,
+            "trigger": 2730,
+            "end": 2835,
+            "name": ""
+        },
+        {
+            "number": 11,
+            "trigger": 2855,
+            "end": 3015,
+            "name": "Hairpin"
+        },
+        {
+            "number": 12,
+            "trigger": 3085,
+            "end": 3670,
+            "name": "200R"
+        },
+        {
+            "number": 13,
+            "trigger": 3750,
+            "end": 3900,
+            "name": "Spoon Curve"
+        },
+        {
+            "number": 14,
+            "trigger": 3910,
+            "end": 4120,
+            "name": "Spoon Curve"
+        },
+        {
+            "number": 15,
+            "trigger": 4915,
+            "end": 5205,
+            "name": "130R"
+        },
+        {
+            "number": 16,
+            "trigger": 5360,
+            "end": 5425,
+            "name": "Casio Triangle"
+        },
+        {
+            "number": 17,
+            "trigger": 5425,
+            "end": 5510,
+            "name": "Casio Triangle"
+        },
+        {
+            "number": 18,
+            "trigger": 5510,
+            "end": 5795,
+            "name": "Casio Triangle/Last Curve"
+        }
+    ],
+    "drsZones": [
+        {
+            "zone": 1,
+            "start": 5710,
+            "end": 625,
+            "comment": "Zone 1 - Start/Finish Straight"
+        }
+    ]
+}

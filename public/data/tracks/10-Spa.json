@@ -1,0 +1,141 @@
+{
+    "trackId": 10,
+    "trackName": "Circuit de Spa-Francorchamps",
+    "eventName": "FORMULA 1 MOËT & CHANDON BELGIAN GRAND PRIX",
+    "eventName_2026": "FORMULA 1 MOËT & CHANDON BELGIAN GRAND PRIX",
+    "eventName_F2": "FIA FORMULA 2 BELGIAN GRAND PRIX",
+    "location": "Stavelot, Belgium",
+    "year": null,
+    "trackLength": 7007,
+    "comment": "Generic default variant for Belgian GP - works across multiple game versions unless specific year file exists. Values in meters.",
+    "turns": [
+        {
+            "number": 1,
+            "trigger": 300,
+            "end": 480,
+            "name": "La Source"
+        },
+        {
+            "number": 2,
+            "trigger": 985,
+            "end": 1100,
+            "name": "Eau Rouge"
+        },
+        {
+            "number": 3,
+            "trigger": 1100,
+            "end": 1250,
+            "name": "Eau Rouge"
+        },
+        {
+            "number": 4,
+            "trigger": 1250,
+            "end": 1415,
+            "name": "Raidillon"
+        },
+        {
+            "number": 5,
+            "trigger": 2310,
+            "end": 2470,
+            "name": "Les Combes"
+        },
+        {
+            "number": 6,
+            "trigger": 2470,
+            "end": 2585,
+            "name": "Les Combes"
+        },
+        {
+            "number": 7,
+            "trigger": 2595,
+            "end": 2770,
+            "name": "Malmedy"
+        },
+        {
+            "number": 8,
+            "trigger": 2940,
+            "end": 3200,
+            "name": "Bruxelles/Rivage"
+        },
+        {
+            "number": 9,
+            "trigger": 3240,
+            "end": 3395,
+            "name": "Jacky Ickx Curve/Speakers Corner"
+        },
+        {
+            "number": 10,
+            "trigger": 3730,
+            "end": 3945,
+            "name": "Pouhon"
+        },
+        {
+            "number": 11,
+            "trigger": 3945,
+            "end": 4225,
+            "name": "Pouhon"
+        },
+        {
+            "number": 12,
+            "trigger": 4415,
+            "end": 4600,
+            "name": "Fagnes"
+        },
+        {
+            "number": 13,
+            "trigger": 4605,
+            "end": 4780,
+            "name": "Fagnes"
+        },
+        {
+            "number": 14,
+            "trigger": 4880,
+            "end": 5055,
+            "name": "Campus/Stavelot"
+        },
+        {
+            "number": 15,
+            "trigger": 5090,
+            "end": 5320,
+            "name": "Curve Paul Frere"
+        },
+        {
+            "number": 16,
+            "trigger": 5800,
+            "end": 6060,
+            "name": "Blanchimont"
+        },
+        {
+            "number": 17,
+            "trigger": 6115,
+            "end": 6320,
+            "name": "Blanchimont"
+        },
+        {
+            "number": 18,
+            "trigger": 6665,
+            "end": 6780,
+            "name": "Bus Stop Chicane"
+        },
+        {
+            "number": 19,
+            "trigger": 6780,
+            "end": 6880,
+            "name": "Bus Stop Chicane"
+        }
+    ],
+    "drsZones": [
+        {
+            "zone": 1,
+            "start": 1627,
+            "end": 2362,
+            "comment": "Zone 1 - Kemmel Straight (between Turns 4 and 5)"
+        },
+        {
+            "zone": 2,
+            "start": 6877,
+            "end": 332,
+            "comment": "Zone 2 - Start/Finish Straight"
+        }
+    ]
+}
