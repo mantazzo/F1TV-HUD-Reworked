@@ -1,0 +1,135 @@
+{
+    "trackId": 19,
+    "trackName": "Autódromo Hermanos Rodríguez",
+    "eventName": "FORMULA 1 GRAN PREMIO DE LA CIUDAD DE MÉXICO",
+    "eventName_2026": "FORMULA 1 GRAN PREMIO DE LA CIUDAD DE MÉXICO",
+    "eventName_F2": "FIA FORMULA 2 GRAN PREMIO DE LA CIUDAD DE MÉXICO",
+    "location": "Mexico City, Mexico",
+    "year": null,
+    "trackLength": 4525,
+    "comment": "Generic default variant for Mexican GP - works across multiple game versions unless specific year file exists. Values in meters.",
+    "turns": [
+        {
+            "number": 1,
+            "trigger": 1200,
+            "end": 1330,
+            "name": ""
+        },
+        {
+            "number": 2,
+            "trigger": 1340,
+            "end": 1405,
+            "name": ""
+        },
+        {
+            "number": 3,
+            "trigger": 1405,
+            "end": 1515,
+            "name": ""
+        },
+        {
+            "number": 4,
+            "trigger": 2090,
+            "end": 2205,
+            "name": ""
+        },
+        {
+            "number": 5,
+            "trigger": 2210,
+            "end": 2305,
+            "name": ""
+        },
+        {
+            "number": 6,
+            "trigger": 2340,
+            "end": 2485,
+            "name": ""
+        },
+        {
+            "number": 7,
+            "trigger": 2690,
+            "end": 2810,
+            "name": ""
+        },
+        {
+            "number": 8,
+            "trigger": 2815,
+            "end": 2920,
+            "name": ""
+        },
+        {
+            "number": 9,
+            "trigger": 2920,
+            "end": 3045,
+            "name": ""
+        },
+        {
+            "number": 10,
+            "trigger": 3090,
+            "end": 3220,
+            "name": ""
+        },
+        {
+            "number": 11,
+            "trigger": 3220,
+            "end": 3350,
+            "name": ""
+        },
+        {
+            "number": 12,
+            "trigger": 3770,
+            "end": 3920,
+            "name": ""
+        },
+        {
+            "number": 13,
+            "trigger": 3980,
+            "end": 4080,
+            "name": ""
+        },
+        {
+            "number": 14,
+            "trigger": 4080,
+            "end": 4130,
+            "name": ""
+        },
+        {
+            "number": 15,
+            "trigger": 4130,
+            "end": 4170,
+            "name": ""
+        },
+        {
+            "number": 16,
+            "trigger": 4180,
+            "end": 4300,
+            "name": ""
+        },
+        {
+            "number": 17,
+            "trigger": 4305,
+            "end": 4515,
+            "name": ""
+        }
+    ],
+    "drsZones": [
+        {
+            "zone": 1,
+            "start": 3354,
+            "end": 3796,
+            "comment": "Zone 1 - between Turns 11 and 12"
+        },
+        {
+            "zone": 2,
+            "start": 186,
+            "end": 1225,
+            "comment": "Zone 2A - Start/Finish Straight"
+        },
+        {
+            "zone": 3,
+            "start": 1573,
+            "end": 2082,
+            "comment": "Zone 2B - between Turns 3 and 4"
+        }
+    ]
+}

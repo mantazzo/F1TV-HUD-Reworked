@@ -1,0 +1,147 @@
+{
+    "trackId": 15,
+    "trackName": "Circuit of the Americas",
+    "eventName": "FORMULA 1 MSC CRUISES UNITED STATES GRAND PRIX",
+    "eventName_2026": "FORMULA 1 MSC CRUISES UNITED STATES GRAND PRIX",
+    "eventName_F2": "FIA FORMULA 2 UNITED STATES GRAND PRIX",
+    "location": "Austin, Texas, United States",
+    "year": null,
+    "trackLength": 5514,
+    "comment": "Generic default variant for United States GP - works across multiple game versions unless specific year file exists. Values in meters.",
+    "turns": [
+        {
+            "number": 1,
+            "trigger": 570,
+            "end": 740,
+            "name": ""
+        },
+        {
+            "number": 2,
+            "trigger": 800,
+            "end": 1035,
+            "name": ""
+        },
+        {
+            "number": 3,
+            "trigger": 1105,
+            "end": 1225,
+            "name": ""
+        },
+        {
+            "number": 4,
+            "trigger": 1225,
+            "end": 1315,
+            "name": ""
+        },
+        {
+            "number": 5,
+            "trigger": 1315,
+            "end": 1415,
+            "name": ""
+        },
+        {
+            "number": 6,
+            "trigger": 1415,
+            "end": 1650,
+            "name": ""
+        },
+        {
+            "number": 7,
+            "trigger": 1670,
+            "end": 1795,
+            "name": ""
+        },
+        {
+            "number": 8,
+            "trigger": 1830,
+            "end": 1960,
+            "name": ""
+        },
+        {
+            "number": 9,
+            "trigger": 1960,
+            "end": 2060,
+            "name": ""
+        },
+        {
+            "number": 10,
+            "trigger": 2140,
+            "end": 2260,
+            "name": ""
+        },
+        {
+            "number": 11,
+            "trigger": 2520,
+            "end": 2670,
+            "name": ""
+        },
+        {
+            "number": 12,
+            "trigger": 3720,
+            "end": 3860,
+            "name": ""
+        },
+        {
+            "number": 13,
+            "trigger": 3935,
+            "end": 4075,
+            "name": ""
+        },
+        {
+            "number": 14,
+            "trigger": 4075,
+            "end": 4175,
+            "name": ""
+        },
+        {
+            "number": 15,
+            "trigger": 4210,
+            "end": 4370,
+            "name": ""
+        },
+        {
+            "number": 16,
+            "trigger": 4455,
+            "end": 4570,
+            "name": ""
+        },
+        {
+            "number": 17,
+            "trigger": 4570,
+            "end": 4680,
+            "name": ""
+        },
+        {
+            "number": 18,
+            "trigger": 4685,
+            "end": 4905,
+            "name": ""
+        },
+        {
+            "number": 19,
+            "trigger": 4990,
+            "end": 5150,
+            "name": ""
+        },
+        {
+            "number": 20,
+            "trigger": 5295,
+            "end": 5435,
+            "name": ""
+        }
+    ],
+    "drsZones": [
+        {
+            "zone": 1,
+            "start": 2975,
+            "end": 3726,
+            "comment": "Zone 1 - from Turn 11 to Turn 2"
+        },
+        {
+            "zone": 2,
+            "start": 5445,
+            "end": 606,
+            "comment": "Zone 2 - Start/Finish Straight"
+        }
+    ]
+}

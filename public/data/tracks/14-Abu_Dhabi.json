@@ -1,0 +1,123 @@
+{
+    "trackId": 14,
+    "trackName": "Yas Marina Circuit",
+    "eventName": "FORMULA 1 ETIHAD AIRWAYS ABU DHABI GRAND PRIX",
+    "eventName_2026": "FORMULA 1 ETIHAD AIRWAYS ABU DHABI GRAND PRIX",
+    "eventName_F2": "FIA FORMULA 2 ABU DHABI GRAND PRIX",
+    "location": "Abu Dhabi, United Arab Emirates",
+    "year": null,
+    "trackLength": 5280,
+    "comment": "Generic default variant for Abu Dhabi GP - works across multiple game versions unless specific year file exists. Values in meters.",
+    "turns": [
+        {
+            "number": 1,
+            "trigger": 320,
+            "end": 490,
+            "name": ""
+        },
+        {
+            "number": 2,
+            "trigger": 570,
+            "end": 730,
+            "name": ""
+        },
+        {
+            "number": 3,
+            "trigger": 740,
+            "end": 1000,
+            "name": ""
+        },
+        {
+            "number": 4,
+            "trigger": 1020,
+            "end": 1180,
+            "name": ""
+        },
+        {
+            "number": 5,
+            "trigger": 1325,
+            "end": 1565,
+            "name": ""
+        },
+        {
+            "number": 6,
+            "trigger": 2590,
+            "end": 2695,
+            "name": ""
+        },
+        {
+            "number": 7,
+            "trigger": 2695,
+            "end": 2785,
+            "name": ""
+        },
+        {
+            "number": 8,
+            "trigger": 2810,
+            "end": 3070,
+            "name": ""
+        },
+        {
+            "number": 9,
+            "trigger": 3575,
+            "end": 3955,
+            "name": ""
+        },
+        {
+            "number": 10,
+            "trigger": 4045,
+            "end": 4155,
+            "name": ""
+        },
+        {
+            "number": 11,
+            "trigger": 4175,
+            "end": 4290,
+            "name": ""
+        },
+        {
+            "number": 12,
+            "trigger": 4320,
+            "end": 4430,
+            "name": ""
+        },
+        {
+            "number": 13,
+            "trigger": 4445,
+            "end": 4550,
+            "name": ""
+        },
+        {
+            "number": 14,
+            "trigger": 4560,
+            "end": 4685,
+            "name": ""
+        },
+        {
+            "number": 15,
+            "trigger": 4795,
+            "end": 4995,
+            "name": ""
+        },
+        {
+            "number": 16,
+            "trigger": 5060,
+            "end": 5205,
+            "name": ""
+        }
+    ],
+    "drsZones": [
+        {
+            "zone": 1,
+            "start": 1758,
+            "end": 2597,
+            "comment": "Zone 1 - between Turns 5 and 6"
+        },
+        {
+            "zone": 2,
+            "start": 2905,
+            "end": 3615,
+            "comment": "Zone 2 - between Turns 8 and 9"
+        }
+    ]
+}
