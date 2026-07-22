@@ -1,0 +1,147 @@
+{
+    "trackId": 20,
+    "trackName": "Baku City Circuit",
+    "eventName": "FORMULA 1 QATAR AIRWAYS AZERBAIJAN GRAND PRIX",
+    "eventName_2026": "FORMULA 1 QATAR AIRWAYS AZERBAIJAN GRAND PRIX",
+    "eventName_F2": "FIA FORMULA 2 AZERBAIJAN GRAND PRIX",
+    "location": "Baku, Azerbaijan",
+    "year": null,
+    "trackLength": 5994,
+    "comment": "Generic default variant for Azerbaijan GP - works across multiple game versions unless specific year file exists. Values in meters.",
+    "turns": [
+        {
+            "number": 1,
+            "trigger": 250,
+            "end": 385,
+            "name": ""
+        },
+        {
+            "number": 2,
+            "trigger": 610,
+            "end": 735,
+            "name": ""
+        },
+        {
+            "number": 3,
+            "trigger": 1485,
+            "end": 1595,
+            "name": ""
+        },
+        {
+            "number": 4,
+            "trigger": 1710,
+            "end": 1820,
+            "name": ""
+        },
+        {
+            "number": 5,
+            "trigger": 2040,
+            "end": 2130,
+            "name": ""
+        },
+        {
+            "number": 6,
+            "trigger": 2130,
+            "end": 2220,
+            "name": ""
+        },
+        {
+            "number": 7,
+            "trigger": 2510,
+            "end": 2610,
+            "name": ""
+        },
+        {
+            "number": 8,
+            "trigger": 2725,
+            "end": 2765,
+            "name": "Castle Section"
+        },
+        {
+            "number": 9,
+            "trigger": 2765,
+            "end": 2790,
+            "name": "Castle Section"
+        },
+        {
+            "number": 10,
+            "trigger": 2790,
+            "end": 2825,
+            "name": "Castle Section"
+        },
+        {
+            "number": 11,
+            "trigger": 2825,
+            "end": 2885,
+            "name": "Castle Section"
+        },
+        {
+            "number": 12,
+            "trigger": 2890,
+            "end": 2970,
+            "name": "Castle Section"
+        },
+        {
+            "number": 13,
+            "trigger": 3240,
+            "end": 3395,
+            "name": ""
+        },
+        {
+            "number": 14,
+            "trigger": 3475,
+            "end": 3585,
+            "name": ""
+        },
+        {
+            "number": 15,
+            "trigger": 3700,
+            "end": 3820,
+            "name": ""
+        },
+        {
+            "number": 16,
+            "trigger": 4055,
+            "end": 4195,
+            "name": ""
+        },
+        {
+            "number": 17,
+            "trigger": 4270,
+            "end": 4380,
+            "name": ""
+        },
+        {
+            "number": 18,
+            "trigger": 4495,
+            "end": 4625,
+            "name": ""
+        },
+        {
+            "number": 19,
+            "trigger": 4655,
+            "end": 4805,
+            "name": ""
+        },
+        {
+            "number": 20,
+            "trigger": 4990,
+            "end": 5170,
+            "name": ""
+        }
+    ],
+    "drsZones": [
+        {
+            "zone": 1,
+            "start": 725,
+            "end": 1501,
+            "comment": "Zone 1 - Back Straight from Turn 2 to Turn 3"
+        },
+        {
+            "zone": 2,
+            "start": 5413,
+            "end": 289,
+            "comment": "Zone 2 - Start/Finish Straight"
+        }
+    ]
+}
