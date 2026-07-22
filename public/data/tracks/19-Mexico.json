@@ -13,55 +13,55 @@
             "number": 1,
             "trigger": 1200,
             "end": 1330,
-            "name": ""
+            "name": "Esses Moisés Solana"
         },
         {
             "number": 2,
             "trigger": 1340,
             "end": 1405,
-            "name": ""
+            "name": "Esses Moisés Solana"
         },
         {
             "number": 3,
             "trigger": 1405,
             "end": 1515,
-            "name": ""
+            "name": "Esses Moisés Solana"
         },
         {
             "number": 4,
             "trigger": 2090,
             "end": 2205,
-            "name": ""
+            "name": "Ese del Lago"
         },
         {
             "number": 5,
             "trigger": 2210,
             "end": 2305,
-            "name": ""
+            "name": "Ese del Lago"
         },
         {
             "number": 6,
             "trigger": 2340,
             "end": 2485,
-            "name": ""
+            "name": "Horquilla"
         },
         {
             "number": 7,
             "trigger": 2690,
             "end": 2810,
-            "name": ""
+            "name": "Esses"
         },
         {
             "number": 8,
             "trigger": 2815,
             "end": 2920,
-            "name": ""
+            "name": "Esses"
         },
         {
             "number": 9,
             "trigger": 2920,
             "end": 3045,
-            "name": ""
+            "name": "Esses"
         },
         {
             "number": 10,
@@ -85,19 +85,19 @@
             "number": 13,
             "trigger": 3980,
             "end": 4080,
-            "name": ""
+            "name": "Foro Sol"
         },
         {
             "number": 14,
             "trigger": 4080,
             "end": 4130,
-            "name": ""
+            "name": "Foro Sol"
         },
         {
             "number": 15,
             "trigger": 4130,
             "end": 4170,
-            "name": ""
+            "name": "Foro Sol"
         },
         {
             "number": 16,
@@ -109,7 +109,7 @@
             "number": 17,
             "trigger": 4305,
             "end": 4515,
-            "name": ""
+            "name": "Peraltada/Mansell"
         }
     ],
     "drsZones": [

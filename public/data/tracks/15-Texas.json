@@ -13,7 +13,7 @@
             "number": 1,
             "trigger": 570,
             "end": 740,
-            "name": ""
+            "name": "Big Red"
         },
         {
             "number": 2,
@@ -25,19 +25,19 @@
             "number": 3,
             "trigger": 1105,
             "end": 1225,
-            "name": ""
+            "name": "Esses"
         },
         {
             "number": 4,
             "trigger": 1225,
             "end": 1315,
-            "name": ""
+            "name": "Esses"
         },
         {
             "number": 5,
             "trigger": 1315,
             "end": 1415,
-            "name": ""
+            "name": "Esses"
         },
         {
             "number": 6,
@@ -73,7 +73,7 @@
             "number": 11,
             "trigger": 2520,
             "end": 2670,
-            "name": ""
+            "name": "Bobby Pin"
         },
         {
             "number": 12,
@@ -127,7 +127,7 @@
             "number": 20,
             "trigger": 5295,
             "end": 5435,
-            "name": ""
+            "name": "Andretti"
         }
     ],
     "drsZones": [
