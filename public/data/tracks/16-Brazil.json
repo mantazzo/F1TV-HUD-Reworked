@@ -1,6 +1,10 @@
 {
   "trackId": 16,
   "trackName": "Autodromo Jose Carlos Pace",
+  "eventName": "FORMULA 1 MSC CRUISES GRANDE PRÊMIO DE SÃO PAULO ",
+  "eventName_2026": "FORMULA 1 MSC CRUISES GRANDE PRÊMIO DE SÃO PAULO",
+  "eventName_F2": "FIA FORMULA 2 GRANDE PRÊMIO DE SÃO PAULO",
+  "location": "São Paulo, Brazil",
   "year": null,
   "trackLength": 4294,
   "comment": "Generic default variant for Sao Paulo GP (Autodromo Jose Carlos Pace) - works across multiple game versions unless specific year file exists. Values in meters.",
@@ -100,14 +104,14 @@
     {
       "zone": 1,
       "start": 825,
-      "end": 1349,
-      "comment": "Zone 1 - from Turn 3 to Turn 4"
+      "end": 1348,
+      "comment": "Zone 1 - between Turns 3 and 4"
     },
     {
       "zone": 2,
       "start": 3830,
       "end": 285,
-      "comment": "Zone 2 - through Turn 15 up to Turn 1"
+      "comment": "Zone 2 - Start/Finish Straight"
     }
   ]
 }

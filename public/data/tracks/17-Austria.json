@@ -11,8 +11,8 @@
   "turns": [
     {
       "number": 1,
-      "trigger": 350,
-      "end": 560,
+      "trigger": 380,
+      "end": 550,
       "name": "Niki Lauda Kurve"
     },
     {
@@ -23,14 +23,14 @@
     },
     {
       "number": 3,
-      "trigger": 1270,
-      "end": 1490,
+      "trigger": 1320,
+      "end": 1485,
       "name": "Remus"
     },
     {
       "number": 4,
-      "trigger": 2090,
-      "end": 2315,
+      "trigger": 2130,
+      "end": 2310,
       "name": "Schlossgold"
     },
     {
@@ -59,13 +59,13 @@
     },
     {
       "number": 9,
-      "trigger": 3680,
+      "trigger": 3705,
       "end": 3905,
       "name": "Rindt"
     },
     {
       "number": 10,
-      "trigger": 3940,
+      "trigger": 3950,
       "end": 4140,
       "name": "Red Bull Mobile"
     }
