@@ -11,112 +11,112 @@
   "turns": [
     {
       "number": 1,
-      "trigger": 300,
-      "end": 425,
+      "trigger": 310,
+      "end": 420,
       "name": ""
     },
     {
       "number": 2,
-      "trigger": 425,
+      "trigger": 420,
       "end": 620,
       "name": ""
     },
     {
       "number": 3,
-      "trigger": 1000,
-      "end": 1180,
+      "trigger": 1050,
+      "end": 1175,
       "name": ""
     },
     {
       "number": 4,
-      "trigger": 1190,
-      "end": 1340,
+      "trigger": 1195,
+      "end": 1335,
       "name": ""
     },
     {
       "number": 5,
-      "trigger": 1400,
-      "end": 1565,
+      "trigger": 1405,
+      "end": 1555,
       "name": ""
     },
     {
       "number": 6,
-      "trigger": 1790,
-      "end": 1950,
+      "trigger": 1825,
+      "end": 1945,
       "name": ""
     },
     {
       "number": 7,
-      "trigger": 1950,
-      "end": 2055,
+      "trigger": 1945,
+      "end": 2040,
       "name": ""
     },
     {
       "number": 8,
-      "trigger": 2075,
-      "end": 2385,
+      "trigger": 2060,
+      "end": 2325,
       "name": ""
     },
     {
       "number": 9,
-      "trigger": 3220,
-      "end": 3380,
+      "trigger": 3240,
+      "end": 3375,
       "name": ""
     },
     {
       "number": 10,
-      "trigger": 3390,
-      "end": 3550,
+      "trigger": 3395,
+      "end": 3525,
       "name": ""
     },
     {
       "number": 11,
-      "trigger": 4050,
-      "end": 4230,
+      "trigger": 4085,
+      "end": 4220,
       "name": ""
     },
     {
       "number": 12,
-      "trigger": 4325,
-      "end": 4525,
+      "trigger": 4340,
+      "end": 4520,
       "name": ""
     },
     {
       "number": 13,
-      "trigger": 4570,
-      "end": 4720,
+      "trigger": 4605,
+      "end": 4715,
       "name": ""
     },
     {
       "number": 14,
       "trigger": 4745,
-      "end": 4925,
+      "end": 4920,
       "name": ""
     }
   ],
   "drsZones":[
     {
       "zone": 1,
-      "start": 2550,
+      "start": 2549,
       "end": 3264,
       "comment": "Zone 1A - between Turns 8 and 9"
     },
     {
       "zone": 2,
-      "start": 3558,
-      "end": 4113,
+      "start": 3557,
+      "end": 4112,
       "comment": "Zone 1B - between Turns 10 and 11"
     },
     {
       "zone": 3,
-      "start": 4890,
+      "start": 4889,
       "end": 330,
       "comment": "Zone 2A - Start/Finish Straight"
     },
     {
       "zone": 4,
-      "start": 586,
-      "end": 1056,
+      "start": 585,
+      "end": 1055,
       "comment": "Zone 2B - between Turns 2 and 3"
     }
   ]

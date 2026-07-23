@@ -11,19 +11,19 @@
   "turns": [
     {
       "number": 1,
-      "trigger": 445,
-      "end": 715,
+      "trigger": 460,
+      "end": 710,
       "name": ""
     },
     {
       "number": 2,
-      "trigger": 715,
-      "end": 835,
+      "trigger": 710,
+      "end": 845,
       "name": ""
     },
     {
       "number": 3,
-      "trigger": 840,
+      "trigger": 850,
       "end": 970,
       "name": ""
     },
@@ -35,14 +35,14 @@
     },
     {
       "number": 5,
-      "trigger": 1275,
+      "trigger": 1285,
       "end": 1425,
       "name": ""
     },
     {
       "number": 6,
-      "trigger": 1480,
-      "end": 1700,
+      "trigger": 1530,
+      "end": 1680,
       "name": ""
     },
     {
@@ -59,19 +59,19 @@
     },
     {
       "number": 9,
-      "trigger": 2490,
-      "end": 2615,
+      "trigger": 2500,
+      "end": 2610,
       "name": ""
     },
     {
       "number": 10,
       "trigger": 2620,
-      "end": 2775,
+      "end": 2755,
       "name": ""
     },
     {
       "number": 11,
-      "trigger": 3075,
+      "trigger": 3085,
       "end": 3180,
       "name": ""
     },
@@ -83,39 +83,39 @@
     },
     {
       "number": 13,
-      "trigger": 3305,
-      "end": 3705,
+      "trigger": 3310,
+      "end": 3645,
       "name": ""
     },
     {
       "number": 14,
-      "trigger": 4680,
-      "end": 4840,
+      "trigger": 4730,
+      "end": 4835,
       "name": ""
     },
     {
       "number": 15,
-      "trigger": 4840,
-      "end": 4925,
+      "trigger": 4835,
+      "end": 4905,
       "name": ""
     },
     {
       "number": 16,
-      "trigger": 5080,
-      "end": 5260,
+      "trigger": 5105,
+      "end": 5240,
       "name": ""
     }
   ],
   "drsZones":[
     {
       "zone": 1,
-      "start": 4020,
-      "end": 4740,
+      "start": 4019,
+      "end": 4739,
       "comment": "Zone 1 - Main Straight between Turns 13 and 14"
     },
     {
       "zone": 2,
-      "start": 5283,
+      "start": 5281,
       "end": 446,
       "comment": "Zone 2 - Start/Finish Straight"
     }
