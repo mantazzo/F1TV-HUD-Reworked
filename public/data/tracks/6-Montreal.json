@@ -80,12 +80,14 @@
       "trigger": 3150,
       "end": 3300,
       "name": ""
-    },{
+    },
+    {
       "number": 13,
       "trigger": 3830,
       "end": 3935,
       "name": ""
-    },{
+    },
+    {
       "number": 14,
       "trigger": 3935,
       "end": 4025,
@@ -98,12 +100,14 @@
       "start": 1473,
       "end": 1972,
       "comment": "Zone 1 - between Turns 7 and 8"
-    },{
+    },
+    {
       "zone": 2,
       "start": 3089,
       "end": 3877,
       "comment": "Zone 2A - Back Straight between Turns 11 and 13"
-    },{
+    },
+    {
       "zone": 3,
       "start": 4031,
       "end": 214,

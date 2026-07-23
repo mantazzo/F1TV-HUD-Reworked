@@ -112,7 +112,8 @@
       "start": 4222,
       "end": 542,
       "comment": "Zone 1A - Start/Finish Straight"
-    },{
+    },
+    {
       "zone": 2,
       "start": 670,
       "end": 1020,
