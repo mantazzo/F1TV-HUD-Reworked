@@ -1,0 +1,109 @@
+{
+  "trackId": 26,
+  "trackName": "Circuit Zandvoort",
+  "eventName": "FORMULA 1 HEINEKEN DUTCH GRAND PRIX",
+  "eventName_2026": "FORMULA 1 HEINEKEN DUTCH GRAND PRIX",
+  "eventName_F2": "FIA FORMULA 2 DUTCH GRAND PRIX",
+  "location": "Zandvoort, Netherlands",
+  "year": null,
+  "trackLength": 4258,
+  "comment": "Generic default variant for Dutch GP - works across multiple game versions unless specific year file exists. Values in meters.",
+  "turns": [
+    {
+      "number": 1,
+      "trigger": 270,
+      "end": 480,
+      "name": "Tarzanbocht"
+    },
+    {
+      "number": 2,
+      "trigger": 640,
+      "end": 755,
+      "name": "Gerlachbocht"
+    },
+    {
+      "number": 3,
+      "trigger": 770,
+      "end": 950,
+      "name": "Hugenholtzbocht"
+    },
+    {
+      "number": 4,
+      "trigger": 990,
+      "end": 1140,
+      "name": "Hunserug"
+    },
+    {
+      "number": 5,
+      "trigger": 1185,
+      "end": 1340,
+      "name": "Slotemakerbocht"
+    },
+    {
+      "number": 6,
+      "trigger": 1370,
+      "end": 1530,
+      "name": "Scheivlak"
+    },
+    {
+      "number": 7,
+      "trigger": 1570,
+      "end": 1830,
+      "name": "Scheivlak"
+    },
+    {
+      "number": 8,
+      "trigger": 1980,
+      "end": 2110,
+      "name": "Mastersbocht"
+    },
+    {
+      "number": 9,
+      "trigger": 2205,
+      "end": 2350,
+      "name": "Bocht 9"
+    },
+    {
+      "number": 10,
+      "trigger": 2425,
+      "end": 2620,
+      "name": "Bocht 10"
+    },
+    {
+      "number": 11,
+      "trigger": 3045,
+      "end": 3125,
+      "name": "Hans Ernst Bocht/Chicane 1"
+    },
+    {
+      "number": 12,
+      "trigger": 3125,
+      "end": 3265,
+      "name": "Hans Ernst Bocht/Chicane 2"
+    },{
+      "number": 13,
+      "trigger": 3430,
+      "end": 3600,
+      "name": "Bocht 13"
+    },{
+      "number": 14,
+      "trigger": 3625,
+      "end": 3935,
+      "name": "Arie Luyendijkbocht"
+    }
+  ],
+  "drsZones": [
+    {
+      "zone": 1,
+      "start": 2626,
+      "end": 3066,
+      "comment": "Zone 1 - between Turns 10 and 11"
+    },
+    {
+      "zone": 2,
+      "start": 3618,
+      "end": 316,
+      "comment": "Zone 2 - Start/Finish Straight"
+    }
+  ]
+}
