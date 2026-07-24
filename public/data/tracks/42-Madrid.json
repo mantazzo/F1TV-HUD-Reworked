@@ -1,0 +1,159 @@
+{
+    "trackId": 42,
+    "trackName": "Circuito de Madring",
+    "eventName": "FORMULA 1 GRAN PREMIO DE MADRID",
+    "eventName_2026": "FORMULA 1 TAG HEUER GRAN PREMIO DE ESPAÑA",
+    "eventName_F2": "FIA FORMULA 2 GRAN PREMIO DE ESPAÑA",
+    "location": "Madrid, Spain",
+    "year": null,
+    "trackLength": 5411,
+    "comment": "First version of Madring - the new debut track for 2026 F1 season. This information may be updated after real Formula 1 race (post-September 2026). Values in meters.",
+    "turns": [
+        {
+            "number": 1,
+            "trigger": 380,
+            "end": 475,
+            "name": ""
+        },
+        {
+            "number": 2,
+            "trigger": 475,
+            "end": 540,
+            "name": ""
+        },
+        {
+            "number": 3,
+            "trigger": 560,
+            "end": 730,
+            "name": ""
+        },
+        {
+            "number": 4,
+            "trigger": 1220,
+            "end": 1480,
+            "name": ""
+        },
+        {
+            "number": 5,
+            "trigger": 1500,
+            "end": 1550,
+            "name": ""
+        },
+        {
+            "number": 6,
+            "trigger": 1550,
+            "end": 1635,
+            "name": ""
+        },
+        {
+            "number": 7,
+            "trigger": 1665,
+            "end": 1795,
+            "name": ""
+        },
+        {
+            "number": 8,
+            "trigger": 1870,
+            "end": 1945,
+            "name": ""
+        },
+        {
+            "number": 9,
+            "trigger": 1945,
+            "end": 2030,
+            "name": ""
+        },
+        {
+            "number": 10,
+            "trigger": 2180,
+            "end": 2290,
+            "name": ""
+        },
+        {
+            "number": 11,
+            "trigger": 2300,
+            "end": 2440,
+            "name": ""
+        },
+        {
+            "number": 12,
+            "trigger": 2485,
+            "end": 3060,
+            "name": ""
+        },
+        {
+            "number": 13,
+            "trigger": 3240,
+            "end": 3365,
+            "name": ""
+        },
+        {
+            "number": 14,
+            "trigger": 3420,
+            "end": 3550,
+            "name": ""
+        },
+        {
+            "number": 15,
+            "trigger": 3595,
+            "end": 3840,
+            "name": ""
+        },
+        {
+            "number": 16,
+            "trigger": 3890,
+            "end": 3960,
+            "name": ""
+        },
+        {
+            "number": 17,
+            "trigger": 3960,
+            "end": 4045,
+            "name": ""
+        },
+        {
+            "number": 18,
+            "trigger": 4180,
+            "end": 4300,
+            "name": ""
+        },
+        {
+            "number": 19,
+            "trigger": 4330,
+            "end": 4540,
+            "name": ""
+        },
+        {
+            "number": 20,
+            "trigger": 4740,
+            "end": 4860,
+            "name": ""
+        },
+        {
+            "number": 21,
+            "trigger": 4890,
+            "end": 5000,
+            "name": ""
+        },
+        {
+            "number": 22,
+            "trigger": 5175,
+            "end": 5315,
+            "name": ""
+        }
+    ],
+    "drsZones": [
+        {
+            "zone": 1,
+            "start": 710,
+            "end": 1490,
+            "comment": "Zone 1 - from Turn 11 to Turn 2"
+        },
+        {
+            "zone": 2,
+            "start": 5344,
+            "end": 412,
+            "comment": "Zone 2 - Start/Finish Straight"
+        }
+    ]
+}
