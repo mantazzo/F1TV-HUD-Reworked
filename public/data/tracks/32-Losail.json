@@ -1,0 +1,117 @@
+{
+    "trackId": 32,
+    "trackName": "Lusail International Circuit",
+    "eventName": "FORMULA 1 QATAR AIRWAYS QATAR GRAND PRIX ",
+    "eventName_2026": "FORMULA 1 QATAR AIRWAYS QATAR GRAND PRIX",
+    "eventName_F2": "FIA FORMULA 2 QATAR GRAND PRIX",
+    "location": "Lusail, Qatar",
+    "year": null,
+    "trackLength": 5417,
+    "comment": "Generic default variant for Qatar GP - works across multiple game versions unless specific year file exists. Values in meters.",
+    "turns": [
+        {
+            "number": 1,
+            "trigger": 660,
+            "end": 940,
+            "name": ""
+        },
+        {
+            "number": 2,
+            "trigger": 1010,
+            "end": 1210,
+            "name": ""
+        },
+        {
+            "number": 3,
+            "trigger": 1260,
+            "end": 1430,
+            "name": ""
+        },
+        {
+            "number": 4,
+            "trigger": 1650,
+            "end": 1830,
+            "name": ""
+        },
+        {
+            "number": 5,
+            "trigger": 1840,
+            "end": 2020,
+            "name": ""
+        },
+        {
+            "number": 6,
+            "trigger": 2130,
+            "end": 2290,
+            "name": ""
+        },
+        {
+            "number": 7,
+            "trigger": 2500,
+            "end": 2730,
+            "name": ""
+        },
+        {
+            "number": 8,
+            "trigger": 2735,
+            "end": 2900,
+            "name": ""
+        },
+        {
+            "number": 9,
+            "trigger": 2900,
+            "end": 3040,
+            "name": ""
+        },
+        {
+            "number": 10,
+            "trigger": 3105,
+            "end": 3265,
+            "name": ""
+        },
+        {
+            "number": 11,
+            "trigger": 3290,
+            "end": 3600,
+            "name": ""
+        },
+        {
+            "number": 12,
+            "trigger": 3725,
+            "end": 3915,
+            "name": ""
+        },
+        {
+            "number": 13,
+            "trigger": 3920,
+            "end": 4090,
+            "name": ""
+        },
+        {
+            "number": 14,
+            "trigger": 4135,
+            "end": 4310,
+            "name": ""
+        },
+        {
+            "number": 15,
+            "trigger": 4445,
+            "end": 4620,
+            "name": ""
+        },
+        {
+            "number": 16,
+            "trigger": 4880,
+            "end": 5115,
+            "name": ""
+        }
+    ],
+    "drsZones": [
+        {
+            "zone": 1,
+            "start": 5376,
+            "end": 703,
+            "comment": "Zone 1 - Start/Finish Straight"
+        }
+    ]
+}

@@ -1,0 +1,129 @@
+{
+    "trackId": 31,
+    "trackName": "Las Vegas Street Circuit",
+    "eventName": "FORMULA 1 HEINEKEN LAS VEGAS GRAND PRIX",
+    "eventName_2026": "FORMULA 1 HEINEKEN LAS VEGAS GRAND PRIX",
+    "eventName_F2": "FIA FORMULA 2 LAS VEGAS GRAND PRIX",
+    "location": "Las Vegas, Nevada, USA",
+    "year": null,
+    "trackLength": 6200,
+    "comment": "Generic default variant for Las Vegas GP - works across multiple game versions unless specific year file exists. Values in meters.",
+    "turns": [
+        {
+            "number": 1,
+            "trigger": 240,
+            "end": 350,
+            "name": ""
+        },
+        {
+            "number": 2,
+            "trigger": 350,
+            "end": 485,
+            "name": ""
+        },
+        {
+            "number": 3,
+            "trigger": 500,
+            "end": 645,
+            "name": ""
+        },
+        {
+            "number": 4,
+            "trigger": 645,
+            "end": 785,
+            "name": ""
+        },
+        {
+            "number": 5,
+            "trigger": 1515,
+            "end": 1640,
+            "name": ""
+        },
+        {
+            "number": 6,
+            "trigger": 1730,
+            "end": 1990,
+            "name": ""
+        },
+        {
+            "number": 7,
+            "trigger": 2010,
+            "end": 2080,
+            "name": ""
+        },
+        {
+            "number": 8,
+            "trigger": 2080,
+            "end": 2170,
+            "name": ""
+        },
+        {
+            "number": 9,
+            "trigger": 2195,
+            "end": 2305,
+            "name": ""
+        },
+        {
+            "number": 10,
+            "trigger": 2540,
+            "end": 2890,
+            "name": ""
+        },
+        {
+            "number": 11,
+            "trigger": 2920,
+            "end": 3165,
+            "name": ""
+        },
+        {
+            "number": 12,
+            "trigger": 3190,
+            "end": 3300,
+            "name": ""
+        },
+        {
+            "number": 13,
+            "trigger": 3800,
+            "end": 4300,
+            "name": ""
+        },
+        {
+            "number": 14,
+            "trigger": 5140,
+            "end": 5225,
+            "name": ""
+        },
+        {
+            "number": 15,
+            "trigger": 5225,
+            "end": 5275,
+            "name": ""
+        },
+        {
+            "number": 16,
+            "trigger": 5285,
+            "end": 5375,
+            "name": ""
+        },
+        {
+            "number": 17,
+            "trigger": 5995,
+            "end": 6200,
+            "name": ""
+        }
+    ],
+    "drsZones": [
+        {
+            "zone": 1,
+            "start": 752,
+            "end": 1536,
+            "comment": "Zone 1 - between Turns 4 and 5"
+        },
+        {
+            "zone": 2,
+            "start": 4322,
+            "end": 5165,
+            "comment": "Zone 2 - Main Straight between Turns 13 and 14"
+        }
+    ]
+}
