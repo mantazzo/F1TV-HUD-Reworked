@@ -1,0 +1,195 @@
+{
+    "trackId": 29,
+    "trackName": "Jeddah Street Circuit",
+    "eventName": "FORMULA 1 STC SAUDI ARABIAN GRAND PRIX",
+    "eventName_2026": "FORMULA 1 STC SAUDI ARABIAN GRAND PRIX",
+    "eventName_F2": "FIA FORMULA 2 SAUDI ARABIAN GRAND PRIX",
+    "location": "Jeddah, Saudi Arabia",
+    "year": null,
+    "trackLength": 6175,
+    "comment": "Generic default variant for Saudi Arabian GP - works across multiple game versions unless specific year file exists. Values in meters.",
+    "turns": [
+        {
+            "number": 1,
+            "trigger": 450,
+            "end": 540,
+            "name": ""
+        },
+        {
+            "number": 2,
+            "trigger": 540,
+            "end": 640,
+            "name": ""
+        },
+        {
+            "number": 3,
+            "trigger": 650,
+            "end": 790,
+            "name": ""
+        },
+        {
+            "number": 4,
+            "trigger": 975,
+            "end": 1065,
+            "name": ""
+        },
+        {
+            "number": 5,
+            "trigger": 1065,
+            "end": 1250,
+            "name": ""
+        },
+        {
+            "number": 6,
+            "trigger": 1255,
+            "end": 1365,
+            "name": ""
+        },
+        {
+            "number": 7,
+            "trigger": 1370,
+            "end": 1450,
+            "name": ""
+        },
+        {
+            "number": 8,
+            "trigger": 1455,
+            "end": 1555,
+            "name": ""
+        },
+        {
+            "number": 9,
+            "trigger": 1580,
+            "end": 1695,
+            "name": ""
+        },
+        {
+            "number": 10,
+            "trigger": 1695,
+            "end": 1800,
+            "name": ""
+        },
+        {
+            "number": 11,
+            "trigger": 1800,
+            "end": 1875,
+            "name": ""
+        },
+        {
+            "number": 12,
+            "trigger": 1875,
+            "end": 2080,
+            "name": ""
+        },
+        {
+            "number": 13,
+            "trigger": 2320,
+            "end": 2660,
+            "name": ""
+        },
+        {
+            "number": 14,
+            "trigger": 2675,
+            "end": 2950,
+            "name": ""
+        },
+        {
+            "number": 15,
+            "trigger": 2965,
+            "end": 3070,
+            "name": ""
+        },
+        {
+            "number": 16,
+            "trigger": 3075,
+            "end": 3175,
+            "name": ""
+        },
+        {
+            "number": 17,
+            "trigger": 3175,
+            "end": 3275,
+            "name": ""
+        },
+        {
+            "number": 18,
+            "trigger": 3305,
+            "end": 3470,
+            "name": ""
+        },
+        {
+            "number": 19,
+            "trigger": 3510,
+            "end": 3695,
+            "name": ""
+        },
+        {
+            "number": 20,
+            "trigger": 3715,
+            "end": 3920,
+            "name": ""
+        },
+        {
+            "number": 21,
+            "trigger": 3940,
+            "end": 4245,
+            "name": ""
+        },
+        {
+            "number": 22,
+            "trigger": 4270,
+            "end": 4385,
+            "name": ""
+        },
+        {
+            "number": 23,
+            "trigger": 4390,
+            "end": 4480,
+            "name": ""
+        },
+        {
+            "number": 24,
+            "trigger": 4500,
+            "end": 4620,
+            "name": ""
+        },
+        {
+            "number": 25,
+            "trigger": 4705,
+            "end": 4970,
+            "name": ""
+        },
+        {
+            "number": 26,
+            "trigger": 5035,
+            "end": 5435,
+            "name": ""
+        },
+        {
+            "number": 27,
+            "trigger": 5500,
+            "end": 5680,
+            "name": ""
+        }
+    ],
+    "drsZones": [
+        {
+            "zone": 1,
+            "start": 3689,
+            "end": 4287,
+            "comment": "Zone 1 - from Turn 19 to Turn 22"
+        },
+        {
+            "zone": 2,
+            "start": 4721,
+            "end": 5533,
+            "comment": "Zone 2 - from Turn 24 to Turn 27"
+        },
+        {
+            "zone": 3,
+            "start": 5882,
+            "end": 494,
+            "comment": "Zone 3 - Start/Finish Straight"
+        }
+    ]
+}

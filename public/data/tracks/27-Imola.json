@@ -1,0 +1,135 @@
+{
+    "trackId": 27,
+    "trackName": "Autodromo Internazionale Enzo e Dino Ferrari",
+    "eventName": "FORMULA 1 AWS GRAN PREMIO DEL MADE IN ITALY E DELL'EMILIA-ROMAGNA",
+    "eventName_2026": "FORMULA 1 GRAN PREMIO DEL MADE IN ITALY E DELL'EMILIA-ROMAGNA",
+    "eventName_F2": "FIA FORMULA 2 GRAN PREMIO DEL MADE IN ITALY E DELL'EMILIA-ROMAGNA",
+    "location": "Imola, Emilia-Romagna, Italy",
+    "year": null,
+    "trackLength": 4910,
+    "comment": "Generic default variant for Emilia Romagna GP (Imola) - works across multiple game versions unless specific year file exists. Values in meters.",
+    "turns": [
+        {
+            "number": 1,
+            "trigger": 195,
+            "end": 315,
+            "name": ""
+        },
+        {
+            "number": 2,
+            "trigger": 840,
+            "end": 950,
+            "name": "Variante Tamburello"
+        },
+        {
+            "number": 3,
+            "trigger": 950,
+            "end": 1040,
+            "name": "Variante Tamburello"
+        },
+        {
+            "number": 4,
+            "trigger": 1070,
+            "end": 1180,
+            "name": "Variante Tamburello"
+        },
+        {
+            "number": 5,
+            "trigger": 1490,
+            "end": 1590,
+            "name": "Variante Villeneuve"
+        },
+        {
+            "number": 6,
+            "trigger": 1595,
+            "end": 1705,
+            "name": "Variante Villeneuve"
+        },
+        {
+            "number": 7,
+            "trigger": 1845,
+            "end": 2025,
+            "name": "Tosa"
+        },
+        {
+            "number": 8,
+            "trigger": 2260,
+            "end": 2410,
+            "name": ""
+        },
+        {
+            "number": 9,
+            "trigger": 2480,
+            "end": 2630,
+            "name": "Piratella"
+        },
+        {
+            "number": 10,
+            "trigger": 2650,
+            "end": 2800,
+            "name": ""
+        },
+        {
+            "number": 11,
+            "trigger": 2910,
+            "end": 3000,
+            "name": "Acque Minerali"
+        },
+        {
+            "number": 12,
+            "trigger": 3020,
+            "end": 3115,
+            "name": "Acque Minerali"
+        },
+        {
+            "number": 13,
+            "trigger": 3115,
+            "end": 3180,
+            "name": "Acque Minerali"
+        },
+        {
+            "number": 14,
+            "trigger": 3530,
+            "end": 3595,
+            "name": "Variante Alta"
+        },
+        {
+            "number": 15,
+            "trigger": 3595,
+            "end": 3655,
+            "name": "Variante Alta"
+        },
+        {
+            "number": 16,
+            "trigger": 4110,
+            "end": 4235,
+            "name": ""
+        },
+        {
+            "number": 17,
+            "trigger": 4305,
+            "end": 4415,
+            "name": ""
+        },
+        {
+            "number": 18,
+            "trigger": 4435,
+            "end": 4560,
+            "name": "Rivazza"
+        },
+        {
+            "number": 19,
+            "trigger": 4750,
+            "end": 4900,
+            "name": "Rivazza"
+        }
+    ],
+    "drsZones": [
+        {
+            "zone": 1,
+            "start": 4865,
+            "end": 904,
+            "comment": "Zone 1 - Start/Finish Straight"
+        }
+    ]
+}

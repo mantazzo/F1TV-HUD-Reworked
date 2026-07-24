@@ -1,0 +1,147 @@
+{
+    "trackId": 30,
+    "trackName": "Miami International Autodrome",
+    "eventName": "FORMULA 1 CRYPTO.COM MIAMI GRAND PRIX",
+    "eventName_2026": "FORMULA 1 CRYPTO.COM MIAMI GRAND PRIX",
+    "eventName_F2": "FIA FORMULA 2 MIAMI GRAND PRIX",
+    "location": "Miami, Florida, USA",
+    "year": null,
+    "trackLength": 5410,
+    "comment": "Generic default variant for Miami GP - works across multiple game versions unless specific year file exists. Values in meters.",
+    "turns": [
+        {
+            "number": 1,
+            "trigger": 340,
+            "end": 460,
+            "name": ""
+        },
+        {
+            "number": 2,
+            "trigger": 465,
+            "end": 545,
+            "name": ""
+        },
+        {
+            "number": 3,
+            "trigger": 550,
+            "end": 915,
+            "name": ""
+        },
+        {
+            "number": 4,
+            "trigger": 1070,
+            "end": 1235,
+            "name": ""
+        },
+        {
+            "number": 5,
+            "trigger": 1240,
+            "end": 1380,
+            "name": ""
+        },
+        {
+            "number": 6,
+            "trigger": 1385,
+            "end": 1485,
+            "name": ""
+        },
+        {
+            "number": 7,
+            "trigger": 1495,
+            "end": 1615,
+            "name": ""
+        },
+        {
+            "number": 8,
+            "trigger": 1615,
+            "end": 1765,
+            "name": ""
+        },
+        {
+            "number": 9,
+            "trigger": 2105,
+            "end": 2270,
+            "name": ""
+        },
+        {
+            "number": 10,
+            "trigger": 2360,
+            "end": 2680,
+            "name": ""
+        },
+        {
+            "number": 11,
+            "trigger": 3080,
+            "end": 3190,
+            "name": ""
+        },
+        {
+            "number": 12,
+            "trigger": 3195,
+            "end": 3345,
+            "name": ""
+        },
+        {
+            "number": 13,
+            "trigger": 3350,
+            "end": 3430,
+            "name": ""
+        },
+        {
+            "number": 14,
+            "trigger": 3440,
+            "end": 3490,
+            "name": ""
+        },
+        {
+            "number": 15,
+            "trigger": 3490,
+            "end": 3545,
+            "name": ""
+        },
+        {
+            "number": 16,
+            "trigger": 3555,
+            "end": 3640,
+            "name": ""
+        },
+        {
+            "number": 17,
+            "trigger": 4860,
+            "end": 4975,
+            "name": ""
+        },
+        {
+            "number": 18,
+            "trigger": 5005,
+            "end": 5135,
+            "name": ""
+        },
+        {
+            "number": 19,
+            "trigger": 5175,
+            "end": 5400,
+            "name": ""
+        }
+    ],
+    "drsZones": [
+        {
+            "zone": 1,
+            "start": 2336,
+            "end": 3087,
+            "comment": "Zone 1 - from Turn 9 to Turn 11"
+        },
+        {
+            "zone": 2,
+            "start": 4141,
+            "end": 4874,
+            "comment": "Zone 2 - between Turns 16 and 17"
+        },
+        {
+            "zone": 3,
+            "start": 5288,
+            "end": 340,
+            "comment": "Zone 3 - Start/Finish Straight"
+        }
+    ]
+}
