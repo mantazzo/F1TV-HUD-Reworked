@@ -7,7 +7,7 @@
   "location": "Zandvoort, Netherlands",
   "year": null,
   "trackLength": 4258,
-  "comment": "Generic default variant for Dutch GP - works across multiple game versions unless specific year file exists. Values in meters.",
+  "comment": "Generic default variant for Dutch GP (Zandvoort) - works across multiple game versions unless specific year file exists. Values in meters.",
   "turns": [
     {
       "number": 1,
@@ -80,12 +80,14 @@
       "trigger": 3125,
       "end": 3265,
       "name": "Hans Ernst Bocht/Chicane 2"
-    },{
+    },
+    {
       "number": 13,
       "trigger": 3430,
       "end": 3600,
       "name": "Bocht 13"
-    },{
+    },
+    {
       "number": 14,
       "trigger": 3625,
       "end": 3935,
