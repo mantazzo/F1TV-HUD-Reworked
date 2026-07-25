@@ -41,6 +41,8 @@
         let currentFormula = null;
         let currentSessionType = null;
         let currentYear = null;
+        let playerCarIdx = -1;
+        let detectedEraYear = null; // 2024/2025/2026 from player's m_teamId, or null to fall back to gameYear
         let overlayVisible = true;
         let visibilityMode = 'toggle'; // 'toggle', 'automatic', 'controlled'
         let hideTimer = null;
@@ -156,20 +158,27 @@
             return null;
         }
         
-        // Get event name based on formula type
-        function getEventName(trackData, formulaType) {
+        // Get event name based on formula type, preferring an era-specific override
+        // (e.g. "eventName_2026") when the player's car era is known
+        function getEventName(trackData, formulaType, eraYear) {
             if (!trackData) {
-                return formulaType === DriverUtils.FORMULA_TYPE.F2 
-                    ? '<F2 EVENT NAME MISSING>' 
+                return formulaType === DriverUtils.FORMULA_TYPE.F2
+                    ? '<F2 EVENT NAME MISSING>'
                     : '<F1 EVENT NAME MISSING>';
             }
-            
-            // For F2, try eventName_F2 first, fallback to eventName
+
+            // For F2, try eventName_F2_<era> then eventName_F2, fallback to eventName
             if (formulaType === DriverUtils.FORMULA_TYPE.F2) {
+                if (eraYear && trackData[`eventName_F2_${eraYear}`]) {
+                    return trackData[`eventName_F2_${eraYear}`];
+                }
                 return trackData.eventName_F2 || trackData.eventName || '<F2 EVENT NAME MISSING>';
             }
-            
-            // For F1 and others
+
+            // For F1 and others, try eventName_<era> first (e.g. different 2026 sponsor)
+            if (eraYear && trackData[`eventName_${eraYear}`]) {
+                return trackData[`eventName_${eraYear}`];
+            }
             return trackData.eventName || '<F1 EVENT NAME MISSING>';
         }
         
@@ -182,12 +191,16 @@
         }
         
         // Get year to display
-        function getDisplayYear(trackData, gameYear) {
-            // Priority: track file year → game year
+        function getDisplayYear(trackData, gameYear, eraYear) {
+            // Priority: track file year (explicit per-file override) → detected car era → game year
             if (trackData && trackData.year !== null && trackData.year !== undefined) {
                 return trackData.year;
             }
-            
+
+            if (eraYear !== null && eraYear !== undefined) {
+                return eraYear;
+            }
+
             if (gameYear !== null && gameYear !== undefined) {
                 // m_gameYear is 2-digit, convert to 4-digit
                 // Assuming years 00-50 are 2000-2050, 51-99 are 1951-1999
@@ -207,9 +220,9 @@
         
         // Update display
         function updateDisplay() {
-            const eventName = getEventName(trackData, currentFormula);
+            const eventName = getEventName(trackData, currentFormula, detectedEraYear);
             const location = getLocation(trackData);
-            const year = getDisplayYear(trackData, currentYear);
+            const year = getDisplayYear(trackData, currentYear, detectedEraYear);
             const sessionTypeName = getSessionTypeName(currentSessionType);
             
             eventNameElement.textContent = eventName;
@@ -281,6 +294,24 @@
                 }
             }
             
+            // Participants packet - detect player's team ID to determine car era (2024/2025/2026)
+            if (data.m_header && data.m_header.m_packetId === 4) {
+                if (data.m_header.m_playerCarIndex !== undefined) {
+                    playerCarIdx = data.m_header.m_playerCarIndex;
+                }
+
+                const participants = data.m_participants;
+                if (Array.isArray(participants) && participants[playerCarIdx]) {
+                    const teamId = participants[playerCarIdx].m_teamId;
+                    const eraYear = DriverUtils.getCarEraYear(teamId);
+
+                    if (eraYear !== detectedEraYear) {
+                        detectedEraYear = eraYear;
+                        updateDisplay();
+                    }
+                }
+            }
+
             // Event packet - detect Session Started (SSTA) event
             if (data.m_header && data.m_header.m_packetId === 3) {
                 // Check if this is a Session Started event

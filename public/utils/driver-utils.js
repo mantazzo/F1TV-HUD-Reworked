@@ -52,7 +52,48 @@ const DriverUtils = {
         BETA: 4,
         SUPERCARS: 5,
         ESPORTS: 6,
-        F2_2021: 7
+        F2_2021: 7,
+        F1_WORLD: 8,
+        F1_ELIMINATION: 9,
+        F1_26: 13
+    },
+
+    /**
+     * Determine the "content era" year a car's livery belongs to, based on its team ID.
+     * F1 25 keeps reporting m_gameYear = 25 even with the 2026 Season Pack active (it's
+     * still the same game/title), so gameYear alone can't tell 2024/2025/2026-liveried
+     * cars apart — only the team ID ranges in DefaultTeams.json do that.
+     *
+     * @param {number} teamId - m_teamId from a Participants packet entry
+     * @returns {number|null} 2024, 2025, or 2026 if the ID is era-specific; null for the
+     *   default real F1 teams (0-9), F1 Generic (41), and My Team (104) — callers should
+     *   fall back to m_gameYear-derived year for those.
+     */
+    getCarEraYear(teamId) {
+        if (teamId === undefined || teamId === null) return null;
+
+        // 2024 classic-content teams (APXGP '24, Konnersport '24, F1 24 F2 grid, F1 24 real teams)
+        if (teamId === 142 || teamId === 155 ||
+            (teamId >= 158 && teamId <= 168) ||
+            (teamId >= 185 && teamId <= 194)) {
+            return 2024;
+        }
+
+        // 2025 content teams (APXGP, Konnersport, F2 grid pre-2026-pack)
+        if (teamId === 129 || teamId === 154 ||
+            (teamId >= 209 && teamId <= 219) ||
+            (teamId >= 465 && teamId <= 475)) {
+            return 2025;
+        }
+
+        // 2026 Season Pack teams (real F1 '26, F2 '26 reserved range, F1 Generic '26, My Team '26)
+        if ((teamId >= 220 && teamId <= 230) ||
+            (teamId >= 476 && teamId <= 486) ||
+            teamId === 488 || teamId === 65535) {
+            return 2026;
+        }
+
+        return null;
     },
 
     /**
