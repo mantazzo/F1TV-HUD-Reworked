@@ -1,0 +1,111 @@
+{
+  "trackId": 41,
+  "trackName": "Circuit Zandvoort",
+  "eventName": "FORMULA 1 REVERSE DUTCH GRAND PRIX",
+  "eventName_2026": "FORMULA 1 REVERSE DUTCH GRAND PRIX",
+  "eventName_F2": "FIA FORMULA 2 REVERSE DUTCH GRAND PRIX",
+  "location": "Zandvoort, Netherlands",
+  "year": null,
+  "trackLength": 4258,
+  "comment": "Generic default variant for Dutch GP (Zandvoort, Reverse), introduced in F1 25 game. Values in meters.",
+  "turns": [
+    {
+      "number": 1,
+      "trigger": 300,
+      "end": 630,
+      "name": "Arie Luyendijkbocht"
+    },
+    {
+      "number": 2,
+      "trigger": 650,
+      "end": 830,
+      "name": "Bocht 13"
+    },
+    {
+      "number": 3,
+      "trigger": 995,
+      "end": 1135,
+      "name": "Hans Ernst Bocht/Chicane 2"
+    },
+    {
+      "number": 4,
+      "trigger": 1135,
+      "end": 1215,
+      "name": "Hans Ernst Bocht/Chicane 1"
+    },
+    {
+      "number": 5,
+      "trigger": 1640,
+      "end": 1850,
+      "name": "Bocht 10"
+    },
+    {
+      "number": 6,
+      "trigger": 1910,
+      "end": 2070,
+      "name": "Bocht 9"
+    },
+    {
+      "number": 7,
+      "trigger": 2150,
+      "end": 2290,
+      "name": "Mastersbocht"
+    },
+    {
+      "number": 8,
+      "trigger": 2430,
+      "end": 2690,
+      "name": "Scheivlak"
+    },
+    {
+      "number": 9,
+      "trigger": 2730,
+      "end": 2890,
+      "name": "Scheivlak"
+    },
+    {
+      "number": 10,
+      "trigger": 2920,
+      "end": 3075,
+      "name": "Slotemakerbocht"
+    },
+    {
+      "number": 11,
+      "trigger": 3120,
+      "end": 3270,
+      "name": "Hunserug"
+    },
+    {
+      "number": 12,
+      "trigger": 3310,
+      "end": 3490,
+      "name": "Hugenholtzbocht"
+    },
+    {
+      "number": 13,
+      "trigger": 3505,
+      "end": 3620,
+      "name": "Gerlachbocht"
+    },
+    {
+      "number": 14,
+      "trigger": 3780,
+      "end": 3990,
+      "name": "Tarzanbocht"
+    }
+  ],
+  "drsZones": [
+    {
+      "zone": 1,
+      "start": 1251,
+      "end": 1631,
+      "comment": "Zone 1 - between Turns 4 and 5"
+    },
+    {
+      "zone": 2,
+      "start": 4073,
+      "end": 347,
+      "comment": "Zone 2 - Start/Finish Straight"
+    }
+  ]
+}

@@ -1,0 +1,93 @@
+{
+  "trackId": 40,
+  "trackName": "Red Bull Ring",
+  "eventName": "FORMULA 1 REVERSE AUSTRIAN GRAND PRIX",
+  "eventName_2026": "FORMULA 1 REVERSE AUSTRIAN GRAND PRIX",
+  "eventName_F2": "FIA FORMULA 2 REVERSE AUSTRIAN GRAND PRIX",
+  "location": "Spielberg, Austria",
+  "year": null,
+  "trackLength": 4323,
+  "comment": "Generic default variant for Austrian GP (Red Bull Ring, Reverse), introduced in F1 25 game. Values in meters.",
+  "turns": [
+    {
+      "number": 1,
+      "trigger": 195,
+      "end": 375,
+      "name": "Red Bull Mobile"
+    },
+    {
+      "number": 2,
+      "trigger": 420,
+      "end": 620,
+      "name": "Rindt"
+    },
+    {
+      "number": 3,
+      "trigger": 945,
+      "end": 1170,
+      "name": ""
+    },
+    {
+      "number": 4,
+      "trigger": 1170,
+      "end": 1385,
+      "name": "Würth"
+    },
+    {
+      "number": 5,
+      "trigger": 1435,
+      "end": 1710,
+      "name": "Rauch"
+    },
+    {
+      "number": 6,
+      "trigger": 1765,
+      "end": 2005,
+      "name": ""
+    },
+    {
+      "number": 7,
+      "trigger": 2015,
+      "end": 2195,
+      "name": "Schlossgold"
+    },
+    {
+      "number": 8,
+      "trigger": 2840,
+      "end": 3005,
+      "name": "Remus"
+    },
+    {
+      "number": 9,
+      "trigger": 3085,
+      "end": 3325,
+      "name": ""
+    },
+    {
+      "number": 10,
+      "trigger": 3775,
+      "end": 3945,
+      "name": "Niki Lauda Kurve"
+    }
+  ],
+  "drsZones": [
+    {
+      "zone": 1,
+      "start": 2304,
+      "end": 2871,
+      "comment": "Zone 1 - between Turns 7 and 8"
+    },
+    {
+      "zone": 2,
+      "start": 3057,
+      "end": 3809,
+      "comment": "Zone 2 - from Turn 8 to Turn 10"
+    },
+    {
+      "zone": 3,
+      "start": 3999,
+      "end": 260,
+      "comment": "Zone 3 - Start/Finish Straight"
+    }
+  ]
+}

@@ -1,0 +1,135 @@
+{
+  "trackId": 39,
+  "trackName": "Silverstone Circuit",
+  "eventName": "FORMULA 1 REVERSE BRITISH GRAND PRIX",
+  "eventName_2026": "FORMULA 1 REVERSE BRITISH GRAND PRIX",
+  "eventName_F2": "FIA FORMULA 2 REVERSE BRITISH GRAND PRIX",
+  "location": "Silverstone, United Kingdom",
+  "year": null,
+  "trackLength": 5890,
+  "comment": "Generic default variant for British GP (Silverstone, Reverse), introduced in F1 25 game. Values in meters.",
+  "turns": [
+    {
+      "number": 1,
+      "trigger": 270,
+      "end": 440,
+      "name": "Club"
+    },
+    {
+      "number": 2,
+      "trigger": 475,
+      "end": 575,
+      "name": "Club"
+    },
+    {
+      "number": 3,
+      "trigger": 575,
+      "end": 710,
+      "name": "Vale"
+    },
+    {
+      "number": 4,
+      "trigger": 870,
+      "end": 1250,
+      "name": "Stowe"
+    },
+    {
+      "number": 5,
+      "trigger": 1830,
+      "end": 1995,
+      "name": "Chapel"
+    },
+    {
+      "number": 6,
+      "trigger": 1995,
+      "end": 2185,
+      "name": "Becketts"
+    },
+    {
+      "number": 7,
+      "trigger": 2185,
+      "end": 2330,
+      "name": "Becketts"
+    },
+    {
+      "number": 8,
+      "trigger": 2350,
+      "end": 2460,
+      "name": "Maggotts"
+    },
+    {
+      "number": 9,
+      "trigger": 2460,
+      "end": 2645,
+      "name": "Maggotts"
+    },
+    {
+      "number": 10,
+      "trigger": 2885,
+      "end": 3170,
+      "name": "Copse"
+    },
+    {
+      "number": 11,
+      "trigger": 3415,
+      "end": 3745,
+      "name": "Woodcote"
+    },
+    {
+      "number": 12,
+      "trigger": 3800,
+      "end": 4060,
+      "name": "Luffield"
+    },
+    {
+      "number": 13,
+      "trigger": 4070,
+      "end": 4290,
+      "name": "Brooklands"
+    },
+    {
+      "number": 14,
+      "trigger": 4780,
+      "end": 4965,
+      "name": "Aintree"
+    },
+    {
+      "number": 15,
+      "trigger": 5005,
+      "end": 5150,
+      "name": "The Loop"
+    },
+    {
+      "number": 16,
+      "trigger": 5175,
+      "end": 5340,
+      "name": "Village"
+    },
+    {
+      "number": 17,
+      "trigger": 5380,
+      "end": 5610,
+      "name": "Farm"
+    },
+    {
+      "number": 18,
+      "trigger": 5620,
+      "end": 5825,
+      "name": "Abbey"
+    }
+  ],
+  "drsZones": [
+    {
+      "zone": 1,
+      "start": 1312,
+      "end": 1855,
+      "comment": "Zone 1 - Hangar Straight (between Turns 4 and 5)"
+    },
+    {
+      "zone": 2,
+      "start": 3234,
+      "end": 3832,
+      "comment": "Zone 2 - Old Pit Straight (from Copse (Turn 10) to Luffield (Turn 12))"
+    }
+  ]
+}
