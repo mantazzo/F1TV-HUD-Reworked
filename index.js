@@ -261,20 +261,20 @@ function startServer(portNumber, forwardAddresses) {
     app.use('/images', express.static(path.join(__dirname, 'images')));
 
     // Overlays
-    app.get('/car-damage', (req, res) => res.sendFile(path.join(__dirname, 'views', 'car-damage.html')));
-    app.get('/speedometer', (req, res) => res.sendFile(path.join(__dirname, 'views', 'speedometer.html')));
-    app.get('/lap-timer', (req, res) => res.sendFile(path.join(__dirname, 'views', 'lap-timer.html')));
-    app.get('/pit-timer', (req, res) => res.sendFile(path.join(__dirname, 'views', 'pit-timer.html')));
-    app.get('/pit-window', (req, res) => res.sendFile(path.join(__dirname, 'views', 'pit-window.html')));
-    app.get('/live-speed', (req, res) => res.sendFile(path.join(__dirname, 'views', 'live-speed.html')));
-    app.get('/fastest-lap', (req, res) => res.sendFile(path.join(__dirname, 'views', 'fastest-lap.html')));
-    app.get('/weather', (req, res) => res.sendFile(path.join(__dirname, 'views', 'weather.html')));
-    app.get('/turn-indicator', (req, res) => res.sendFile(path.join(__dirname, 'views', 'turn-indicator.html')));
-    app.get('/fastest-sectors', (req, res) => res.sendFile(path.join(__dirname, 'views', 'fastest-sectors.html')));
-    app.get('/message-box', (req, res) => res.sendFile(path.join(__dirname, 'views', 'message-box.html')));
-    app.get('/mini-leaderboard', (req, res) => res.sendFile(path.join(__dirname, 'views', 'mini-leaderboard.html')));
-    app.get('/session-info', (req, res) => res.sendFile(path.join(__dirname, 'views', 'session-info.html')));
-    app.get('/leaderboard', (req, res) => res.sendFile(path.join(__dirname, 'views', 'leaderboard.html')));
+    app.get('/car-damage', (req, res) => res.sendFile(path.join(__dirname, 'views', 'car-damage.html')));              // Car Damage overlay
+    app.get('/speedometer', (req, res) => res.sendFile(path.join(__dirname, 'views', 'speedometer.html')));            // Speedometer overlay
+    app.get('/lap-timer', (req, res) => res.sendFile(path.join(__dirname, 'views', 'lap-timer.html')));                // Lap Timer overlay
+    app.get('/pit-timer', (req, res) => res.sendFile(path.join(__dirname, 'views', 'pit-timer.html')));                // Pit Timer overlay
+    app.get('/pit-window', (req, res) => res.sendFile(path.join(__dirname, 'views', 'pit-window.html')));              // Pit Window overlay
+    app.get('/live-speed', (req, res) => res.sendFile(path.join(__dirname, 'views', 'live-speed.html')));              // Live Speed overlay
+    app.get('/fastest-lap', (req, res) => res.sendFile(path.join(__dirname, 'views', 'fastest-lap.html')));            // Fastest Lap overlay
+    app.get('/weather', (req, res) => res.sendFile(path.join(__dirname, 'views', 'weather.html')));                    // Weather overlay (incl. forecast)
+    app.get('/turn-indicator', (req, res) => res.sendFile(path.join(__dirname, 'views', 'turn-indicator.html')));      // Turn Indicator overlay
+    app.get('/fastest-sectors', (req, res) => res.sendFile(path.join(__dirname, 'views', 'fastest-sectors.html')));    // Fastest Sectors overlay
+    app.get('/message-box', (req, res) => res.sendFile(path.join(__dirname, 'views', 'message-box.html')));            // Message Box overlay (known as FIA Stewards previously)
+    app.get('/mini-leaderboard', (req, res) => res.sendFile(path.join(__dirname, 'views', 'mini-leaderboard.html')));  // Mini Leaderboard overlay
+    app.get('/session-info', (req, res) => res.sendFile(path.join(__dirname, 'views', 'session-info.html')));          // Session Info overlay
+    app.get('/leaderboard', (req, res) => res.sendFile(path.join(__dirname, 'views', 'leaderboard.html')));            // Leaderboard overlay (Initials version)
 
     // Controllers
     app.get('/controller/controller-extended', (req, res) => res.sendFile(path.join(__dirname, 'views', 'controller', 'controller-extended.html'))); 
@@ -284,16 +284,16 @@ function startServer(portNumber, forwardAddresses) {
 
     // UDP Debug pages
     // Only really useful for analyzing raw packet data and verifying if the parser is working correctly, but can be helpful for troubleshooting and development purposes
-    app.get('/debug/header-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'header-debug.html')));                    // Header (sent by any packet)
-    app.get('/debug/session-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'session-debug.html')));                  // Session packet (ID 1)
-    app.get('/debug/lap-data-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'lap-data-debug.html')));                // Lap Data packet (ID 2)
-    app.get('/debug/event-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'event-debug.html')));                      // Event packet (ID 3)
-    app.get('/debug/participants-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'participants-debug.html')));        // Participants packet (ID 4)
-    app.get('/debug/car-telemetry-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'car-telemetry-debug.html')));      // Car Telemetry packet (ID 6)
-    app.get('/debug/car-status-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'car-status-debug.html')));            // Car Status packet (ID 7)
-    app.get('/debug/car-damage-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'car-damage-debug.html')));            // Car Damage packet (ID 10)
-    app.get('/debug/session-history-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'session-history-debug.html')));  // Session History packet (ID 11)
-    app.get('/debug/time-trial-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'time-trial-debug.html')));            // Time Trial packet (ID 14)
+    app.get('/debug/header-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'header-debug.html')));                     // Header (sent by any packet)
+    app.get('/debug/session-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'session-debug.html')));                   // Session packet (ID 1)
+    app.get('/debug/lap-data-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'lap-data-debug.html')));                 // Lap Data packet (ID 2)
+    app.get('/debug/event-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'event-debug.html')));                       // Event packet (ID 3)
+    app.get('/debug/participants-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'participants-debug.html')));         // Participants packet (ID 4)
+    app.get('/debug/car-telemetry-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'car-telemetry-debug.html')));       // Car Telemetry packet (ID 6)
+    app.get('/debug/car-status-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'car-status-debug.html')));             // Car Status packet (ID 7)
+    app.get('/debug/car-damage-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'car-damage-debug.html')));             // Car Damage packet (ID 10)
+    app.get('/debug/session-history-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'session-history-debug.html')));   // Session History packet (ID 11)
+    app.get('/debug/time-trial-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'time-trial-debug.html')));             // Time Trial packet (ID 14)
     app.get('/debug/car-telemetry-2-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'car-telemetry-2-debug.html')));   // Car Telemetry 2 packet (ID 16, 2026 Season Pack only)
 
     // Other Debug pages
