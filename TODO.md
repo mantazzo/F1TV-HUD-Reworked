@@ -43,8 +43,8 @@
 - Turn Indicator
     - A very basic overlay that shows current Turn
     - Needs data set up by the user (examples provided)
-    - Can use different data depending on game year (potential older game support in the future?)
-    - Needs data for all remaining tracks still
+    - Can use different data depending on game year (potential older game support in the future - low priority to add support for now)
+    - Data for all F1 25 tracks have been included (incl. Madrid, added via 2026 Season Pack DLC)
 - Fastest Sectors
     - Fully remade
     - Shows the current fastest sector times and driver names
@@ -69,6 +69,7 @@
     - Shows Event Name, Year, Current Session and Location
         - Event Name and Location are set by the track's JSON data file (same file as with Turn Indicator)
         - F2 can use a different Event Name, falls back to F1 Event Name if not found
+            - Can also show different eventName per car year, so that you can have different event names for 2026 cars and 2025 cars, for example
         - Year can be set by JSON file or it will use game's year by default
     - Can be set to just be a toggle, or have automatic hiding (after 10 seconds)
         - Can be changed to show up for 10 seconds after every session start as well
@@ -99,15 +100,16 @@
     - All original features are available, with a few improvements/fixes where applicable
     - Uses Initials for display
     - Driver Numbers display can either use images (.svg or .png) or use a fallback to text version
-      - You can also use different Driver Number styles per team!
+        - You can also use different Driver Number styles per team!
     - Flags Display is implemented and improved (displayed according to marshall post data, instead of local car data)
     - Time Remaining/Laps Remaining banner has also been implemented
-    - Standings (Driver and Team) have been implemented (as of v0.6.5)
-      - Support is added for up to 24 drivers and 12 teams (with individual controls!)
-      - You can use ID data for automatic assignment or add overrides for Drivers or Teams Logos and/or Names
-      - Can be shown automatically during Formation Lap
-      - Name displays use textFit library to fit names better for display
-    - Likely feature complete, but may get a few improvements to support F1 '26 cars a bit better
+    - Standings (Driver and Team) have been reimplemented
+        - Support is added for up to 24 drivers and 12 teams display (with individual controls!)
+        - You can use ID data for automatic assignment or add overrides for Drivers or Teams Logos and/or Names (in the DriverStandings.json or ConstructorStandings.json files)
+        - Can be shown automatically during Formation Lap
+        - Name displays use textFit library to fit names better for display
+    - DRS Indicator was updated to also show "Overtake Active" Mode for 2026 F1 cars when enabled
+    - Likely feature complete, may get a few improvements to support F1 '26 cars a bit better over time
 
 ## Overlay Controllers
 
@@ -133,7 +135,7 @@ Bugfixes and Improvements for the older overlays (need to go back through old ov
 
 ## Next Planned Overlay
 
-Leaderboard - Last Name version, then Driver Name overlay
+??? (originally, I had Leaderboard - Last Name version, then Driver Name overlay; I'd like to start probably something new so maybe I may push Driver Name overlay a bit ahead...)
 
 ## Not started
 
