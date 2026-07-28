@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>F1 Lobby Info Packet Debug</title>
+    <link rel="stylesheet" href="/fonts.css">
+    <link rel="stylesheet" href="/styles-event-debug.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        .section-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+        }
+
+        .section-title {
+            font-family: 'F1TV-2022', sans-serif;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.55);
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            margin-bottom: 14px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+            white-space: nowrap;
+        }
+
+        /* ── Lobby player table ────────────────────────────────────────── */
+
+        .pt {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .pt thead tr {
+            background: rgba(255, 255, 255, 0.05);
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .pt th {
+            padding: 8px 10px;
+            text-align: left;
+            font-family: 'F1TV-2022', sans-serif;
+            font-size: 10px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.55);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .pt th.right { text-align: right; }
+
+        .pt td {
+            padding: 6px 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            color: rgba(255, 255, 255, 0.85);
+            font-family: 'Courier New', monospace;
+            vertical-align: middle;
+        }
+
+        .pt td.right { text-align: right; }
+
+        .pt tbody tr:hover {
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        /* Player highlights */
+        .pt tbody tr.player-car   { background: rgba(225, 6, 0, 0.08); }
+        .pt tbody tr.player-car:hover { background: rgba(225, 6, 0, 0.14); }
+        .pt tbody tr.player-car-2 { background: rgba(77, 171, 247, 0.08); }
+        .pt tbody tr.player-car-2:hover { background: rgba(77, 171, 247, 0.13); }
+
+        /* Empty slots (beyond m_numPlayers) */
+        .pt tbody tr.slot-inactive td { color: rgba(255, 255, 255, 0.22); }
+        .pt tbody tr.slot-inactive .badge { opacity: 0.4; }
+
+        /* Slot index pill */
+        .car-idx {
+            display: inline-block;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            font-weight: 700;
+            width: 22px;
+            text-align: center;
+            padding: 1px 0;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.7);
+        }
+        .car-idx.is-player  { background: rgba(225, 6, 0, 0.4);    color: #ff8787; }
+        .car-idx.is-player2 { background: rgba(77, 171, 247, 0.35); color: #74c0fc; }
+
+        /* Player name */
+        .driver-name {
+            font-family: 'F1TV-2022', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .driver-name.is-empty {
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.2);
+            font-style: italic;
+        }
+
+        .sub-id {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.4);
+            font-family: 'Courier New', monospace;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            font-size: 10px;
+            font-family: 'Segoe UI', sans-serif;
+            font-weight: 600;
+            padding: 2px 7px;
+            border-radius: 3px;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        .badge-green  { background: rgba(0, 200, 100, 0.2);  color: #69db7c; }
+        .badge-yellow { background: rgba(255, 200, 0, 0.2);  color: #ffd43b; }
+        .badge-red    { background: rgba(225, 6, 0, 0.2);    color: #ff8787; }
+        .badge-blue   { background: rgba(77, 171, 247, 0.2); color: #74c0fc; }
+        .badge-purple { background: rgba(180,100,255,0.2);   color: #cc99ff; }
+        .badge-orange { background: rgba(255,120,0,0.2);     color: #ff922b; }
+        .badge-grey   { background: rgba(255,255,255,0.08);  color: rgba(255,255,255,0.45); }
+
+        /* Race number */
+        .race-num {
+            font-family: 'F1TV-2022', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.9);
+        }
+
+        /* Field reference table */
+        table.ref-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        table.ref-table th {
+            text-align: left;
+            font-family: 'F1TV-2022', sans-serif;
+            font-size: 11px;
+            color: rgba(255,255,255,0.4);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 6px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+        }
+        table.ref-table td {
+            padding: 7px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            font-family: 'Segoe UI', sans-serif;
+            color: rgba(255,255,255,0.8);
+            vertical-align: top;
+        }
+        table.ref-table tr:last-child td { border-bottom: none; }
+        table.ref-table td:first-child { font-family: 'F1TV-2022', sans-serif; color: rgba(255,255,255,0.6); white-space: nowrap; }
+        table.ref-table td code {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            background: rgba(77,171,247,0.1);
+            color: #74c0fc;
+            padding: 1px 5px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-header">
+        <h1>Lobby Info Packet Debug</h1>
+        <span class="debug-badge">Packet ID 9</span>
+    </div>
+
+    <div class="debug-content">
+
+        <div id="waitingMsg" class="waiting-msg">
+            <div class="waiting-spinner"></div>
+            <div>Waiting for Lobby Info packets (ID&nbsp;9)&hellip; <small style="color:rgba(255,255,255,0.35)">(only sent while sitting in a Multiplayer lobby)</small></div>
+        </div>
+
+        <div id="mainContent" style="display:none">
+
+            <!-- Status bar -->
+            <div class="status-bar" style="margin-bottom:16px">
+                <span>Total packets: <strong id="totalPackets">0</strong></span>
+                <span>Last update: <strong id="lastPacketTime">&mdash;</strong></span>
+                <span>Players in lobby: <strong id="numPlayers">&mdash;</strong></span>
+                <span>Player car: <strong id="playerCarIdx">&mdash;</strong></span>
+                <span>Secondary player: <strong id="secondaryCarIdx">&mdash;</strong></span>
+            </div>
+
+            <!-- Lobby table -->
+            <div class="section-card">
+                <div class="section-title">Lobby &mdash; <span id="numPlayersTitle">?</span> players of <span id="totalSlotsTitle">?</span> slots</div>
+                <table class="pt">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Name</th>
+                            <th class="right">Car&nbsp;#</th>
+                            <th>Type</th>
+                            <th>Team</th>
+                            <th>Nationality</th>
+                            <th>Telemetry</th>
+                            <th>Online&nbsp;Names</th>
+                            <th class="right">Tech&nbsp;Level</th>
+                            <th>Platform</th>
+                            <th>Ready&nbsp;Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ptBody"></tbody>
+                </table>
+            </div>
+
+            <!-- Field reference -->
+            <div class="section-card">
+                <div class="section-title">Column Reference</div>
+                <table class="pt">
+                    <thead>
+                        <tr>
+                            <th style="width:140px">Column</th>
+                            <th style="width:220px">UDP Field</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>#</td>                  <td><code>m_lobbyPlayers[i]</code></td>        <td>Lobby slot index (0&ndash;21, 0&ndash;23 if using 2026 specifications). Red = Player 1, Blue = Player 2. Slots at or above <code>m_numPlayers</code> are dimmed.</td></tr>
+                        <tr><td>Name</td>               <td><code>m_name</code></td>                   <td>Participant name in UTF-8. Truncated with &hellip; if too long.</td></tr>
+                        <tr><td>Car #</td>              <td><code>m_carNumber</code></td>              <td>Car number chosen by the player.</td></tr>
+                        <tr><td>Type</td>               <td><code>m_aiControlled</code></td>           <td>0 = Human, 1 = AI.</td></tr>
+                        <tr><td>Team</td>               <td><code>m_teamId</code></td>                 <td>Team identifier. Resolved to a team name via DefaultTeams.json. "No Team" if the value is the no-team sentinel (255 pre-2026, 65535 on the 2026 format).</td></tr>
+                        <tr><td>Nationality</td>        <td><code>m_nationality</code></td>            <td>Driver nationality code, resolved to a country name. The actual ID is shown as a small subtag.</td></tr>
+                        <tr><td>Telemetry</td>          <td><code>m_yourTelemetry</code></td>          <td>The player's UDP telemetry restriction setting. 0 = Restricted, 1 = Public.</td></tr>
+                        <tr><td>Online Names</td>       <td><code>m_showOnlineNames</code></td>        <td>Whether the player has "show online names" enabled. 0 = Off, 1 = On.</td></tr>
+                        <tr><td>Tech Level</td>         <td><code>m_techLevel</code></td>              <td>F1 World tech level for the participant. Only relevant in F1 World game mode.</td></tr>
+                        <tr><td>Platform</td>           <td><code>m_platform</code></td>               <td>Platform the participant is playing on. 1 = Steam, 3 = PlayStation, 4 = Xbox, 6 = Origin, 255 = Unknown.</td></tr>
+                        <tr><td>Ready Status</td>       <td><code>m_readyStatus</code></td>            <td>0 = Not Ready, 1 = Ready, 2 = Spectating.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        socket.emit('identify', 'Lobby Info Debug');
+
+        // ─── Enum / lookup maps ───────────────────────────────────────────────
+
+        const PLATFORM = {
+            1: 'Steam', 3: 'PlayStation', 4: 'Xbox', 6: 'Origin', 255: 'Unknown'
+        };
+
+        const NATIONALITY = {
+            0:'World',
+            1:'American', 2:'Argentinean', 3:'Australian', 4:'Austrian', 5:'Azerbaijani',
+            6:'Bahraini', 7:'Belgian', 8:'Bolivian', 9:'Brazilian', 10:'British',
+            11:'Bulgarian', 12:'Cameroonian', 13:'Canadian', 14:'Chilean', 15:'Chinese',
+            16:'Colombian', 17:'Costa Rican', 18:'Croatian', 19:'Cypriot', 20:'Czech',
+            21:'Danish', 22:'Dutch', 23:'Ecuadorian', 24:'English', 25:'Emirian',
+            26:'Estonian', 27:'Finnish', 28:'French', 29:'German', 30:'Ghanaian',
+            31:'Greek', 32:'Guatemalan', 33:'Honduran', 34:'Hong Konger', 35:'Hungarian',
+            36:'Icelander', 37:'Indian', 38:'Indonesian', 39:'Irish', 40:'Israeli',
+            41:'Italian', 42:'Jamaican', 43:'Japanese', 44:'Jordanian', 45:'Kuwaiti',
+            46:'Latvian', 47:'Lebanese', 48:'Lithuanian', 49:'Luxembourger', 50:'Malaysian',
+            51:'Maltese', 52:'Mexican', 53:'Monegasque', 54:'New Zealander', 55:'Nicaraguan',
+            56:'Northern Irish', 57:'Norwegian', 58:'Omani', 59:'Pakistani', 60:'Panamanian',
+            61:'Paraguayan', 62:'Peruvian', 63:'Polish', 64:'Portuguese', 65:'Qatari',
+            66:'Romanian', 67:'Russian', 68:'Salvadoran', 69:'Saudi', 70:'Scottish',
+            71:'Serbian', 72:'Singaporean', 73:'Slovakian', 74:'Slovenian', 75:'South Korean',
+            76:'South African', 77:'Spanish', 78:'Swedish', 79:'Swiss', 80:'Thai',
+            81:'Turkish', 82:'Uruguayan', 83:'Ukrainian', 84:'Venezuelan', 85:'Barbadian',
+            86:'Welsh', 87:'Vietnamese', 88:'Algerian', 89:'Bosnian', 90:'Filipino',
+            255:'Not found'
+        };
+
+        // No-team sentinel: 255 pre-2026 (uint8), 65535 on the 2026 format (uint16)
+        const NO_TEAM_IDS = new Set([255, 65535]);
+
+        // ─── Team data (loaded from DefaultTeams.json) ────────────────────────
+
+        let teamData = {};
+
+        fetch('/data/DefaultTeams.json')
+            .then(r => r.json())
+            .then(d => { teamData = d; })
+            .catch(() => { console.warn('[LobbyInfoDebug] Could not load DefaultTeams.json'); });
+
+        function teamName(id) {
+            const t = teamData[id];
+            if (t) return t.ShortName || `Team ${id}`;
+            return `Team ${id}`;
+        }
+
+        // ─── Badge helpers ────────────────────────────────────────────────────
+
+        function badge(text, cls) {
+            return `<span class="badge badge-${cls}">${text}</span>`;
+        }
+
+        // ─── Row builder ──────────────────────────────────────────────────────
+
+        function buildRow(idx, p, isActive, playerIdx, player2Idx) {
+            const isPlayer  = idx === playerIdx;
+            const isPlayer2 = idx === player2Idx;
+
+            let trClass = '';
+            if (!isActive)       trClass = 'slot-inactive';
+            else if (isPlayer)   trClass = 'player-car';
+            else if (isPlayer2)  trClass = 'player-car-2';
+
+            // Index pill
+            const idxClass = isPlayer ? ' is-player' : isPlayer2 ? ' is-player2' : '';
+            const idxPill  = `<span class="car-idx${idxClass}">${idx}</span>`;
+
+            // Name
+            const name = p.m_name;
+            const nameHtml = (name && name.trim() !== '')
+                ? `<span class="driver-name">${name}</span>`
+                : `<span class="driver-name is-empty">empty slot</span>`;
+
+            // Car number
+            const carNum = `<span class="race-num">${p.m_carNumber ?? '—'}</span>`;
+
+            // AI / Human
+            const typeHtml = p.m_aiControlled === 0
+                ? badge('Human', 'blue')
+                : badge('AI', 'purple');
+
+            // Team
+            const teamId   = p.m_teamId;
+            const teamHtml = (teamId === undefined)
+                ? '—'
+                : NO_TEAM_IDS.has(teamId)
+                    ? badge('No Team', 'grey')
+                    : `${teamName(teamId)} <span class="sub-id">ID: ${teamId}</span>`;
+
+            // Nationality
+            const nat = p.m_nationality;
+            const natHtml = (nat !== undefined)
+                ? `${NATIONALITY[nat] ?? nat}<br><span class="sub-id">ID: ${nat}</span>`
+                : '—';
+
+            // Telemetry
+            const telHtml = p.m_yourTelemetry === 1
+                ? badge('Public', 'green')
+                : badge('Restricted', 'grey');
+
+            // Show Online Names
+            const onlineHtml = p.m_showOnlineNames === 1
+                ? badge('On', 'green')
+                : badge('Off', 'grey');
+
+            // Tech Level (F1 World)
+            const techHtml = p.m_techLevel !== undefined ? p.m_techLevel : '—';
+
+            // Platform
+            const platId   = p.m_platform;
+            const platName = PLATFORM[platId] ?? `${platId}`;
+            const platCls  = { 1:'green', 3:'blue', 4:'green', 6:'grey', 255:'grey' }[platId] ?? 'grey';
+            const platHtml = badge(platName, platCls);
+
+            // Ready status
+            const readyMap = { 0: ['Not Ready', 'grey'], 1: ['Ready', 'green'], 2: ['Spectating', 'blue'] };
+            const [readyLabel, readyCls] = readyMap[p.m_readyStatus] ?? [`${p.m_readyStatus}`, 'grey'];
+            const readyHtml = badge(readyLabel, readyCls);
+
+            return `<tr class="${trClass}">
+                <td>${idxPill}</td>
+                <td>${nameHtml}</td>
+                <td class="right">${carNum}</td>
+                <td>${typeHtml}</td>
+                <td>${teamHtml}</td>
+                <td>${natHtml}</td>
+                <td>${telHtml}</td>
+                <td>${onlineHtml}</td>
+                <td class="right">${techHtml}</td>
+                <td>${platHtml}</td>
+                <td>${readyHtml}</td>
+            </tr>`;
+        }
+
+        // ─── Socket handler ───────────────────────────────────────────────────
+
+        let built = false;
+        let totalPackets = 0;
+
+        socket.on('f1_data', (data) => {
+            if (!data.m_header || data.m_header.m_packetId !== 9) return;
+
+            if (!built) {
+                document.getElementById('waitingMsg').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                built = true;
+            }
+
+            totalPackets++;
+            document.getElementById('totalPackets').textContent    = totalPackets;
+            document.getElementById('lastPacketTime').textContent  = new Date().toLocaleTimeString();
+
+            const playerIdx  = data.m_header.m_playerCarIndex          ?? 255;
+            const player2Idx = data.m_header.m_secondaryPlayerCarIndex  ?? 255;
+            const numPlayers = data.m_numPlayers ?? 0;
+            const players    = data.m_lobbyPlayers ?? [];
+
+            document.getElementById('numPlayers').textContent       = numPlayers;
+            document.getElementById('playerCarIdx').textContent     = playerIdx  === 255 ? '—' : playerIdx;
+            document.getElementById('secondaryCarIdx').textContent  = player2Idx === 255 ? '—' : player2Idx;
+            document.getElementById('numPlayersTitle').textContent  = numPlayers;
+            document.getElementById('totalSlotsTitle').textContent  = players.length;
+
+            document.getElementById('ptBody').innerHTML = players
+                .map((p, i) => buildRow(i, p, i < numPlayers, playerIdx, player2Idx))
+                .join('');
+        });
+
+        console.log('[LobbyInfoDebug] Debug page loaded');
+    </script>
+</body>
+</html>

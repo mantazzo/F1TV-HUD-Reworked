@@ -16,6 +16,8 @@ I made these pages for analyzing live data from the game. These can be useful fo
     - http://localhost:3000/debug/car-telemetry-debug
 - Car Status Packet Debug (ID 7)
     - http://localhost:3000/debug/car-status-debug
+- Lobby Info Packet Debug (ID 9)
+    - http://localhost:3000/debug/lobby-info-debug
 - Car Damage Packet Debug (ID 10)
     - http://localhost:3000/debug/car-damage-debug
 - Session History Packet Debug (ID 11)
@@ -29,7 +31,6 @@ Pages currently not made, might be added in the future:
 - Motion Packet Debug (ID 0)
 - Car Setup Packet Debug (ID 5)
 - Final Classification Packet Debug (ID 8)
-- Lobby Info Packet Debug (ID 9)
 - Tyre Sets Packet Debug (ID 12)
 - Motion Ex Packet Debug (ID 13)
 - Lap Position Packet Debug (ID 15)
