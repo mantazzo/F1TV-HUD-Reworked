@@ -27,6 +27,7 @@
     "socket.io": "^4.8.3"
   },
   "devDependencies": {
-    "patch-package": "^8.0.1"
+    "patch-package": "^8.0.1",
+    "socket.io-client": "^4.8.3"
   }
 }
