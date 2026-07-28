@@ -88,7 +88,10 @@
         let teamNames = {};
         let participants = []; // Store full participant data
         let participantLastNames = {};
-        let playerIndex = null;
+        let playerIndex = null;  // "active driver" — m_header.m_playerCarIndex, or m_spectatorCarIndex while spectating
+        let rawPlayerIndex = null; // from m_header.m_playerCarIndex, unmodified
+        let isSpectating = 0;     // from Session packet m_isSpectating
+        let spectatorCarIndex = 255; // from Session packet m_spectatorCarIndex
         let numActiveCars = 0;
         let formulaType = DriverUtils.FORMULA_TYPE.F1_MODERN;
         let sessionType = null;
@@ -160,7 +163,10 @@
             
             // Session packet (ID 1) - Get player index, formula type, and session type
             if (packetId === 1) {
-                playerIndex = data.m_header.m_playerCarIndex;
+                rawPlayerIndex = data.m_header.m_playerCarIndex;
+                isSpectating      = data.m_isSpectating      ?? isSpectating;
+                spectatorCarIndex = data.m_spectatorCarIndex ?? spectatorCarIndex;
+                playerIndex = DriverUtils.getActiveDriverIndex(rawPlayerIndex, isSpectating, spectatorCarIndex);
                 sessionType = data.m_sessionType;
                 
                 if (data.m_formula !== undefined && data.m_formula !== formulaType) {

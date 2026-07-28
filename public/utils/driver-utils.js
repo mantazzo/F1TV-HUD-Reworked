@@ -59,6 +59,24 @@ const DriverUtils = {
     },
 
     /**
+     * Resolve the car index overlays should treat as "the player"/"active driver".
+     *
+     * Normally this is just m_header.m_playerCarIndex. But in Multiplayer, once you
+     * DNF/DSQ/finish (or if you're a pure spectator, where playerCarIndex is 255), the
+     * game lets you spectate another car — the Session packet reports this via
+     * m_isSpectating/m_spectatorCarIndex, and every position-keyed overlay (Leaderboard
+     * PI row, etc.) should follow the spectated car instead of the now-inactive player car.
+     *
+     * @param {number} playerCarIndex - m_header.m_playerCarIndex (255 = no player car / full spectator)
+     * @param {number} isSpectating - m_isSpectating from the Session packet (0 or 1)
+     * @param {number} spectatorCarIndex - m_spectatorCarIndex from the Session packet
+     * @returns {number} The car index overlays should treat as "the active driver"
+     */
+    getActiveDriverIndex(playerCarIndex, isSpectating, spectatorCarIndex) {
+        return isSpectating === 1 ? spectatorCarIndex : playerCarIndex;
+    },
+
+    /**
      * Determine the "content era" year a car's livery belongs to, based on its team ID.
      * F1 25 keeps reporting m_gameYear = 25 even with the 2026 Season Pack active (it's
      * still the same game/title), so gameYear alone can't tell 2024/2025/2026-liveried

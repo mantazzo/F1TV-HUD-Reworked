@@ -5,6 +5,7 @@
     <link rel="stylesheet" href="/fonts.css">
     <link rel="stylesheet" href="/styles-turn-indicator.css">
     <script src="/socket.io/socket.io.js"></script>
+    <script src="/utils/driver-utils.js"></script>
 </head>
 <body>
     <div class="turn-indicator-container">
@@ -23,6 +24,8 @@
         let trackId = -1;
         let trackData = null;
         let currentTurnNumber = null;
+        let isSpectating = 0;     // from Session packet m_isSpectating
+        let spectatorCarIndex = 255; // from Session packet m_spectatorCarIndex
         let overlayVisible = true; // Track if overlay is enabled
         
         // Track name mapping (from TRACKS constant)
@@ -98,11 +101,14 @@
         
         // Listen for telemetry data
         socket.on('f1_data', (data) => {
-            // Session packet - load track data when track changes
+            // Session packet - load track data when track changes + track spectating state
             if (data.m_header && data.m_header.m_packetId === 1) {
+                isSpectating      = data.m_isSpectating      ?? isSpectating;
+                spectatorCarIndex = data.m_spectatorCarIndex ?? spectatorCarIndex;
+
                 const newTrackId = data.m_trackId;
                 const gameYear = data.m_gameYear || null;
-                
+
                 if (newTrackId !== trackId) {
                     trackId = newTrackId;
                     loadTrackData(trackId, gameYear).then(data => {
@@ -110,10 +116,10 @@
                     });
                 }
             }
-            
+
             // Lap Data packet - check turn position
             if (data.m_header && data.m_header.m_packetId === 2) {
-                const playerIndex = data.m_header.m_playerCarIndex;
+                const playerIndex = DriverUtils.getActiveDriverIndex(data.m_header.m_playerCarIndex, isSpectating, spectatorCarIndex);
                 if (data.m_lapData && data.m_lapData[playerIndex]) {
                     const lapDistance = data.m_lapData[playerIndex].m_lapDistance;
                     

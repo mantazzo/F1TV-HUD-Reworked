@@ -303,10 +303,15 @@
                 row.condition.textContent = weatherName;
                 
                 // Use textFit to auto-resize font to fit container
+                // detectMultiLine must be forced off: textFit's own heuristic measures wrap BEFORE
+                // applying nowrap, so a two-word name like "Light Rain" wraps at the default font
+                // size, gets misdetected as intentionally multi-line, and silently overrides our
+                // multiLine:false — skipping both the nowrap and the font-shrink entirely.
                 textFit(row.condition, {
                     minFontSize: 14,
                     maxFontSize: 20,
                     multiLine: false,
+                    detectMultiLine: false,
                     alignHoriz: true,
                     alignVert: false,
                     widthOnly: true

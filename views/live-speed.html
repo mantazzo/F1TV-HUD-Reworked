@@ -91,7 +91,10 @@
         let previousSpeedKmh = 0;
         let currentDriverName = '';
         let currentTeamId = 0;
-        let playerIndex = -1;
+        let playerIndex = -1;    // "active driver" — m_header.m_playerCarIndex, or m_spectatorCarIndex while spectating
+        let rawPlayerIndex = -1; // from m_header.m_playerCarIndex, unmodified
+        let isSpectating = 0;     // from Session packet m_isSpectating
+        let spectatorCarIndex = 255; // from Session packet m_spectatorCarIndex
         let primaryColor = null;
         let speedUnitsLeadPlayer = 1; // 0 = MPH, 1 = KPH (default to KPH)
         let isSpeedIncreasing = false;
@@ -290,12 +293,18 @@
         socket.on('f1_data', (data) => {
             try {
                 const playerIdx = data?.m_header?.m_playerCarIndex;
-                
-                if (playerIdx !== undefined && playerIdx !== playerIndex) {
-                    playerIndex = playerIdx;
+
+                if (playerIdx !== undefined && playerIdx !== rawPlayerIndex) {
+                    rawPlayerIndex = playerIdx;
                 }
-                
+                playerIndex = DriverUtils.getActiveDriverIndex(rawPlayerIndex, isSpectating, spectatorCarIndex);
+
                 if (data?.m_header?.m_packetId === 1) { // Session Data
+                    // Spectating state — follow the spectated car instead of the (now-inactive) player car
+                    isSpectating      = data.m_isSpectating      ?? isSpectating;
+                    spectatorCarIndex = data.m_spectatorCarIndex ?? spectatorCarIndex;
+                    playerIndex = DriverUtils.getActiveDriverIndex(rawPlayerIndex, isSpectating, spectatorCarIndex);
+
                     // Track formula type for driver data loading
                     if (typeof data.m_formula === 'number' && data.m_formula !== formulaType) {
                         formulaType = data.m_formula;
@@ -303,7 +312,7 @@
                         // Reload driver data with correct formula
                         loadDriverData();
                     }
-                    
+
                     // Get player's speed unit preference (0 = MPH, 1 = KPH)
                     if (typeof data.m_speedUnitsLeadPlayer === 'number') {
                         const newSpeedUnits = data.m_speedUnitsLeadPlayer;
@@ -318,7 +327,7 @@
                 }
 
                 if (data?.m_header?.m_packetId === 4) { // Participants Data
-                    const participantData = Array.isArray(data.m_participants) ? data.m_participants[playerIdx] : undefined;
+                    const participantData = Array.isArray(data.m_participants) ? data.m_participants[playerIndex] : undefined;
                     if (participantData) {
                         // Get primary livery color (keep as RGB)
                         if (participantData.m_liveryColour && Array.isArray(participantData.m_liveryColour) && participantData.m_liveryColour.length > 0) {
@@ -356,7 +365,7 @@
                 }
 
                 if (data?.m_header?.m_packetId === 6) { // Car Telemetry Data
-                    const carTelemetry = Array.isArray(data.m_carTelemetryData) ? data.m_carTelemetryData[playerIdx] : undefined;
+                    const carTelemetry = Array.isArray(data.m_carTelemetryData) ? data.m_carTelemetryData[playerIndex] : undefined;
                     if (carTelemetry) {
                         if (typeof carTelemetry.m_speed === 'number') {
                             updateSpeed(carTelemetry.m_speed);

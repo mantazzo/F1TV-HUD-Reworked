@@ -5,6 +5,7 @@
     <link rel="stylesheet" href="/fonts.css">
     <link rel="stylesheet" href="/styles-speedometer.css">
     <script src="/socket.io/socket.io.js"></script>
+    <script src="/utils/driver-utils.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
 </head>
 <body>
@@ -196,6 +197,8 @@
         const speedUnits = document.getElementById('speed-units');
         let isMph = false; // Default to false until Session packet is received
         let currentDrsDisplayState = 0; // Track current DRS display state: 0=unavailable, 1=available, 2=active
+        let isSpectating = 0;     // from Session packet m_isSpectating
+        let spectatorCarIndex = 255; // from Session packet m_spectatorCarIndex
 
         // Initialize DRS blink animation once
         const drsBlinkAnimation = anime({
@@ -354,11 +357,15 @@
         }
 
         socket.on('f1_data', (data) => {
-            const playerIndex = data.m_header?.m_playerCarIndex || 0;
-            
+            const rawPlayerIndex = data.m_header?.m_playerCarIndex || 0;
+            const playerIndex = DriverUtils.getActiveDriverIndex(rawPlayerIndex, isSpectating, spectatorCarIndex);
+
             if (data.m_header.m_packetId === 1) { // Session Packet
+                isSpectating      = data.m_isSpectating      ?? isSpectating;
+                spectatorCarIndex = data.m_spectatorCarIndex ?? spectatorCarIndex;
+
                 const speedUnitsLeadPlayer = data.m_speedUnitsLeadPlayer || 0;
-                
+
                 // Apply units mode override
                 if (currentConfig.unitsMode === 'kmh') {
                     isMph = false;
@@ -372,7 +379,6 @@
                 speedUnits.textContent = isMph ? 'MPH' : 'KMH';
                 kmhLayer.src = isMph ? '/images/speedometer/MPH.png' : '/images/speedometer/KMH.png';
             } else if (data.m_header.m_packetId === 6) { // Car Telemetry
-                const playerIndex = data.m_header.m_playerCarIndex;
                 const throttle = data.m_carTelemetryData[playerIndex].m_throttle; // 0.0 to 1.0
                 const brake = data.m_carTelemetryData[playerIndex].m_brake; // 0.0 to 1.0
                 const speed = data.m_carTelemetryData[playerIndex].m_speed; // 0 to 65535 km/h

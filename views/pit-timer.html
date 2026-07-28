@@ -84,6 +84,8 @@
         let pitLaneTimerActive = false; // Track if pit lane timer is active (in pit lane during race)
         let previousPitLaneTimerActive = false; // Track previous state to detect transitions
         let showOverlayUntil = 0; // Hold overlay visible for 6s after pit lane timer deactivates
+        let isSpectating = 0;     // from Session packet m_isSpectating
+        let spectatorCarIndex = 255; // from Session packet m_spectatorCarIndex
 
         // Team and driver data
         let teamNames = {};
@@ -308,10 +310,14 @@
 
         socket.on('f1_data', (data) => {
             try {
-                const playerIdx = data?.m_header?.m_playerCarIndex;
-                
-                // Session packet - track formula type
+                const rawPlayerIdx = data?.m_header?.m_playerCarIndex;
+                const playerIdx = DriverUtils.getActiveDriverIndex(rawPlayerIdx, isSpectating, spectatorCarIndex);
+
+                // Session packet - track formula type + spectating state
                 if (data?.m_header?.m_packetId === 1) {
+                    isSpectating      = data.m_isSpectating      ?? isSpectating;
+                    spectatorCarIndex = data.m_spectatorCarIndex ?? spectatorCarIndex;
+
                     if (typeof data.m_formula === 'number' && data.m_formula !== formulaType) {
                         formulaType = data.m_formula;
                         console.debug('[PitTimer] Formula type:', formulaType);

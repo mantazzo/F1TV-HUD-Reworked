@@ -199,7 +199,10 @@
         let driversData   = {};
         let customDrivers = [];
         let formulaType   = DriverUtils.FORMULA_TYPE.F1_MODERN;
-        let playerIndex   = -1;
+        let playerIndex   = -1;   // "active driver" — m_header.m_playerCarIndex, or m_spectatorCarIndex while spectating
+        let rawPlayerIndex = -1;  // from m_header.m_playerCarIndex, unmodified
+        let isSpectating   = 0;   // from Session packet m_isSpectating
+        let spectatorCarIndex = 255; // from Session packet m_spectatorCarIndex
         let currentTeamId = null;
         let primaryColor  = null;
         let drsFault      = 0;
@@ -488,14 +491,21 @@
         socket.on('f1_data', (data) => {
             try {
                 const playerIdx = data?.m_header?.m_playerCarIndex;
-                if (playerIdx !== undefined) playerIndex = playerIdx;
+                if (playerIdx !== undefined) rawPlayerIndex = playerIdx;
+                playerIndex = DriverUtils.getActiveDriverIndex(rawPlayerIndex, isSpectating, spectatorCarIndex);
 
                 const pid = data?.m_header?.m_packetId;
 
-                // Packet 1 — Session (formula type)
-                if (pid === 1 && typeof data.m_formula === 'number' && data.m_formula !== formulaType) {
-                    formulaType = data.m_formula;
-                    loadDriverData();
+                // Packet 1 — Session (formula type + spectating state)
+                if (pid === 1) {
+                    isSpectating      = data.m_isSpectating      ?? isSpectating;
+                    spectatorCarIndex = data.m_spectatorCarIndex ?? spectatorCarIndex;
+                    playerIndex = DriverUtils.getActiveDriverIndex(rawPlayerIndex, isSpectating, spectatorCarIndex);
+
+                    if (typeof data.m_formula === 'number' && data.m_formula !== formulaType) {
+                        formulaType = data.m_formula;
+                        loadDriverData();
+                    }
                 }
 
                 // Packet 4 — Participants (driver name + team colour)

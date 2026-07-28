@@ -225,7 +225,10 @@
         let targetCarIdx = -1;
         let numActiveCars = 20;
         let currentLapNum = 0;
-        let playerCarIdx = -1;
+        let playerCarIdx = -1;   // "active driver" — m_header.m_playerCarIndex, or m_spectatorCarIndex while spectating
+        let rawPlayerCarIdx = -1; // from m_header.m_playerCarIndex, unmodified
+        let isSpectating = 0;     // from Session packet m_isSpectating
+        let spectatorCarIndex = 255; // from Session packet m_spectatorCarIndex
         let participants = []; // Store full participant data
         let participantNames = {};
         let teamNames = {};
@@ -471,10 +474,14 @@
         function handleSessionPacket(data) {
             const newSessionType = data.m_sessionType;
             const newFormulaType = data.m_formula;
-            
+
             // Store track length and safety car status for overlay visibility calculations
             trackLength = data.m_trackLength || -1;
             safetyCarStatus = data.m_safetyCarStatus || 0;
+
+            // Spectating state — follow the spectated car instead of the (now-inactive) player car
+            isSpectating      = data.m_isSpectating      ?? isSpectating;
+            spectatorCarIndex = data.m_spectatorCarIndex ?? spectatorCarIndex;
             
             // Only reload custom drivers if formula type changed
             if (formulaType !== newFormulaType) {
@@ -523,8 +530,7 @@
          * Updates tyre compound for the player
          */
         function handleCarStatusPacket(data) {
-            const playerIndex = data.m_header.m_playerCarIndex;
-            const carStatus = data.m_carStatusData[playerIndex];
+            const carStatus = data.m_carStatusData[playerCarIdx];
             
             if (carStatus) {
                 const visualTyreCompound = carStatus.m_visualTyreCompound;
@@ -1067,7 +1073,8 @@
             if (packetId === 1) {
                 handleSessionPacket(data);
             } else if (packetId === 2) {
-                const playerIndex = data.m_header.m_playerCarIndex;
+                rawPlayerCarIdx = data.m_header.m_playerCarIndex ?? rawPlayerCarIdx;
+                const playerIndex = DriverUtils.getActiveDriverIndex(rawPlayerCarIdx, isSpectating, spectatorCarIndex);
                 const lapData = data.m_lapData[playerIndex];
 
                 if (lapData) {

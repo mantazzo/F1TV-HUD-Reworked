@@ -1208,7 +1208,10 @@
         const LAP_TRIGGERS    = [15, 10, 5, 3];
         // Tracks that use Aston Martin Safety Car branding (all others use Mercedes)
         const ASTON_MARTIN_TRACKS = new Set([0, 27, 4, 20, 6, 17, 9, 10, 11, 15, 19, 16]);
-        let playerCarIdx          = -1;   // from m_header.m_playerCarIndex
+        let playerCarIdx          = -1;   // "active driver" — m_header.m_playerCarIndex, or m_spectatorCarIndex while spectating
+        let rawPlayerCarIdx       = -1;   // from m_header.m_playerCarIndex, unmodified
+        let isSpectating          = 0;    // from Session packet m_isSpectating
+        let spectatorCarIndex     = 255;  // from Session packet m_spectatorCarIndex
         const carPositions = new Array(NUM_CARS).fill(0); // carIdx → race position (1-based)
 
         // Driver lookup state
@@ -1950,6 +1953,9 @@
             arrowTimers.forEach(id => { if (id !== null) clearTimeout(id); });
             arrowTimers.fill(null);
             playerCarIdx = -1;
+            rawPlayerCarIdx = -1;
+            isSpectating = 0;
+            spectatorCarIndex = 255;
             numActiveCars = 0;
             extendedGrid = false;
             extendedGrid2026 = false;
@@ -2674,11 +2680,11 @@
         // ── Slot visibility ────────────────────────────────────────────────
         // Hide pre-allocated rows beyond the active car count for always-visible
         // containers. Conditionally-visible containers (inPit, finish, out,
-        // pitStatus) are already display:none by default and driven by game data,
-        // so they don't need slot-count clamping.
+        // pitStatus, penalty) are already display:none by default and driven by
+        // game data, so they don't need slot-count clamping.
         function updateSlotVisibility() {
             const containers = [
-                elPenalty, elFlLogo, elDrivers,
+                elFlLogo, elDrivers,
                 elTimingInterval, elTimingLeader,
                 elQualiGaps, elQualiTimes,
                 elTyre,
@@ -2720,6 +2726,9 @@
                 totalLaps   = data.m_totalLaps      ?? 0;
                 sessionDuration = data.m_sessionDuration ?? sessionDuration;
                 trackLength     = data.m_trackLength     ?? trackLength;
+                isSpectating      = data.m_isSpectating     ?? isSpectating;
+                spectatorCarIndex = data.m_spectatorCarIndex ?? spectatorCarIndex;
+                playerCarIdx = DriverUtils.getActiveDriverIndex(rawPlayerCarIdx, isSpectating, spectatorCarIndex);
                 const timeLeft = data.m_sessionTimeLeft ?? 0;
                 const newTrackId = data.m_trackId ?? -1;
                 if (newTrackId !== -1 && newTrackId !== trackId) {
@@ -2810,7 +2819,8 @@
 
             // Packet ID 2 — Lap Data
             if (pid === 2) {
-                playerCarIdx = data.m_header.m_playerCarIndex ?? playerCarIdx;
+                rawPlayerCarIdx = data.m_header.m_playerCarIndex ?? rawPlayerCarIdx;
+                playerCarIdx = DriverUtils.getActiveDriverIndex(rawPlayerCarIdx, isSpectating, spectatorCarIndex);
                 const lapData = data.m_lapData;
                 if (!Array.isArray(lapData)) return;
 

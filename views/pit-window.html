@@ -5,6 +5,7 @@
     <link rel="stylesheet" href="/fonts.css">
     <link rel="stylesheet" href="/styles-pit-window.css">
     <script src="/socket.io/socket.io.js"></script>
+    <script src="/utils/driver-utils.js"></script>
 </head>
 <body>
     <div class="overlay-container">
@@ -65,7 +66,10 @@
         let pitWindowIdeal = 0;
         let pitWindowLatest = 0;
         let currentLap = 0;
-        let playerIndex = null;
+        let playerIndex = null;  // "active driver" — m_header.m_playerCarIndex, or m_spectatorCarIndex while spectating
+        let rawPlayerIndex = null; // from m_header.m_playerCarIndex, unmodified
+        let isSpectating = 0;     // from Session packet m_isSpectating
+        let spectatorCarIndex = 255; // from Session packet m_spectatorCarIndex
         
         // Auto display configuration
         let autoDisplayEnabled = false;
@@ -228,10 +232,14 @@
             const packetId = data.m_header.m_packetId;
             
             if (packetId === 1) {
-                // Session packet - pit window data
+                // Session packet - pit window data + spectating state
+                isSpectating      = data.m_isSpectating      ?? isSpectating;
+                spectatorCarIndex = data.m_spectatorCarIndex ?? spectatorCarIndex;
+                playerIndex = DriverUtils.getActiveDriverIndex(rawPlayerIndex, isSpectating, spectatorCarIndex);
+
                 const idealLap = data.m_pitStopWindowIdealLap || 0;
                 const latestLap = data.m_pitStopWindowLatestLap || 0;
-                
+
                 if (pitWindowIdeal !== idealLap || pitWindowLatest !== latestLap) {
                     pitWindowIdeal = idealLap;
                     pitWindowLatest = latestLap;
@@ -241,10 +249,9 @@
                 // But then again, we already show "N/A" when the lap values are 0, so this could remain as showing the current tyre compound instead in other sessions
             } else if (packetId === 2) {
                 // Lap Data packet - track player's current lap
-                if (playerIndex === null) {
-                    playerIndex = data.m_header.m_playerCarIndex;
-                }
-                
+                rawPlayerIndex = data.m_header.m_playerCarIndex ?? rawPlayerIndex;
+                playerIndex = DriverUtils.getActiveDriverIndex(rawPlayerIndex, isSpectating, spectatorCarIndex);
+
                 if (data.m_lapData && data.m_lapData[playerIndex]) {
                     const newLap = data.m_lapData[playerIndex].m_currentLapNum || 0;
                     
@@ -284,10 +291,8 @@
                 }
             } else if (packetId === 7) {
                 // Car Status packet - get player's tyre compound
-                const playerIdx = data.m_header.m_playerCarIndex;
-                
-                if (data.m_carStatusData && data.m_carStatusData[playerIdx]) {
-                    const visualCompound = data.m_carStatusData[playerIdx].m_visualTyreCompound;
+                if (data.m_carStatusData && data.m_carStatusData[playerIndex]) {
+                    const visualCompound = data.m_carStatusData[playerIndex].m_visualTyreCompound;
                     updateCompound(visualCompound);
                 }
             }
