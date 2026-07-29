@@ -5,7 +5,7 @@
 #
 # TIP: To run this without opening a terminal, double-click install.bat instead.
 
-$NODE_VERSION = "24.16.0"
+$NODE_VERSION = "24.18.1"
 $NODE_ZIP_URL = "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-win-x64.zip"
 $RUNTIME_DIR  = Join-Path $PSScriptRoot "runtime"
 $ZIP_PATH     = Join-Path $PSScriptRoot "runtime-node.zip"
@@ -46,6 +46,15 @@ if (-not $RuntimeReady) {
 # ── 4. Install/update project dependencies ───────────────────────────────────
 # This also re-applies any patches via the postinstall patch-package hook,
 # so re-running this script is the way for existing users to pick those up.
+#
+# The postinstall hook (patch-package) runs through npm-generated .cmd shims
+# in node_modules\.bin, which fall back to a bare "node" on PATH when they
+# can't find node.exe alongside themselves. Since node.exe only lives in
+# runtime\ (not on PATH by default), that fallback fails for anyone without
+# a separate system-wide Node.js install. Prepending runtime\ to PATH here
+# makes sure it resolves.
+$env:PATH = "$RUNTIME_DIR;$env:PATH"
+
 Write-Host "Installing dependencies..."
 $NodeExe = Join-Path $RUNTIME_DIR "node.exe"
 $NpmScript = Join-Path $RUNTIME_DIR "node_modules\npm\bin\npm-cli.js"

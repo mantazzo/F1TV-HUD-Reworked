@@ -16,5 +16,10 @@ if (-not (Test-Path $NodeExe)) {
     exit 1
 }
 
+# Prepend the bundled runtime to PATH so anything that falls back to a bare
+# "node"/"npm" lookup (e.g. npm-generated .cmd shims in node_modules\.bin)
+# resolves to it, for users without a separate system-wide Node.js install.
+$env:PATH = "$RUNTIME_DIR;$env:PATH"
+
 # ── Start the application ────────────────────────────────────────────────────
 & $NodeExe (Join-Path $PSScriptRoot "index.js")
