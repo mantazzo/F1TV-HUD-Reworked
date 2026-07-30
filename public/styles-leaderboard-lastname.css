@@ -1,0 +1,2774 @@
+/* ════════════════════════════════════════════════════════════════
+   LEADERBOARD OVERLAY
+   Canvas: 650x1291 px
+   ════════════════════════════════════════════════════════════════ */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: black; overflow: hidden; }
+/* Note for myself: Use "background: black;" when debugging/working on overlay and use "background: transparent;" when testing/shipping final versions */
+
+/* ════════════════════════════════════════════════════════════════
+   OVERLAY CONTAINER — 650x1291 px
+   ════════════════════════════════════════════════════════════════ */
+.overlay-container {
+    position: relative;
+    width: 650px;
+    height: 1291px;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 200ms, height 800ms ease;
+}
+.overlay-container.visible { opacity: 1; }
+
+/* ════════════════════════════════════════════════════════════════
+   INNER CONTAINER — native 650×1291 px
+   ════════════════════════════════════════════════════════════════ */
+#lb-container {
+    position: absolute;
+    width: 650px;
+    height: 1291px;
+    transition: opacity 200ms ease;
+}
+#lb-container > * { position: absolute; }
+
+/* ── Pane modes ─────────────────────────────────────────── */
+/* All direct children carry an opacity transition for pane changes.
+   :where() keeps the specificity at (1,0,0) so element-specific transition
+   rules defined later win via source order. */
+#lb-container > *:not(:where(#lb-series-logo, #lb-series-logo-f2)) {
+    transition: opacity 333ms ease;
+}
+/* Pane 4 — logo only: fade out everything except the series logo */
+#lb-container.pane-4 > *:not(:where(#lb-series-logo, #lb-series-logo-f2)) {
+    opacity: 0 !important;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   FLAGS / THICK STROKE BORDER — item_1_4r0r0r0
+   513×1299 at left:-1, top:-2
+   ════════════════════════════════════════════════════════════════ */
+#lb-flags-border {
+    left: -1px;
+    top: -2px;
+    width: 513px;
+    height: 1299px;
+    overflow: hidden;
+    z-index: 1;
+    transition: top 300ms ease, width 300ms ease, opacity 333ms ease;
+}
+#lb-flags-border > * { position: absolute; }
+
+/* Flags animation (item_1_4r0r0r0_1): 800×(1190|1290|1390) at top:(1|-148)
+   top, height, background-size are all set dynamically by updateFlagsImg() */
+#lb-flags-img {
+    left: 0;
+    top: 1px;
+    width: 800px;
+    height: 1190px;
+    background-size: 800px 1190px;
+    opacity: 0;
+    display: none; /* JS drives background-image, top, height, background-size, opacity, and visibility */
+    transition: top 300ms ease, height 300ms ease, background-size 300ms ease;
+}
+
+/* ThickStroke texture (item_1_4r0r0r0_2): 800×(1190|1290|1390) at top:(1|-148), opacity:0.05
+   top, height, background-size, background-image are all set dynamically by updateThickStrokeBg() / pid 4 */
+#lb-thick-stroke-bg {
+    left: 0;
+    top: 1px;
+    width: 800px;
+    height: 1190px;
+    background-image: url('/images/leaderboard-lastname/BG.png');
+    background-size: 800px 1190px;
+    opacity: 0.05;
+    transition: top 300ms ease, height 300ms ease, background-size 300ms ease;
+}
+
+/* Blurred border rectangle (item_1_4r0r0r0_3): 800×(1189|1289|1389) at top:(1.5|-147.5), opacity:0.1
+   top, height are set dynamically by updateBorderRect(); opacity drops to 0 for red flag / green / yellow / SC / VSC,
+   stays 0.1 during formation lap and normal racing (set in setFlagsBanner()) */
+#lb-border-rect {
+    left: 0;
+    top: 1.5px;
+    width: 800px;
+    height: 1189px;
+    border-radius: 37px 0 0 37px;
+    border: 8px solid rgb(0, 0, 0);
+    border-right-width: 0;
+    opacity: 0.1;
+    filter: blur(1.5px);
+    transition: top 300ms ease, height 300ms ease;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   MAIN DARK PANEL — item_1_5r0r0r0
+   top, width, height, display set dynamically by updateMainPanels()
+   ════════════════════════════════════════════════════════════════ */
+#lb-main-bg {
+    left: 17px;
+    top: 20px;
+    width: 495px;
+    height: 1150px;
+    border-radius: 25px 0 0 25px;
+    background-color: rgb(10, 10, 15);
+    opacity: 0.85;
+    transition: width 300ms ease, opacity 333ms ease;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   FORMATION LAP BACKGROUND — item_1_6r0r0r0
+   width, height, display set dynamically by updateMainPanels()
+   ════════════════════════════════════════════════════════════════ */
+#lb-formation-bg {
+    display: none;
+    left: 17px;
+    top: 144px;
+    width: 495px;
+    height: 1026px;
+    border-radius: 0 0 0 25px;
+    background-color: rgb(10, 10, 15);
+    opacity: 0.85;
+    transition: width 300ms ease, opacity 333ms ease;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   POSITION COLUMN BACKGROUND — item_1_7r0r0r0
+   height set dynamically by updateMainPanels()
+   ════════════════════════════════════════════════════════════════ */
+#lb-pos-col-bg {
+    left: 24px;
+    top: 144px;
+    width: 48px;
+    height: 1019px;
+    border-radius: 0 0 0 18px;
+    border-right: 1px solid rgb(74, 74, 74);
+    opacity: 0.75;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   HEADER / LAPS BAR — item_1_8r0r0r0
+   width, display set dynamically by updateMainPanels()
+   ════════════════════════════════════════════════════════════════ */
+#lb-header {
+    left: 25px;
+    top: 95px;
+    width: 487px;
+    height: 50px;
+    overflow: hidden;
+    transition: width 300ms ease, opacity 333ms ease;
+}
+#lb-header > * { position: absolute; }
+
+/* Background image (item_1_8r0r0r0_1): 490×50 at left:-3, opacity:0.85 */
+#lb-header-img {
+    left: -3px;
+    top: 0;
+    width: 490px;
+    height: 50px;
+    background-image: url('/images/leaderboard-lastname/TopBG.png');
+    background-size: 490px 50px;
+    opacity: 0.85;
+}
+
+/* Bottom shadow gradient (item_1_8r0r0r0_2): 490×30 at left:-2, top:20, rotated 180°, opacity:0.35 */
+#lb-header-gradient {
+    left: -2px;
+    top: 20px;
+    width: 490px;
+    height: 30px;
+    background-image: url('/images/common/Gradient.png');
+    background-size: 490px 30px;
+    opacity: 0.35;
+    transform: rotate(180deg);
+}
+
+/* Finished banner (item_1_8r0r0r0_3): 490×50, hidden off-screen at left:310 — left/opacity driven by JS,
+   sliding to left:0 with opacity:0.65 when the session/race finishes (Last-Name-specific slide-in) */
+#lb-finished-img {
+    left: 310px;
+    top: 0;
+    width: 490px;
+    height: 50px;
+    background-image: url('/images/leaderboard-lastname/Finished.png');
+    background-size: 490px 50px;
+    opacity: 0;
+    transition: left 167ms ease, opacity 333ms ease;
+}
+
+/* Timer container (item_1_8r0r0r0_4): 140×50 — left/display driven by JS (updateHeaderDisplay/updateMainPanels)
+   No separate F2/SQ timer box in this version — one session-time element covers all timed sessions */
+#lb-timer-wrap {
+    left: 164px;
+    top: 0;
+    width: 140px;
+    height: 50px;
+    display: none;
+    overflow: hidden;
+    transition: left 300ms ease;
+}
+#lb-timer-wrap > * { position: absolute; }
+
+/* ── Timed sessions: session time remaining (item_1_8r0r0r0_4_2r0) ──────── */
+/* 140×50 at left:0 within wrapper — F1TV-2022 Bold Oblique 32px, centered   */
+#lb-session-time {
+    left: 0;
+    top: 0;
+    width: 140px;
+    height: 50px;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+    color: rgb(255, 255, 255);
+    font-size: 32px;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+}
+
+#lb-session-time.timer-critical {
+    color: rgb(255, 0, 0);
+}
+
+/* ── Race: LAP X / Y (item_1_8r0r0r0_5) ─────────────────────────────────── */
+/* 185×30 at left:156.5, top:10  hidden by default                           */
+#lb-race-laps {
+    display: none;
+    left: 156.5px;
+    top: 10px;
+    width: 185px;
+    height: 30px;
+}
+#lb-race-laps > * { position: absolute; }
+
+/* "LAP" label: 70×30 at left:0  F1TV-2022-Regular-Oblique 26px  grey  centered */
+#lb-lap-label {
+    left: 0;
+    top: 0;
+    width: 70px;
+    height: 30px;
+    font-family: 'F1TV-2022';
+    font-weight: 400;
+    font-style: oblique;
+    color: rgb(192, 192, 192);
+    font-size: 26px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+}
+
+/* Current lap number: 60×31 at left:73  F1TV-2022 Bold Oblique 33px  white */
+#lb-lap-current {
+    left: 73px;
+    top: 0;
+    width: 60px;
+    height: 31px;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+    color: rgb(255, 255, 255);
+    font-size: 33px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    white-space: pre;
+}
+
+/* Total laps "/X": 60×27 at left:105  Formula1 DisplayOblique 24px  grey */
+#lb-lap-total {
+    left: 105px;
+    top: 0;
+    width: 60px;
+    height: 27px;
+    font-family: 'Formula1 Display';
+    font-weight: 400;
+    font-style: oblique;
+    color: rgb(192, 192, 192);
+    font-size: 24px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    white-space: pre;
+}
+
+/* ── Session name label (item_1_8r0r0r0_7) ──────────────────────────────── */
+/* 200×34 at left:20, top:9  Formula1 Display 30px bold  white  hidden by default */
+#lb-session-label {
+    display: none; /* JS sets to flex when shown; left also set dynamically */
+    left: 10px;
+    top: 9px;
+    width: 200px;
+    height: 34px;
+    font-family: 'Formula1 Display';
+    font-weight: 900;
+    color: rgb(255, 255, 255);
+    font-size: 30px;
+    justify-content: flex-start;
+    align-items: center;
+    white-space: pre;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   FLAGS BORDER OVERLAY — item_1_34r0r0r0r0
+   333×1290 at left:0, top:3  overlays all driver rows
+   ════════════════════════════════════════════════════════════════ */
+#lb-deco-border-widget {
+    left: 0;
+    top: 3px;
+    width: 333px;
+    height: 1290px;
+    overflow: hidden;
+    transition: width 300ms ease;
+}
+#lb-deco-border-widget > * { position: absolute; }
+
+/* Normal: grey CSS border (item_1_34r0r0r0r0_2r0): 309×1238 at left:23, top:25 */
+/* 309x1138 at 20 drivers */
+#lb-deco-border {
+    left: 23px;
+    top: 25px;
+    width: 309px;
+    height: 1138px;
+    border-radius: 20px 0 0 20px;
+    border-style: solid;
+    border-width: 4px 0 4px 4px;
+    border-color: rgb(79, 79, 79);
+}
+
+/* Formation Lap: grey CSS border, bottom portion only (item_1_34r0r0r0r0_3r0):
+   309×1138 at left:22, top:143  hidden by default */
+#lb-deco-border-formation {
+    display: none;
+    left: 22px;
+    top: 93px;
+    width: 309px;
+    height: 1138px;
+    border-radius: 0 0 0 20px;
+    border-style: solid;
+    border-width: 0 0 4px 4px;
+    border-color: rgb(88, 91, 92);
+}
+
+/* Race Finished: red CSS border (item_1_34r0r0r0r0_4r0):
+   309×1138 at left:22, top:25  fades in via JS opacity transition */
+#lb-deco-border-finished {
+    opacity: 0;
+    transition: opacity 333ms ease;
+    left: 22px;
+    top: 25px;
+    width: 309px;
+    height: 1138px;
+    border-radius: 22px 0 0 22px;
+    border-style: solid;
+    border-width: 3px 0 3px 3px;
+    border-color: rgb(255, 0, 0);
+}
+
+/* SC/VSC/RF container (item_1_34r0r0r0r0_6r0r0): 310×1139 at left:23, top:24
+   Clips child images to pane width; fades in via opacity on SC/VSC/RF state */
+#lb-deco-border-sc-container {
+    left: 23px;
+    top: 24px;
+    width: 310px;
+    height: 1139px;
+    opacity: 0;
+    overflow: hidden;
+    transition: opacity 333ms ease, width 300ms ease;
+}
+
+/* Safety Car / VSC: Border_SC.png — two copies for animation (item_1_34r0r0r0r0_6r0r0_1 & _2):
+   320×1139 at left:0, top:0 within container */
+#lb-deco-border-sc,
+#lb-deco-border-sc-2 {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 320px;
+    height: 1139px;
+    background-size: 320px 1139px;
+}
+
+/* Yellow Flag: Border_Yellow.png (item_1_34r0r0r0r0_8r0r0_1):
+   326×430 at left:23, top:24  fades in via JS opacity; width transitions for narrow/F2 pane */
+#lb-deco-border-yellow {
+    opacity: 0;
+    transition: opacity 333ms ease, width 300ms ease;
+    left: 23px;
+    top: 24px;
+    width: 326px;
+    height: 430px;
+    background-image: url('/images/leaderboard/Border_Yellow.png');
+    background-size: 325px 430px;
+}
+
+/* Green Flag: Border_Green.png (item_1_34r0r0r0r0_10r0r0_1):
+   326×430 at left:23, top:24  fades in via JS opacity; width transitions for narrow/F2 pane */
+#lb-deco-border-green {
+    opacity: 0;
+    transition: opacity 333ms ease, width 300ms ease;
+    left: 23px;
+    top: 24px;
+    width: 326px;
+    height: 430px;
+    background-image: url('/images/leaderboard/Border_Green.png');
+    background-size: 325px 430px;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   VERTICAL GRADIENT — item_1_26r0r0r0 / item_1_27r0r0r0
+   ════════════════════════════════════════════════════════════════ */
+
+/* Normal (item_1_26r0r0r0): 38×1145 at left:295, top:21, opacity:0.4 */
+#lb-gradient-vertical {
+    left: 295px;
+    top: 21px;
+    width: 38px;
+    height: 1145px;
+    background-image: url('/images/leaderboard/Gradient_Vertical.png');
+    background-size: 38px 1145px;
+    opacity: 0.4;
+    transition: left 300ms ease;
+}
+
+/* Formation Lap only (item_1_27r0r0r0): 38×(1020|1120) at left:295, top:146, opacity:0.4 */
+#lb-gradient-vertical-formation {
+    display: none;
+    left: 295px;
+    top: 146px;
+    width: 38px;
+    height: 1020px;
+    background-image: url('/images/leaderboard/Gradient_Vertical.png');
+    background-size: 38px 1020px;
+    opacity: 0.4;
+    transition: left 300ms ease;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SAFETY CAR / VSC TEAM BANNER — item_1_8r0r0r0_6
+   308×53 at left:0, top:0  hidden by default
+   ════════════════════════════════════════════════════════════════ */
+/* Blink animation: visible for 4.5 s, hidden for 25.5 s, repeating every 30 s */
+/* TODO: check if the "blink" is accurate (eventually, feedback required) */
+@keyframes sc-banner-blink {
+    0%    { opacity: 1; }
+    15%   { opacity: 1; }
+    15.1% { opacity: 0; }
+    100%  { opacity: 0; }
+}
+#lb-sc-banner {
+    display: none;
+    left: 0;
+    top: 0;
+    width: 308px;
+    height: 53px;
+    overflow: hidden;
+}
+#lb-sc-banner.sc-active { animation: sc-banner-blink 30s linear infinite; }
+#lb-sc-banner > * { position: absolute; }
+
+/* Background (item_1_8r0r0r0_6_1): 309×53 at left:1 */
+#lb-sc-bg {
+    left: 1px;
+    top: 0;
+    width: 309px;
+    height: 53px;
+    background-image: url('/images/leaderboard/Header_BG.png');
+    background-size: 309px 53px;
+}
+
+/* Full-size team layer (item_1_8r0r0r0_6_2): 309×53 at left:0, top:0 */
+#lb-sc-team {
+    left: 0;
+    top: 0;
+    width: 309px;
+    height: 53px;
+}
+#lb-sc-team > * { position: absolute; }
+
+/* Team name text (item_1_8r0r0r0_6_3r0): 305×50 at left:3, top:3  Optima 37px white centered */
+#lb-sc-team-name {
+    left: 3px;
+    top: 3px;
+    width: 305px;
+    height: 50px;
+    border-radius: 0 15px 0 0;
+    font-family: 'Optima';
+    font-weight: 400;
+    color: rgb(255, 255, 255);
+    font-size: 37px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+}
+
+/* Team logo (item_1_8r0r0r0_6_4r0): 270×24 at left:19, top:14 — hidden; shown when team logo available */
+#lb-sc-team-logo {
+    display: none;
+    left: 19px;
+    top: 14px;
+    width: 270px;
+    height: 24px;
+    background-image: url('/images/leaderboard/SC_Mercedes.png');
+    background-size: 270px 24px;
+}
+
+/* Compact pane (item_1_8r0r0r0_6_5): 309×53 at left:0, top:0 — alternative SC/VSC layout */
+#lb-sc-pane {
+    display: none;
+    left: 0;
+    top: 0;
+    width: 309px;
+    height: 53px;
+}
+#lb-sc-pane > * { position: absolute; }
+
+/* Pane team name (item_1_8r0r0r0_6_6r0): 173×28 at left:7, top:13  Optima 22px white centered */
+#lb-sc-pane-name {
+    left: 7px;
+    top: 13px;
+    width: 173px;
+    height: 28px;
+    border-radius: 0 15px 0 0;
+    font-family: 'Optima';
+    font-weight: 400;
+    color: rgb(255, 255, 255);
+    font-size: 22px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+}
+
+/* Pane team logo (item_1_8r0r0r0_6_7r0): 160×16 at left:12, top:18 */
+#lb-sc-pane-logo {
+    left: 12px;
+    top: 18px;
+    width: 160px;
+    height: 16px;
+    background-image: url('/images/leaderboard/SC_Mercedes.png');
+    background-size: 160px 16px;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   STARTING GRID BANNER — item_1_31r0r0r0
+   305×105 at left:29, top:145.5  opacity:0 by default; fades in during Formation Lap
+   ════════════════════════════════════════════════════════════════ */
+#lb-formation-banner {
+    left: 26px;
+    top: 95.5px; /* originally 145.5px, but moved up to fix layout a bit; return later if I want to implement an edge case here */
+    width: 307px;
+    height: 105px;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 333ms ease, width 300ms ease;
+}
+#lb-formation-banner > * { position: absolute; }
+
+/* Background (item_1_31r0r0r0_1): LapBG.png 313×116 at left:0, top:-5  opacity:0.85 */
+#lb-formation-banner-bg {
+    left: 0;
+    top: -5px;
+    width: 313px;
+    height: 116px;
+    background-image: url('/images/leaderboard/LapBG.png');
+    background-size: 313px 116px;
+    border-style: solid;
+    border-width: 6px 0 7px;
+    border-color: rgb(90, 93, 98);
+    opacity: 0.85;
+}
+
+/* "STARTING" (item_1_31r0r0r0_2): 295×40 at left:0, top:10  F1TV-2022 ObliqueBold 35px white centered */
+#lb-formation-banner-line1 {
+    box-sizing: border-box;
+    left: 0;
+    top: 10px;
+    width: 295px;
+    height: 40px;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 35px;
+    color: rgb(255, 255, 255);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+    transition: left 300ms ease, font-size 200ms ease;
+}
+
+/* "TYRES" (item_1_31r0r0r0_3): 295×40 at left:0, top:55  F1TV-2022 ObliqueBold 35px white centered */
+#lb-formation-banner-line2 {
+    box-sizing: border-box;
+    left: 0;
+    top: 55px;
+    width: 295px;
+    height: 40px;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 35px;
+    color: rgb(255, 255, 255);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+    transition: left 300ms ease, font-size 200ms ease;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SC/VSC ENDING BANNER — item_1_29r0r0r0
+   306×55 at left:27.5, top:201  hidden by default
+   Overlays the lower portion of the SC/VSC banner when SC/VSC is returning.
+   ════════════════════════════════════════════════════════════════ */
+#lb-sc-ending-banner {
+    display: none;
+    left: 27.5px;
+    top: 201px;
+    width: 306px;
+    height: 55px;
+    overflow: hidden;
+    transition: width 300ms ease, opacity 333ms ease;
+}
+#lb-sc-ending-banner > * { position: absolute; }
+
+/* Background (item_1_29r0r0r0_1): Header_BG.png 306×55 */
+#lb-sc-ending-bg {
+    left: 0;
+    top: 0;
+    width: 306px;
+    height: 55px;
+    background-image: url('/images/leaderboard/Header_BG.png');
+    background-size: 306px 55px;
+}
+
+/* "ENDING" text (item_1_29r0r0r0_2): 306×55 at left:10, top:-0.5
+   F1TV-2022 35px gold centered; left/width transition for pane changes */
+#lb-sc-ending-text {
+    box-sizing: border-box;
+    left: 10px;
+    top: -0.5px;
+    width: 306px;
+    height: 55px;
+    font-family: 'F1TV-2022';
+    font-weight: 400;
+    font-size: 35px;
+    color: rgb(255, 215, 0);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+    transition: left 200ms ease, width 250ms ease;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   VSC FLAGS BANNER — item_1_33r0r0r0r0
+   306×105 at left:27.5, top:145
+   ════════════════════════════════════════════════════════════════ */
+#lb-vsc-banner {
+    display: none;
+    left: 27.5px;
+    top: 145px;
+    width: 306px;
+    height: 105px;
+    overflow: hidden;
+    transition: top 333ms ease, width 300ms ease, opacity 333ms ease;
+}
+#lb-vsc-banner > * { position: absolute; }
+
+/* Yellow Flag layer (item_1_33r0r0r0r0_1): 306×105 at left:0, top:0 */
+#lb-yf-layer {
+    display: none;
+    left: 0;
+    top: 0;
+    width: 306px;
+    height: 105px;
+    transition: opacity 333ms ease;
+}
+#lb-yf-layer > * { position: absolute; }
+
+/* Top BG (item_1_33r0r0r0r0_2r0): YellowFlag_Banner.png 306×50 at top:0 — width 0→306 on show */
+#lb-yf-top-bg {
+    left: 0;
+    top: 0;
+    width: 0;
+    height: 50px;
+    background-image: url('/images/leaderboard/YellowFlag_Banner.png');
+    background-size: 306px 50px;
+    transition: width 333ms ease;
+}
+
+/* "YELLOW FLAG" (item_1_33r0r0r0r0_3r0): 295×50 at left:0, top:0  30px ObliqueBold black centered */
+#lb-yf-top-text {
+    left: 0;
+    top: 0;
+    width: 295px;
+    height: 50px;
+    font-family: 'F1TV-2022';
+    font-style: oblique;
+    font-weight: 700;
+    font-size: 30px;
+    color: rgb(0, 0, 0);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+    transition: opacity 333ms ease;
+}
+
+/* Shine sweep (item_1_33r0r0r0r0_8r0): white blur overlay — one-shot transition on yellow flag appear */
+#lb-yf-shine {
+    left: 0;
+    top: 0;
+    width: 0;
+    height: 50px;
+    filter: blur(7.5px);
+    background-color: rgb(255, 255, 255);
+    opacity: 1;
+    pointer-events: none;
+    transition: width 500ms ease, opacity 500ms ease;
+}
+
+/* Narrow pane "FLAG" (item_1_33r0r0r0r0_9r0): 210×50 at left:-10, top:0 — shown instead of full text.
+   Toggled via display:none/flex (snaps instantly), unlike the equivalent Green Flag element
+   (#lb-gf-top-text-pane) which fades via opacity+transition — kept as originally built for now,
+   but could be switched to the same opacity+transition approach later for a smoother pane swap. */
+#lb-yf-top-text-pane {
+    display: none;
+    left: -10px;
+    top: 0;
+    width: 210px;
+    height: 50px;
+    font-family: 'F1TV-2022';
+    font-style: oblique;
+    font-weight: 700;
+    font-size: 32px;
+    color: rgb(0, 0, 0);
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+}
+
+/* Bottom BG (item_1_33r0r0r0r0_4r0): Header_BG.png 306×55 at top:50 */
+#lb-yf-bottom-bg {
+    left: 0;
+    top: 50px;
+    width: 306px;
+    height: 55px;
+    background-image: url('/images/leaderboard/Header_BG.png');
+    background-size: 306px 55px;
+}
+
+/* Sector label (item_1_33r0r0r0r0_6r0r0): 170×55 at left:10, top:50  26px gold right-aligned */
+#lb-yf-sector-label {
+    left: 10px;
+    top: 50px;
+    width: 170px;
+    height: 55px;
+    font-family: 'F1TV-2022';
+    font-weight: 400;
+    font-size: 26px;
+    color: rgb(255, 215, 0);
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    white-space: pre;
+    transition: left 200ms ease, font-size 200ms ease;
+}
+
+/* Sector number (item_1_33r0r0r0r0_7r0r0): 90×55 at left:190, top:50  40px gold left-aligned */
+#lb-yf-sector-num {
+    left: 190px;
+    top: 50px;
+    width: 90px;
+    height: 55px;
+    font-family: 'Formula1 Display Wide';
+    font-weight: 300;
+    font-size: 40px;
+    color: rgb(255, 215, 0);
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    white-space: pre;
+    transition: left 200ms ease, font-size 200ms ease;
+}
+
+/* Green Flag layer (item_1_33r0r0r0r0_10): 306×105 at left:0, top:0 */
+#lb-gf-layer {
+    display: none;
+    left: 0;
+    top: 0;
+    width: 306px;
+    height: 105px;
+    transition: opacity 333ms ease;
+}
+#lb-gf-layer > * { position: absolute; }
+
+/* Top BG (item_1_33r0r0r0r0_11r0): GreenFlag_Banner.png 307×50 at top:0 — width 0→306 on show */
+#lb-gf-top-bg {
+    left: 0;
+    top: 0;
+    width: 0;
+    height: 50px;
+    background-image: url('/images/leaderboard/GreenFlag_Banner.png');
+    background-size: 306px 50px;
+    transition: width 333ms ease;
+}
+
+/* "GREEN FLAG" (item_1_33r0r0r0r0_12r0): 295×52 at left:0, top:0  30px ObliqueBold black centered */
+#lb-gf-top-text {
+    left: 0;
+    top: 0;
+    width: 295px;
+    height: 52px;
+    font-family: 'F1TV-2022';
+    font-style: oblique;
+    font-weight: 700;
+    font-size: 30px;
+    color: rgb(0, 0, 0);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+    transition: opacity 333ms ease;
+}
+
+/* Shine sweep (item_1_33r0r0r0r0_15r0): white blur overlay — one-shot transition on green flag appear */
+#lb-gf-shine {
+    left: 0;
+    top: 0;
+    width: 0;
+    height: 50px;
+    filter: blur(7.5px);
+    background-color: rgb(255, 255, 255);
+    opacity: 1;
+    pointer-events: none;
+    transition: width 500ms ease, opacity 500ms ease;
+}
+
+/* Narrow pane "FLAG" (item_1_33r0r0r0r0_16r0): 210×50 at left:-10, top:0 — fades in when narrow */
+#lb-gf-top-text-pane {
+    left: -10px;
+    top: 0;
+    width: 210px;
+    height: 50px;
+    font-family: 'F1TV-2022';
+    font-style: oblique;
+    font-weight: 700;
+    font-size: 32px;
+    color: rgb(0, 0, 0);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+    opacity: 0;
+    transition: opacity 333ms ease;
+}
+
+/* Bottom BG (item_1_33r0r0r0r0_13r0): Header_BG.png 306×55 at top:50 */
+#lb-gf-bottom-bg {
+    left: 0;
+    top: 50px;
+    width: 306px;
+    height: 55px;
+    background-image: url('/images/leaderboard/Header_BG.png');
+    background-size: 306px 55px;
+}
+
+/* "TRACK CLEAR" (item_1_33r0r0r0r0_14r0): 250×55 at left:27, top:50  28px lime centered */
+#lb-gf-bottom-text {
+    left: 27px;
+    top: 50px;
+    width: 250px;
+    height: 55px;
+    font-family: 'F1TV-2022';
+    font-weight: 300;
+    font-size: 28px;
+    color: rgb(0, 255, 0);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+}
+
+/* ── Time/Laps Remaining banner (item_1_28r0r0r0) ──────────────────────── */
+#lb-timelaps-banner {
+    left: 28px;
+    top: 147px;
+    width: 306px;
+    height: 105px;
+    display: none;
+    transition: opacity 0.25s, width 300ms;
+    overflow: hidden;
+}
+#lb-timelaps-banner > * { position: absolute; }
+#lb-timelaps-finallap > * { position: absolute; }
+
+/* Background (item_1_28r0r0r0_2r0): TimeLapsRemBG.png 306×105 */
+#lb-timelaps-bg {
+    left: 0;
+    top: 0;
+    width: 306px;
+    height: 105px;
+    background-image: url('/images/leaderboard/TimeLapsRemBG.png');
+    background-size: 306px 105px;
+}
+
+/* Number/value (item_1_28r0r0r0_3r0): 145×105 at left:15  80px red oblique bold */
+#lb-timelaps-num {
+    left: 15px;
+    top: 0;
+    width: 145px;
+    height: 105px;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 80px;
+    color: rgb(255, 0, 0);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+}
+
+/* Label text (item_1_28r0r0r0_4r0): 140×85 at left:145, top:13  25px white bold centered */
+#lb-timelaps-label {
+    left: 145px;
+    top: 13px;
+    width: 140px;
+    height: 85px;
+    font-family: 'F1TVname';
+    font-weight: 700;
+    font-size: 25px;
+    color: rgb(255, 255, 255);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    white-space: pre;
+}
+
+/* Label text — narrow pane (item_1_28r0r0r0_5r0): 170×20 at left:0, top:80  16px white bold centered */
+#lb-timelaps-label-pane {
+    left: 0;
+    top: 80px;
+    width: 170px;
+    height: 20px;
+    font-family: 'F1TVname';
+    font-weight: 700;
+    font-size: 16px;
+    color: rgb(255, 255, 255);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    white-space: pre;
+    transition: opacity 200ms;
+}
+
+/* Final Lap — narrow pane only (item_1_28r0r0r0_6): 306×105, hidden by default */
+#lb-timelaps-finallap {
+    left: 0;
+    top: 0;
+    width: 306px;
+    height: 105px;
+    display: none;
+}
+
+/* "FINAL" text (item_1_28r0r0r0_7r0): 155×105 at left:13, top:-20  44px oblique bold white */
+#lb-timelaps-final {
+    left: 13px;
+    top: -20px;
+    width: 155px;
+    height: 105px;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 44px;
+    color: rgb(255, 255, 255);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* "LAP" text (item_1_28r0r0r0_8r0): 155×105 at left:13, top:20  44px oblique bold white */
+#lb-timelaps-lap {
+    left: 13px;
+    top: 20px;
+    width: 155px;
+    height: 105px;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 44px;
+    color: rgb(255, 255, 255);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Background (item_1_33r0r0r0r0_19r0r0): SafetyCar_Banner.png 306×105 at left:0, top:0 — width 0→305 on show */
+#lb-vsc-bg {
+    left: 0;
+    top: 0;
+    width: 0;
+    height: 105px;
+    transition: width 333ms ease;
+    background-image: url('/images/leaderboard/SafetyCar_Banner.png');
+    background-size: 306px 105px;
+}
+
+/* Shine sweep (item_1_33r0r0r0r0_26r0r0): golden blur overlay — one-shot transition on SC/VSC appear */
+#lb-vsc-shine {
+    left: 0;
+    top: 0;
+    width: 0;
+    height: 105px;
+    filter: blur(7.5px);
+    background-color: rgb(255, 208, 82);
+    opacity: 1;
+    pointer-events: none;
+    transition: width 500ms ease, opacity 500ms ease;
+}
+
+/* VSC text layer (item_1_33r0r0r0r0_20r0r0): 306×105 at left:0, top:0 */
+#lb-vsc-text {
+    display: none;
+    left: 0;
+    top: 0;
+    width: 306px;
+    height: 105px;
+}
+#lb-vsc-text > * { position: absolute; }
+
+/* "VIRTUAL" (item_1_33r0r0r0r0_21r0r0r0): 204×35 at left:102, top:21  38px ObliqueBold black left */
+#lb-vsc-text-virtual {
+    left: 102px;
+    top: 21px;
+    width: 204px;
+    height: 35px;
+    font-family: 'F1TV-2022';
+    font-style: oblique;
+    font-weight: 700;
+    font-size: 38px;
+    color: rgb(0, 0, 0);
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    white-space: pre;
+    transition: left 250ms ease;
+}
+
+/* "SAFETY CAR" (item_1_33r0r0r0r0_22r0r0r0): 206×35 at left:100, top:51.5  26px ObliqueBold black left */
+#lb-vsc-text-safetycar {
+    left: 100px;
+    top: 51.5px;
+    width: 206px;
+    height: 35px;
+    font-family: 'F1TV-2022';
+    font-style: oblique;
+    font-weight: 700;
+    font-size: 26px;
+    color: rgb(0, 0, 0);
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    white-space: pre;
+    transition: left 250ms ease;
+}
+
+/* FIA logo glyph (item_1_33r0r0r0r0_27r0r0): 110×80 at left:0, top:15  F1TV-2022-Logos 80px centered */
+#lb-vsc-fia-logo {
+    left: 0;
+    top: 15px;
+    width: 110px;
+    height: 80px;
+    font-family: 'F1TV-2022-Logos';
+    font-weight: 400;
+    font-size: 80px;
+    color: rgb(0, 0, 0);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+}
+
+/* SC text layer (item_1_33r0r0r0r0_23r0r0): 306×105 at left:0, top:0 */
+#lb-sc-text {
+    display: none;
+    left: 0;
+    top: 0;
+    width: 306px;
+    height: 105px;
+}
+#lb-sc-text > * { position: absolute; }
+
+/* "SAFETY" (item_1_33r0r0r0r0_24r0r0r0): 195×35 at left:100, top:18  37px ObliqueBold black centered */
+#lb-sc-text-safety {
+    left: 100px;
+    top: 18px;
+    width: 195px;
+    height: 35px;
+    font-family: 'F1TV-2022';
+    font-style: oblique;
+    font-weight: 700;
+    font-size: 37px;
+    color: rgb(0, 0, 0);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+    transition: left 250ms ease;
+}
+
+/* "CAR" (item_1_33r0r0r0r0_25r0r0r0): 160×35 at left:110, top:53  37px ObliqueBold black left */
+#lb-sc-text-car {
+    left: 110px;
+    top: 53px;
+    width: 160px;
+    height: 35px;
+    font-family: 'F1TV-2022';
+    font-style: oblique;
+    font-weight: 700;
+    font-size: 37px;
+    color: rgb(0, 0, 0);
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    white-space: pre;
+    transition: left 250ms ease;
+}
+
+/* Red Flag layer (item_1_33r0r0r0r0_28r0): 306×105 at left:0, top:0 — fades in over 200ms on rf */
+#lb-rf-layer {
+    display: none;
+    left: 0;
+    top: 0;
+    width: 306px;
+    height: 105px;
+    transition: opacity 200ms ease;
+}
+#lb-rf-layer > * { position: absolute; }
+
+/* RedFlag_Banner.png ×3 (items _29/_30/_31): 306×50 each */
+#lb-rf-img-1 {
+    left: 0;
+    top: 0;
+    width: 306px;
+    height: 50px;
+    background-image: url('/images/leaderboard/RedFlag_Banner.png');
+    background-size: 306px 50px;
+}
+#lb-rf-img-2 {
+    left: 0;
+    top: 49px;
+    width: 306px;
+    height: 50px;
+    background-image: url('/images/leaderboard/RedFlag_Banner.png');
+    background-size: 306px 50px;
+}
+#lb-rf-img-3 {
+    left: 0;
+    top: 57px;
+    width: 306px;
+    height: 50px;
+    background-image: url('/images/leaderboard/RedFlag_Banner.png');
+    background-size: 306px 50px;
+}
+
+/* Semi-transparent red overlay (item_1_33r0r0r0r0_32r0r0): 306×105 */
+#lb-rf-overlay {
+    left: 0;
+    top: 0;
+    width: 306px;
+    height: 105px;
+    background-color: rgb(255, 0, 0);
+    opacity: 0.15;
+}
+
+/* "RED FLAG" text (item_1_33r0r0r0r0_33r0r0): 302×105  48px ObliqueBold white centered */
+#lb-rf-text {
+    left: 0;
+    top: 0;
+    width: 302px;
+    height: 105px;
+    font-family: 'F1TV-2022';
+    font-style: oblique;
+    font-weight: 700;
+    font-size: 48px;
+    color: rgb(255, 255, 255);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+    transition: left 250ms ease;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SERIES LOGO — item_1_36r0
+   140.8×36.08 at left:35, top:46
+   ════════════════════════════════════════════════════════════════ */
+#lb-series-logo {
+    left: 35px;
+    top: 46px;
+    width: 140.8px;
+    height: 36.08px;
+    background-image: url('/images/other-logos/F1.png');
+    background-size: 140.8px 36.08px;
+}
+
+/* F2 series logo (item_1_37r0): 172.15×77.275 at left:20, top:24  hidden by default */
+#lb-series-logo-f2 {
+    display: none;
+    left: 20px;
+    top: 24px;
+    width: 172.15px;
+    height: 77.275px;
+    background-image: url('/images/other-logos/F2.png');
+    background-size: 172.15px 77.275px;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SESSION LAYER — item_1_9r0r0
+   ════════════════════════════════════════════════════════════════ */
+
+/* Sprint logo (item_1_10r0r0r0): 151.58×30.21 at left:177, top:50  hidden by default */
+#lb-sprint-logo {
+    display: none;
+    left: 177px;
+    top: 50px;
+    width: 151.58px;
+    height: 30.21px;
+    background-image: url('/images/leaderboard/Sprint.png');
+    background-size: 151.58px 30.21px;
+    transition: opacity 300ms ease;
+}
+
+/* Session name (item_1_11r0r0r0 / _12r0r0r0 combined):
+   135×40 at left:189, top:46  Formula1 Display 900  grey  centered
+   font-size managed by textFit (max 37px) */
+#lb-session-name {
+    left: 189px;
+    top: 46px;
+    width: 135px;
+    height: 40px;
+    font-family: 'Formula1 Display';
+    font-weight: 900;
+    color: rgb(192, 192, 192);
+    display: block;
+    overflow: hidden;
+    white-space: nowrap;
+    transition: opacity 300ms ease;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   BATTERY WIDGET — item_1_14r0r0r0_1
+   JS-generated rows (NUM_CARS × 50px stride)  left:334, top:167
+   ════════════════════════════════════════════════════════════════ */
+#lb-battery {
+    left: 334px;
+    top: 167px;
+    width: 80px;
+    height: 1200px; /* NUM_CARS × 50px */
+    transition: left 300ms ease;
+}
+#lb-battery > * { position: absolute; }
+
+/* Per-car row container (.lb-battery-row): 80×40, top set by JS */
+.lb-battery-row {
+    display: none;
+    left: 5px;
+    width: 80px;
+    height: 40px;
+    transition: top 333ms ease;
+}
+.lb-battery-row > * { position: absolute; }
+
+/* Battery image frame (item_1_14r0r0r0_3r0r0): 80×40 at left:0, top:0 */
+.lb-battery-img {
+    left: 0;
+    top: 0;
+    width: 80px;
+    height: 40px;
+    background-image: url('/images/leaderboard/Battery_Yellow.png');
+    background-size: 80px 40px;
+    transition: left 300ms ease;
+}
+
+/* Gauge clip container (item_1_14r0r0r0_4r0r0): 68×30 at left:5, top:5 */
+.lb-battery-gauge {
+    left: 5px;
+    top: 5px;
+    width: 68px;
+    height: 30px;
+    border-radius: 1px;
+    opacity: 0.85;
+    overflow: hidden;
+    transition: left 300ms ease;
+}
+
+/* Gauge fill bar: width % driven by JS */
+.lb-battery-gauge-fill {
+    height: 100%;
+    width: 0%;
+    background-color: rgb(255, 140, 0);
+}
+
+/* ERS % text (item_1_14r0r0r0_5r0r0): 69×30 at left:5, top:5
+   F1TV-2022 21px  white with 3px black stroke  centered */
+.lb-battery-text {
+    left: 5px;
+    top: 5px;
+    width: 69px;
+    height: 30px;
+    font-family: 'F1TV-2022';
+    font-weight: 400;
+    font-size: 21px;
+    color: rgb(255, 255, 255);
+    -webkit-text-stroke: 3px rgb(0, 0, 0);
+    paint-order: stroke fill;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+    transition: left 300ms ease;
+}
+
+/* ─── Penalties widget (item_1_14r0r0r0_90) ──────────────────────────────── */
+
+#lb-penalty {
+    left: 334px;
+    top: 167px;
+    width: 145px;
+    height: 1200px; /* NUM_CARS × 50px */
+    transition: left 300ms ease;
+}
+#lb-penalty > * { position: absolute; }
+
+/* Per-car row container: 145×40, top set by JS */
+.lb-penalty-row {
+    display: none;
+    left: 0;
+    width: 145px;
+    height: 40px;
+    transition: top 333ms ease;
+}
+.lb-penalty-row > * { position: absolute; }
+
+/* Penalty background image (item_1_14r0r0r0_92r0r0_1): Penalty_BG.png 100×40 at left:0
+   opacity:0.95, rounded bottom-left corner */
+.lb-penalty-bg {
+    left: 0;
+    top: 0;
+    width: 100px;
+    height: 40px;
+    opacity: 0.95;
+    border-radius: 0 0 0 5px;
+    background-image: url('/images/leaderboard/Penalty_BG.png');
+    background-size: 100px 40px;
+    transition: left 300ms ease;
+}
+
+/* Shadow rectangle (item_1_14r0r0r0_92r0r0_2): 51×41 at left:10
+   blurred black rect behind the penalty icon */
+.lb-penalty-shadow {
+    left: 10px;
+    top: 0;
+    width: 51px;
+    height: 41px;
+    border-radius: 8px;
+    border: 2px solid rgb(0, 0, 0);
+    opacity: 0.5;
+    filter: blur(5px);
+    background-color: rgb(0, 0, 0);
+    transition: left 300ms ease;
+}
+
+/* Penalty icon (item_1_14r0r0r0_92r0r0_3): Penalty.png 60×40 at left:0 */
+.lb-penalty-icon {
+    left: 0;
+    top: 0;
+    width: 60px;
+    height: 40px;
+    background-image: url('/images/leaderboard/Penalty.png');
+    background-size: 60px 40px;
+    transition: left 300ms ease;
+}
+
+/* Penalty value text (item_1_14r0r0r0_93r0r0): 45×40 at left:60
+   F1TV-2022 17px  black  centered */
+.lb-penalty-value {
+    left: 60px;
+    top: 0;
+    width: 45px;
+    height: 40px;
+    font-family: 'F1TV-2022';
+    font-weight: 400;
+    font-size: 17px;
+    color: rgb(0, 0, 0);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+    transition: left 300ms ease;
+}
+
+/* ─── Fastest Lap Logo widget (item_1_14r0r0r0_157) ─────────────────────────── */
+
+#lb-fl-logo {
+    left: 334px;
+    top: 167px;
+    width: 35px;
+    height: 1200px; /* NUM_CARS × 50px */
+    display: block;
+    transition: left 300ms ease, opacity 300ms ease;
+    opacity: 0;
+}
+#lb-fl-logo > * { position: absolute; }
+
+/* Per-car row container: 35×40, top set by JS */
+.lb-fl-logo-row {
+    left: 0px;
+    width: 35px;
+    height: 40px;
+    transition: top 333ms ease, left 300ms ease, opacity 300ms ease;
+}
+
+/* FL icon (item_1_14r0r0r0_158r0): FL_Icon.png 35×40
+   magenta background, rounded right corners, opacity 0.85 */
+.lb-fl-logo-icon {
+    left: 0;
+    top: 0;
+    width: 35px;
+    height: 40px;
+    border-radius: 0 5px 5px 0;
+    opacity: 0.85;
+    background-color: rgb(255, 0, 255);
+    background-image: url('/images/leaderboard/FL_Icon.png');
+    background-size: 35px 40px;
+    transition: left 300ms ease, opacity 300ms ease;
+}
+
+/* ─── Driver name slots (item_1_24r0r0 → item_1_24r0r0_49) ──────────────────── */
+
+#lb-drivers {
+    left: 27px;
+    top: 160px;
+    width: 310px;
+    height: 1200px;
+}
+#lb-drivers > * { position: absolute; }
+
+/* Per-driver row: 310×50, top set by JS */
+.lb-driver-row {
+    left: 0;
+    width: 310px;
+    height: 50px;
+    transition: top 300ms ease;
+}
+.lb-driver-row > * { position: absolute; }
+
+/* Name abbreviation (item_1_24r0r0_51r0r0): 205×49 at left:100
+   F1TV-2022-Name 24px  white  left-aligned */
+.lb-driver-abbrev {
+    left: 100px;
+    top: 0;
+    width: 205px;
+    height: 49px;
+    font-family: 'F1TV-2022-Name';
+    font-weight: 400;
+    font-size: 24px;
+    color: rgb(255, 255, 255);
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    white-space: pre;
+    transition: opacity 200ms ease;
+}
+
+/* Secondary driver indicator (item_1_24r0r0_52r0r0): 5×50 at left:44
+   Thin colored bar — hidden by default */
+.lb-driver-secondary-indicator {
+    display: none;
+    left: 44px;
+    top: 0;
+    width: 5px;
+    height: 50px;
+    border-radius: 1px;
+    background-color: rgb(255, 255, 255);
+}
+
+/* Primary driver indicator (item_1_24r0r0_53r0r0): expands 0→305px at left:1
+   PlayerIndicator.png — width:0 hides it; JS sets width 305px when active */
+.lb-driver-primary-indicator {
+    left: 1px;
+    top: 0;
+    width: 0;
+    height: 50px;
+    overflow: hidden;
+    background-image: url('/images/common/PlayerIndicator.png');
+    background-size: 305px 50px;
+    background-repeat: no-repeat;
+    transition: width 125ms ease;
+}
+
+/* Team logo — normal variant (item_1_24r0r0_56r0r0r0): img 55×50 at left:45 */
+.lb-driver-team-logo-normal {
+    position: absolute;
+    left: 45px;
+    top: 0;
+    width: 55px;
+    height: 50px;
+    object-fit: contain;
+    display: none;
+    padding: 5px; /* to fit logos in the 55×50 box better, remove if unnecessary */
+}
+
+/* Team logo — PI variant (item_1_24r0r0_57r0r0r0): img 65×60 at left:45, top:-5 */
+.lb-driver-team-logo-pi {
+    position: absolute;
+    left: 45px;
+    top: -5px;
+    width: 65px;
+    height: 60px;
+    object-fit: contain;
+    display: none;
+    padding: 5px; /* to fit logos in the 65×60 box better, remove if unnecessary */
+}
+
+/* Driver number image (SVG or PNG) — same slot as team logo, shown when image file exists
+   width animates in sync with the text version when PI active */
+.lb-driver-number-img {
+    position: absolute;
+    left: 45px;
+    top: 0;
+    width: 55px;
+    height: 50px;
+    object-fit: contain;
+    display: none;
+    padding: 5px; /* to fit logos in the 55×50 box better, remove if unnecessary */
+    transition: width 125ms ease;
+}
+
+/* Driver number (item_1_24r0r0_58r0r0): 45×51 at left:50
+   Formula1 Display Bold 26px  team-blue  centered  hidden (opacity 0)
+   width/font-size animate when PI active (45→145px, 26→30px) */
+.lb-driver-number {
+    left: 50px;
+    top: 0;
+    width: 45px;
+    height: 51px;
+    opacity: 0;
+    font-family: 'Formula1 Display';
+    font-weight: 700;
+    font-size: 26px;
+    color: rgb(255, 255, 255);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+    transition: width 125ms ease, font-size 125ms ease;
+}
+
+/* Position number (item_1_24r0r0_59r0r0): 45×50 at left:0
+   F1TV-2022-Position 21px  silver  centered */
+.lb-driver-position {
+    left: 0;
+    top: 0;
+    width: 45px;
+    height: 50px;
+    font-family: 'F1TV-2022-Position';
+    font-weight: 400;
+    font-size: 21px;
+    color: rgb(192, 192, 192);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+}
+
+/* Driver last name (item_1_24r0r0_4r0r0 / item_1_24r0r0_27r0r0): 210×49 at left:100
+   F1TV-2022-Name-Bold 24px  white  left-aligned  hidden by default */
+.lb-driver-lastname {
+    display: flex;
+    opacity: 0;
+    pointer-events: none;
+    left: 100px;
+    top: 0;
+    width: 210px;
+    height: 49px;
+    font-family: 'F1TV-2022-Name';
+    font-weight: 700;
+    font-size: 24px;
+    color: rgb(255, 255, 255);
+    text-transform: uppercase;
+    justify-content: flex-start;
+    align-items: center;
+    white-space: pre;
+    transition: opacity 200ms ease;
+}
+
+/* Long last name variant (>9 chars) — condensed font to fit in the same space */
+.lb-driver-lastname--long {
+    font-family: 'F1TV-2022-Name';
+    font-size: 24px;
+    font-stretch: condensed;
+}
+
+/* Position-gained arrow (item_1_24r0r0_62r0r0r0): Arrow_Up.png 35×20 at left:5, top:0
+   opacity 0 by default; fades in/out over 200ms when position is gained */
+.lb-driver-arrow-up {
+    left: 5px;
+    top: 0;
+    width: 35px;
+    height: 20px;
+    opacity: 0;
+    background-image: url('/images/leaderboard/Arrow_Up.png');
+    background-size: 35px 20px;
+    transition: opacity 200ms ease;
+}
+
+/* Position-lost arrow (item_1_24r0r0_63r0r0r0): Arrow_Down.png 35×20 at left:5, top:30
+   opacity 0 by default; fades in/out over 200ms when position is lost */
+.lb-driver-arrow-down {
+    left: 5px;
+    top: 30px;
+    width: 35px;
+    height: 20px;
+    opacity: 0;
+    background-image: url('/images/leaderboard/Arrow_Down.png');
+    background-size: 35px 20px;
+    transition: opacity 200ms ease;
+}
+
+/* Knockout zone indicator (item_1_24r0r0_192r0r0): 47×45 at left:0, top:2.5px
+   Knockout.png — hidden by default; shown in Q1/Q2/SQ1/SQ2 for knockout-zone drivers
+   once the threshold position has set a valid lap time */
+.lb-driver-knockout {
+    left: 0;
+    top: 2.5px;
+    width: 47px;
+    height: 45px;
+    background-image: url('/images/common/Knockout.png');
+    background-size: 47px 45px;
+    display: none;
+}
+
+/* Team logo colored background (item_1_24r0r0_55r0r0r0): 65×50 at left:45
+   Filled with team primary color — hidden by default, shown when PI/teammate indicator active */
+.lb-driver-team-logo-bg {
+    left: 45px;
+    top: 0;
+    width: 65px;
+    height: 50px;
+    display: none;
+}
+
+/* Driver last name — PI variant (item_1_24r0r0_60r0r0): 200×50 at left:115
+   F1TV-2022 ObliqueBold 25px black — opacity 0 by default, 1 when PI/teammate indicator active */
+.lb-driver-lastname-pi {
+    left: 115px;
+    top: 0;
+    width: 200px;
+    height: 50px;
+    opacity: 0;
+    pointer-events: none;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 25px;
+    color: rgb(0, 0, 0);
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    white-space: pre;
+    transition: opacity 200ms ease;
+}
+
+/* Long last name variant for PI mode (>9 chars) — reduced font size */
+.lb-driver-lastname-pi--long {
+    font-size: 22px;
+}
+
+/* ── Timing widget (item_1_18r0r0r0): 150×1100 at left:167, top:161 ──────── */
+#lb-timing {
+    left: 167px;
+    top: 160px;
+    width: 150px;
+    height: 1200px;
+    transition: opacity 200ms ease;
+}
+
+#lb-timing-interval,
+#lb-timing-leader {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 150px;
+    height: 1200px;
+    transition: opacity 200ms ease;
+}
+
+#lb-timing-leader {
+    display: none;
+}
+
+/* Each car's row — absolutely positioned at 50px stride via JS */
+.lb-timing-row {
+    position: absolute;
+    width: 125px;
+    height: 49px;
+    transition: top 333ms ease;
+}
+
+/* Text element inside each row */
+.lb-timing-text {
+    box-sizing: border-box;
+    width: 125px;
+    height: 49px;
+    display: flex;
+    white-space: pre;
+    font-family: 'F1TV-2022-Timing';
+    font-weight: 400;
+    color: rgb(255, 255, 255);
+    font-style: normal;
+    font-size: 22px;
+    justify-content: flex-end;
+    text-align: right;
+    align-items: center;
+    transition: color 200ms ease;
+}
+
+/* ── In-Pit Logo (item_1_15r0r0r0): 35×1100 at left:330, top:165 ─────────── */
+#lb-inpit {
+    left: 330px;
+    top: 165px;
+    width: 35px;
+    height: 1200px;
+    transition: left 300ms ease;
+}
+
+/* Each car row: 35×40, hidden by default, top set via JS at 50px stride */
+.lb-inpit-row {
+    position: absolute;
+    left: 0;
+    width: 35px;
+    height: 40px;
+    display: none;
+    overflow: hidden;
+    transition: top 333ms ease;
+}
+
+/* Gradient overlay (item_1_15r0r0r0_2r0_2):
+   40×36 at left:-3, top:2; rotated -90deg; opacity 0.95 */
+.lb-inpit-gradient {
+    position: absolute;
+    left: -3px;
+    top: 2px;
+    width: 40px;
+    height: 36px;
+    border-radius: 5px 0px 5px 5px;
+    opacity: 0.95;
+    transform: translate3d(0, 0, 0) rotate(-90deg);
+    background: linear-gradient(-180deg, rgb(0,0,0,0) 0%, rgba(255,255,255,0.4) 74.4186%);
+}
+
+/* "P" text element (item_1_15r0r0r0_2r0_3): 35×40 centred */
+.lb-inpit-text {
+    position: absolute;
+    left: 0;
+    top: 0;
+    box-sizing: border-box;
+    width: 35px;
+    height: 40px;
+    display: flex;
+    white-space: pre;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+    color: rgb(255, 255, 255);
+    font-size: 25px;
+    justify-content: center;
+    text-align: center;
+    align-items: center;
+}
+
+/* ── Finish Logo (item_1_16r0r0r0): 135×1100 at left:334, top:165 ──────────── */
+#lb-finish {
+    left: 334px;
+    top: 165px;
+    width: 135px;
+    height: 1200px;
+    transition: left 300ms ease;
+}
+
+/* Each car row: 35×40, opacity:0 (hidden) by default, top set via JS at 50px stride */
+.lb-finish-row {
+    position: absolute;
+    left: 0;
+    width: 35px;
+    height: 40px;
+    opacity: 0;
+    overflow: hidden;
+    transition: top 333ms ease, opacity 300ms ease;
+}
+
+/* Gradient overlay (item_1_16r0r0r0_3r0r0_1):
+   40×36 at left:-3, top:2; rotated -90deg; opacity:0.8; border-radius:0 0 8px 8px */
+.lb-finish-gradient {
+    position: absolute;
+    left: -3px;
+    top: 2px;
+    width: 40px;
+    height: 36px;
+    border-radius: 0px 0px 8px 8px;
+    opacity: 0.8;
+    transform: translate3d(0, 0, 0) rotate(-90deg);
+    background: linear-gradient(-180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.47) 100%);
+}
+
+/* Finished_Logo.png image (item_1_16r0r0r0_3r0r0_2): 35×35 at left:0.5, top:2.5 */
+.lb-finish-img {
+    position: absolute;
+    left: 0.5px;
+    top: 2.5px;
+    width: 35px;
+    height: 35px;
+    background-image: url('/images/leaderboard/Finished_Logo.png');
+    background-size: 35px 35px;
+}
+
+/* ── OUT text (item_1_17r0r0r0): 130×1100 at left:192, top:162 ─────────────── */
+#lb-out {
+    left: 192px;
+    top: 160px;
+    width: 130px;
+    height: 1200px;
+    opacity: 1;
+}
+
+/* Each car row: 130×50, hidden by default, top set via JS at 50px stride */
+.lb-out-row {
+    position: absolute;
+    left: 0;
+    width: 130px;
+    height: 50px;
+    display: none;
+    opacity: 0.65;
+    transition: top 333ms ease;
+}
+
+/* "OUT" text element */
+.lb-out-text {
+    box-sizing: border-box;
+    width: 130px;
+    height: 50px;
+    display: flex;
+    white-space: pre;
+    font-family: 'F1TV-2022';
+    font-weight: 400;
+    font-style: oblique;
+    color: rgb(255, 255, 255);
+    font-size: 21px;
+    justify-content: center;
+    text-align: center;
+    align-items: center;
+}
+
+/* ── Pit Status (item_1_19r0r0r0): 130×1100 at left:187, top:162 ──────────── */
+#lb-pit-status {
+    left: 187px;
+    top: 162px;
+    width: 130px;
+    height: 1200px;
+}
+
+/* Each car row: 130×50, hidden by default, top set via JS at 50px stride */
+.lb-pit-status-row {
+    position: absolute;
+    left: 0;
+    width: 130px;
+    height: 50px;
+    opacity: 0;
+    transition: opacity 167ms ease, top 333ms ease;
+}
+
+/* "IN PIT" / "PIT EXIT" text element */
+.lb-pit-status-text {
+    box-sizing: border-box;
+    width: 130px;
+    height: 50px;
+    display: flex;
+    white-space: pre;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+    color: rgb(31, 91, 198);
+    font-size: 22px;
+    justify-content: center;
+    text-align: center;
+    align-items: center;
+}
+
+/* ── Tyre Compound (item_1_23r0r0): 40×1100 at left:299, top:161 ───────────── */
+#lb-tyre {
+    left: 299px;
+    top: 160px;
+    width: 40px;
+    height: 1200px;
+    transition: left 333ms ease, opacity 333ms ease;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   DRS INDICATOR — item_1_35r0
+   JS-generated rows (NUM_CARS × 50px stride)  left:22.5, top:162
+   Each row: 5×50px green pill, hidden by default, shown when DRS active
+   ════════════════════════════════════════════════════════════════ */
+#lb-drs {
+    left: 22.5px;
+    top: 160px;
+    width: 20px;
+    height: 1110px;
+}
+
+.lb-drs-row {
+    position: absolute;
+    width: 5px;
+    height: 50px;
+    border-radius: 2px;
+    background-color: rgb(0, 255, 0);
+    display: none;
+    transition: top 333ms ease;
+}
+
+/* 2026 Season Pack: Overtake Mode active (in place of DRS) — game HUD uses approx. #0eace6 */
+.lb-drs-row--overtake {
+    background-color: rgb(14, 172, 230);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   MFD1 — CURRENT TYRES PAGE (item_1_20r0r0r0 group)
+   Header BG (item_1_30r0r0r0_1): 310×105 at left:27, top:145
+   Label text (item_1_30r0r0r0_2): "CURRENT TYRES", F1TV-2022-ObliqueBold 24px
+   Compound name rows (item_1_21r0r0r0r0): 180×1100 at left:167, top:161
+   Both hidden by default; toggled as a pair by the controller.
+   ════════════════════════════════════════════════════════════════ */
+#lb-mfd1-header {
+    left: 27px;
+    top: 145px;
+    width: 307px;
+    height: 55px;
+    background-image: url('/images/leaderboard/Header_BG.png');
+    background-size: 307px 55px;
+    background-repeat: no-repeat;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 167ms ease;
+}
+
+#lb-mfd1-label {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 305px;
+    height: 55px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 24px;
+    color: rgb(255, 0, 0);
+    white-space: pre;
+}
+
+#lb-mfd1 {
+    left: 167px;
+    top: 207.5px;
+    width: 180px;
+    height: 1200px;
+    opacity: 0;
+    transition: opacity 167ms ease;
+}
+
+.lb-mfd1-row {
+    position: absolute;
+    left: 0;
+    width: 180px;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'F1TV-2022';
+    font-size: 20px;
+    white-space: pre;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   MFD2 — CURRENT TYRE AGE PAGE (item_1_21r0r0r0r0_24)
+   Header BG (item_1_30r0r0r0_1): same 310×105 at left:27, top:145
+   Label (item_1_30r0r0r0_3): F1TV-2022-ObliqueCondensed 20.5px
+   Age rows: 70×50 at left:45, F1TV-2022-ObliqueBold 32px, white, right-aligned
+   ════════════════════════════════════════════════════════════════ */
+#lb-mfd2-header {
+    left: 27px;
+    top: 145px;
+    width: 310px;
+    height: 55px;
+    background-image: url('/images/leaderboard/Header_BG.png');
+    background-size: 307px 55px;
+    background-repeat: no-repeat;
+    opacity: 0;
+    transition: opacity 167ms ease;
+}
+
+#lb-mfd2-label {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 305px;
+    height: 55px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'F1TV-2022';
+    font-weight: 400;
+    font-style: oblique;
+    font-stretch: condensed;
+    font-size: 20.5px;
+    color: rgb(255, 0, 0);
+    white-space: pre;
+}
+
+#lb-mfd2 {
+    left: 167px;
+    top: 207.5px;
+    width: 180px;
+    height: 1200px;
+    opacity: 0;
+    transition: opacity 167ms ease;
+}
+
+.lb-mfd2-row {
+    position: absolute;
+    left: 45px;
+    width: 70px;
+    height: 50px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 32px;
+    color: #ffffff;
+    white-space: pre;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   MFD3 — LAPS COMPLETED / TYRE CHANGES PAGE (item_1_21r0r0r0r0_47)
+   Header BG (item_1_30r0r0r0_1): same 310×105 at left:27, top:145
+   Label (item_1_30r0r0r0_4): F1TV-2022-ObliqueBold 24px — text set by JS
+   Value rows: 70×50 at left:45, F1TV-2022-ObliqueBold 32px, white, right-aligned
+   ════════════════════════════════════════════════════════════════ */
+#lb-mfd3-header {
+    left: 27px;
+    top: 145px;
+    width: 307px;
+    height: 55px;
+    background-image: url('/images/leaderboard/Header_BG.png');
+    background-size: 307px 55px;
+    background-repeat: no-repeat;
+    opacity: 0;
+    transition: opacity 167ms ease;
+}
+
+#lb-mfd3-label {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 305px;
+    height: 55px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 24px;
+    color: rgb(255, 0, 0);
+    white-space: pre;
+}
+
+#lb-mfd3 {
+    left: 167px;
+    top: 207.5px;
+    width: 180px;
+    height: 1200px;
+    opacity: 0;
+    transition: opacity 167ms ease;
+}
+
+.lb-mfd3-row {
+    position: absolute;
+    left: 45px;
+    width: 70px;
+    height: 50px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 32px;
+    color: #ffffff;
+    white-space: pre;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   MFD4 — GAINED / LOST PAGE (item_1_21r0r0r0r0_70)
+   Header BG (item_1_30r0r0r0_1): same 310×105 at left:27, top:145
+   Label (item_1_30r0r0r0_5): F1TV-2022-ObliqueBold 24px
+   Per-car row: arrow image 60×50 at left:40 + number text 70×50 at left:100
+   Arrow images: Arrow_Up.png / Arrow_Down.png / Arrow_None.png
+   ════════════════════════════════════════════════════════════════ */
+#lb-mfd4-header {
+    left: 27px;
+    top: 145px;
+    width: 307px;
+    height: 55px;
+    background-image: url('/images/leaderboard/Header_BG.png');
+    background-size: 307px 55px;
+    background-repeat: no-repeat;
+    opacity: 0;
+    transition: opacity 167ms ease;
+}
+
+#lb-mfd4-label {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 305px;
+    height: 55px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 24px;
+    color: rgb(255, 0, 0);
+    white-space: pre;
+}
+
+#lb-mfd4 {
+    left: 167px;
+    top: 207.5px;
+    width: 180px;
+    height: 1200px;
+    opacity: 0;
+    transition: opacity 167ms ease;
+}
+
+.lb-mfd4-row {
+    position: absolute;
+    left: 0;
+    width: 180px;
+    height: 50px;
+}
+
+.lb-mfd4-arrow {
+    position: absolute;
+    left: 40px;
+    top: 0;
+    width: 60px;
+    height: 50px;
+    background-size: 60px 50px;
+    background-repeat: no-repeat;
+}
+
+.lb-mfd4-arrow--up   { background-image: url('/images/leaderboard/Arrow_Up.png');   }
+.lb-mfd4-arrow--down { background-image: url('/images/leaderboard/Arrow_Down.png'); }
+.lb-mfd4-arrow--none { background-image: url('/images/leaderboard/Arrow_None.png'); }
+
+.lb-mfd4-text {
+    position: absolute;
+    left: 100px;
+    top: 0;
+    width: 70px;
+    height: 50px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 32px;
+    color: #ffffff;
+    white-space: pre;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   QUALI/PRACTICE TIMING WIDGET — item_1_22r0r0
+   JS-generated rows (NUM_CARS × 50px stride)  left:182, top:160
+   Two sub-layers: Gaps (gap to P1) and Times (own best lap)
+   Reuses .lb-timing-row and .lb-timing-text classes
+   ════════════════════════════════════════════════════════════════ */
+#lb-quali-timing {
+    left: 182px;
+    top: 160px;
+    width: 135px;
+    height: 1200px;
+}
+
+#lb-quali-timing-gaps,
+#lb-quali-timing-times {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 135px;
+    height: 1200px;
+    transition: opacity 200ms ease;
+}
+
+#lb-quali-timing-times {
+    opacity: 0;
+}
+
+/* Each car row: 40×50, border-radius 25px pill shape, top set via JS at 50px stride */
+.lb-tyre-row {
+    position: absolute;
+    left: 0;
+    width: 40px;
+    height: 50px;
+    border-radius: 25px;
+    transition: top 300ms ease;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   FASTEST LAP ANIMATION (NON-RACE) — item_1_24r0r0_1
+   Overlays the P1 driver row; width transitions 0→310px (185px
+   in narrow pane) when P1 sets a new fastest lap, retracts after 6s.
+   Top is kept in sync with the P1 row by updateFlAnimPosition() in JS.
+   ════════════════════════════════════════════════════════════════ */
+#lb-fl-anim {
+    left: 27px;
+    top: 162.5px;   /* initial: lb-drivers top(160) + getRowTop(0)(0) + 2.5 */
+    width: 0;
+    height: 45px;
+    overflow: hidden;
+    display: none;  /* hidden in race sessions; shown by updateHeaderDisplay() */
+    transition: width 333ms ease, opacity 333ms ease;
+}
+
+/* Background rectangle (item_1_24r0r0_1_2r0) + diagonal stripes effect
+   (item_1_24r0r0_1_5r0r0…r92) combined into a single CSS gradient */
+#lb-fl-anim-bg {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 310px;
+    height: 45px;
+    background-color: rgb(255, 0, 255);
+    background-image: repeating-linear-gradient(
+        -45deg,
+        rgba(0, 0, 0, 0.5) 0,
+        rgba(0, 0, 0, 0.5) 1.25px,
+        transparent 1.25px,
+        transparent 4px
+    );
+}
+
+/* Race session fastest lap animation — shown on top of the FL car's row */
+#lb-fl-race-anim {
+    left: 27px;
+    top: 165px;   /* initial: lb-drivers top(160) + getRowTop(0)(0) + 5; updated by JS */
+    width: 0;
+    height: 40px;
+    overflow: hidden;
+    display: none;  /* hidden in non-race sessions; shown by updateHeaderDisplay() */
+    transition: width 333ms ease, opacity 333ms ease;
+}
+
+#lb-fl-race-anim-bg {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 310px;
+    height: 40px;
+    background-color: rgb(255, 0, 255);
+    background-image: repeating-linear-gradient(
+        -45deg,
+        rgba(0, 0, 0, 0.5) 0,
+        rgba(0, 0, 0, 0.5) 1.25px,
+        transparent 1.25px,
+        transparent 4px
+    );
+}
+
+#lb-fl-race-anim-text {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 310px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-sizing: border-box;
+    padding-bottom: 2px;
+    white-space: pre;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 30px;
+    color: rgb(255, 255, 255);
+}
+
+/* Single-letter compound text; colour set per-row via JS */
+.lb-tyre-text {
+    box-sizing: border-box;
+    width: 40px;
+    height: 50px;
+    display: flex;
+    white-space: pre;
+    font-family: 'F1TV-2022-Logos';
+    font-weight: 400;
+    font-style: normal;
+    font-size: 18px;
+    justify-content: center;
+    text-align: center;
+    align-items: center;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   CHAMPIONSHIP STANDINGS — item_1_39
+   482×1390 at left:0, top:0 — hidden by default
+   (opacity toggled with the Leaderboard)
+   ════════════════════════════════════════════════════════════════ */
+#lb-standings {
+    left: 0;
+    top: 0;
+    width: 482px;
+    height: 1390px;
+    opacity: 0;
+    transition: opacity 200ms ease;
+}
+#lb-standings > * { position: absolute; }
+
+/* Background container (item_1_40r0): 482×1390 */
+#lb-standings-bg {
+    left: 0;
+    top: 0;
+    width: 482px;
+    height: 1390px;
+}
+#lb-standings-bg > * { position: absolute; }
+
+/* Series logo (item_1_41r0r0): F1.png 156.8×40.18 at left:35, top:46
+   AutoSizeScale (0.88 Sprint / 0.98 otherwise) applied via JS transform; anchored top-left
+   so the logo scales in place rather than around its center. */
+#lb-standings-logo {
+    left: 35px;
+    top: 46px;
+    width: 156.8px;
+    height: 40.18px;
+    background-image: url('/images/other-logos/F1.png');
+    background-size: 156.8px 40.18px;
+    transform-origin: top left;
+}
+
+/* Panel background (item_1_42r0r0): 405×945 at left:18, top:225, opacity:0.85 */
+#lb-standings-panel-bg {
+    left: 18px;
+    top: 225px;
+    width: 405px;
+    height: 945px;
+    border-radius: 0 0 0 25px;
+    background-color: rgb(18, 20, 24);
+    opacity: 0.85;
+    transition: height 800ms ease;
+}
+
+/* Position# column background (item_1_43r0r0): 48×1020 at left:25, top:140, opacity:0.75 */
+#lb-standings-pos-col-bg {
+    left: 25px;
+    top: 140px;
+    width: 48px;
+    height: 1020px;
+    border-radius: 0 0 0 15px;
+    border-right: 1px solid rgb(36, 35, 38);
+    background-color: rgb(18, 20, 24);
+    opacity: 0.75;
+    transition: height 800ms ease;
+}
+
+/* Column separator (item_1_44r0r0): 48×1020 at left:353, top:140, opacity:0.75 */
+#lb-standings-separator {
+    left: 353px;
+    top: 140px;
+    width: 48px;
+    height: 1020px;
+    border-left: 1px solid rgba(74, 74, 74, 0.78);
+    opacity: 0.75;
+    transition: height 800ms ease;
+}
+
+/* Header background (item_1_45r0r0): 405×121 at left:18, top:105 */
+#lb-standings-header-bg {
+    left: 18px;
+    top: 105px;
+    width: 405px;
+    height: 121px;
+    background-color: rgb(18, 20, 24);
+}
+
+/* Header gradient 1 (item_1_46r0r0): 404.8×30 at left:18, top:105, opacity:0.5 */
+#lb-standings-header-gradient-1 {
+    left: 18px;
+    top: 105px;
+    width: 404.8px;
+    height: 30px;
+    background-image: url('/images/common/Gradient.png');
+    background-size: 404.8px 30px;
+    opacity: 0.5;
+}
+
+/* Header gradient 2 (item_1_47r0r0): 404.8×20 at left:18, top:205, rotated 180deg */
+#lb-standings-header-gradient-2 {
+    left: 18px;
+    top: 205px;
+    width: 404.8px;
+    height: 20px;
+    background-image: url('/images/common/Gradient.png');
+    background-size: 404.8px 20px;
+    transform: rotate(180deg);
+}
+
+/* Decorative border (item_1_48r0r0): 400×1060 at left:23, top:105 */
+#lb-standings-border {
+    left: 23px;
+    top: 105px;
+    width: 400px;
+    height: 1060px;
+    border-radius: 0 0 0 20px;
+    border-bottom: 4px solid rgb(88, 91, 92);
+    border-left: 4px solid rgb(88, 91, 92);
+    transition: height 800ms ease;
+}
+
+/* Header title — DRIVERS'/CONSTRUCTORS' (item_1_49r0r0 / item_1_52r0r0 combined):
+   390×40 at left:26, top:120  F1TV-2022 ObliqueBold 34px white centered */
+#lb-standings-title {
+    left: 26px;
+    top: 120px;
+    width: 390px;
+    height: 40px;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 34px;
+    color: rgb(255, 255, 255);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+}
+
+/* "CHAMPIONSHIP" (item_1_53r0r0): 390×40 at left:26, top:165  F1TV-2022 ObliqueBold 34px white centered */
+#lb-standings-subtitle {
+    left: 26px;
+    top: 165px;
+    width: 390px;
+    height: 40px;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 34px;
+    color: rgb(255, 255, 255);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+}
+
+/* FIA logo glyph (item_1_50r0r0): F1TV-2022-Logos 'f' 100×75 at left:171, top:30 */
+#lb-standings-fia-logo {
+    left: 171px;
+    top: 30px;
+    width: 100px;
+    height: 75px;
+    font-family: 'F1TV-2022-Logos';
+    font-weight: 400;
+    font-size: 55px;
+    color: rgb(255, 255, 255);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+}
+
+/* FIA series name (item_1_51r0r0): 226×50 at left:253, top:40  Formula1 Display 18px white centered
+   Wraps naturally (no forced line break) into "FIA Formula One" / "World Championship™" */
+#lb-standings-fia-text {
+    left: 253px;
+    top: 40px;
+    width: 226px;
+    height: 50px;
+    font-family: 'Formula1 Display';
+    font-weight: 400;
+    font-size: 18px;
+    color: rgb(255, 255, 255);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    white-space: normal;
+}
+
+/* Vertical Gradient (item_1_54r0): 36.8×945 at left:385, top:225, opacity:0.75
+   Sibling of the BG container, not part of it */
+#lb-standings-gradient-vertical {
+    left: 385px;
+    top: 225px;
+    width: 36.8px;
+    height: 945px;
+    background-image: url('/images/leaderboard/Gradient_Vertical.png');
+    background-size: 36.8px 945px;
+    opacity: 0.75;
+    transition: height 800ms ease, background-size 800ms ease;
+}
+
+/* Standings Container (item_1_55r0): 415×1025 at left:27, top:225
+   Sibling of the BG container, holds either Driver or Constructor standings */
+#lb-standings-standings {
+    left: 27px;
+    top: 225px;
+    width: 415px;
+    height: 1025px;
+    transition: height 800ms ease;
+}
+#lb-standings-standings > * { position: absolute; }
+
+/* Driver Standings Container (item_1_55r0_1): 415×1025 at left:0, top:0 — rows appended via JS */
+#lb-standings-drivers {
+    left: 0;
+    top: 0;
+    width: 415px;
+    height: 1025px;
+}
+#lb-standings-drivers > * { position: absolute; }
+
+/* Driver Row Container (item_1_55r0_2r0 etc.): 415×50, one per driver slot, top set via JS
+   (46.5px stride at every tier — 20×46.5=930px / 22×46.5=1023px / 24×46.5=1116px, all within
+   the container's own height, 1025px normally or 1120px at the 24-driver tier) */
+.lb-standings-row {
+    left: 0;
+    width: 415px;
+    height: 50px;
+}
+.lb-standings-row > * { position: absolute; }
+
+/* Position Number (item_1_55r0_3r0r0 etc.): 40×50 at left:0, top:0 */
+.lb-standings-pos {
+    left: 0;
+    top: 0;
+    width: 40px;
+    height: 50px;
+    font-family: 'F1TV-2022-Position';
+    font-weight: 400;
+    font-size: 21px;
+    color: rgb(192, 192, 192);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+}
+
+/* Team Logo (item_1_55r0_5r0r0r0 etc.): img 55×50 at left:45, top:0 */
+.lb-standings-team-logo {
+    left: 45px;
+    top: 0;
+    width: 55px;
+    height: 50px;
+    object-fit: contain;
+    padding: 5px;
+}
+
+/* Driver Name (item_1_55r0_7r0r0 etc.): 245×50 at left:100, top:0 */
+.lb-standings-name {
+    left: 100px;
+    top: 0;
+    width: 227px;
+    height: 50px;
+    font-family: 'F1TV-2022';
+    font-weight: 400;
+    font-style: normal;
+    font-size: 23px;
+    color: rgb(255, 255, 255);
+    display: flex;
+    justify-content: flex-start;
+    text-align: left;
+    align-items: center;
+    white-space: pre;
+}
+
+/* Driver Points (item_1_55r0_8r0r0 etc.): 80×50 at left:320, top:0 */
+.lb-standings-points {
+    left: 320px;
+    top: 0;
+    width: 80px;
+    height: 50px;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 26px;
+    color: rgb(255, 255, 255);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+}
+
+/* Constructor Standings Container (item_1_55r0_156): 415×1025 at left:0, top:0
+   Hidden by default (opacity, not display:none — Drivers/Constructors overlap the
+   same box, and both need to stay genuinely laid out at all times so their textFit
+   calls, which fire independently of which one is currently selected, always get a
+   real clientWidth/clientHeight to measure against instead of throwing). */
+#lb-standings-constructors {
+    opacity: 0;
+    left: 0;
+    top: 0;
+    width: 415px;
+    height: 1025px;
+}
+#lb-standings-constructors > * { position: absolute; }
+
+/* Constructor Row Container (item_1_55r0_157r0 etc.): 415×102.5, one per team slot, top set via JS.
+   Uses a user-tuned 93.2px stride (not the original 102.5px) at every tier —
+   10×93.2=932px / 11×93.2=1025.2px / 12×93.2=1118.4px, all within the container's own height,
+   1025px normally or 1120px at the 12-team tier. */
+.lb-standings-constructor-row {
+    left: 0;
+    width: 415px;
+    height: 102.5px;
+    overflow: hidden;
+}
+.lb-standings-constructor-row > * { position: absolute; }
+
+/* Position Number (item_1_55r0_158r0r0 etc.): 40×65 at left:0, top:0 */
+.lb-standings-constructor-pos {
+    left: 0;
+    top: 0;
+    width: 40px;
+    height: 65px;
+    font-family: 'F1TV-2022-Position';
+    font-weight: 400;
+    font-size: 21px;
+    color: rgb(192, 192, 192);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+}
+
+/* Team Logo (item_1_55r0_160r0r0r0 etc.): img 75×70 at left:45, top:0 */
+.lb-standings-constructor-logo {
+    left: 45px;
+    top: 0;
+    width: 75px;
+    height: 70px;
+    object-fit: contain;
+    padding: 5px;
+}
+
+/* Team Name (item_1_55r0_162r0r0 etc.): 195×80 at left:125, top:20
+   Wraps naturally across up to 2 lines (e.g. "RED BULL RACING" / "RBPT") — not a forced <br> */
+.lb-standings-constructor-name {
+    left: 125px;
+    top: 0px;
+    width: 195px;
+    height: 80px;
+    font-family: 'F1TV-2022';
+    font-weight: 400;
+    font-style: normal;
+    font-size: 23px;
+    color: rgb(255, 255, 255);
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    text-align: left;
+    white-space: normal;
+}
+
+/* Team Points (item_1_55r0_163r0r0 etc.): 80×65 at left:320, top:0 */
+.lb-standings-constructor-points {
+    left: 320px;
+    top: 0;
+    width: 80px;
+    height: 65px;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 26px;
+    color: rgb(255, 255, 255);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: pre;
+}
+
+/* Thick Stroke BG (item_1_56r0): 332×1190 at left:2, top:-1, opacity:0.05
+   Decorative texture, sibling of the BG container, not part of it */
+#lb-standings-thick-stroke-bg {
+    left: 2px;
+    top: -1px;
+    width: 332px;
+    height: 1190px;
+    background-image: url('/images/leaderboard/BG.png');
+    background-size: 332px 1190px;
+    opacity: 0.05;
+    transition: height 800ms ease, background-size 800ms ease;
+}
+
+/* Thick Stroke BG extension (item_1_57r0): 90×1287 clipped viewport at left:334, top:-1
+   Extends the ThickStrokeBG texture along the right edge that the original doesn't cover */
+#lb-standings-thick-stroke-side {
+    left: 334px;
+    top: -1px;
+    width: 90px;
+    height: 1287px;
+    overflow: hidden;
+    transition: height 800ms ease;
+}
+#lb-standings-thick-stroke-side > * { position: absolute; }
+
+/* Extension image (item_1_57r0_1): 332×1190 at left:-40, top:0, opacity:0.05 — same BG.png texture,
+   shifted left so only the slice within the 90px viewport is visible */
+#lb-standings-thick-stroke-side-img {
+    left: -40px;
+    top: 0;
+    width: 332px;
+    height: 1190px;
+    background-image: url('/images/leaderboard/BG.png');
+    background-size: 332px 1190px;
+    opacity: 0.05;
+    transition: height 800ms ease, background-size 800ms ease;
+}
+
+/* Leaderboard ⇄ Standings — #lb-standings occupies the same position/size as the
+   main leaderboard content, so only one is ever meant to be visible at a time.
+   Toggled via #lb-container.standings-active from the standingsMode overlay_config
+   property (see the socket.on('overlay_config', ...) handler). Uses opacity, not
+   display:none — display:none collapses width to 0, which breaks textFit's static-
+   width checks (#lb-session-name, standings name fields) on whatever it's applied to.
+   !important is required here: many children (e.g. #lb-session-name) manage their own
+   opacity via inline styles elsewhere (pane-mode, session state, etc.), and a plain
+   class rule loses to any inline style regardless of selector specificity. */
+#lb-container.standings-active > *:not(#lb-standings) {
+    opacity: 0 !important;
+}

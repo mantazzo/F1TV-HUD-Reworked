@@ -260,20 +260,21 @@ function startServer(portNumber, forwardAddresses) {
     app.use('/images', express.static(path.join(__dirname, 'images')));
 
     // Overlays
-    app.get('/car-damage', (req, res) => res.sendFile(path.join(__dirname, 'views', 'car-damage.html')));              // Car Damage overlay
-    app.get('/speedometer', (req, res) => res.sendFile(path.join(__dirname, 'views', 'speedometer.html')));            // Speedometer overlay
-    app.get('/lap-timer', (req, res) => res.sendFile(path.join(__dirname, 'views', 'lap-timer.html')));                // Lap Timer overlay
-    app.get('/pit-timer', (req, res) => res.sendFile(path.join(__dirname, 'views', 'pit-timer.html')));                // Pit Timer overlay
-    app.get('/pit-window', (req, res) => res.sendFile(path.join(__dirname, 'views', 'pit-window.html')));              // Pit Window overlay
-    app.get('/live-speed', (req, res) => res.sendFile(path.join(__dirname, 'views', 'live-speed.html')));              // Live Speed overlay
-    app.get('/fastest-lap', (req, res) => res.sendFile(path.join(__dirname, 'views', 'fastest-lap.html')));            // Fastest Lap overlay
-    app.get('/weather', (req, res) => res.sendFile(path.join(__dirname, 'views', 'weather.html')));                    // Weather overlay (incl. forecast)
-    app.get('/turn-indicator', (req, res) => res.sendFile(path.join(__dirname, 'views', 'turn-indicator.html')));      // Turn Indicator overlay
-    app.get('/fastest-sectors', (req, res) => res.sendFile(path.join(__dirname, 'views', 'fastest-sectors.html')));    // Fastest Sectors overlay
-    app.get('/message-box', (req, res) => res.sendFile(path.join(__dirname, 'views', 'message-box.html')));            // Message Box overlay (known as FIA Stewards previously)
-    app.get('/mini-leaderboard', (req, res) => res.sendFile(path.join(__dirname, 'views', 'mini-leaderboard.html')));  // Mini Leaderboard overlay
-    app.get('/session-info', (req, res) => res.sendFile(path.join(__dirname, 'views', 'session-info.html')));          // Session Info overlay
-    app.get('/leaderboard', (req, res) => res.sendFile(path.join(__dirname, 'views', 'leaderboard.html')));            // Leaderboard overlay (Initials version)
+    app.get('/car-damage', (req, res) => res.sendFile(path.join(__dirname, 'views', 'car-damage.html')));                       // Car Damage overlay
+    app.get('/speedometer', (req, res) => res.sendFile(path.join(__dirname, 'views', 'speedometer.html')));                     // Speedometer overlay
+    app.get('/lap-timer', (req, res) => res.sendFile(path.join(__dirname, 'views', 'lap-timer.html')));                         // Lap Timer overlay
+    app.get('/pit-timer', (req, res) => res.sendFile(path.join(__dirname, 'views', 'pit-timer.html')));                         // Pit Timer overlay
+    app.get('/pit-window', (req, res) => res.sendFile(path.join(__dirname, 'views', 'pit-window.html')));                       // Pit Window overlay
+    app.get('/live-speed', (req, res) => res.sendFile(path.join(__dirname, 'views', 'live-speed.html')));                       // Live Speed overlay
+    app.get('/fastest-lap', (req, res) => res.sendFile(path.join(__dirname, 'views', 'fastest-lap.html')));                     // Fastest Lap overlay
+    app.get('/weather', (req, res) => res.sendFile(path.join(__dirname, 'views', 'weather.html')));                             // Weather overlay (incl. forecast)
+    app.get('/turn-indicator', (req, res) => res.sendFile(path.join(__dirname, 'views', 'turn-indicator.html')));               // Turn Indicator overlay
+    app.get('/fastest-sectors', (req, res) => res.sendFile(path.join(__dirname, 'views', 'fastest-sectors.html')));             // Fastest Sectors overlay
+    app.get('/message-box', (req, res) => res.sendFile(path.join(__dirname, 'views', 'message-box.html')));                     // Message Box overlay (known as FIA Stewards previously)
+    app.get('/mini-leaderboard', (req, res) => res.sendFile(path.join(__dirname, 'views', 'mini-leaderboard.html')));           // Mini Leaderboard overlay
+    app.get('/session-info', (req, res) => res.sendFile(path.join(__dirname, 'views', 'session-info.html')));                   // Session Info overlay
+    app.get('/leaderboard', (req, res) => res.sendFile(path.join(__dirname, 'views', 'leaderboard.html')));                     // Leaderboard overlay (Initials version)
+    app.get('/leaderboard-lastname', (req, res) => res.sendFile(path.join(__dirname, 'views', 'leaderboard-lastname.html')));   // Leaderboard overlay (Last Name version)
 
     // Controllers
     app.get('/controller/controller-extended', (req, res) => res.sendFile(path.join(__dirname, 'views', 'controller', 'controller-extended.html'))); 
@@ -302,7 +303,7 @@ function startServer(portNumber, forwardAddresses) {
     // Default to speedometer overlay (for now)
     app.get('/', (req, res) => res.redirect('/speedometer'));
     
-    server.listen(3000, () => console.log('Overlays at http://localhost:3000/ (For example, http://localhost:3000/speedometer) \nController available at http://localhost:3000/controller/controller-extended \nReminder - you can press Ctrl+C to stop the system manually.'));
+    server.listen(3000, () => console.log('Overlays at http://localhost:3000/ (For example, http://localhost:3000/speedometer) \nController (for various overlays) available at http://localhost:3000/controller/controller-extended \nReminder - you can press Ctrl+C to stop the system manually.'));
 }
 
 // ── Startup prompt chain ──────────────────────────────────────────────────────
