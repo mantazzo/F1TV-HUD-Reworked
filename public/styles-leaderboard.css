@@ -126,12 +126,13 @@ body { background: transparent; overflow: hidden; }
     height: 1076px;
     border-radius: 0 0 0 25px;
     background-color: rgb(18, 20, 24);
+    opacity: 0.85;
     transition: width 300ms ease, opacity 333ms ease;
 }
 
 /* ════════════════════════════════════════════════════════════════
    POSITION COLUMN BACKGROUND — item_1_7r0r0r0
-   height set dynamically by updateMainPanels()
+   height, opacity set dynamically by updateMainPanels()
    ════════════════════════════════════════════════════════════════ */
 #lb-pos-col-bg {
     left: 26px;
@@ -141,6 +142,7 @@ body { background: transparent; overflow: hidden; }
     border-radius: 0 0 0 22px;
     border-right: 1px solid rgb(74, 74, 74);
     opacity: 0.15;
+    transition: opacity 250ms ease;
 }
 
 /* ════════════════════════════════════════════════════════════════

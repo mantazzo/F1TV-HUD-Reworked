@@ -1671,7 +1671,7 @@
                 }
                 elLapTotal.textContent = `/ ${totalLaps}`;
             } else if (isTT) {
-                elLapCurrent.textContent = currentLap || 1;
+                elLapCurrent.textContent = carLapNum[playerCarIdx] || 1;
                 elLapTotal.textContent   = '';
             }
 
@@ -2185,6 +2185,7 @@
             // lb-pos-col-bg
             elPosColBg.style.height          = extendedGrid2026 ? '1220px' : extendedGrid ? '1120px' : '1020px';
             elPosColBg.style.backgroundColor = positionBg ? '#0a0a0f' : 'transparent';
+            elPosColBg.style.opacity         = positionBg ? '1' : '0.15';
 
             // lb-header
             elHeader.style.width   = narrow ? '187px' : '306px';
