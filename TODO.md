@@ -135,7 +135,7 @@ Bugfixes and Improvements for the older overlays (need to go back through old ov
 
 ## Next Planned Overlay
 
-??? (originally, I had Leaderboard - Last Name version, then Driver Name overlay; I'd like to start probably something new so maybe I may push Driver Name overlay a bit ahead...)
+Leaderboard - Last Name version (shouldn't be too difficult)
 
 ## Not started
 
