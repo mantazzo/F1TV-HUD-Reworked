@@ -1207,7 +1207,7 @@
         const TIME_TRIGGERS_S = [1200, 900, 600, 300, 120]; // 20, 15, 10, 5, 2 minutes in seconds
         const LAP_TRIGGERS    = [15, 10, 5, 3];
         // Tracks that use Aston Martin Safety Car branding (all others use Mercedes)
-        const ASTON_MARTIN_TRACKS = new Set([0, 27, 4, 20, 6, 17, 9, 10, 11, 15, 19, 16]);
+        const ASTON_MARTIN_TRACKS = new Set([0, 3, 5, 10, 12, 14, 20, 26, 27, 29, 30, 32, 41]); // F1 25, 2025-era cars
         let playerCarIdx          = -1;   // "active driver" — m_header.m_playerCarIndex, or m_spectatorCarIndex while spectating
         let rawPlayerCarIdx       = -1;   // from m_header.m_playerCarIndex, unmodified
         let isSpectating          = 0;    // from Session packet m_isSpectating
@@ -1396,8 +1396,11 @@
             elScTeam.style.display = narrow ? 'none' : '';
             elScPane.style.display = narrow ? '' : 'none';
 
-            // Aston Martin name shown for specific tracks; Mercedes logo shown for all others
-            const isAston = ASTON_MARTIN_TRACKS.has(trackId);
+            // 2026 season pack cars: Mercedes-only Safety Car (Aston Martin deal ended), regardless of
+            // track — detected via car era (team ID), not formulaType, so F2 2026 is covered too.
+            // Pre-2026 eras still alternate Aston Martin (specific tracks) vs Mercedes (everywhere else).
+            const eraYear = DriverUtils.getCarEraYear(carTeamIds[playerCarIdx]);
+            const isAston = eraYear !== 2026 && ASTON_MARTIN_TRACKS.has(trackId);
             elScTeamName.style.display = isAston ? '' : 'none';
             elScTeamLogo.style.display = isAston ? 'none' : '';
             elScPaneName.style.display = isAston ? '' : 'none';
