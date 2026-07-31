@@ -292,127 +292,116 @@ body { background: black; overflow: hidden; }
     white-space: pre;
 }
 
-/* ── Session name label (item_1_8r0r0r0_7) ──────────────────────────────── */
-/* 200×34 at left:20, top:9  Formula1 Display 30px bold  white  hidden by default */
-#lb-session-label {
-    display: none; /* JS sets to flex when shown; left also set dynamically */
-    left: 10px;
-    top: 9px;
-    width: 200px;
-    height: 34px;
-    font-family: 'Formula1 Display';
-    font-weight: 900;
-    color: rgb(255, 255, 255);
-    font-size: 30px;
-    justify-content: flex-start;
-    align-items: center;
-    white-space: pre;
-}
-
 /* ════════════════════════════════════════════════════════════════
-   FLAGS BORDER OVERLAY — item_1_34r0r0r0r0
-   333×1290 at left:0, top:3  overlays all driver rows
+   FLAGS BORDER OVERLAY — item_1_9r0r0r0
+   512×1290 at left:0, top:1  overlays all driver rows
    ════════════════════════════════════════════════════════════════ */
 #lb-deco-border-widget {
     left: 0;
-    top: 3px;
-    width: 333px;
+    top: 1px;
+    width: 512px;
     height: 1290px;
     overflow: hidden;
     transition: width 300ms ease;
 }
 #lb-deco-border-widget > * { position: absolute; }
 
-/* Normal: grey CSS border (item_1_34r0r0r0r0_2r0): 309×1238 at left:23, top:25 */
-/* 309x1138 at 20 drivers */
+/* Normal: grey CSS border (item_1_9r0r0r0_2r0): 489×1238 at left:22.5, top:25 (21-22 drivers) */
+/* 489×1138 at 20 drivers */
 #lb-deco-border {
-    left: 23px;
+    left: 22.5px;
     top: 25px;
-    width: 309px;
+    width: 489px;
     height: 1138px;
+    opacity: 0.7;
     border-radius: 20px 0 0 20px;
     border-style: solid;
     border-width: 4px 0 4px 4px;
-    border-color: rgb(79, 79, 79);
+    border-color: rgb(56, 56, 56);
 }
 
-/* Formation Lap: grey CSS border, bottom portion only (item_1_34r0r0r0r0_3r0):
-   309×1138 at left:22, top:143  hidden by default */
+/* Formation Lap: grey CSS border, bottom portion only (item_1_9r0r0r0_3r0):
+   489×1138 at left:22, top:143  hidden by default */
 #lb-deco-border-formation {
     display: none;
     left: 22px;
-    top: 93px;
-    width: 309px;
+    top: 143px;
+    width: 489px;
     height: 1138px;
-    border-radius: 0 0 0 20px;
+    border-radius: 0 0 0 18px;
     border-style: solid;
     border-width: 0 0 4px 4px;
-    border-color: rgb(88, 91, 92);
+    border-color: rgb(35, 35, 35);
 }
 
-/* Race Finished: red CSS border (item_1_34r0r0r0r0_4r0):
-   309×1138 at left:22, top:25  fades in via JS opacity transition */
+/* Race Finished: red CSS border (item_1_9r0r0r0_4r0):
+   489×1138 at left:22, top:25  fades in via JS opacity transition */
 #lb-deco-border-finished {
     opacity: 0;
     transition: opacity 333ms ease;
     left: 22px;
     top: 25px;
-    width: 309px;
+    width: 489px;
     height: 1138px;
-    border-radius: 22px 0 0 22px;
+    border-radius: 20px 0 0 20px;
     border-style: solid;
     border-width: 3px 0 3px 3px;
     border-color: rgb(255, 0, 0);
 }
 
-/* SC/VSC/RF container (item_1_34r0r0r0r0_6r0r0): 310×1139 at left:23, top:24
-   Clips child images to pane width; fades in via opacity on SC/VSC/RF state */
-#lb-deco-border-sc-container {
-    left: 23px;
-    top: 24px;
-    width: 310px;
-    height: 1139px;
-    opacity: 0;
-    overflow: hidden;
-    transition: opacity 333ms ease, width 300ms ease;
-}
-
-/* Safety Car / VSC: Border_SC.png — two copies for animation (item_1_34r0r0r0r0_6r0r0_1 & _2):
-   320×1139 at left:0, top:0 within container */
-#lb-deco-border-sc,
-#lb-deco-border-sc-2 {
+/* Safety Car / VSC / RF (item_1_9r0r0r0_10r0r0): 490×1138 at left:22, top:25.2 — single flat image,
+   no container/second-copy needed (Initials uses two stacked copies purely for a double-layer blend).
+   Width relies on the parent widget's own overflow:hidden clip for narrow-pane sizing. */
+#lb-deco-border-sc {
     position: absolute;
-    left: 0;
-    top: 0;
-    width: 320px;
-    height: 1139px;
-    background-size: 320px 1139px;
+    left: 22px;
+    top: 25.2px;
+    width: 490px;
+    height: 1138px;
+    opacity: 0;
+    background-size: 490px 1138px;
+    transition: opacity 333ms ease;
 }
 
-/* Yellow Flag: Border_Yellow.png (item_1_34r0r0r0r0_8r0r0_1):
-   326×430 at left:23, top:24  fades in via JS opacity; width transitions for narrow/F2 pane */
+/* Yellow Flag: Border_Yellow.png (item_1_9r0r0r0_6r0r0):
+   490×430 at left:21.5, top:24  fades in via JS opacity; width transitions for F2 pane */
 #lb-deco-border-yellow {
     opacity: 0;
     transition: opacity 333ms ease, width 300ms ease;
-    left: 23px;
+    left: 21.5px;
     top: 24px;
-    width: 326px;
+    width: 490px;
     height: 430px;
-    background-image: url('/images/leaderboard/Border_Yellow.png');
-    background-size: 325px 430px;
+    background-image: url('/images/leaderboard-lastname/Border_Yellow.png');
+    background-size: 490px 430px;
 }
 
-/* Green Flag: Border_Green.png (item_1_34r0r0r0r0_10r0r0_1):
-   326×430 at left:23, top:24  fades in via JS opacity; width transitions for narrow/F2 pane */
+/* Green Flag: Border_Green.png (item_1_9r0r0r0_8r0r0):
+   490×430 at left:21.5, top:24  fades in via JS opacity; width transitions for F2 pane */
 #lb-deco-border-green {
     opacity: 0;
     transition: opacity 333ms ease, width 300ms ease;
-    left: 23px;
+    left: 21.5px;
     top: 24px;
-    width: 326px;
+    width: 490px;
     height: 430px;
-    background-image: url('/images/leaderboard/Border_Green.png');
-    background-size: 325px 430px;
+    background-image: url('/images/leaderboard-lastname/Border_Green.png');
+    background-size: 490px 430px;
+}
+
+/* Time/Laps banner border (item_1_9r0r0r0_11r0): 489×1138 at left:23, top:25 — new for Last-Name,
+   no Initials equivalent. Border color (red/white/transparent) driven entirely by JS. */
+#lb-deco-border-timelaps {
+    opacity: 0;
+    transition: opacity 333ms ease;
+    left: 23px;
+    top: 25px;
+    width: 489px;
+    height: 1138px;
+    border-radius: 20px 0 0 20px;
+    border-style: solid;
+    border-width: 3px 0 3px 3px;
+    border-color: rgba(255, 255, 255, 0);
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -446,49 +435,56 @@ body { background: black; overflow: hidden; }
 
 /* ════════════════════════════════════════════════════════════════
    SAFETY CAR / VSC TEAM BANNER — item_1_8r0r0r0_6
-   308×53 at left:0, top:0  hidden by default
+   489×53 at left:0, top:0  hidden by default
+   Flatter structure than Initials: no team/pane sub-wrappers — name/logo shift position
+   directly on narrow-pane change (333ms ease) instead of swapping to a compact layout.
    ════════════════════════════════════════════════════════════════ */
-/* Blink animation: visible for 4.5 s, hidden for 25.5 s, repeating every 30 s */
-/* TODO: check if the "blink" is accurate (eventually, feedback required) */
+/* Blink animation, recalculated from the Last-Name formula (inertia(isincreasing(4500,
+   blink(name,10000,true)),3)*100): blink() free-runs a 10s/10s square wave (20s period);
+   isincreasing(4500,...) pulses high for 4.5s after each rising edge, low for the remaining
+   15.5s; inertia(...,3) adds a ~333ms fade at each edge (333ms / 20000ms = 1.665%).
+   TODO: best-effort NCalc translation, not yet verified against a live SC deployment. */
 @keyframes sc-banner-blink {
-    0%    { opacity: 1; }
-    15%   { opacity: 1; }
-    15.1% { opacity: 0; }
-    100%  { opacity: 0; }
+    0%      { opacity: 0; }
+    1.665%  { opacity: 1; }
+    22.5%   { opacity: 1; }
+    24.165% { opacity: 0; }
+    100%    { opacity: 0; }
 }
 #lb-sc-banner {
     display: none;
     left: 0;
     top: 0;
-    width: 308px;
+    width: 489px;
     height: 53px;
     overflow: hidden;
 }
 #lb-sc-banner.sc-active { animation: sc-banner-blink 30s linear infinite; }
 #lb-sc-banner > * { position: absolute; }
 
-/* Background (item_1_8r0r0r0_6_1): 309×53 at left:1 */
+/* Background (item_1_8r0r0r0_6_2r0): 309×53 at left:1 */
 #lb-sc-bg {
     left: 1px;
     top: 0;
     width: 309px;
     height: 53px;
-    background-image: url('/images/leaderboard/Header_BG.png');
+    background-image: url('/images/leaderboard-lastname/Header_BG.png');
     background-size: 309px 53px;
 }
 
-/* Full-size team layer (item_1_8r0r0r0_6_2): 309×53 at left:0, top:0 */
-#lb-sc-team {
-    left: 0;
+/* Background extension (item_1_8r0r0r0_6_3r0): 310×53 at left:310 — same image, covers full banner width */
+#lb-sc-bg-2 {
+    left: 310px;
     top: 0;
-    width: 309px;
+    width: 310px;
     height: 53px;
+    background-image: url('/images/leaderboard-lastname/Header_BG.png');
+    background-size: 310px 53px;
 }
-#lb-sc-team > * { position: absolute; }
 
-/* Team name text (item_1_8r0r0r0_6_3r0): 305×50 at left:3, top:3  Optima 37px white centered */
+/* Team name text (item_1_8r0r0r0_6_4r0): 305×50 at left:91.5 normal / 18.5 narrow, top:3  Optima 37px white centered */
 #lb-sc-team-name {
-    left: 3px;
+    left: 91.5px;
     top: 3px;
     width: 305px;
     height: 50px;
@@ -501,54 +497,19 @@ body { background: black; overflow: hidden; }
     justify-content: center;
     align-items: center;
     white-space: pre;
+    transition: left 333ms ease;
 }
 
-/* Team logo (item_1_8r0r0r0_6_4r0): 270×24 at left:19, top:14 — hidden; shown when team logo available */
+/* Team logo (item_1_8r0r0r0_6_5r0): 270×24 at left:109 normal / 33 narrow, top:14 — hidden; shown when team logo available */
 #lb-sc-team-logo {
     display: none;
-    left: 19px;
+    left: 109px;
     top: 14px;
     width: 270px;
     height: 24px;
-    background-image: url('/images/leaderboard/SC_Mercedes.png');
+    background-image: url('/images/leaderboard-lastname/Mercedes.png');
     background-size: 270px 24px;
-}
-
-/* Compact pane (item_1_8r0r0r0_6_5): 309×53 at left:0, top:0 — alternative SC/VSC layout */
-#lb-sc-pane {
-    display: none;
-    left: 0;
-    top: 0;
-    width: 309px;
-    height: 53px;
-}
-#lb-sc-pane > * { position: absolute; }
-
-/* Pane team name (item_1_8r0r0r0_6_6r0): 173×28 at left:7, top:13  Optima 22px white centered */
-#lb-sc-pane-name {
-    left: 7px;
-    top: 13px;
-    width: 173px;
-    height: 28px;
-    border-radius: 0 15px 0 0;
-    font-family: 'Optima';
-    font-weight: 400;
-    color: rgb(255, 255, 255);
-    font-size: 22px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    white-space: pre;
-}
-
-/* Pane team logo (item_1_8r0r0r0_6_7r0): 160×16 at left:12, top:18 */
-#lb-sc-pane-logo {
-    left: 12px;
-    top: 18px;
-    width: 160px;
-    height: 16px;
-    background-image: url('/images/leaderboard/SC_Mercedes.png');
-    background-size: 160px 16px;
+    transition: left 333ms ease;
 }
 
 /* ════════════════════════════════════════════════════════════════

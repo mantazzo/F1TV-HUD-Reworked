@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>F1 Leaderboard Overlay</title>
+    <title>F1 Leaderboard (Last Name) Overlay</title>
     <link rel="stylesheet" href="/fonts.css">
     <link rel="stylesheet" href="/styles-leaderboard-lastname.css">
     <script src="/utils/driver-utils.js"></script>
@@ -60,28 +60,20 @@
                     <span id="lb-lap-total">/58</span>
                 </div>
 
-                <!-- Safety car / VSC team banner (item_1_8r0r0r0_6): 308×53 at left:0 — hidden by default -->
+                <!-- Safety car / VSC team banner (item_1_8r0r0r0_6): 489×53 at left:0 — hidden by default.
+                     Flatter structure than Initials: no team/pane sub-wrappers — name/logo shift position
+                     directly on narrow-pane change instead of swapping to a separate compact layout. -->
                 <div id="lb-sc-banner">
-                    <!-- Background (item_1_8r0r0r0_6_1): BG.png, 309×53 at left:1 -->
+                    <!-- Background (item_1_8r0r0r0_6_2r0): Header_BG.png, 309×53 at left:1 -->
                     <div id="lb-sc-bg"></div>
-                    <!-- Full-size team display (item_1_8r0r0r0_6_2): 309×53 -->
-                    <div id="lb-sc-team">
-                        <!-- Team name (item_1_8r0r0r0_6_3r0): Optima 37px centered -->
-                        <div id="lb-sc-team-name">ASTON MARTIN</div>
-                        <!-- Team logo (item_1_8r0r0r0_6_4r0): Mercedes.png 270×24 — hidden; shown when team logo available -->
-                        <div id="lb-sc-team-logo"></div>
-                    </div>
-                    <!-- Compact pane (item_1_8r0r0r0_6_5): alternative layout — hidden -->
-                    <div id="lb-sc-pane">
-                        <!-- Smaller team name (item_1_8r0r0r0_6_6r0): Optima 22px centered -->
-                        <div id="lb-sc-pane-name">ASTON MARTIN</div>
-                        <!-- Smaller team logo (item_1_8r0r0r0_6_7r0): Mercedes.png 160×16 -->
-                        <div id="lb-sc-pane-logo"></div>
-                    </div>
+                    <!-- Background extension (item_1_8r0r0r0_6_3r0): Header_BG.png again, 310×53 at left:310 — covers full width -->
+                    <div id="lb-sc-bg-2"></div>
+                    <!-- Team name (item_1_8r0r0r0_6_4r0): Optima 37px centered -->
+                    <div id="lb-sc-team-name">ASTON MARTIN</div>
+                    <!-- Team logo (item_1_8r0r0r0_6_5r0): Mercedes.png 270×24 — hidden; shown when team logo available -->
+                    <div id="lb-sc-team-logo"></div>
                 </div>
 
-                <!-- Session name label — unknown/time trial (item_1_8r0r0r0_7): 200×34 at left:20, top:9 -->
-                <div id="lb-session-label">SESSION</div>
             </div>
 
             <!-- ══ Session layer (item_1_9r0r0) ══════════════════════════════ -->
@@ -229,21 +221,22 @@
             <!-- FlagsBorder overlay widget (item_1_34r0r0r0r0): 333×1290 at left:0, top:3
                  Sits on top of all driver rows. JS swaps visibility based on flag/session state. -->
             <div id="lb-deco-border-widget">
-                <!-- Normal: grey CSS border (item_1_34r0r0r0r0_2r0) — always visible -->
+                <!-- Normal: grey CSS border (item_1_9r0r0r0_2r0) — always visible -->
                 <div id="lb-deco-border"></div>
-                <!-- Formation Lap: grey CSS border, bottom half only (item_1_34r0r0r0r0_3r0) -->
+                <!-- Formation Lap: grey CSS border, bottom half only (item_1_9r0r0r0_3r0) -->
                 <div id="lb-deco-border-formation"></div>
-                <!-- Race Finished: red CSS border (item_1_34r0r0r0r0_4r0) -->
+                <!-- Race Finished: red CSS border (item_1_9r0r0r0_4r0) -->
                 <div id="lb-deco-border-finished"></div>
-                <!-- SC/VSC/RF container (item_1_34r0r0r0r0_6r0r0): clips to pane width, fades opacity on flag state -->
-                <div id="lb-deco-border-sc-container">
-                    <div id="lb-deco-border-sc"></div>
-                    <div id="lb-deco-border-sc-2"></div>
-                </div>
-                <!-- Yellow Flag: Border_Yellow.png, top portion only (item_1_34r0r0r0r0_8r0r0_1) -->
+                <!-- SC/VSC/RF (item_1_9r0r0r0_10r0r0): single flat image, no container/second-copy
+                     needed here (Initials uses two stacked copies; only one image is required) -->
+                <div id="lb-deco-border-sc"></div>
+                <!-- Yellow Flag: Border_Yellow.png, top portion only (item_1_9r0r0r0_6r0r0) -->
                 <div id="lb-deco-border-yellow"></div>
-                <!-- Green Flag: Border_Green.png, top portion only (item_1_34r0r0r0r0_10r0r0_1) -->
+                <!-- Green Flag: Border_Green.png, top portion only (item_1_9r0r0r0_8r0r0) -->
                 <div id="lb-deco-border-green"></div>
+                <!-- Time/Laps banner border (item_1_9r0r0r0_11r0): new for Last-Name — red while the
+                     time/laps banner or race-finished state is active, white during Final Lap -->
+                <div id="lb-deco-border-timelaps"></div>
             </div>
 
             <!-- VSC Flags banner (item_1_33r0r0r0r0): 306×105 at left:27.5, top:145 -->
@@ -439,7 +432,7 @@
 
     <script>
         const socket = io();
-        socket.emit('identify', 'Leaderboard');
+        socket.emit('identify', 'Leaderboard (Last Name)');
 
         // ── Session type helpers ───────────────────────────────────────────
         const RACE_TYPES  = new Set([15, 16, 17]);                                    // Race, Race 2, Race 3
@@ -466,7 +459,6 @@
         const elRaceLaps     = document.getElementById('lb-race-laps');
         const elLapCurrent   = document.getElementById('lb-lap-current');
         const elLapTotal     = document.getElementById('lb-lap-total');
-        const elSessionLabel = document.getElementById('lb-session-label');
         const elSessionName  = document.getElementById('lb-session-name');
         const elBattery      = document.getElementById('lb-battery');
         const elPenalty      = document.getElementById('lb-penalty');
@@ -520,11 +512,10 @@
         const elDecoBorder            = document.getElementById('lb-deco-border');
         const elDecoBorderFormation   = document.getElementById('lb-deco-border-formation');
         const elDecoBorderFinished    = document.getElementById('lb-deco-border-finished');
-        const elDecoBorderScContainer = document.getElementById('lb-deco-border-sc-container');
         const elDecoBorderSc          = document.getElementById('lb-deco-border-sc');
-        const elDecoBorderSc2         = document.getElementById('lb-deco-border-sc-2');
         const elDecoBorderYellow      = document.getElementById('lb-deco-border-yellow');
         const elDecoBorderGreen       = document.getElementById('lb-deco-border-green');
+        const elDecoBorderTimelaps    = document.getElementById('lb-deco-border-timelaps');
         const elTimeLapsBanner    = document.getElementById('lb-timelaps-banner');
         const elTimeLapsNum       = document.getElementById('lb-timelaps-num');
         const elTimeLapsLabel     = document.getElementById('lb-timelaps-label');
@@ -540,12 +531,8 @@
         const elGradientVerticalFmn = document.getElementById('lb-gradient-vertical-formation');
         const elHeader      = document.getElementById('lb-header');
         const elScBanner    = document.getElementById('lb-sc-banner');
-        const elScTeam      = document.getElementById('lb-sc-team');
         const elScTeamName  = document.getElementById('lb-sc-team-name');
         const elScTeamLogo  = document.getElementById('lb-sc-team-logo');
-        const elScPane      = document.getElementById('lb-sc-pane');
-        const elScPaneName  = document.getElementById('lb-sc-pane-name');
-        const elScPaneLogo  = document.getElementById('lb-sc-pane-logo');
         const elSprintLogo      = document.getElementById('lb-sprint-logo');
         const elFlAnim          = document.getElementById('lb-fl-anim');
         const elFlRaceAnim      = document.getElementById('lb-fl-race-anim');
@@ -1204,7 +1191,7 @@
         const TIME_TRIGGERS_S = [1200, 900, 600, 300, 120]; // 20, 15, 10, 5, 2 minutes in seconds
         const LAP_TRIGGERS    = [15, 10, 5, 3];
         // Tracks that use Aston Martin Safety Car branding (all others use Mercedes)
-        const ASTON_MARTIN_TRACKS = new Set([0, 27, 4, 20, 6, 17, 9, 10, 11, 15, 19, 16]);
+        const ASTON_MARTIN_TRACKS = new Set([0, 3, 5, 10, 12, 14, 20, 26, 27, 29, 30, 32, 41]); // F1 25, 2025-era cars
         let playerCarIdx          = -1;   // "active driver" — m_header.m_playerCarIndex, or m_spectatorCarIndex while spectating
         let rawPlayerCarIdx       = -1;   // from m_header.m_playerCarIndex, unmodified
         let isSpectating          = 0;    // from Session packet m_isSpectating
@@ -1302,25 +1289,6 @@
             elBattery.style.display     = (showBattery && isRace) ? '' : 'none';
 
             updateRaceLaps();
-            
-            // Session label inside header bar (item_1_8r0r0r0_7)
-            // Shown for SQ sessions (all session types) and for F2 non-race sessions (Short P / Short Q / OSQ)
-            let sessionLabelText = '';
-            if (isSQ) {
-                sessionLabelText = SESSION_LABELS[sessionType] ?? '';
-            } else if (formulaType === 2 && isTimed) {
-                if      (sessionType === 4)                      sessionLabelText = 'PRACTICE'; // Short Practice
-                else if (sessionType === 8 || sessionType === 9) sessionLabelText = 'QUALI';    // Short Q / OSQ
-            }
-            elSessionLabel.textContent = sessionLabelText;
-            elSessionLabel.style.display = sessionLabelText ? 'flex' : 'none';
-            if (isSQ) {
-                elSessionLabel.style.left = '70px';
-            } else if (sessionType === 8 || sessionType === 9) {
-                elSessionLabel.style.left = '35px'; // F2 Short Q / OSQ — sits left of the timer
-            } else {
-                elSessionLabel.style.left = '10px';
-            }
 
             // Sprint logo (item_1_10r0r0r0): visible in any sprint session; opacity 0 in narrow pane
             // Hidden during Formation Lap (m_safetyCarStatus === 3)
@@ -1381,15 +1349,16 @@
             elScBanner.classList.toggle('sc-active', scActive);
 
             const narrow = paneMode === 1 || paneMode === 3;
-            elScTeam.style.display = narrow ? 'none' : '';
-            elScPane.style.display = narrow ? '' : 'none';
+            elScTeamName.style.left = narrow ? '18.5px' : '91.5px';
+            elScTeamLogo.style.left = narrow ? '33px'   : '109px';
 
-            // Aston Martin name shown for specific tracks; Mercedes logo shown for all others
-            const isAston = ASTON_MARTIN_TRACKS.has(trackId);
+            // 2026 season pack cars: Mercedes-only Safety Car (Aston Martin deal ended), regardless of
+            // track — detected via car era (team ID), not formulaType, so F2 2026 is covered too.
+            // Pre-2026 eras still alternate Aston Martin (specific tracks) vs Mercedes (everywhere else).
+            const eraYear = DriverUtils.getCarEraYear(carTeamIds[playerCarIdx]);
+            const isAston = eraYear !== 2026 && ASTON_MARTIN_TRACKS.has(trackId);
             elScTeamName.style.display = isAston ? '' : 'none';
             elScTeamLogo.style.display = isAston ? 'none' : '';
-            elScPaneName.style.display = isAston ? '' : 'none';
-            elScPaneLogo.style.display = isAston ? 'none' : '';
         }
 
         // ── Yellow flag banner pane adjustments ───────────────────────────────────
@@ -1633,15 +1602,10 @@
             const narrow         = paneMode === 1 || paneMode === 3;
             const doubleDigitLap = (currentLap || 1) >= 10;
 
-            // Container left: shifts left in narrow pane and for short-lap-count races
-            // TODO: 20px/75px values carried over unverified from the Initials version — not covered by
-            // the Last-Name formula reference, needs checking against live short-distance race data.
+            // Container left: shifts left in narrow pane (short-lap-count repositioning confirmed
+            // unnecessary here — this layout has enough space, unlike the Initials version)
             let raceLeft;
-            if (totalLaps < 6 && narrow) {
-                raceLeft = '20px';
-            } else if (totalLaps < 7) {
-                raceLeft = '75px';
-            } else if (narrow && doubleDigitLap) {
+            if (narrow && doubleDigitLap) {
                 raceLeft = '100px';
             } else if (narrow) {
                 raceLeft = '109px';
@@ -2108,17 +2072,18 @@
             const flagBorderActive = mode === 'sc' || mode === 'vsc' || mode === 'rf' || mode === 'yellow' || mode === 'green';
             const scVscRfActive    = mode === 'sc' || mode === 'vsc' || mode === 'rf';
 
-            // Widget: narrows to 212px in narrow pane, 333px otherwise; grows 100px for 2026 grid
-            elDecoBorderWidget.style.width  = `${narrow ? 212 : 333}px`;
+            // Widget: narrows to 392px in narrow pane, 512px otherwise; grows 100px for 2026 grid
+            elDecoBorderWidget.style.width  = `${narrow ? 392 : 512}px`;
             elDecoBorderWidget.style.height = extendedGrid2026 ? '1390px' : '1290px';
 
             // Standard border: hidden when session ended, formation lap, or a flag-specific border is active
-            elDecoBorder.style.top    = `${isF2 ? 94 : 23}px`;
-            elDecoBorder.style.height = `${isF2 ? (extendedGrid2026 ? 1270 : extendedGrid ? 1170 : 1070) : (extendedGrid2026 ? 1341 : extendedGrid ? 1241 : 1140)}px`;
+            // F2 top/height delta (+71/-70) carried over from Initials — not covered by the Last-Name formula
+            elDecoBorder.style.top    = `${isF2 ? 96 : 25}px`;
+            elDecoBorder.style.height = `${isF2 ? (extendedGrid2026 ? 1268 : extendedGrid ? 1168 : 1068) : (extendedGrid2026 ? 1338 : extendedGrid ? 1238 : 1138)}px`;
             elDecoBorder.style.display = (sessionEnded || formationLap || flagBorderActive) ? 'none' : '';
 
             // Formation border: shown only during formation lap, no transition
-            elDecoBorderFormation.style.height  = `${extendedGrid2026 ? 1272 : extendedGrid ? 1172 : 1072}px`;
+            elDecoBorderFormation.style.height  = `${extendedGrid2026 ? 1220 : extendedGrid ? 1120 : 1020}px`;
             elDecoBorderFormation.style.display = formationLap ? 'block' : 'none';
 
             // Finished border: fades in (333ms) when session ends
@@ -2126,27 +2091,22 @@
             elDecoBorderFinished.style.height = `${isF2 ? (extendedGrid2026 ? 1268 : extendedGrid ? 1168 : 1068) : (extendedGrid2026 ? 1338 : extendedGrid ? 1238 : 1138)}px`;
             elDecoBorderFinished.style.opacity = sessionEnded ? '1' : '0';
 
-            // SC/VSC/RF container: fades in (333ms) on flag state; hidden immediately when time/laps banner is active
-            elDecoBorderScContainer.style.top     = `${isF2 ? 95 : 24}px`;
-            elDecoBorderScContainer.style.width   = `${narrow ? 190 : 310}px`;
-            elDecoBorderScContainer.style.height  = `${extendedGrid2026 ? 1339 : extendedGrid ? 1239 : 1139}px`;
-            elDecoBorderScContainer.style.opacity = scVscRfActive ? '1' : '0';
-            elDecoBorderScContainer.style.display = timeLapsBannerActive ? 'none' : '';
+            // SC/VSC/RF: single flat image (no container/second-copy needed) — fades in (333ms) on flag
+            // state, hidden immediately when the time/laps banner is active. Flat top (no F2 offset):
+            // Initials' container+child F2 shift nets out to ~24-25px either way, so one value covers both.
+            const scH = extendedGrid2026 ? 1338 : extendedGrid ? 1238 : 1138;
+            elDecoBorderSc.style.top            = '25.2px';
+            elDecoBorderSc.style.height         = `${scH}px`;
+            elDecoBorderSc.style.backgroundSize = `490px ${scH}px`;
+            elDecoBorderSc.style.opacity        = scVscRfActive ? '1' : '0';
+            elDecoBorderSc.style.display        = timeLapsBannerActive ? 'none' : '';
 
-            // Individual SC borders: positioned within container, sized for extendedGrid + F2 top offset
-            const scH      = extendedGrid2026 ? 1338 : extendedGrid ? 1238 : 1139;
-            const scBgSize = `320px ${scH}px`;
-            const scTop    = `${isF2 ? -70 : 0}px`;
-            elDecoBorderSc.style.top             = scTop;
-            elDecoBorderSc.style.height          = `${scH}px`;
-            elDecoBorderSc.style.backgroundSize  = scBgSize;
-            elDecoBorderSc2.style.top            = scTop;
-            elDecoBorderSc2.style.height         = `${scH}px`;
-            elDecoBorderSc2.style.backgroundSize = scBgSize;
-
-            // Yellow flag border: top=75px (F2) or 24px; width clips to 5px in F2, transitions for narrow pane
+            // Yellow flag border: top=75px (F2) or 24px; width clips to 5px in F2 to avoid overlapping
+            // F2-specific header content — relies on the parent widget's own overflow:hidden clip for
+            // narrow-pane width, so no separate narrow value is needed here (not confirmed against
+            // live narrow-pane footage, flag if this looks wrong)
             const flagBorderTop   = `${isF2 ? 75 : 24}px`;
-            const flagBorderWidth = `${isF2 ? 5 : (narrow ? 190 : 326)}px`;
+            const flagBorderWidth = `${isF2 ? 5 : 490}px`;
             elDecoBorderYellow.style.top     = flagBorderTop;
             elDecoBorderYellow.style.width   = flagBorderWidth;
             elDecoBorderYellow.style.opacity = mode === 'yellow' ? '1' : '0';
@@ -2155,6 +2115,21 @@
             elDecoBorderGreen.style.top     = flagBorderTop;
             elDecoBorderGreen.style.width   = flagBorderWidth;
             elDecoBorderGreen.style.opacity = mode === 'green' ? '1' : '0';
+
+            // Time/laps banner border: red while the time/laps banner (or race-finished state) is
+            // showing, white specifically during the Final Lap banner, transparent otherwise. Hidden
+            // during formation lap (matches the given Visible formula; the formula's own BorderColor
+            // also referenced formation lap as a third "red" case, but that's unreachable once Visible
+            // hides the element, so it's dropped here).
+            elDecoBorderTimelaps.style.height = `${extendedGrid2026 ? 1338 : extendedGrid ? 1238 : 1138}px`;
+            elDecoBorderTimelaps.style.display = formationLap ? 'none' : '';
+            const timelapsShown = timeLapsBannerActive || sessionEnded;
+            elDecoBorderTimelaps.style.opacity = timelapsShown ? '1' : '0';
+            elDecoBorderTimelaps.style.borderColor = timeLapsBannerType === 'finallap'
+                ? 'rgb(255, 255, 255)'
+                : timelapsShown
+                    ? 'rgb(255, 0, 0)'
+                    : 'rgba(255, 255, 255, 0)';
         }
 
         function updateMainPanels() {
@@ -2228,9 +2203,10 @@
             const scVscBorder = mode === 'sc' || mode === 'vsc';
             const rfBorder    = mode === 'rf';
             updateDecoBorders();
-            const scBorderImg = scVscBorder ? 'Border_SC.png' : 'Border_Red.png';
-            elDecoBorderSc.style.backgroundImage  = `url('/images/leaderboard/${scBorderImg}')`;
-            elDecoBorderSc2.style.backgroundImage = `url('/images/leaderboard/${scBorderImg}')`;
+            const scBorderImg = !scVscBorder
+                ? 'Border_Red.png'
+                : extendedGrid2026 ? 'Border_SC_24.png' : extendedGrid ? 'Border_SC_22.png' : 'Border_SC.png';
+            elDecoBorderSc.style.backgroundImage = `url('/images/leaderboard-lastname/${scBorderImg}')`;
             // Yellow/green border opacity + sizing handled by updateDecoBorders() above
 
             const flagImgMap = {
