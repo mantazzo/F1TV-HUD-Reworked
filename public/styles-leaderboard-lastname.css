@@ -1196,25 +1196,25 @@ body { background: black; overflow: hidden; }
    SESSION LAYER — item_1_9r0r0
    ════════════════════════════════════════════════════════════════ */
 
-/* Sprint logo (item_1_10r0r0r0): 151.58×30.21 at left:177, top:50  hidden by default */
+/* Sprint logo (item_1_10r0r0r0): 155.72×29.64 at left:171, top:48  hidden by default */
 #lb-sprint-logo {
     display: none;
-    left: 177px;
-    top: 50px;
-    width: 151.58px;
-    height: 30.21px;
-    background-image: url('/images/leaderboard/Sprint.png');
-    background-size: 151.58px 30.21px;
+    left: 171px;
+    top: 48px;
+    width: 155.72px;
+    height: 29.64px;
+    background-image: url('/images/leaderboard-lastname/Sprint.png');
+    background-size: 155.72px 29.64px;
     transition: opacity 300ms ease;
 }
 
 /* Session name (item_1_11r0r0r0 / _12r0r0r0 combined):
-   135×40 at left:189, top:46  Formula1 Display 900  grey  centered
-   font-size managed by textFit (max 37px) */
+   300×40 at left:200, top:45  Formula1 Display 900  grey  centered
+   width narrows to 185px in narrow panes (1/3, set in JS); font-size managed by textFit (max 37px) */
 #lb-session-name {
-    left: 189px;
-    top: 46px;
-    width: 135px;
+    left: 200px;
+    top: 45px;
+    width: 300px;
     height: 40px;
     font-family: 'Formula1 Display';
     font-weight: 900;
@@ -1227,12 +1227,12 @@ body { background: black; overflow: hidden; }
 
 /* ════════════════════════════════════════════════════════════════
    BATTERY WIDGET — item_1_14r0r0r0_1
-   JS-generated rows (NUM_CARS × 50px stride)  left:334, top:167
+   JS-generated rows (NUM_CARS × 50px stride)  left:515 (395 narrow pane, set in JS), top:165
    ════════════════════════════════════════════════════════════════ */
 #lb-battery {
-    left: 334px;
-    top: 167px;
-    width: 80px;
+    left: 515px;
+    top: 165px;
+    width: 115px;
     height: 1200px; /* NUM_CARS × 50px */
     transition: left 300ms ease;
 }
@@ -1254,7 +1254,7 @@ body { background: black; overflow: hidden; }
     top: 0;
     width: 80px;
     height: 40px;
-    background-image: url('/images/leaderboard/Battery_Yellow.png');
+    background-image: url('/images/leaderboard-lastname/Battery_Yellow.png');
     background-size: 80px 40px;
     transition: left 300ms ease;
 }
@@ -1265,7 +1265,7 @@ body { background: black; overflow: hidden; }
     top: 5px;
     width: 68px;
     height: 30px;
-    border-radius: 1px;
+    border-radius: 3px;
     opacity: 0.85;
     overflow: hidden;
     transition: left 300ms ease;
@@ -1301,8 +1301,8 @@ body { background: black; overflow: hidden; }
 /* ─── Penalties widget (item_1_14r0r0r0_90) ──────────────────────────────── */
 
 #lb-penalty {
-    left: 334px;
-    top: 167px;
+    left: 515px;
+    top: 165px;
     width: 145px;
     height: 1200px; /* NUM_CARS × 50px */
     transition: left 300ms ease;
@@ -1319,27 +1319,27 @@ body { background: black; overflow: hidden; }
 }
 .lb-penalty-row > * { position: absolute; }
 
-/* Penalty background image (item_1_14r0r0r0_92r0r0_1): Penalty_BG.png 100×40 at left:0
-   opacity:0.95, rounded bottom-left corner */
+/* Penalty background image (item_1_14r0r0r0_92r0r0_1): Penalty_BG.png 103×40 at left:0
+   opacity:0.75, rounded bottom-left corner */
 .lb-penalty-bg {
     left: 0;
     top: 0;
-    width: 100px;
+    width: 103px;
     height: 40px;
-    opacity: 0.95;
+    opacity: 0.75;
     border-radius: 0 0 0 5px;
-    background-image: url('/images/leaderboard/Penalty_BG.png');
-    background-size: 100px 40px;
+    background-image: url('/images/leaderboard-lastname/Penalty_BG.png');
+    background-size: 103px 40px;
     transition: left 300ms ease;
 }
 
-/* Shadow rectangle (item_1_14r0r0r0_92r0r0_2): 51×41 at left:10
-   blurred black rect behind the penalty icon */
+/* Shadow rectangle (item_1_14r0r0r0_92r0r0_2): 60×38 at left:1, top:1 — matches the
+   icon's own size/position exactly, sits behind it (blurred) as a soft glow */
 .lb-penalty-shadow {
-    left: 10px;
-    top: 0;
-    width: 51px;
-    height: 41px;
+    left: 1px;
+    top: 1px;
+    width: 60px;
+    height: 38px;
     border-radius: 8px;
     border: 2px solid rgb(0, 0, 0);
     opacity: 0.5;
@@ -1348,27 +1348,28 @@ body { background: black; overflow: hidden; }
     transition: left 300ms ease;
 }
 
-/* Penalty icon (item_1_14r0r0r0_92r0r0_3): Penalty.png 60×40 at left:0 */
+/* Penalty icon (item_1_14r0r0r0_92r0r0_3): Penalty.png 60×38 at left:1, top:1 */
 .lb-penalty-icon {
-    left: 0;
-    top: 0;
+    left: 1px;
+    top: 1px;
     width: 60px;
-    height: 40px;
-    background-image: url('/images/leaderboard/Penalty.png');
-    background-size: 60px 40px;
+    height: 38px;
+    opacity: 0.8;
+    background-image: url('/images/leaderboard-lastname/Penalty.png');
+    background-size: 60px 38px;
     transition: left 300ms ease;
 }
 
-/* Penalty value text (item_1_14r0r0r0_93r0r0): 45×40 at left:60
-   F1TV-2022 17px  black  centered */
+/* Penalty value text (item_1_14r0r0r0_93r0r0): 50×40 at left:60
+   F1TV-2022 21px  black  centered */
 .lb-penalty-value {
     left: 60px;
     top: 0;
-    width: 45px;
+    width: 50px;
     height: 40px;
     font-family: 'F1TV-2022';
     font-weight: 400;
-    font-size: 17px;
+    font-size: 21px;
     color: rgb(0, 0, 0);
     display: flex;
     justify-content: center;
