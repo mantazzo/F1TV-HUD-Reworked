@@ -933,7 +933,7 @@
             row.appendChild(arrow);
             row.appendChild(text);
             elMfd4.appendChild(row);
-            return { arrow, text };
+            return { row, arrow, text };
         });
 
         // ── Standings driver rows — 24 slots created (max Controller-selectable count); how many
@@ -1782,13 +1782,17 @@
         // Battery, Penalty and FL Logo containers slide left in narrow pane (1 or 3).
         function updateDataContainerLeft() {
             const narrow = paneMode === 1 || paneMode === 3;
-            const left = narrow ? '215px' : '334px';
             const dataLeft = narrow ? '395px' : '515px'; // shifted +180px versus the shared narrow/wide values above
+            // In-Pit, Finish, and FL-Logo occupy the same per-row "status slot" (mutually exclusive —
+            // FL-Logo already hides itself once its own driver finishes) and their reference formulas
+            // agree almost exactly (391/512 vs 391/511.5), so unified to one value here rather than
+            // three near-duplicates that would otherwise cause a visible jump between them.
+            const statusLeft = narrow ? '391px' : '512px';
             elBattery.style.left   = dataLeft;
             elPenalty.style.left   = dataLeft; // same formula as Battery — currently overlaps it, see conversation
-            elFlLogo.style.left    = left;
-            elFinish.style.left    = left;
-            elInPit.style.left     = narrow ? '210px' : '330px';
+            elFlLogo.style.left    = statusLeft;
+            elFinish.style.left    = statusLeft;
+            elInPit.style.left     = statusLeft;
         }
 
         // ── Timing formatters ─────────────────────────────────────────────────────
@@ -2021,11 +2025,12 @@
         // Returns the correct top px value for row at 0-based index i.
         // MFD mode takes priority (banner is hidden when MFD is active).
         function getRowTop(i) {
-            // TODO: rows at Position 20+ (i >= 19) get no shift at all here while Position 1-19 jump by
-            // 92.5px, which may cause a visible overlap/gap at the P19/P20 boundary when both MFD and the
-            // flags/VSC banner are active simultaneously. Unconfirmed whether this is an intentional cutoff
-            // (rare enough not to matter) or needs a gradual falloff like the other two branches below.
-            if (mfdActive && flagsBannerMode)            return i * 50 + (i <= 18 ? 92.5 : 0); // flat, not decreasing — confirmed via Position 19 (i=18) still reading 92.5, cuts off at Position 20 (i=19)
+            // MFD + flags/VSC banner combined: the reference formula hardcodes 92.5 flat through
+            // Position 19 (unlike the other two branches below, which correctly decrement per row),
+            // which caused a P19/P20 inversion confirmed via recorded-race testing. Using the same
+            // -5px/row decrement as the flags-only branch instead — floors to 0 right around Position
+            // 20 anyway, matching the "doesn't apply past P20" behavior, but without the overlap.
+            if (mfdActive && flagsBannerMode)            return i * 50 + Math.max(0, 92.5 - i * 5);
             if (mfdActive || formationLap)               return i * 50 + Math.max(0, 47.5 - i * 2.5);
             if (flagsBannerMode || timeLapsBannerActive) return i * 50 + Math.max(0, 95   - i * 5);
             return i * 50;
@@ -2859,6 +2864,9 @@
                                 m4Row.arrow.className = 'lb-mfd4-arrow lb-mfd4-arrow--none';
                             }
                         }
+                        // MFD4 deliberately does NOT hide for retired/DSQ/DNF drivers like MFD1-3 do —
+                        // position gained/lost vs grid start is still meaningful for a car that's out,
+                        // so it keeps showing. OUT text is hidden instead while MFD4 is active (see below).
 
                         // In-Pit Logo — show in non-race sessions when car is pitting OR driver is reported In Garage and hasn't finished
                         // It seems sometimes game reports m_pitStatus as 0 and m_driverStatus as 0 while in pits (should be >0 and 0 instead of 0 and 0) - likely a game bug, so we do a workaround
@@ -2938,9 +2946,14 @@
                         // Store result status for battery visibility guard
                         carResultStatus[idx] = car.m_resultStatus ?? 0;
 
-                        // OUT text — show for DNF (4), DSQ (5), or retired (7) drivers; hidden when MFD4 is active or narrow pane
+                        // OUT text — show for DNF (4), DSQ (5), or retired (7) drivers during the Race,
+                        // on any MFD page except MFD4 (MFD4 keeps showing gained/lost-vs-grid for these
+                        // drivers instead — still meaningful for a car that's out — so OUT stays hidden
+                        // there to avoid overlapping it). Hidden during Formation Lap (game can report a
+                        // fake DSQ/retired while a car parks on the grid) and in narrow panes, where the
+                        // whole data column is hidden anyway.
                         const isOut = carResultStatus[idx] === 4 || carResultStatus[idx] === 5 || carResultStatus[idx] === 7;
-                        outRows[pos - 1].row.style.display = (isOut && !isMfd4 && !formationLap && paneMode !== 1 && paneMode !== 3) ? 'block' : 'none';
+                        outRows[pos - 1].row.style.display = (isOut && isRace && !isMfd4 && !formationLap && paneMode !== 1 && paneMode !== 3) ? 'block' : 'none';
                     }
                 });
 
@@ -3074,6 +3087,16 @@
                         : (pos === 1 ? 'Interval' : getLappedText(carDeltaFront[carIdx], frontLapNum, frontLapDist));
                     tRow.lText.textContent = showFastestLap ? formatLapTimeMs(fastestLapDisplayMs)
                         : (pos === 1 ? 'Leader'   : getLappedText(carDeltaLeader[carIdx], leaderLapNum, leaderLapDist));
+
+                    // Shrink-to-fit for wide deltas (e.g. "+1:23.456", "+12 LAPS") that would otherwise
+                    // overflow the fixed 125px-wide box. Only the currently-visible sub-layer is fit —
+                    // the hidden one still gets its textContent updated above (cheap), but skipping
+                    // textFit on it halves the per-packet cost across up to 24 rows.
+                    try {
+                        textFit(showLeaderGaps ? tRow.lText : tRow.iText, { minFontSize: 14, maxFontSize: 22, multiLine: false, widthOnly: true });
+                    } catch (e) {
+                        // Defensive only, see the equivalent try/catch in renderDriverStandings().
+                    }
                 }
 
                 // Track race leader's current lap for header
@@ -3515,13 +3538,15 @@
                 elMfd1.style.opacity       = '1';
             }
 
-            // OUT rows: hide when MFD4 is active or narrow pane (position-change column / no space)
+            // OUT rows: race-only, hidden on MFD4 (which shows gained/lost-vs-grid for OUT drivers
+            // instead), during Formation Lap, or in narrow panes — see the packet handler above for
+            // the full reasoning
             outRows.forEach(({ row }, p) => {
                 const carIdx = carPositions.indexOf(p + 1);
                 if (carIdx < 0) return;
                 const rs = carResultStatus[carIdx] ?? 0;
                 const isOut = rs === 4 || rs === 5 || rs === 7;
-                row.style.display = (isOut && !isMfd4 && !formationLap && paneMode !== 1 && paneMode !== 3) ? 'block' : 'none';
+                row.style.display = (isOut && isRace && !isMfd4 && !formationLap && paneMode !== 1 && paneMode !== 3) ? 'block' : 'none';
             });
 
             // Reposition all rows: MFD stride when active, banner shift when flag is set, else normal
