@@ -5,7 +5,7 @@
 #
 # TIP: To run this without opening a terminal, double-click install.bat instead.
 
-$NODE_VERSION = "24.18.1"
+$NODE_VERSION = "24.19.0"
 $NODE_ZIP_URL = "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-win-x64.zip"
 $RUNTIME_DIR  = Join-Path $PSScriptRoot "runtime"
 $ZIP_PATH     = Join-Path $PSScriptRoot "runtime-node.zip"
