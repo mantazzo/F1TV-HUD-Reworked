@@ -1844,12 +1844,14 @@ body { background: black; overflow: hidden; }
     align-items: center;
 }
 
-/* ── Pit Status (item_1_19r0r0r0): 130×1100 at left:187, top:162 ──────────── */
+/* ── Pit Status (item_1_23r0r0r0): 130×1100 at left:365 (race)/375 (non-race), top:160
+   Left toggled in JS (updateHeaderDisplay); opacity/display toggled in JS (narrow pane / MFD) ── */
 #lb-pit-status {
-    left: 187px;
-    top: 162px;
+    left: 365px;
+    top: 160px;
     width: 130px;
     height: 1200px;
+    transition: left 300ms ease;
 }
 
 /* Each car row: 130×50, hidden by default, top set via JS at 50px stride */
@@ -1879,9 +1881,9 @@ body { background: black; overflow: hidden; }
     align-items: center;
 }
 
-/* ── Tyre Compound (item_1_23r0r0): 40×1100 at left:299, top:161 ───────────── */
+/* ── Tyre Compound (item_1_26r0r0r0): 40×1100 at left:472 (455 in MFD2), top:160 ── */
 #lb-tyre {
-    left: 299px;
+    left: 472px;
     top: 160px;
     width: 40px;
     height: 1200px;
@@ -2216,10 +2218,13 @@ body { background: black; overflow: hidden; }
 }
 
 /* ════════════════════════════════════════════════════════════════
-   FASTEST LAP ANIMATION (NON-RACE) — item_1_24r0r0_1
-   Overlays the P1 driver row; width transitions 0→310px (185px
-   in narrow pane) when P1 sets a new fastest lap, retracts after 6s.
-   Top is kept in sync with the P1 row by updateFlAnimPosition() in JS.
+   FASTEST LAP ANIMATION (NON-RACE) — item_1_24r0r0r0 (wide) / item_1_25r0r0r0 (narrow)
+   Original source uses two separate rectangles (wide one animates width via an
+   inertia() ramp, narrow one just toggles display at a fixed 305px) — combined here
+   into one element that always animates width, matching the wide element's behaviour.
+   Overlays the P1 driver row; width transitions 0→485px (305px in narrow pane, per
+   source: 305 + the usual +180 offset = 485) when P1 sets a new fastest lap, retracts
+   after 6s. Top is kept in sync with the P1 row by updateFlAnimPosition() in JS.
    ════════════════════════════════════════════════════════════════ */
 #lb-fl-anim {
     left: 27px;
@@ -2232,12 +2237,15 @@ body { background: black; overflow: hidden; }
 }
 
 /* Background rectangle (item_1_24r0r0_1_2r0) + diagonal stripes effect
-   (item_1_24r0r0_1_5r0r0…r92) combined into a single CSS gradient */
+   (item_1_24r0r0_1_5r0r0…r92) combined into a single CSS gradient.
+   Fixed width stays a few px past the container's max (485px) so the stripe
+   pattern doesn't stretch/shift as the container's width animates — only more
+   of this fixed background gets revealed through the container's own clip. */
 #lb-fl-anim-bg {
     position: absolute;
     left: 0;
     top: 0;
-    width: 310px;
+    width: 490px;
     height: 45px;
     background-color: rgb(255, 0, 255);
     background-image: repeating-linear-gradient(

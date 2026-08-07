@@ -102,8 +102,9 @@
                  Shown during races only for the car holding the fastest lap -->
             <div id="lb-fl-logo"></div>
 
-            <!-- Fastest Lap Animation (non-race, P1 only) — item_1_24r0r0_1
-                 Slides to full width (310px or 185px pane1) when P1 sets a new
+            <!-- Fastest Lap Animation (non-race, P1 only) — item_1_24r0r0r0 (wide) / item_1_25r0r0r0 (narrow)
+                 Combines the source's two separate rectangles into one animated element.
+                 Slides to full width (485px, or 305px in narrow panes) when P1 sets a new
                  fastest lap in a non-race session; retracts to 0 after 6 seconds.
                  Position tracked via JS (updateFlAnimPosition).
                  Placed before lb-drivers so it paints behind driver content, timing, tyre, and DRS. -->
@@ -147,14 +148,19 @@
                  Each row: gradient overlay + Finished_Logo.png image. Shown when car has Finished result. -->
             <div id="lb-finish"></div>
 
-            <!-- Pit Status (item_1_19r0r0r0): 130×1100 at left:187, top:162
+            <!-- Pit Status (item_1_23r0r0r0): 130×1100 at left:365 (race) / 375 (non-race), top:160
                  JS-generated rows, one per car at 50px stride, hidden by default.
-                 Each row shows "IN PIT" or "PIT EXIT" — used in race sessions. -->
+                 Race: persistent "IN PIT"/"PIT EXIT" driven by live pit/delta state (unchanged).
+                 Non-race: one-shot 6s "IN PIT" pulse on pit entry, same trigger as the In-Pit Logo.
+                 Hidden entirely (opacity) in narrow panes; hidden (display) while any MFD page is active. -->
             <div id="lb-pit-status"></div>
 
-            <!-- Tyre Compound (item_1_23r0r0): 40×1100 at left:299, top:161
+            <!-- Tyre Compound (item_1_26r0r0r0): 40×1100 at left:472 (455 in MFD2), top:160
                  JS-generated rows, one per car at 50px stride.
-                 Each row shows a single-letter compound code in the compound's colour. -->
+                 Each row shows a single-letter compound code in the compound's colour.
+                 Visibility computed centrally by updateTyreRowVisibility(), called after
+                 both pid 2 and pid 7 (and fastest-lap glow start/stop) so the two
+                 independent packet streams can't disagree and flicker the letter. -->
             <div id="lb-tyre"></div>
 
             <!-- DRS Indicator (item_1_35r0): 20×1110 at left:22.5, top:162
@@ -1222,6 +1228,10 @@
         const carDriverStatus = new Array(NUM_CARS).fill(-1); // carIdx → m_driverStatus from pid 2 (-1=unknown, 0=in garage, 1=flying lap, 2=in lap, 3=out lap, 4=on track)
         const carPitStatus    = new Array(NUM_CARS).fill(0);  // carIdx → m_pitStatus from pid 2 (0=none, 1=pitting, 2=pit lane)
         const carNumPitStops  = new Array(NUM_CARS).fill(0);  // carIdx → m_numPitStops from pid 2
+        const carNonRacePitPulse      = new Array(NUM_CARS).fill(false); // carIdx → true while the non-race 6s "IN PIT" pulse is showing
+        const carNonRacePitPulseTimer = new Array(NUM_CARS).fill(null);  // carIdx → active 6-second pulse timeout
+        const carWasInPit             = new Array(NUM_CARS).fill(false); // carIdx → previous frame's In-Pit Logo trigger state, for rising-edge detection
+        const carPitPulseSeeded       = new Array(NUM_CARS).fill(false); // carIdx → false until the first post-reset sample has been used to seed carWasInPit (prevents every car pulsing at once when a session starts with the whole grid parked in the pits)
         const carOvertakeActive  = new Array(NUM_CARS).fill(false); // carIdx → m_overtakeActive from pid 16 (2026 Season Pack only)
         const car2026Regulations = new Array(NUM_CARS).fill(-1);    // carIdx → m_2026Regulations from pid 16 (-1=no pid 16 data yet, 0=pre-2026, 1=2026 regs)
         let fastestLapCarIdx = -1; // carIdx with the fastest lap (updated from pid 11)
@@ -1288,6 +1298,7 @@
             elTiming.style.display      = (!mfdActive && !showLastNames && !formationLap && isRace && paneMode !== 1 && paneMode !== 3)  ? '' : 'none';
             elQualiTiming.style.display = (!mfdActive && !showLastNames && !formationLap && !isRace && paneMode !== 1 && paneMode !== 3) ? '' : 'none';
             elBattery.style.display     = (showBattery && isRace) ? '' : 'none';
+            elPitStatus.style.left      = isRace ? '365px' : '375px';
 
             updateRaceLaps();
 
@@ -1736,17 +1747,19 @@
             }, 6000));
         }
 
-        // ── Fastest Lap Animation trigger (non-race, P1 only) — item_1_24r0r0_1 ──────
+        // ── Fastest Lap Animation trigger (non-race, P1 only) — item_1_24r0r0r0/25r0r0r0 ──
         // Slides the magenta overlay to full width when P1 sets a new fastest lap,
-        // then retracts after 6 seconds. Width matches pane mode (185px narrow, 306px full).
+        // then retracts after 6 seconds. Width matches pane mode (305px narrow, 485px full).
         function triggerFlAnim() {
             const narrow = paneMode === 1 || paneMode === 3;
-            elFlAnim.style.width = narrow ? '185px' : '306px'; // Full-width adjusted from 310px to 306px to match the design a bit better
+            elFlAnim.style.width = narrow ? '305px' : '485px';
             if (flAnimTimer) clearTimeout(flAnimTimer);
             flAnimTimer = setTimeout(() => {
                 elFlAnim.style.width = '0px';
                 flAnimTimer = null;
+                updateTyreRowVisibility(); // re-reveal P1's tyre letter once the glow ends
             }, 6000);
+            updateTyreRowVisibility(); // hide P1's tyre letter immediately, don't wait for the next packet
         }
 
         // Keeps #lb-fl-anim vertically aligned to the P1 row under all row-offset modes.
@@ -1767,7 +1780,9 @@
             flRaceAnimTimer = setTimeout(() => {
                 elFlRaceAnim.style.width = '0px';
                 flRaceAnimTimer = null;
+                updateTyreRowVisibility(); // re-reveal this row's tyre letter once the glow ends
             }, 3333);
+            updateTyreRowVisibility(); // hide this row's tyre letter immediately, don't wait for the next packet
         }
 
         // Keeps #lb-fl-race-anim aligned to the fastest-lap car's current row.
@@ -1793,6 +1808,7 @@
             elFlLogo.style.left    = statusLeft;
             elFinish.style.left    = statusLeft;
             elInPit.style.left     = statusLeft;
+            elPitStatus.style.opacity = narrow ? '0' : '1'; // no transition — snaps instantly, hidden entirely in narrow panes
         }
 
         // ── Timing formatters ─────────────────────────────────────────────────────
@@ -1886,6 +1902,11 @@
             carResultStatus.fill(0);
             carDriverStatus.fill(-1);
             carPitStatus.fill(0);
+            carNonRacePitPulse.fill(false);
+            carWasInPit.fill(false);
+            carPitPulseSeeded.fill(false);
+            carNonRacePitPulseTimer.forEach(id => { if (id !== null) clearTimeout(id); });
+            carNonRacePitPulseTimer.fill(null);
             carOvertakeActive.fill(false);
             car2026Regulations.fill(-1);
             prevPersonalBestMs.fill(0);
@@ -1969,6 +1990,7 @@
             tyreRows.forEach(row => {
                 row.text.textContent = '';
                 row.text.style.color = '';
+                row.text.parentElement.style.display = 'none';
             });
 
             // Clear DRS rows
@@ -2644,9 +2666,10 @@
             }
         }
 
-        // Re-hide timing and tyre columns for OUT/DNF/DSQ/retired drivers in race sessions.
+        // Re-hide timing columns for OUT/DNF/DSQ/retired drivers in race sessions.
         // Called after applyIndicators() (which resets timing rows to display:'') both from
         // the pid 2 post-processing and from the config handler (when playback is paused).
+        // Tyre is NOT handled here — see updateTyreRowVisibility() below.
         function hideOutDriverColumns() {
             if (!isRace) return;
             for (let carIdx = 0; carIdx < NUM_CARS; carIdx++) {
@@ -2657,8 +2680,57 @@
                     const rowIdx = pos - 1;
                     timingRows[rowIdx].iText.parentElement.style.display = 'none';
                     timingRows[rowIdx].lText.parentElement.style.display = 'none';
-                    tyreRows[rowIdx].text.parentElement.style.display    = 'none';
                 }
+            }
+        }
+
+        // ── Tyre row visibility — single source of truth ────────────────────────────
+        // Pit status (pid 2) and tyre compound (pid 7) are independent, unsynchronized
+        // packet streams. Previously each computed its own hide condition inline, so
+        // whichever packet happened to land last during a transition (e.g. a car's
+        // deltas zeroing out on pit entry just before m_pitStatus itself flips) would
+        // "win" for that frame — flickering the tyre letter on/off. Recomputing the full
+        // condition fresh here, from state that's always current regardless of which
+        // packet last wrote it, and calling it after both pid 2 and pid 7 (and whenever
+        // the fastest-lap glow starts/stops) keeps the two streams from disagreeing.
+        function updateTyreRowVisibility() {
+            const playerTeamId = playerCarIdx >= 0 ? (carTeamIds[playerCarIdx] ?? -2) : -2;
+            for (let carIdx = 0; carIdx < NUM_CARS; carIdx++) {
+                const pos = carPositions[carIdx];
+                if (pos < 1 || pos > NUM_CARS) continue;
+                const posIdx = pos - 1;
+
+                const resultStatus = carResultStatus[carIdx] ?? 0;
+                const isNotActive  = resultStatus < 2 || resultStatus > 3; // not "Active" or "Finished"
+                const inPits       = (carPitStatus[carIdx] ?? 0) > 0 || (carDriverStatus[carIdx] ?? -1) === 0;
+                // Reading the live DOM opacity (rather than recomputing racePit/racePitExit/the non-race
+                // pulse here) guarantees this always matches whatever pid 2 last decided, including the
+                // delta-zeroed pit-entry edge case that isn't yet reflected in carPitStatus.
+                const pitStatusShowing = pitStatusRows[posIdx].row.style.opacity === '1';
+                const outShowing       = outRows[posIdx].row.style.display === 'block';
+                const tyrePitExit = isRace &&
+                    carDriverStatus[carIdx] === 3 &&
+                    carNumPitStops[carIdx] > 0 &&
+                    carPitStatus[carIdx] === 0 &&
+                    pos > 1 &&
+                    carDeltaFront[carIdx] === 0 &&
+                    carDeltaLeader[carIdx] === 0 &&
+                    !isRaceRestart;
+                const isTeammateRow = showTeammateIndicator && playerCarIdx >= 0
+                    && carIdx !== playerCarIdx
+                    && playerTeamId >= 0
+                    && carTeamIds[carIdx] === playerTeamId;
+                const isPlayerRow = showPrimaryPI && carIdx === playerCarIdx;
+
+                // Fastest-lap glow masking: hide the tyre letter on whichever row is currently
+                // showing the "new fastest lap" animation (non-race P1-only, or race per-car).
+                const flAnimShowing     = !isRace && flAnimTimer !== null && pos === 1;
+                const flRaceAnimShowing = isRace && flRaceAnimTimer !== null && fastestLapCarIdx === carIdx;
+
+                const hidden = isNotActive || inPits || pitStatusShowing || outShowing || tyrePitExit
+                    || isPlayerRow || isTeammateRow || flAnimShowing || flRaceAnimShowing;
+
+                tyreRows[posIdx].text.parentElement.style.display = hidden ? 'none' : '';
             }
         }
 
@@ -2876,6 +2948,28 @@
                             (car.m_resultStatus ?? 0) !== 3;  // only show for non-finished cars
                         inPitRows[pos - 1].row.style.display = inPit ? 'block' : 'none';
 
+                        // Non-race "IN PIT" pulse for the Pit Status column — same trigger as the
+                        // In-Pit Logo above, but surfaced as a one-shot 6-second notification instead
+                        // of a persistent icon (races already show live pit status via racePit below,
+                        // no timer needed there since m_pitStatus/deltas are continuously accurate).
+                        // The whole grid starts a non-race session parked in the pits, so the first
+                        // sample after a reset only seeds the baseline — it can't fire a pulse, or
+                        // every car would flash IN PIT together the moment the session begins.
+                        if (!carPitPulseSeeded[idx]) {
+                            carPitPulseSeeded[idx] = true;
+                            carWasInPit[idx] = inPit;
+                        } else {
+                            if (inPit && !carWasInPit[idx]) {
+                                carNonRacePitPulse[idx] = true;
+                                if (carNonRacePitPulseTimer[idx]) clearTimeout(carNonRacePitPulseTimer[idx]);
+                                carNonRacePitPulseTimer[idx] = setTimeout(() => {
+                                    carNonRacePitPulse[idx] = false;
+                                    carNonRacePitPulseTimer[idx] = null;
+                                }, 6000);
+                            }
+                            carWasInPit[idx] = inPit;
+                        }
+
                         // Penalty row — race-only, shown when toggle on and any penalty exists
                         const unservedSG = car.m_numUnservedStopGoPens ?? 0;
                         const unservedDT = car.m_numUnservedDriveThroughPens ?? 0;
@@ -2905,10 +2999,11 @@
                             penRow.value.parentElement.style.display = 'none';
                         }
 
-                        // Pit Status row — race-only, shows IN PIT while in pitlane, PIT EXIT while
+                        // Pit Status row — race: persistent IN PIT while in pitlane, PIT EXIT while
                         // merging back onto track (delta still zero), hidden once timing resumes.
                         // P1 skips PIT EXIT entirely since delta-to-leader is always zero for the leader.
                         // Also catches pit entry: driverStatus === 2 (in lap) with deltas already zeroed.
+                        // Non-race: one-shot 6s IN PIT pulse, see carNonRacePitPulse trigger above.
                         const racePit = isRace &&
                             ((car.m_pitStatus ?? 0) > 0 ||
                             (car.m_driverStatus ?? -1) === 0 ||
@@ -2932,6 +3027,12 @@
                             psRow.row.style.opacity = '1';
                         } else if (racePitExit) {
                             psRow.text.textContent  = 'PIT EXIT';
+                            psRow.text.style.color  = carPrimaryColors[idx] ?? 'rgb(255, 255, 255)';
+                            psRow.row.style.opacity = '1';
+                        } else if (carNonRacePitPulse[idx]) {
+                            // Non-race: one-shot 6s pulse (trigger set above), independent of whether
+                            // the car is still physically in the pits by the time this renders.
+                            psRow.text.textContent  = 'IN PIT';
                             psRow.text.style.color  = carPrimaryColors[idx] ?? 'rgb(255, 255, 255)';
                             psRow.row.style.opacity = '1';
                         } else {
@@ -3135,8 +3236,9 @@
 
                 applyIndicators();
                 updateKnockoutIndicators();
+                hideOutDriverColumns();
 
-                // Hide timing and tyre for any rows currently showing pit status or OUT text.
+                // Hide timing for any rows currently showing pit status text.
                 // Must run after applyIndicators() since that clears all timing rows to ''.
                 for (let p = 0; p < NUM_CARS; p++) {
                     if (pitStatusRows[p].row.style.opacity === '1') {
@@ -3144,21 +3246,9 @@
                         timingRows[p].lText.parentElement.style.display      = 'none';
                         qualiTimingRows[p].gText.parentElement.style.display = 'none';
                         qualiTimingRows[p].tText.parentElement.style.display = 'none';
-                        tyreRows[p].text.parentElement.style.display         = 'none';
-                    }
-                    hideOutDriverColumns();
-                }
-
-                // Re-hide tyre rows for any car currently in the pits. applyIndicators() unconditionally
-                // resets all tyre rows to display:'', so in non-race sessions (where pitStatusRows are
-                // never set to opacity '1') the tyre would otherwise flicker visible on every Packet 2.
-                for (let ci = 0; ci < NUM_CARS; ci++) {
-                    const pos = carPositions[ci];
-                    if (pos < 1 || pos > NUM_CARS) continue;
-                    if ((carPitStatus[ci] ?? 0) > 0 || (carDriverStatus[ci] ?? -1) === 0) {
-                        tyreRows[pos - 1].text.parentElement.style.display = 'none';
                     }
                 }
+                updateTyreRowVisibility();
             }
 
             // Packet ID 3 — Event
@@ -3405,32 +3495,11 @@
                     const inPits = (carPitStatus[carIdx] ?? 0) > 0 || (carDriverStatus[carIdx] ?? -1) === 0;
                     const showMfd2 = !isNotActive && (isRace || hasBestLap) && !inPits;
                     mfd2Rows[pos - 1].row.style.display = showMfd2 ? 'flex' : 'none';
-
-                    // Tyre row visibility: hide for inactive/DSQ/retired or in pits;
-                    // in race, also hide on pit exit (driverStatus=out lap, deltas still zero) until timing resumes
-                    const tyrePitExit = isRace &&
-                        carDriverStatus[carIdx] === 3 &&
-                        carNumPitStops[carIdx] > 0 &&
-                        carPitStatus[carIdx] === 0 &&
-                        pos > 1 &&
-                        carDeltaFront[carIdx] === 0 &&
-                        carDeltaLeader[carIdx] === 0 &&
-                        !isRaceRestart;
-                    const playerTeamId = playerCarIdx >= 0 ? (carTeamIds[playerCarIdx] ?? -2) : -2;
-                    const isTeammateRow = showTeammateIndicator && playerCarIdx >= 0
-                        && carIdx !== playerCarIdx
-                        && playerTeamId >= 0
-                        && carTeamIds[carIdx] === playerTeamId;
-                    const isPlayerRow = showPrimaryPI && carIdx === playerCarIdx;
-                    if (isPlayerRow || isTeammateRow) {
-                        tRow.text.parentElement.style.display = 'none';
-                    } else {
-                        tRow.text.parentElement.style.display = (!isNotActive && !inPits && !tyrePitExit) ? '' : 'none';
-                    }
                 });
                 updateBatteryLayout();
                 updatePenaltyLayout();
                 updateFlLogoLayout();
+                updateTyreRowVisibility();
             }
 
             // Packet ID 11 — Session History: best lap per car
@@ -3629,10 +3698,14 @@
             elTyre.style.display = tyreHidden ? 'none' : '';
             if (!tyreHidden) {
                 elTyre.style.opacity = (mfdActive && !isMfd2) ? '0' : '1';
-                elTyre.style.left    = isMfd2 ? '280px' : '299px';
+                elTyre.style.left    = isMfd2 ? '455px' : '472px';
                 tyreRows.forEach(({ text }) => { text.style.fontSize = isMfd2 ? '24px' : '18px'; });
             }
             elDrs.style.display         = (!mfdActive && !showLastNames) ? '' : 'none';
+
+            // Pit Status column — hidden while any MFD page is active (same reasoning as DRS above:
+            // it isn't covered by the MFD content area's width, so it would otherwise show through)
+            elPitStatus.style.display   = mfdActive ? 'none' : '';
 
             // ERS battery — hide entire column when toggled off or outside race sessions
             showBattery = !!cfg.showBattery;
