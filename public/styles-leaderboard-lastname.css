@@ -1918,11 +1918,17 @@ body { background: black; overflow: hidden; }
 }
 
 /* ════════════════════════════════════════════════════════════════
-   MFD1 — CURRENT TYRES PAGE (item_1_20r0r0r0 group)
-   Header BG (item_1_30r0r0r0_1): 310×105 at left:27, top:145
-   Label text (item_1_30r0r0r0_2): "CURRENT TYRES", F1TV-2022-ObliqueBold 24px
-   Compound name rows (item_1_21r0r0r0r0): 180×1100 at left:167, top:161
+   MFD1 — CURRENT TYRES PAGE
+   Header BG (item_1_30r0r0r0_1): 310×105 at left:27, top:145 — unchanged, out of
+   scope for the data-row rework below (handled separately).
+   Compound name rows (item_1_28r0r0r0r0): 180×1100 at left:345, top:160.
+   Container top matches elDrivers' own top exactly (160px) — elMfd1 is a member of
+   ROW_CONTAINERS, so getRowTop(i) positions its rows the same way as every other
+   row-based element (including the flags/VSC-banner and Formation Lap row-shift
+   branches), instead of a hand-rolled formula that only matched one of those branches.
    Both hidden by default; toggled as a pair by the controller.
+   Opacity/visibility computed centrally — see updateMfd1DataVisibility() and
+   updateMfd1RowVisibility() in JS.
    ════════════════════════════════════════════════════════════════ */
 #lb-mfd1-header {
     left: 27px;
@@ -1955,8 +1961,8 @@ body { background: black; overflow: hidden; }
 }
 
 #lb-mfd1 {
-    left: 167px;
-    top: 207.5px;
+    left: 345px;
+    top: 160px;
     width: 180px;
     height: 1200px;
     opacity: 0;
@@ -1974,13 +1980,20 @@ body { background: black; overflow: hidden; }
     font-family: 'F1TV-2022';
     font-size: 20px;
     white-space: pre;
+    transition: top 333ms ease;
 }
 
 /* ════════════════════════════════════════════════════════════════
-   MFD2 — CURRENT TYRE AGE PAGE (item_1_21r0r0r0r0_24)
-   Header BG (item_1_30r0r0r0_1): same 310×105 at left:27, top:145
-   Label (item_1_30r0r0r0_3): F1TV-2022-ObliqueCondensed 20.5px
-   Age rows: 70×50 at left:45, F1TV-2022-ObliqueBold 32px, white, right-aligned
+   MFD2 — CURRENT TYRE AGE PAGE
+   Header BG (item_1_30r0r0r0_1): same 310×105 at left:27, top:145 — unchanged, out
+   of scope for the data-row rework below (handled separately).
+   Age rows (item_1_29r0r0r0r0): container shares MFD1's 180px-wide "page frame" at
+   left:345, top:160 (elMfd2 is a ROW_CONTAINERS member — see JS); the row's own
+   left:45/width:70 inset lands the visible 70px band at the source's absolute
+   left:390, matching item_1_29r0r0r0r0's own captured position exactly.
+   F1TV-2022-ObliqueBold 32px, white, right-aligned — already matched, unchanged.
+   Opacity/visibility computed centrally — see updateMfd2DataVisibility() and
+   updateMfd2RowVisibility() in JS.
    ════════════════════════════════════════════════════════════════ */
 #lb-mfd2-header {
     left: 27px;
@@ -2013,8 +2026,8 @@ body { background: black; overflow: hidden; }
 }
 
 #lb-mfd2 {
-    left: 167px;
-    top: 207.5px;
+    left: 345px;
+    top: 160px;
     width: 180px;
     height: 1200px;
     opacity: 0;
@@ -2035,13 +2048,20 @@ body { background: black; overflow: hidden; }
     font-size: 32px;
     color: #ffffff;
     white-space: pre;
+    transition: top 333ms ease;
 }
 
 /* ════════════════════════════════════════════════════════════════
-   MFD3 — LAPS COMPLETED / TYRE CHANGES PAGE (item_1_21r0r0r0r0_47)
-   Header BG (item_1_30r0r0r0_1): same 310×105 at left:27, top:145
-   Label (item_1_30r0r0r0_4): F1TV-2022-ObliqueBold 24px — text set by JS
-   Value rows: 70×50 at left:45, F1TV-2022-ObliqueBold 32px, white, right-aligned
+   MFD3 — LAPS COMPLETED / TYRE CHANGES PAGE
+   Header BG (item_1_30r0r0r0_1): same 310×105 at left:27, top:145 — unchanged, out
+   of scope for the data-row rework below (handled separately).
+   Label (item_1_30r0r0r0_4): F1TV-2022-ObliqueBold 24px — text set by JS.
+   Value rows (item_1_30r0r0r0r0): shares the 345px "page frame" at left:345, top:160
+   (elMfd3 is a ROW_CONTAINERS member — see JS); row's own left:45/width:70 inset
+   lands the visible band at the source's absolute left:390, same as MFD2.
+   F1TV-2022-ObliqueBold 32px, white, right-aligned — already matched, unchanged.
+   Opacity/visibility computed centrally — see updateMfd3DataVisibility() and
+   updateMfd3RowVisibility() in JS.
    ════════════════════════════════════════════════════════════════ */
 #lb-mfd3-header {
     left: 27px;
@@ -2073,8 +2093,8 @@ body { background: black; overflow: hidden; }
 }
 
 #lb-mfd3 {
-    left: 167px;
-    top: 207.5px;
+    left: 345px;
+    top: 160px;
     width: 180px;
     height: 1200px;
     opacity: 0;
@@ -2095,14 +2115,24 @@ body { background: black; overflow: hidden; }
     font-size: 32px;
     color: #ffffff;
     white-space: pre;
+    transition: top 333ms ease;
 }
 
 /* ════════════════════════════════════════════════════════════════
-   MFD4 — GAINED / LOST PAGE (item_1_21r0r0r0r0_70)
-   Header BG (item_1_30r0r0r0_1): same 310×105 at left:27, top:145
-   Label (item_1_30r0r0r0_5): F1TV-2022-ObliqueBold 24px
-   Per-car row: arrow image 60×50 at left:40 + number text 70×50 at left:100
-   Arrow images: Arrow_Up.png / Arrow_Down.png / Arrow_None.png
+   MFD4 — GAINED / LOST PAGE
+   Header BG (item_1_30r0r0r0_1): same 310×105 at left:27, top:145 — unchanged,
+   out of scope for the data-row rework below (handled separately).
+   Label (item_1_30r0r0r0_5): F1TV-2022-ObliqueBold 24px.
+   Container (item_1_31r0r0r0r0): own "page frame", left:380, top:160, width:130
+   (NOT the 345px frame MFD1-3 share — arrow(60)+text(70) fill the container
+   exactly, no inset needed). Race-only (isMfd4 already gates on isRace).
+   Per-car row (item_1_31r0r0r0r0_1): arrow image 60×50 at left:0 (item_..._2r0)
+   + number text 70×50 at left:60 (item_..._3r0) — was 40/100, off by a flat 40px.
+   Arrow images: Arrow_Up.png / Arrow_Down.png / Arrow_None.png, now pointing at
+   the leaderboard-lastname image folder (was leaderboard's, same files either way).
+   Opacity/visibility computed centrally — see updateMfd4DataVisibility() in JS.
+   No per-row hide logic — MFD4 deliberately keeps showing for retired/DSQ/DNF
+   drivers (gained/lost-vs-grid stays meaningful), unlike MFD1-3.
    ════════════════════════════════════════════════════════════════ */
 #lb-mfd4-header {
     left: 27px;
@@ -2134,9 +2164,9 @@ body { background: black; overflow: hidden; }
 }
 
 #lb-mfd4 {
-    left: 167px;
-    top: 207.5px;
-    width: 180px;
+    left: 380px;
+    top: 160px;
+    width: 130px;
     height: 1200px;
     opacity: 0;
     transition: opacity 167ms ease;
@@ -2145,13 +2175,14 @@ body { background: black; overflow: hidden; }
 .lb-mfd4-row {
     position: absolute;
     left: 0;
-    width: 180px;
+    width: 130px;
     height: 50px;
+    transition: top 333ms ease;
 }
 
 .lb-mfd4-arrow {
     position: absolute;
-    left: 40px;
+    left: 0;
     top: 0;
     width: 60px;
     height: 50px;
@@ -2159,13 +2190,13 @@ body { background: black; overflow: hidden; }
     background-repeat: no-repeat;
 }
 
-.lb-mfd4-arrow--up   { background-image: url('/images/leaderboard/Arrow_Up.png');   }
-.lb-mfd4-arrow--down { background-image: url('/images/leaderboard/Arrow_Down.png'); }
-.lb-mfd4-arrow--none { background-image: url('/images/leaderboard/Arrow_None.png'); }
+.lb-mfd4-arrow--up   { background-image: url('/images/leaderboard-lastname/Arrow_Up.png');   }
+.lb-mfd4-arrow--down { background-image: url('/images/leaderboard-lastname/Arrow_Down.png'); }
+.lb-mfd4-arrow--none { background-image: url('/images/leaderboard-lastname/Arrow_None.png'); }
 
 .lb-mfd4-text {
     position: absolute;
-    left: 100px;
+    left: 60px;
     top: 0;
     width: 70px;
     height: 50px;
