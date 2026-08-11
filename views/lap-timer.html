@@ -681,7 +681,11 @@
             
             // Q1/Sprint Shootout 1 - compare to knockout threshold
             if ([SESSION_TYPE.QUALIFYING_1, SESSION_TYPE.SPRINT_SHOOTOUT_1].includes(sessionType)) {
-                const threshold = numActiveCars === 20 ? DriverUtils.KNOCKOUT_ZONE_POSITIONS.Q1_20_CARS : DriverUtils.KNOCKOUT_ZONE_POSITIONS.Q1_22_CARS;
+                const threshold = numActiveCars > 22
+                    ? DriverUtils.KNOCKOUT_ZONE_POSITIONS.Q1_24_CARS
+                    : numActiveCars > 20
+                        ? DriverUtils.KNOCKOUT_ZONE_POSITIONS.Q1_22_CARS
+                        : DriverUtils.KNOCKOUT_ZONE_POSITIONS.Q1_20_CARS;
                 if (currentPosition > threshold) {
                     for (let i = 0; i < allLapData.length; i++) {
                         if (allLapData[i].m_carPosition === threshold) {
