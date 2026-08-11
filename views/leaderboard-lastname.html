@@ -181,34 +181,46 @@
                 <div id="lb-fl-race-anim-text">FASTEST LAP</div>
             </div>
 
+            <!-- MFD header (item_1_37r0r0r0): 484×55 at left:28, top:145 — shared background +
+                 container for all four MFD page labels, consolidated from four separate
+                 per-page headers (source models it this way: only one MFD page is ever active
+                 at a time, so one shared background + four independently-toggled labels avoids
+                 duplicating the same shift/suppression logic four times — same rationale as the
+                 ROW_CONTAINERS consolidation used for the MFD data rows).
+                 Background is two overlapping 305×105 TimeLapsRemBG.png tiles (that asset is
+                 already used elsewhere in this file for the time/laps-remaining banner) rather
+                 than the old single narrower Header_BG.png — needed since one copy alone
+                 (305px) doesn't cover the new 484px width.
+                 Shifts top +55px (145→200) while a yellow/green flag is shown — see
+                 updateMfdHeaderVisibility() in JS, called from setFlagsBanner() and from every
+                 site that already updates the four MFD data containers' own visibility
+                 (MFD-page toggle, Formation Lap, and the time/laps-remaining banner window all
+                 route through those same call sites). -->
+            <div id="lb-mfd-header">
+                <div id="lb-mfd-header-bg1"></div>
+                <div id="lb-mfd-header-bg2"></div>
+                <div id="lb-mfd1-label">CURRENT TYRES</div>
+                <div id="lb-mfd2-label">CURRENT TYRE AGE (LAPS)</div>
+                <div id="lb-mfd3-label">LAPS COMPLETED</div>
+                <div id="lb-mfd4-label">GAINED / LOST</div>
+            </div>
+
             <!-- MFD1 — Current Tyres page
-                 Header BG + label: 310×105 at left:27, top:145 — unchanged, out of scope
-                 for the data-row rework (handled separately).
                  Compound text rows (item_1_28r0r0r0r0): 180×1100 at left:345, top:160.
                  Full compound name (TYRE_COMPOUND displayText) per row, hidden by default.
                  Visibility computed centrally — see updateMfd1DataVisibility() (container)
                  and updateMfd1RowVisibility() (per row) in JS. -->
-            <div id="lb-mfd1-header">
-                <div id="lb-mfd1-label">CURRENT TYRES</div>
-            </div>
             <div id="lb-mfd1"></div>
 
             <!-- MFD2 — Current Tyre Age page
-                 Header BG + label: 310×105 at left:27, top:145 — unchanged, out of scope
-                 for the data-row rework (handled separately).
                  Tyre age rows (item_1_29r0r0r0r0): shares MFD1's 180px "page frame" at
                  left:345, top:160; row's own left:45/width:70 inset lands the visible
                  band at the source's absolute left:390. Hidden by default.
                  Visibility computed centrally — see updateMfd2DataVisibility() (container)
                  and updateMfd2RowVisibility() (per row) in JS. -->
-            <div id="lb-mfd2-header">
-                <div id="lb-mfd2-label">CURRENT TYRE AGE (LAPS)</div>
-            </div>
             <div id="lb-mfd2"></div>
 
             <!-- MFD3 — Laps Completed / Tyre Changes page
-                 Header BG + label: 310×105 at left:27, top:145 — unchanged, out of scope
-                 for the data-row rework (handled separately).
                  Label: "LAPS COMPLETED" in non-race, "TYRE CHANGES" in race.
                  Value rows (item_1_30r0r0r0r0): shares the 345px "page frame" at left:345,
                  top:160; row's own left:45/width:70 inset lands the visible band at the
@@ -216,14 +228,9 @@
                  or m_numPitStops (race) from pid 2. Hidden by default.
                  Visibility computed centrally — see updateMfd3DataVisibility() (container)
                  and updateMfd3RowVisibility() (per row) in JS. -->
-            <div id="lb-mfd3-header">
-                <div id="lb-mfd3-label">LAPS COMPLETED</div>
-            </div>
             <div id="lb-mfd3"></div>
 
             <!-- MFD4 — Gained / Lost positions page
-                 Header BG + label: 310×105 at left:27, top:145 — unchanged, out of scope
-                 for the data-row rework (handled separately).
                  Container (item_1_31r0r0r0r0): own page frame, left:380, top:160, width:130
                  (not the 345px frame MFD1-3 share — arrow+text fill it exactly).
                  Each row has an arrow image (60×50 at left:0) and delta text (70×50 at
@@ -233,9 +240,6 @@
                  No per-row hide logic — deliberately keeps showing for retired/DSQ/DNF
                  drivers, unlike MFD1-3. Opacity computed centrally — see
                  updateMfd4DataVisibility() in JS. -->
-            <div id="lb-mfd4-header">
-                <div id="lb-mfd4-label">GAINED / LOST</div>
-            </div>
             <div id="lb-mfd4"></div>
 
             <!-- Vertical gradient — normal (item_1_26r0r0r0): Gradient_Vertical.png
@@ -334,14 +338,17 @@
                 </div>
             </div>
 
-            <!-- Starting Tyres Banner (item_1_31r0r0r0): 305×105 at left:29, top:145.5 — formation lap only -->
+            <!-- Starting Grid Banner (item_1_38r0r0r0): 484×105 at left:27, top:145 — formation lap only -->
             <div id="lb-formation-banner">
-                <!-- Background (item_1_31r0r0r0_1): LapBG.png 313×116 at left:0, top:-5, opacity:0.85 -->
+                <!-- Background (item_1_38r0r0r0_1): TopBG.png 484×105 at left:0, top:0, opacity:0.85 -->
                 <div id="lb-formation-banner-bg"></div>
-                <!-- "STARTING" (item_1_31r0r0r0_2): 295×40 at top:10  F1TV-2022 ObliqueBold 35px white centered -->
+                <!-- "STARTING" (item_1_38r0r0r0_2): 490×40 at top:10  F1TV-2022 ObliqueBold 35px white centered -->
                 <div id="lb-formation-banner-line1">STARTING</div>
-                <!-- "GRID" (item_1_31r0r0r0_3): 295×40 at top:55  F1TV-2022 ObliqueBold 35px white centered -->
+                <!-- "GRID" (item_1_38r0r0r0_3): 490×40 at top:55  F1TV-2022 ObliqueBold 35px white centered -->
                 <div id="lb-formation-banner-line2">GRID</div>
+                <!-- Rotated shadow gradient (item_1_38r0r0r0_4): Gradient.png 484×30 at left:-3, top:75,
+                     rotated 180°, opacity:0.35 — new element, wasn't previously implemented. -->
+                <div id="lb-formation-banner-gradient"></div>
             </div>
 
             <!-- SC/VSC Ending Banner (item_1_29r0r0r0): 306×55 at left:27.5, top:201 — hidden by default -->
@@ -500,14 +507,14 @@
         const elPitStatus    = document.getElementById('lb-pit-status');
         const elTyre         = document.getElementById('lb-tyre');
         const elDrs          = document.getElementById('lb-drs');
-        const elMfd1Header   = document.getElementById('lb-mfd1-header');
+        const elMfdHeader    = document.getElementById('lb-mfd-header');
+        const elMfd1Label    = document.getElementById('lb-mfd1-label');
         const elMfd1         = document.getElementById('lb-mfd1');
-        const elMfd2Header   = document.getElementById('lb-mfd2-header');
+        const elMfd2Label    = document.getElementById('lb-mfd2-label');
         const elMfd2         = document.getElementById('lb-mfd2');
-        const elMfd3Header   = document.getElementById('lb-mfd3-header');
         const elMfd3Label    = document.getElementById('lb-mfd3-label');
         const elMfd3         = document.getElementById('lb-mfd3');
-        const elMfd4Header   = document.getElementById('lb-mfd4-header');
+        const elMfd4Label    = document.getElementById('lb-mfd4-label');
         const elMfd4         = document.getElementById('lb-mfd4');
         const elFinishedImg  = document.getElementById('lb-finished-img');
         const elVscBanner    = document.getElementById('lb-vsc-banner');
@@ -1466,16 +1473,15 @@
             elVscBanner.style.width = narrow   ? '186px' : '306px';
         }
 
-        // ── Starting Tyres banner (item_1_31r0r0r0) ───────────────────────────────
+        // ── Starting Tyres banner (item_1_38r0r0r0) ───────────────────────────────
         // Shown (opacity 1) during Formation Lap (m_safetyCarStatus === 3), hidden otherwise.
         function updateFormationBanner() {
-            const narrow   = paneMode === 1 || paneMode === 3;
+            const narrow = paneMode === 1 || paneMode === 3;
             const fontSize = narrow ? '25px' : '35px';
-            const textLeft = narrow ? '-58px' : '0px';
             elFormationBanner.style.opacity          = formationLap ? '1' : '0';
-            elFormationBanner.style.width            = narrow ? '184px' : '307px';
-            elFormationBannerLine1.style.left        = textLeft;
-            elFormationBannerLine2.style.left        = textLeft;
+            elFormationBanner.style.width            = narrow ? '365px' : '485px';
+            elFormationBannerLine1.style.left        = narrow ? '-67px' : '0px';
+            elFormationBannerLine2.style.left        = narrow ? '-65px' : '0px';
             elFormationBannerLine1.style.fontSize    = fontSize;
             elFormationBannerLine2.style.fontSize    = fontSize;
         }
@@ -2281,6 +2287,7 @@
             updateBatteryLayout();
             updatePenaltyLayout();
             updateFlLogoLayout();
+            updateMfdHeaderVisibility(); // reacts to yellow/green flag for its own +55px shift
             // Banner itself is hidden when any MFD page is active (rows use MFD stride instead)
             elVscBanner.style.display    = (mode && !mfdActive) ? 'block' : 'none';
             const scVsc = mode === 'vsc' || mode === 'sc';
@@ -2431,6 +2438,7 @@
             updateBatteryLayout();
             updatePenaltyLayout();
             updateFlLogoLayout();
+            updateMfdHeaderVisibility();
             updateMfd1DataVisibility();
             updateMfd2DataVisibility();
             updateMfd3DataVisibility();
@@ -2451,6 +2459,7 @@
                 updatePenaltyLayout();
                 updateFlLogoLayout();
                 updateOverlayHeight();
+                updateMfdHeaderVisibility();
                 updateMfd1DataVisibility();
                 updateMfd2DataVisibility();
                 updateMfd3DataVisibility();
@@ -2493,6 +2502,7 @@
             updateBatteryLayout();
             updatePenaltyLayout();
             updateFlLogoLayout();
+            updateMfdHeaderVisibility();
             updateMfd1DataVisibility();
             updateMfd2DataVisibility();
             updateMfd3DataVisibility();
@@ -2519,6 +2529,7 @@
                 updatePenaltyLayout();
                 updateFlLogoLayout();
                 updateOverlayHeight();
+                updateMfdHeaderVisibility();
                 updateMfd1DataVisibility();
                 updateMfd2DataVisibility();
                 updateMfd3DataVisibility();
@@ -2955,6 +2966,28 @@
             elMfd4.style.opacity = (isMfd4 && !formationLap && !timeLapsBannerActive) ? '1' : '0';
         }
 
+        // ── MFD header — single source of truth for the shared background + all four
+        // labels (see the HTML comment above #lb-mfd-header for why this is consolidated).
+        // Shifts down 55px while a yellow/green flag is shown (call from setFlagsBanner()
+        // too, not just here, so the shift reacts immediately rather than waiting for the
+        // next MFD-page-toggle-driven call). Opacity/height follow the same
+        // active-page/Formation-Lap/time-laps-banner rules as the four data containers.
+        function updateMfdHeaderVisibility() {
+            const hasFlag = flagsBannerMode === 'yellow' || flagsBannerMode === 'green';
+            elMfdHeader.style.top     = hasFlag ? '200px' : '145px';
+            elMfdHeader.style.opacity = ((isMfd1 || isMfd2 || isMfd3 || isMfd4) && !formationLap && !timeLapsBannerActive) ? '1' : '0';
+
+            const labelHeight = hasFlag ? '50px' : '55px';
+            elMfd1Label.style.height  = labelHeight;
+            elMfd2Label.style.height  = labelHeight;
+            elMfd3Label.style.height  = labelHeight;
+            elMfd4Label.style.height  = labelHeight;
+            elMfd1Label.style.opacity = isMfd1 ? '1' : '0';
+            elMfd2Label.style.opacity = isMfd2 ? '1' : '0';
+            elMfd3Label.style.opacity = isMfd3 ? '1' : '0';
+            elMfd4Label.style.opacity = isMfd4 ? '1' : '0';
+        }
+
         // ── Slot visibility ────────────────────────────────────────────────
         // Hide pre-allocated rows beyond the active car count for always-visible
         // containers. Conditionally-visible containers (inPit, finish, out,
@@ -3056,13 +3089,10 @@
                     updateHeaderDisplay(); updateStandingsVisibility();
                     updateAllRowPositions(); updateBatteryLayout(); updatePenaltyLayout(); updateFlLogoLayout();
                     // Formation Lap start: auto-show MFD1 data without header (wide mode only); end: hide if no MFD page active
-                    elMfd1Header.style.opacity = (isMfd1 && !formationLap) ? '1' : '0';
+                    updateMfdHeaderVisibility();
                     updateMfd1DataVisibility();
-                    elMfd2Header.style.opacity = (isMfd2 && !formationLap) ? '1' : '0';
                     updateMfd2DataVisibility();
-                    elMfd3Header.style.opacity = (isMfd3 && !formationLap) ? '1' : '0';
                     updateMfd3DataVisibility();
-                    elMfd4Header.style.opacity = (isMfd4 && !formationLap) ? '1' : '0';
                     updateMfd4DataVisibility();
                     // Tyre column: hide during formation lap (overlay_config may not re-fire in time)
                     const flTyreHidden = showLastNames || formulaType === 2 || formationLap || paneMode === 1 || paneMode === 3;
@@ -3830,13 +3860,10 @@
             updateScEndingBanner();
             updateFormationBanner();
             updateDataContainerLeft();
-            // MFD1-4 headers: same simple page-select rule for all four (data rows are
-            // handled separately below — see updateMfdNDataVisibility() for each page).
-            // isMfd4 already gates on isRace, so MFD4's header naturally stays race-only.
-            elMfd1Header.style.opacity = (isMfd1 && !formationLap) ? '1' : '0';
-            elMfd2Header.style.opacity = (isMfd2 && !formationLap) ? '1' : '0';
-            elMfd3Header.style.opacity = (isMfd3 && !formationLap) ? '1' : '0';
-            elMfd4Header.style.opacity = (isMfd4 && !formationLap) ? '1' : '0';
+            // MFD header + all four labels: single source of truth in updateMfdHeaderVisibility()
+            // (data rows are handled separately below — see updateMfdNDataVisibility() for each page).
+            // isMfd4 already gates on isRace, so MFD4's label naturally stays race-only.
+            updateMfdHeaderVisibility();
             updateMfd1DataVisibility();
             updateMfd2DataVisibility();
             updateMfd3DataVisibility();

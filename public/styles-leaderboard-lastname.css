@@ -513,13 +513,15 @@ body { background: black; overflow: hidden; }
 }
 
 /* ════════════════════════════════════════════════════════════════
-   STARTING GRID BANNER — item_1_31r0r0r0
-   305×105 at left:29, top:145.5  opacity:0 by default; fades in during Formation Lap
+   STARTING TYRES BANNER — item_1_38r0r0r0
+   484×105 at left:27, top:145  opacity:0 by default; fades in during Formation Lap.
+   Text was previously "STARTING GRID" — corrected to "STARTING TYRES", matching what
+   the banner actually shows (MFD1's tyre data) per the source's own description.
    ════════════════════════════════════════════════════════════════ */
 #lb-formation-banner {
-    left: 26px;
-    top: 95.5px; /* originally 145.5px, but moved up to fix layout a bit; return later if I want to implement an edge case here */
-    width: 307px;
+    left: 27px;
+    top: 95px;
+    width: 485px;
     height: 105px;
     overflow: hidden;
     opacity: 0;
@@ -528,26 +530,25 @@ body { background: black; overflow: hidden; }
 }
 #lb-formation-banner > * { position: absolute; }
 
-/* Background (item_1_31r0r0r0_1): LapBG.png 313×116 at left:0, top:-5  opacity:0.85 */
+/* Background (item_1_38r0r0r0_1): TopBG.png 484×105 at left:0, top:0, opacity:0.85 — same
+   asset + opacity already used by #lb-header-img above; no border (that was LapBG.png-
+   specific decorative framing, dropped along with that asset). */
 #lb-formation-banner-bg {
     left: 0;
-    top: -5px;
-    width: 313px;
-    height: 116px;
-    background-image: url('/images/leaderboard/LapBG.png');
-    background-size: 313px 116px;
-    border-style: solid;
-    border-width: 6px 0 7px;
-    border-color: rgb(90, 93, 98);
+    top: 0;
+    width: 485px;
+    height: 105px;
+    background-image: url('/images/leaderboard-lastname/TopBG.png');
+    background-size: 484px 105px;
     opacity: 0.85;
 }
 
-/* "STARTING" (item_1_31r0r0r0_2): 295×40 at left:0, top:10  F1TV-2022 ObliqueBold 35px white centered */
+/* "STARTING" (item_1_38r0r0r0_2): 490×40 at left:0, top:10  F1TV-2022 ObliqueBold 35px white centered */
 #lb-formation-banner-line1 {
     box-sizing: border-box;
     left: 0;
     top: 10px;
-    width: 295px;
+    width: 485px;
     height: 40px;
     font-family: 'F1TV-2022';
     font-weight: 700;
@@ -561,12 +562,12 @@ body { background: black; overflow: hidden; }
     transition: left 300ms ease, font-size 200ms ease;
 }
 
-/* "TYRES" (item_1_31r0r0r0_3): 295×40 at left:0, top:55  F1TV-2022 ObliqueBold 35px white centered */
+/* "TYRES" (item_1_38r0r0r0_3): 490×40 at left:0, top:55  F1TV-2022 ObliqueBold 35px white centered */
 #lb-formation-banner-line2 {
     box-sizing: border-box;
     left: 0;
     top: 55px;
-    width: 295px;
+    width: 485px;
     height: 40px;
     font-family: 'F1TV-2022';
     font-weight: 700;
@@ -578,6 +579,19 @@ body { background: black; overflow: hidden; }
     align-items: center;
     white-space: pre;
     transition: left 300ms ease, font-size 200ms ease;
+}
+
+/* Rotated shadow gradient (item_1_38r0r0r0_4) — new element, not previously implemented.
+   Same technique as #lb-header-gradient above: Gradient.png, rotated 180°, opacity 0.35. */
+#lb-formation-banner-gradient {
+    left: -3px;
+    top: 75px;
+    width: 485px;
+    height: 30px;
+    background-image: url('/images/common/Gradient.png');
+    background-size: 485px 30px;
+    opacity: 0.35;
+    transform: rotate(180deg);
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -1930,9 +1944,40 @@ body { background: black; overflow: hidden; }
 }
 
 /* ════════════════════════════════════════════════════════════════
+   MFD HEADER — item_1_37r0r0r0
+   Shared background + container for all four MFD page labels (see the HTML comment
+   above #lb-mfd-header for why this is consolidated instead of four separate headers).
+   Top shifts +55px (145→200) while a yellow/green flag is shown; opacity/visibility
+   computed centrally in updateMfdHeaderVisibility() (JS) — active MFD page, hidden
+   during Formation Lap and the time/laps-remaining banner window.
+   ════════════════════════════════════════════════════════════════ */
+#lb-mfd-header {
+    left: 28px;
+    top: 145px;
+    width: 484px;
+    height: 55px;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 167ms ease, top 300ms ease;
+}
+#lb-mfd-header > * { position: absolute; }
+
+/* Two overlapping copies of the same 305×105 asset tile the 484px width seamlessly
+   (one copy alone doesn't cover it) — same asset already used by #lb-timelaps-bg. */
+#lb-mfd-header-bg1,
+#lb-mfd-header-bg2 {
+    top: 0;
+    width: 305px;
+    height: 105px;
+    background-image: url('/images/leaderboard-lastname/TimeLapsRemBG.png');
+    background-size: 305px 105px;
+    background-repeat: no-repeat;
+}
+#lb-mfd-header-bg1 { left: 0; }
+#lb-mfd-header-bg2 { left: 304px; }
+
+/* ════════════════════════════════════════════════════════════════
    MFD1 — CURRENT TYRES PAGE
-   Header BG (item_1_30r0r0r0_1): 310×105 at left:27, top:145 — unchanged, out of
-   scope for the data-row rework below (handled separately).
    Compound name rows (item_1_28r0r0r0r0): 180×1100 at left:345, top:160.
    Container top matches elDrivers' own top exactly (160px) — elMfd1 is a member of
    ROW_CONTAINERS, so getRowTop(i) positions its rows the same way as every other
@@ -1942,34 +1987,22 @@ body { background: black; overflow: hidden; }
    Opacity/visibility computed centrally — see updateMfd1DataVisibility() and
    updateMfd1RowVisibility() in JS.
    ════════════════════════════════════════════════════════════════ */
-#lb-mfd1-header {
-    left: 27px;
-    top: 145px;
-    width: 307px;
-    height: 55px;
-    background-image: url('/images/leaderboard/Header_BG.png');
-    background-size: 307px 55px;
-    background-repeat: no-repeat;
-    overflow: hidden;
-    opacity: 0;
-    transition: opacity 167ms ease;
-}
-
 #lb-mfd1-label {
-    position: absolute;
     left: 0;
     top: 0;
-    width: 305px;
+    width: 484px;
     height: 55px;
+    opacity: 0;
     display: flex;
     justify-content: center;
     align-items: center;
     font-family: 'F1TV-2022';
     font-weight: 700;
     font-style: oblique;
-    font-size: 24px;
+    font-size: 28px;
     color: rgb(255, 0, 0);
     white-space: pre;
+    transition: opacity 167ms ease, height 300ms ease;
 }
 
 #lb-mfd1 {
@@ -1997,8 +2030,7 @@ body { background: black; overflow: hidden; }
 
 /* ════════════════════════════════════════════════════════════════
    MFD2 — CURRENT TYRE AGE PAGE
-   Header BG (item_1_30r0r0r0_1): same 310×105 at left:27, top:145 — unchanged, out
-   of scope for the data-row rework below (handled separately).
+   Label lives in the shared #lb-mfd-header now — see that section above.
    Age rows (item_1_29r0r0r0r0): container shares MFD1's 180px-wide "page frame" at
    left:345, top:160 (elMfd2 is a ROW_CONTAINERS member — see JS); the row's own
    left:45/width:70 inset lands the visible 70px band at the source's absolute
@@ -2007,24 +2039,12 @@ body { background: black; overflow: hidden; }
    Opacity/visibility computed centrally — see updateMfd2DataVisibility() and
    updateMfd2RowVisibility() in JS.
    ════════════════════════════════════════════════════════════════ */
-#lb-mfd2-header {
-    left: 27px;
-    top: 145px;
-    width: 310px;
-    height: 55px;
-    background-image: url('/images/leaderboard/Header_BG.png');
-    background-size: 307px 55px;
-    background-repeat: no-repeat;
-    opacity: 0;
-    transition: opacity 167ms ease;
-}
-
 #lb-mfd2-label {
-    position: absolute;
     left: 0;
     top: 0;
-    width: 305px;
+    width: 484px;
     height: 55px;
+    opacity: 0;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -2032,9 +2052,10 @@ body { background: black; overflow: hidden; }
     font-weight: 400;
     font-style: oblique;
     font-stretch: condensed;
-    font-size: 20.5px;
+    font-size: 28px;
     color: rgb(255, 0, 0);
     white-space: pre;
+    transition: opacity 167ms ease, height 300ms ease;
 }
 
 #lb-mfd2 {
@@ -2065,9 +2086,8 @@ body { background: black; overflow: hidden; }
 
 /* ════════════════════════════════════════════════════════════════
    MFD3 — LAPS COMPLETED / TYRE CHANGES PAGE
-   Header BG (item_1_30r0r0r0_1): same 310×105 at left:27, top:145 — unchanged, out
-   of scope for the data-row rework below (handled separately).
-   Label (item_1_30r0r0r0_4): F1TV-2022-ObliqueBold 24px — text set by JS.
+   Label lives in the shared #lb-mfd-header now — see that section above. Text set by
+   JS (elMfd3Label.textContent, race vs non-race).
    Value rows (item_1_30r0r0r0r0): shares the 345px "page frame" at left:345, top:160
    (elMfd3 is a ROW_CONTAINERS member — see JS); row's own left:45/width:70 inset
    lands the visible band at the source's absolute left:390, same as MFD2.
@@ -2075,33 +2095,22 @@ body { background: black; overflow: hidden; }
    Opacity/visibility computed centrally — see updateMfd3DataVisibility() and
    updateMfd3RowVisibility() in JS.
    ════════════════════════════════════════════════════════════════ */
-#lb-mfd3-header {
-    left: 27px;
-    top: 145px;
-    width: 307px;
-    height: 55px;
-    background-image: url('/images/leaderboard/Header_BG.png');
-    background-size: 307px 55px;
-    background-repeat: no-repeat;
-    opacity: 0;
-    transition: opacity 167ms ease;
-}
-
 #lb-mfd3-label {
-    position: absolute;
     left: 0;
     top: 0;
-    width: 305px;
+    width: 484px;
     height: 55px;
+    opacity: 0;
     display: flex;
     justify-content: center;
     align-items: center;
     font-family: 'F1TV-2022';
     font-weight: 700;
     font-style: oblique;
-    font-size: 24px;
+    font-size: 28px;
     color: rgb(255, 0, 0);
     white-space: pre;
+    transition: opacity 167ms ease, height 300ms ease;
 }
 
 #lb-mfd3 {
@@ -2132,9 +2141,7 @@ body { background: black; overflow: hidden; }
 
 /* ════════════════════════════════════════════════════════════════
    MFD4 — GAINED / LOST PAGE
-   Header BG (item_1_30r0r0r0_1): same 310×105 at left:27, top:145 — unchanged,
-   out of scope for the data-row rework below (handled separately).
-   Label (item_1_30r0r0r0_5): F1TV-2022-ObliqueBold 24px.
+   Label lives in the shared #lb-mfd-header now — see that section above.
    Container (item_1_31r0r0r0r0): own "page frame", left:380, top:160, width:130
    (NOT the 345px frame MFD1-3 share — arrow(60)+text(70) fill the container
    exactly, no inset needed). Race-only (isMfd4 already gates on isRace).
@@ -2146,33 +2153,22 @@ body { background: black; overflow: hidden; }
    No per-row hide logic — MFD4 deliberately keeps showing for retired/DSQ/DNF
    drivers (gained/lost-vs-grid stays meaningful), unlike MFD1-3.
    ════════════════════════════════════════════════════════════════ */
-#lb-mfd4-header {
-    left: 27px;
-    top: 145px;
-    width: 307px;
-    height: 55px;
-    background-image: url('/images/leaderboard/Header_BG.png');
-    background-size: 307px 55px;
-    background-repeat: no-repeat;
-    opacity: 0;
-    transition: opacity 167ms ease;
-}
-
 #lb-mfd4-label {
-    position: absolute;
     left: 0;
     top: 0;
-    width: 305px;
+    width: 484px;
     height: 55px;
+    opacity: 0;
     display: flex;
     justify-content: center;
     align-items: center;
     font-family: 'F1TV-2022';
     font-weight: 700;
     font-style: oblique;
-    font-size: 24px;
+    font-size: 28px;
     color: rgb(255, 0, 0);
     white-space: pre;
+    transition: opacity 167ms ease, height 300ms ease;
 }
 
 #lb-mfd4 {
