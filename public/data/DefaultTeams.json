@@ -61,6 +61,8 @@
     "FullName_year_Note": "You can specify a different full team name for different game year if necessary. If a specific year is not defined, the default FullName will be used. Not implemented yet (TODO).",
     "Logo": "2025haaslogo.svg",
     "Logo_Note": "The filename of the team's logo image located in the /images/team-logos folder. Can also specify a subfolder, e.g., 'f2/teamlogo.png'.",
+    "Logo_Alt": null,
+    "Logo_Alt_Note": "You can set a specific Alternative logo to use in places where the Normal one would blend in with the Team's Color (e.g. McLaren's orange logo on an orange background). Optional - if not set, the normal Logo will be used everywhere.",
     "Logo_26": "2026haaslogo.svg",
     "Logo_year_Note": "You can specify a different team logo for different game year if necessary. If a specific year is not defined, the default Logo will be used. Not implemented yet (TODO).",
     "OverridePrimaryColor": "#9C9FA2",
@@ -75,6 +77,7 @@
     "ShortName": "McLaren",
     "FullName": "McLaren Formula 1 Team",
     "Logo": "2025mclarenlogo.svg",
+    "Logo_Alt": "2025mclarenlogowhite.svg",
     "NumberDesign_4": "2025mclarenlannor01number.svg",
     "NumberDesign_81": "2025mclarenoscpia01number.svg"
   },
@@ -339,6 +342,7 @@
     "ShortName": "McLaren ‘26",
     "FullName": "McLaren Mastercard F1 Team",
     "Logo": "2026mclarenlogo.svg",
+    "Logo_Alt": "2026mclarenlogowhite.svg",
     "NumberDesign_1": "2026mclarenlannor01numberwhite.svg",
     "NumberDesign_4": "2026mclarenlannor01numberwhite.svg",
     "NumberDesign_81": "2026mclarenoscpia01numberwhite.svg"
@@ -472,6 +476,7 @@
     "ShortName": "McLaren ‘26",
     "FullName": "McLaren Mastercard F1 Team",
     "Logo": "2026mclarenlogo.svg",
+    "Logo_Alt": "2026mclarenlogowhite.svg",
     "NumberDesign_1": "2026mclarenlannor01numberwhite.svg",
     "NumberDesign_4": "2026mclarenlannor01numberwhite.svg",
     "NumberDesign_81": "2026mclarenoscpia01numberwhite.svg"
@@ -499,6 +504,6 @@
     "ShortName": "F1 Custom Team ‘26",
     "FullName": "My Team Custom Team '26",
     "Logo": "fia.svg",
-    "Note": "This is the Custom My Team Team that is used when playing the My Team '26 season. Edit this entry to change the name of your dream, or to change the logo, or to change some other settings."
+    "Note": "This is the Custom My Team Team that is used when playing the My Team '26 season. Edit this entry to change the name of your team, or to change the logo, or to change some other settings."
   }
 }
