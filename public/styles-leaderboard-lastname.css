@@ -408,27 +408,27 @@ body { background: black; overflow: hidden; }
    VERTICAL GRADIENT — item_1_26r0r0r0 / item_1_27r0r0r0
    ════════════════════════════════════════════════════════════════ */
 
-/* Normal (item_1_26r0r0r0): 38×1145 at left:295, top:21, opacity:0.4 */
+/* Normal (item_1_35r0r0r0): 36.8×1145 at left:475, top:20, opacity:0.4 */
 #lb-gradient-vertical {
-    left: 295px;
-    top: 21px;
-    width: 38px;
+    left: 475px;
+    top: 20px;
+    width: 36.8px;
     height: 1145px;
-    background-image: url('/images/leaderboard/Gradient_Vertical.png');
-    background-size: 38px 1145px;
+    background-image: url('/images/leaderboard-lastname/Gradient_Vertical.png');
+    background-size: 36.8px 1145px;
     opacity: 0.4;
     transition: left 300ms ease;
 }
 
-/* Formation Lap only (item_1_27r0r0r0): 38×(1020|1120) at left:295, top:146, opacity:0.4 */
+/* Formation Lap only (item_1_36r0r0r0): 36.8×(1021|1121) at left:475, top:144, opacity:0.4 */
 #lb-gradient-vertical-formation {
     display: none;
-    left: 295px;
-    top: 146px;
-    width: 38px;
-    height: 1020px;
-    background-image: url('/images/leaderboard/Gradient_Vertical.png');
-    background-size: 38px 1020px;
+    left: 475px;
+    top: 144px;
+    width: 36.8px;
+    height: 1021px;
+    background-image: url('/images/leaderboard-lastname/Gradient_Vertical.png');
+    background-size: 36.8px 1021px;
     opacity: 0.4;
     transition: left 300ms ease;
 }

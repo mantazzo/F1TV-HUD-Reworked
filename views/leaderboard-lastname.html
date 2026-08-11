@@ -2252,21 +2252,21 @@
             elTimerWrap.style.left = narrow ? '104px' : '164px';
 
             // lb-gradient-vertical (normal) — hidden during formation lap
-            const gradLeft = narrow ? '175px' : '295px';
+            const gradLeft = narrow ? '355px' : '475px';
             const gradH    = isF2
                 ? (extendedGrid2026 ? 1270 : extendedGrid ? 1170 : 1070)   // F2: base + 125 - 75
                 : (extendedGrid2026 ? 1345 : extendedGrid ? 1245 : 1145);  // F1: base + 125
             elGradientVertical.style.left            = gradLeft;
-            elGradientVertical.style.top             = isF2 ? '97px' : '21px';
+            elGradientVertical.style.top             = isF2 ? '97px' : '20px';
             elGradientVertical.style.height          = `${gradH}px`;
-            elGradientVertical.style.backgroundSize  = `38px ${gradH}px`;
+            elGradientVertical.style.backgroundSize  = `36.8px ${gradH}px`;
             elGradientVertical.style.display         = formationLap ? 'none' : '';
 
             // lb-gradient-vertical-formation — shown only during formation lap
-            const gradFmnH = extendedGrid2026 ? 1220 : extendedGrid ? 1120 : 1020;
+            const gradFmnH = extendedGrid2026 ? 1221 : extendedGrid ? 1121 : 1021;
             elGradientVerticalFmn.style.left           = gradLeft;
             elGradientVerticalFmn.style.height         = `${gradFmnH}px`;
-            elGradientVerticalFmn.style.backgroundSize = `38px ${gradFmnH}px`;
+            elGradientVerticalFmn.style.backgroundSize = `36.8px ${gradFmnH}px`;
             elGradientVerticalFmn.style.display        = formationLap ? 'block' : 'none';
 
             updateDecoBorders();
