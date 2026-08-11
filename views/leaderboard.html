@@ -1222,6 +1222,7 @@
         const carAbbrevs      = new Array(NUM_CARS).fill('');  // carIdx → abbreviation string
         const carLastNames     = new Array(NUM_CARS).fill('');  // carIdx → last name string
         const carTeamLogos     = new Array(NUM_CARS).fill('');  // carIdx → logo URL string
+        const carTeamLogosAlt  = new Array(NUM_CARS).fill('');  // carIdx → alternate logo URL (Logo_Alt override, falls back to Logo)
         const carRaceNumbers   = new Array(NUM_CARS).fill(0);   // carIdx → race/car number
         const carPrimaryColors = new Array(NUM_CARS).fill('rgb(255, 255, 255)'); // carIdx → team primary color
         const carNumImgUrl     = new Array(NUM_CARS).fill(null); // carIdx → null=unchecked, string=image URL, false=no image
@@ -1879,15 +1880,17 @@
                 const pStatus = carPitStatus[carIdx] ?? 0;
 
                 // Determine what text to show in the Times column
-                // Priority: Out Lap → NO TIME (in pits, no best lap) → Personal Best (lime, 6s) → best lap time / NO TIME
+                // Priority: Out Lap (after leaving the pit lane) → NO TIME (in pits, no best lap) → Personal Best (lime, 6s) → best lap time / NO TIME
                 const pbMs = personalBestDisplayMs.get(pos) ?? 0;
                 const showPersonalBest = pbMs > 0;
                 let timeText;
-                if (dStatus === 3) {
-                    // Out lap — leaving pits
+                if (dStatus === 3 && pStatus === 0) {
+                    // Out lap, already left the pit lane (In-Pit logo/pulse has cleared). While still
+                    // driving through the pit lane on the out lap, falls through to the NO TIME / existing
+                    // best-lap branches below instead — matches the In-Pit Logo's own trigger.
                     timeText = 'OUT LAP';
                 } else if ((pStatus > 0 || dStatus === 0) && lapMs === 0) {
-                    // In pit lane / pitting / in garage with no best lap set yet
+                    // In pit lane / pitting / in garage (incl. Out Lap while still in the pit lane) with no best lap set yet
                     timeText = 'NO TIME';
                 } else if (showPersonalBest) {
                     timeText = formatLapTimeMs(pbMs);
@@ -1898,8 +1901,8 @@
                 row.tText.style.color = showPersonalBest ? 'lime' : '';
 
                 // Gaps column: P1 shows their own time; others show gap to P1
-                // Priority: Out Lap → personal best (lime) → time / gap → NO TIME
-                if (dStatus === 3) {
+                // Priority: Out Lap (after leaving the pit lane) → personal best (lime) → time / gap → NO TIME
+                if (dStatus === 3 && pStatus === 0) {
                     row.gText.textContent = 'OUT LAP';
                     row.gText.style.color = '';
                 } else if (showPersonalBest) {
@@ -1913,6 +1916,14 @@
                         ? formatDeltaMs(lapMs - leaderMs)
                         : 'NO TIME';
                     row.gText.style.color = '';
+                }
+
+                // Shrink-to-fit for wide lap times/deltas (e.g. "2:15.678" on long tracks), same
+                // approach as Race Timing. Only the currently-visible sub-layer is fit.
+                try {
+                    textFit(showQualiTimes ? row.tText : row.gText, { minFontSize: 14, maxFontSize: 22, multiLine: false, widthOnly: true });
+                } catch (e) {
+                    // Defensive only, see the equivalent try/catch in renderDriverStandings().
                 }
             }
         }
@@ -1952,6 +1963,7 @@
             carAbbrevs.fill('');
             carLastNames.fill('');
             carTeamLogos.fill('');
+            carTeamLogosAlt.fill('');
             carRaceNumbers.fill(0);
             carPrimaryColors.fill('rgb(255, 255, 255)');
             carNumImgUrl.fill(null);
@@ -2535,9 +2547,11 @@
                 return;
             }
             const threshold = isQ1
-                ? (numActiveCars > 20
-                    ? DriverUtils.KNOCKOUT_ZONE_POSITIONS.Q1_22_CARS
-                    : DriverUtils.KNOCKOUT_ZONE_POSITIONS.Q1_20_CARS)
+                ? (numActiveCars > 22
+                    ? DriverUtils.KNOCKOUT_ZONE_POSITIONS.Q1_24_CARS
+                    : numActiveCars > 20
+                        ? DriverUtils.KNOCKOUT_ZONE_POSITIONS.Q1_22_CARS
+                        : DriverUtils.KNOCKOUT_ZONE_POSITIONS.Q1_20_CARS)
                 : DriverUtils.KNOCKOUT_ZONE_POSITIONS.Q2;
             let thresholdHasTime = false;
             for (let ci = 0; ci < NUM_CARS; ci++) {
@@ -2565,9 +2579,6 @@
                 row.lastName.style.color             = '';
                 row.position.style.color             = '';
                 row.position.style.fontSize          = '';
-                row.driverNumber.style.width         = '';
-                row.driverNumber.style.fontSize      = '';
-                row.numberImg.style.width            = '';
                 timingRows[i].iText.parentElement.style.display      = '';
                 timingRows[i].lText.parentElement.style.display      = '';
                 qualiTimingRows[i].gText.parentElement.style.display = '';
@@ -2599,16 +2610,14 @@
                 const piLastName = carLastNames[playerCarIdx] ?? '';
                 row.primaryIndicator.style.width     = '305px';
                 row.teamLogoBg.style.display         = 'block';
-                row.teamLogoBg.style.backgroundColor = carPrimaryColors[playerCarIdx] ?? 'transparent';
-                row.teamLogoPI.src                   = carTeamLogos[playerCarIdx] ?? '';
+                // F2 uses a fixed dark navy PI background instead of the team color.
+                row.teamLogoBg.style.backgroundColor = formulaType === 2 ? '#000019' : (carPrimaryColors[playerCarIdx] ?? 'transparent');
+                row.teamLogoPI.src                   = carTeamLogosAlt[playerCarIdx] ?? '';
                 row.teamLogoPI.style.display         = 'block';
                 row.teamLogoNormal.style.display     = 'none';
                 row.numberImg.style.display          = 'none';
-                row.numberImg.style.width            = '145px';
                 row.driverNumber.style.display       = 'none';
                 row.driverNumber.style.opacity       = '0';
-                row.driverNumber.style.width         = '145px';
-                row.driverNumber.style.fontSize      = '30px';
                 row.abbrev.style.opacity   = '0';
                 row.lastNamePI.textContent = piLastName.toUpperCase();
                 row.lastNamePI.className   = piLastName.length > 9
@@ -2640,16 +2649,14 @@
                 const tmLastName = carLastNames[teammateCarIdx] ?? '';
                 row.primaryIndicator.style.width     = '305px';
                 row.teamLogoBg.style.display         = 'block';
-                row.teamLogoBg.style.backgroundColor = carPrimaryColors[teammateCarIdx] ?? 'transparent';
-                row.teamLogoPI.src                   = carTeamLogos[teammateCarIdx] ?? '';
+                // F2 uses a fixed dark navy PI background instead of the team color.
+                row.teamLogoBg.style.backgroundColor = formulaType === 2 ? '#000019' : (carPrimaryColors[teammateCarIdx] ?? 'transparent');
+                row.teamLogoPI.src                   = carTeamLogosAlt[teammateCarIdx] ?? '';
                 row.teamLogoPI.style.display         = 'block';
                 row.teamLogoNormal.style.display     = 'none';
                 row.numberImg.style.display          = 'none';
-                row.numberImg.style.width            = '145px';
                 row.driverNumber.style.display       = 'none';
                 row.driverNumber.style.opacity       = '0';
-                row.driverNumber.style.width         = '145px';
-                row.driverNumber.style.fontSize      = '30px';
                 row.abbrev.style.opacity   = '0';
                 row.lastNamePI.textContent = tmLastName.toUpperCase();
                 row.lastNamePI.className   = tmLastName.length > 9
@@ -3250,6 +3257,12 @@
                     updatePenaltyLayout();
                     updateFlLogoLayout();
                     if (!isRace) triggerFlAnim();
+                    // >= 2, not > 2: the leader's own lap-1 time is the session's first fastest
+                    // lap, and the FTLP event for it fires at the same moment currentLap flips to
+                    // 2 (lap-completion and the lap-counter increment land in the same tick) — so
+                    // by the time this check runs, currentLap already reads 2, not 1. A strict > 2
+                    // would miss that same-tick case on every subsequent lap too (confirmed via
+                    // live testing: >2 silently ate the lap-3 trigger for the leader).
                     if (isRace && currentLap >= 2) triggerFlRaceAnim();
                 }
                 // CHQF is NOT thrown for some reason... Commented out until I can discover why
@@ -3326,6 +3339,12 @@
                         const logoFile = teamData?.Logo ?? null;
                         const logoUrl  = logoFile ? `/images/team-logos/${logoFile}` : '';
                         carTeamLogos[carIdx] = logoUrl;
+
+                        // Alternate logo — teams can opt in via Logo_Alt for any same-color-background
+                        // situation (e.g. McLaren, whose orange logo would otherwise blend into the
+                        // equally-orange PI background), falls back to the normal Logo if not set.
+                        const logoAltFile = teamData?.Logo_Alt ?? teamData?.Logo ?? null;
+                        carTeamLogosAlt[carIdx] = logoAltFile ? `/images/team-logos/${logoAltFile}` : '';
 
                         const pos = carPositions[carIdx];
                         if (pos >= 1 && pos <= NUM_CARS) {

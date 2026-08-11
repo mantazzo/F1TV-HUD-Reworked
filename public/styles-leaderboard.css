@@ -1573,9 +1573,12 @@ body { background: transparent; overflow: hidden; }
     transition: width 125ms ease;
 }
 
-/* Driver number (item_1_24r0r0_58r0r0): 45×51 at left:50
-   Formula1 Display Bold 26px  team-blue  centered  hidden (opacity 0)
-   width/font-size animate when PI active (45→145px, 26→30px) */
+/* Driver number (item_1_24r0r0_58r0r0): 45×51 at left:50, Formula1 Display Bold 26px, centered,
+   hidden (opacity 0) until the "Driver Numbers" toggle is on. Color is team-color (or override),
+   set dynamically in JS — the static white here is just the pre-data fallback. Source spec's
+   width/font-size/stroke-thickness growth on PI activation was deliberately NOT implemented —
+   this element (and .lb-driver-number-img) is hidden outright during PI in favor of the team
+   logo/last name takeover instead, confirmed intentional. */
 .lb-driver-number {
     left: 50px;
     top: 0;
@@ -1590,7 +1593,6 @@ body { background: transparent; overflow: hidden; }
     justify-content: center;
     align-items: center;
     white-space: pre;
-    transition: width 125ms ease, font-size 125ms ease;
 }
 
 /* Position number (item_1_24r0r0_59r0r0): 45×50 at left:0
