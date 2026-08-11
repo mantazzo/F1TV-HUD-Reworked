@@ -1414,36 +1414,41 @@ body { background: black; overflow: hidden; }
     transition: left 300ms ease, opacity 300ms ease;
 }
 
-/* ─── Driver name slots (item_1_24r0r0 → item_1_24r0r0_49) ──────────────────── */
+/* ─── Driver name slots (item_1_33r0r0 → item_1_33r0r0_49) ──────────────────── */
 
 #lb-drivers {
-    left: 27px;
+    left: 25px;
     top: 160px;
-    width: 310px;
+    width: 487px;
     height: 1200px;
 }
 #lb-drivers > * { position: absolute; }
 
-/* Per-driver row: 310×50, top set by JS */
+/* Per-driver row: 500×50, top set by JS. Opacity dims to 0.65 for retired/DSQ
+   drivers (overridden back to 1 for the PI/teammate-highlighted row). */
 .lb-driver-row {
     left: 0;
-    width: 310px;
+    width: 500px;
     height: 50px;
-    transition: top 300ms ease;
+    transition: top 300ms ease, opacity 300ms ease;
 }
 .lb-driver-row > * { position: absolute; }
 
-/* Name abbreviation (item_1_24r0r0_51r0r0): 205×49 at left:100
-   F1TV-2022-Name 24px  white  left-aligned */
+/* Driver last name, default/compact slot (item_1_33r0r0_4r0): 205×49 at left:100
+   F1TVname 23px bold, white, left-aligned. Class name kept as "abbrev" even though
+   it now displays the full last name — see project memory, deliberate to avoid
+   renaming every call site for a text/font-only change. Long names are shrunk to
+   fit via textFit (JS) rather than a condensed "--long" variant. */
 .lb-driver-abbrev {
     left: 100px;
     top: 0;
     width: 205px;
     height: 49px;
-    font-family: 'F1TV-2022-Name';
-    font-weight: 400;
-    font-size: 24px;
+    font-family: 'F1TVname';
+    font-weight: 700;
+    font-size: 23px;
     color: rgb(255, 255, 255);
+    text-transform: uppercase;
     display: flex;
     justify-content: flex-start;
     align-items: center;
@@ -1463,21 +1468,24 @@ body { background: black; overflow: hidden; }
     background-color: rgb(255, 255, 255);
 }
 
-/* Primary driver indicator (item_1_24r0r0_53r0r0): expands 0→305px at left:1
-   PlayerIndicator.png — width:0 hides it; JS sets width 305px when active */
+/* Primary driver indicator (item_1_33r0r0_5r0): expands 0→487px at left:0
+   (matches #lb-drivers' own width). Uses the leaderboard-lastname folder's own
+   (longer) PlayerIndicator.png — width:0 hides it; JS sets width 487px when active */
 .lb-driver-primary-indicator {
-    left: 1px;
+    left: 0px;
     top: 0;
     width: 0;
     height: 50px;
     overflow: hidden;
-    background-image: url('/images/common/PlayerIndicator.png');
-    background-size: 305px 50px;
+    background-image: url('/images/leaderboard-lastname/PlayerIndicator.png');
+    background-size: 487px 50px;
     background-repeat: no-repeat;
-    transition: width 125ms ease;
+    transition: width 200ms ease;
 }
 
-/* Team logo — normal variant (item_1_24r0r0_56r0r0r0): img 55×50 at left:45 */
+/* Team logo — normal variant (item_1_33r0r0_13r0r0): img 55×50 at left:45, top:0.
+   Source spec also has an inertia-based Left shift (45→50) tied to PI becoming active,
+   but that's moot — Visible goes to 0 in the exact same condition, so it's never seen. */
 .lb-driver-team-logo-normal {
     position: absolute;
     left: 45px;
@@ -1489,7 +1497,9 @@ body { background: black; overflow: hidden; }
     padding: 5px; /* to fit logos in the 55×50 box better, remove if unnecessary */
 }
 
-/* Team logo — PI variant (item_1_24r0r0_57r0r0r0): img 65×60 at left:45, top:-5 */
+/* Team logo — PI variant (item_1_33r0r0_14r0r0): img 65×60 at left:45. Source spec's static
+   snapshot says top:0, but top:-5 is kept here (matches styles-leaderboard.css too) to vertically
+   center the box's extra 10px of height (60 vs the row's 50) instead of overflowing only downward. */
 .lb-driver-team-logo-pi {
     position: absolute;
     left: 45px;
@@ -1501,8 +1511,10 @@ body { background: black; overflow: hidden; }
     padding: 5px; /* to fit logos in the 65×60 box better, remove if unnecessary */
 }
 
-/* Driver number image (SVG or PNG) — same slot as team logo, shown when image file exists
-   width animates in sync with the text version when PI active */
+/* Driver number image (SVG or PNG) — home-grown addition, not part of the original SimHub
+   source (the source only has the text form below). Deliberately kept at the larger team-logo
+   box size (55×50 @ left:45) rather than .lb-driver-number's smaller 45×51 text box — the
+   custom number-design artwork reads better bigger, unlike the plain outlined text. */
 .lb-driver-number-img {
     position: absolute;
     left: 45px;
@@ -1511,13 +1523,16 @@ body { background: black; overflow: hidden; }
     height: 50px;
     object-fit: contain;
     display: none;
-    padding: 5px; /* to fit logos in the 55×50 box better, remove if unnecessary */
+    padding: 5px; /* to fit number designs in the box better, remove if unnecessary */
     transition: width 125ms ease;
 }
 
-/* Driver number (item_1_24r0r0_58r0r0): 45×51 at left:50
-   Formula1 Display Bold 26px  team-blue  centered  hidden (opacity 0)
-   width/font-size animate when PI active (45→145px, 26→30px) */
+/* Driver number (item_1_33r0r0_15r0): 45×51 at left:50, Formula1 Display Bold 26px, centered,
+   hidden (opacity 0) until the "Driver Numbers" toggle is on. Color is team-color (or override),
+   set dynamically in JS — the static white here is just the pre-data fallback. Source spec's
+   width/font-size/stroke-thickness growth on PI activation was deliberately NOT implemented —
+   this element (and .lb-driver-number-img) is hidden outright during PI in favor of the team
+   logo/last name takeover instead, confirmed intentional. */
 .lb-driver-number {
     left: 50px;
     top: 0;
@@ -1532,7 +1547,6 @@ body { background: black; overflow: hidden; }
     justify-content: center;
     align-items: center;
     white-space: pre;
-    transition: width 125ms ease, font-size 125ms ease;
 }
 
 /* Position number (item_1_24r0r0_59r0r0): 45×50 at left:0
@@ -1552,75 +1566,77 @@ body { background: black; overflow: hidden; }
     white-space: pre;
 }
 
-/* Driver last name (item_1_24r0r0_4r0r0 / item_1_24r0r0_27r0r0): 210×49 at left:100
-   F1TV-2022-Name-Bold 24px  white  left-aligned  hidden by default */
+/* Driver last name, "Show Last Names" toggle slot (item_1_24r0r0_4r0r0 / item_1_24r0r0_27r0r0):
+   390×49 at left:100, F1TV-2022-Name-Bold 24px, white, centered, hidden by default.
+   Widened + centered for the Last-Name theme (this used to be 210px/left-aligned, matching
+   the numbered Leaderboard's own narrower toggle slot). Long names are shrunk to fit via
+   textFit (JS) rather than a condensed "--long" variant. */
 .lb-driver-lastname {
     display: flex;
     opacity: 0;
     pointer-events: none;
     left: 100px;
     top: 0;
-    width: 210px;
+    width: 390px;
     height: 49px;
     font-family: 'F1TV-2022-Name';
     font-weight: 700;
     font-size: 24px;
     color: rgb(255, 255, 255);
     text-transform: uppercase;
-    justify-content: flex-start;
+    justify-content: center;
     align-items: center;
     white-space: pre;
     transition: opacity 200ms ease;
 }
 
-/* Long last name variant (>9 chars) — condensed font to fit in the same space */
-.lb-driver-lastname--long {
-    font-family: 'F1TV-2022-Name';
-    font-size: 24px;
-    font-stretch: condensed;
-}
-
-/* Position-gained arrow (item_1_24r0r0_62r0r0r0): Arrow_Up.png 35×20 at left:5, top:0
-   opacity 0 by default; fades in/out over 200ms when position is gained */
+/* Position-gained arrow (item_1_33r0r0_9r0r0): Arrow_Up.png 35×20 at left:5, top:-5
+   (5px overshoot above the row's own top edge) opacity 0 by default; fades in/out
+   over 200ms when position is gained */
 .lb-driver-arrow-up {
     left: 5px;
-    top: 0;
+    top: -5px;
     width: 35px;
     height: 20px;
     opacity: 0;
-    background-image: url('/images/leaderboard/Arrow_Up.png');
+    background-image: url('/images/leaderboard-lastname/Arrow_Up.png');
     background-size: 35px 20px;
     transition: opacity 200ms ease;
 }
 
-/* Position-lost arrow (item_1_24r0r0_63r0r0r0): Arrow_Down.png 35×20 at left:5, top:30
-   opacity 0 by default; fades in/out over 200ms when position is lost */
+/* Position-lost arrow (item_1_33r0r0_10r0r0): Arrow_Down.png 35×20 at left:5, top:35
+   (5px overshoot below the row's own bottom edge) opacity 0 by default; fades in/out
+   over 200ms when position is lost */
 .lb-driver-arrow-down {
     left: 5px;
-    top: 30px;
+    top: 35px;
     width: 35px;
     height: 20px;
     opacity: 0;
-    background-image: url('/images/leaderboard/Arrow_Down.png');
+    background-image: url('/images/leaderboard-lastname/Arrow_Down.png');
     background-size: 35px 20px;
     transition: opacity 200ms ease;
 }
 
-/* Knockout zone indicator (item_1_24r0r0_192r0r0): 47×45 at left:0, top:2.5px
-   Knockout.png — hidden by default; shown in Q1/Q2/SQ1/SQ2 for knockout-zone drivers
-   once the threshold position has set a valid lap time */
+/* Knockout zone indicator (item_1_33r0r0_143r0): 47×50 at left:0, top:0 — spans the full row
+   height now (was 47×45 with a 2.5px centering offset, a stale value from before the box
+   matched the row's own 50px height). Knockout.png — hidden by default; shown in Q1/Q2/SQ1/SQ2
+   for knockout-zone drivers once the threshold position has set a valid lap time */
 .lb-driver-knockout {
     left: 0;
-    top: 2.5px;
+    top: 0;
     width: 47px;
-    height: 45px;
+    height: 50px;
     background-image: url('/images/common/Knockout.png');
-    background-size: 47px 45px;
+    background-size: 47px 50px;
     display: none;
 }
 
-/* Team logo colored background (item_1_24r0r0_55r0r0r0): 65×50 at left:45
-   Filled with team primary color — hidden by default, shown when PI/teammate indicator active */
+/* Team logo colored background (item_1_33r0r0_12r0r0): 65×50 at left:45
+   Filled with team primary color (or DefaultTeams.json's OverridePrimaryColor — the source
+   spec's giant per-TeamID BackgroundColor formula is just SimHub's own way of expressing that
+   same override table), or a fixed #000019 navy for F2. Hidden by default, shown when
+   PI/teammate indicator active. */
 .lb-driver-team-logo-bg {
     left: 45px;
     top: 0;
@@ -1629,8 +1645,9 @@ body { background: black; overflow: hidden; }
     display: none;
 }
 
-/* Driver last name — PI variant (item_1_24r0r0_60r0r0): 200×50 at left:115
-   F1TV-2022 ObliqueBold 25px black — opacity 0 by default, 1 when PI/teammate indicator active */
+/* Driver last name — PI variant (item_1_33r0r0_6r0): 200×50 at left:115
+   F1TV-2022 ObliqueBold 24px black — opacity 0 by default, 1 when PI/teammate indicator active.
+   Long names are shrunk to fit via textFit (JS), same as .lb-driver-abbrev/.lb-driver-lastname. */
 .lb-driver-lastname-pi {
     left: 115px;
     top: 0;
@@ -1641,18 +1658,13 @@ body { background: black; overflow: hidden; }
     font-family: 'F1TV-2022';
     font-weight: 700;
     font-style: oblique;
-    font-size: 25px;
+    font-size: 24px;
     color: rgb(0, 0, 0);
     display: flex;
     justify-content: flex-start;
     align-items: center;
     white-space: pre;
     transition: opacity 200ms ease;
-}
-
-/* Long last name variant for PI mode (>9 chars) — reduced font size */
-.lb-driver-lastname-pi--long {
-    font-size: 22px;
 }
 
 /* ── Timing widget (item_1_18r0r0r0): 150×1100 at left:335, top:160 ──────── */
@@ -2218,7 +2230,7 @@ body { background: black; overflow: hidden; }
    Reuses .lb-timing-row and .lb-timing-text classes
    ════════════════════════════════════════════════════════════════ */
 #lb-quali-timing {
-    left: 182px;
+    left: 320px;
     top: 160px;
     width: 135px;
     height: 1200px;
@@ -2258,7 +2270,7 @@ body { background: black; overflow: hidden; }
    after 6s. Top is kept in sync with the P1 row by updateFlAnimPosition() in JS.
    ════════════════════════════════════════════════════════════════ */
 #lb-fl-anim {
-    left: 27px;
+    left: 25px;   /* matches #lb-drivers' own left (was stale at 27px pre-dating that round's fix) */
     top: 162.5px;   /* initial: lb-drivers top(160) + getRowTop(0)(0) + 2.5 */
     width: 0;
     height: 45px;
@@ -2288,9 +2300,14 @@ body { background: black; overflow: hidden; }
     );
 }
 
-/* Race session fastest lap animation — shown on top of the FL car's row */
+/* Race session fastest lap animation (item_1_33r0r0_322/_323r0) — shown on top of the FL
+   car's row. Source models this as a per-row template (one pill per driver row), but since
+   only one car can hold the fastest lap at a time, it's consolidated here into a single
+   element repositioned to whichever row currently holds it — same simplification already
+   applied to the non-race #lb-fl-anim above. Height (40 vs the row's 50) and its +5 top
+   offset are deliberately kept smaller/centered too, matching that same sibling's 45/+2.5. */
 #lb-fl-race-anim {
-    left: 27px;
+    left: 25px;   /* matches #lb-drivers' own left (was stale at 27px pre-dating that round's fix) */
     top: 165px;   /* initial: lb-drivers top(160) + getRowTop(0)(0) + 5; updated by JS */
     width: 0;
     height: 40px;
@@ -2299,13 +2316,16 @@ body { background: black; overflow: hidden; }
     transition: width 333ms ease, opacity 333ms ease;
 }
 
+/* Fixed width stays a few px past the container's max (487px) so the stripe pattern doesn't
+   stretch/shift as the container's width animates — only more of this fixed background gets
+   revealed through the container's own clip, same technique as #lb-fl-anim-bg above. */
 #lb-fl-race-anim-bg {
     position: absolute;
     left: 0;
     top: 0;
-    width: 310px;
+    width: 492px;
     height: 40px;
-    background-color: rgb(255, 0, 255);
+    background-color: rgb(128, 0, 128);
     background-image: repeating-linear-gradient(
         -45deg,
         rgba(0, 0, 0, 0.5) 0,
@@ -2319,7 +2339,7 @@ body { background: black; overflow: hidden; }
     position: absolute;
     left: 0;
     top: 0;
-    width: 310px;
+    width: 487px;
     height: 40px;
     display: flex;
     justify-content: center;

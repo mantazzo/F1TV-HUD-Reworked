@@ -38,6 +38,7 @@ const DriverUtils = {
     KNOCKOUT_ZONE_POSITIONS: {
         Q1_20_CARS: 15,  // Positions 16-20 are knockout zone
         Q1_22_CARS: 16,  // Positions 17-22 are knockout zone
+        Q1_24_CARS: 17,  // Positions 18-24 are knockout zone (2026 season, 24-car grid)
         Q2: 10           // Positions 11+ are knockout zone
     },
 
@@ -443,9 +444,11 @@ const DriverUtils = {
         ].includes(sessionType);
         
         if (isQ1) {
-            const threshold = numActiveCars === 20 
-                ? this.KNOCKOUT_ZONE_POSITIONS.Q1_20_CARS 
-                : this.KNOCKOUT_ZONE_POSITIONS.Q1_22_CARS;
+            const threshold = numActiveCars > 22
+                ? this.KNOCKOUT_ZONE_POSITIONS.Q1_24_CARS
+                : numActiveCars > 20
+                    ? this.KNOCKOUT_ZONE_POSITIONS.Q1_22_CARS
+                    : this.KNOCKOUT_ZONE_POSITIONS.Q1_20_CARS;
             return position > threshold;
         } else if (isQ2) {
             return position > this.KNOCKOUT_ZONE_POSITIONS.Q2;
