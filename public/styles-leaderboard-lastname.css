@@ -4,7 +4,7 @@
    ════════════════════════════════════════════════════════════════ */
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: black; overflow: hidden; }
+body { background: transparent; overflow: hidden; }
 /* Note for myself: Use "background: black;" when debugging/working on overlay and use "background: transparent;" when testing/shipping final versions */
 
 /* ════════════════════════════════════════════════════════════════
@@ -598,37 +598,45 @@ body { background: black; overflow: hidden; }
 
 /* ════════════════════════════════════════════════════════════════
    SC/VSC ENDING BANNER — item_1_29r0r0r0
-   306×55 at left:27.5, top:201  hidden by default
-   Overlays the lower portion of the SC/VSC banner when SC/VSC is returning.
+   485×55 at left:26, top:201  hidden by default
+   Overlays the lower portion of the SC/VSC banner when SC/VSC is returning. Narrow/full sizing
+   (365/485) matches #lb-vsc-banner's own — this overlay needs to always match whatever width the
+   banner it's overlaying is currently using.
    ════════════════════════════════════════════════════════════════ */
 #lb-sc-ending-banner {
     display: none;
-    left: 27.5px;
+    left: 26px;
     top: 201px;
-    width: 306px;
+    width: 485px;
     height: 55px;
     overflow: hidden;
     transition: width 300ms ease, opacity 333ms ease;
 }
 #lb-sc-ending-banner > * { position: absolute; }
 
-/* Background (item_1_29r0r0r0_1): Header_BG.png 306×55 */
-#lb-sc-ending-bg {
-    left: 0;
+/* Two overlapping copies of Header_BG.png (item_1_29r0r0r0_1) — same asset/technique as
+   #lb-yf-bottom-bg1/-bg2 and #lb-gf-bottom-bg1/-bg2, needed since the container can be up
+   to 485px wide. */
+#lb-sc-ending-bg1,
+#lb-sc-ending-bg2 {
     top: 0;
-    width: 306px;
+    width: 305px;
     height: 55px;
-    background-image: url('/images/leaderboard/Header_BG.png');
-    background-size: 306px 55px;
+    background-image: url('/images/leaderboard-lastname/Header_BG.png');
+    background-size: 305px 55px;
+    background-repeat: no-repeat;
 }
+#lb-sc-ending-bg1 { left: 0; }
+#lb-sc-ending-bg2 { left: 305px; }
 
-/* "ENDING" text (item_1_29r0r0r0_2): 306×55 at left:10, top:-0.5
-   F1TV-2022 35px gold centered; left/width transition for pane changes */
+/* "ENDING" text (item_1_29r0r0r0_2): matches container width (485/365) — F1TV-2022 35px gold
+   centered. Left stays flush (0) now that width tracks the container 1:1 — no longer needs the
+   old wider-box-shifted-left trick that width narrowing alone replaces. */
 #lb-sc-ending-text {
     box-sizing: border-box;
-    left: 10px;
+    left: 0;
     top: -0.5px;
-    width: 306px;
+    width: 485px;
     height: 55px;
     font-family: 'F1TV-2022';
     font-weight: 400;
@@ -638,65 +646,73 @@ body { background: black; overflow: hidden; }
     justify-content: center;
     align-items: center;
     white-space: pre;
-    transition: left 200ms ease, width 250ms ease;
+    transition: width 250ms ease;
 }
 
 /* ════════════════════════════════════════════════════════════════
-   VSC FLAGS BANNER — item_1_33r0r0r0r0
-   306×105 at left:27.5, top:145
+   VSC FLAGS BANNER — item_1_40r0r0r0
+   485×105 at left:26, top:145 — every flag "widget" (Yellow/Green/SC/VSC/RF) is its own
+   independent element at this exact same spot in the real source; ported here as one
+   shared positioned container with each flag type as a same-spot (0,0-relative) child layer.
    ════════════════════════════════════════════════════════════════ */
 #lb-vsc-banner {
     display: none;
-    left: 27.5px;
+    left: 26px;
     top: 145px;
-    width: 306px;
+    width: 485px;
     height: 105px;
     overflow: hidden;
     transition: top 333ms ease, width 300ms ease, opacity 333ms ease;
 }
 #lb-vsc-banner > * { position: absolute; }
 
-/* Yellow Flag layer (item_1_33r0r0r0r0_1): 306×105 at left:0, top:0 */
+/* Yellow Flag layer (item_1_41r0r0r0r0): 485×105 at left:0, top:0 — top shifts +105px while the
+   Time/Laps Remaining banner is active (same trigger condition, see updateYellowFlagBanner()). */
 #lb-yf-layer {
     display: none;
     left: 0;
     top: 0;
-    width: 306px;
+    width: 485px;
     height: 105px;
-    transition: opacity 333ms ease;
+    transition: top 300ms ease, opacity 333ms ease;
 }
 #lb-yf-layer > * { position: absolute; }
 
-/* Top BG (item_1_33r0r0r0r0_2r0): YellowFlag_Banner.png 306×50 at top:0 — width 0→306 on show */
-#lb-yf-top-bg {
-    left: 0;
+/* Top BG (item_1_41r0r0r0r0_2r0/_3r0): two overlapping YellowFlag_Banner.png 305×50 tiles
+   (one copy alone doesn't cover 485px) — same technique as #lb-timelaps-bg1/-bg2. */
+#lb-yf-top-bg1,
+#lb-yf-top-bg2 {
     top: 0;
-    width: 0;
+    width: 305px;
     height: 50px;
-    background-image: url('/images/leaderboard/YellowFlag_Banner.png');
-    background-size: 306px 50px;
-    transition: width 333ms ease;
+    background-image: url('/images/leaderboard-lastname/YellowFlag_Banner.png');
+    background-size: 305px 50px;
+    background-repeat: no-repeat;
 }
+#lb-yf-top-bg1 { left: 0; }
+#lb-yf-top-bg2 { left: 299.2px; }
 
-/* "YELLOW FLAG" (item_1_33r0r0r0r0_3r0): 295×50 at left:0, top:0  30px ObliqueBold black centered */
+/* "YELLOW FLAG" (item_1_41r0r0r0r0_6): 300×50 at left:92 (normal) — 32px ObliqueBold black
+   centered. Single element now covers both panes via left-slide (JS narrows to 25px) — the
+   old narrow-pane "FLAG" fallback no longer exists. */
 #lb-yf-top-text {
-    left: 0;
+    left: 92px;
     top: 0;
-    width: 295px;
+    width: 300px;
     height: 50px;
     font-family: 'F1TV-2022';
     font-style: oblique;
     font-weight: 700;
-    font-size: 30px;
+    font-size: 32px;
     color: rgb(0, 0, 0);
     display: flex;
     justify-content: center;
     align-items: center;
     white-space: pre;
-    transition: opacity 333ms ease;
+    transition: left 200ms ease;
 }
 
-/* Shine sweep (item_1_33r0r0r0r0_8r0): white blur overlay — one-shot transition on yellow flag appear */
+/* Shine sweep (item_1_41r0r0r0r0_9): white blur overlay — one-shot transition on yellow flag appear */
 #lb-yf-shine {
     left: 0;
     top: 0;
@@ -709,111 +725,100 @@ body { background: black; overflow: hidden; }
     transition: width 500ms ease, opacity 500ms ease;
 }
 
-/* Narrow pane "FLAG" (item_1_33r0r0r0r0_9r0): 210×50 at left:-10, top:0 — shown instead of full text.
-   Toggled via display:none/flex (snaps instantly), unlike the equivalent Green Flag element
-   (#lb-gf-top-text-pane) which fades via opacity+transition — kept as originally built for now,
-   but could be switched to the same opacity+transition approach later for a smoother pane swap. */
-#lb-yf-top-text-pane {
-    display: none;
-    left: -10px;
-    top: 0;
-    width: 210px;
-    height: 50px;
-    font-family: 'F1TV-2022';
-    font-style: oblique;
-    font-weight: 700;
-    font-size: 32px;
-    color: rgb(0, 0, 0);
-    justify-content: center;
-    align-items: center;
-    white-space: pre;
-}
-
-/* Bottom BG (item_1_33r0r0r0r0_4r0): Header_BG.png 306×55 at top:50 */
-#lb-yf-bottom-bg {
-    left: 0;
+/* Bottom BG (item_1_41r0r0r0r0_4r0/_5r0): two overlapping Header_BG.png 305×55 tiles */
+#lb-yf-bottom-bg1,
+#lb-yf-bottom-bg2 {
     top: 50px;
-    width: 306px;
+    width: 305px;
     height: 55px;
-    background-image: url('/images/leaderboard/Header_BG.png');
-    background-size: 306px 55px;
+    background-image: url('/images/leaderboard-lastname/Header_BG.png');
+    background-size: 305px 55px;
+    background-repeat: no-repeat;
 }
+#lb-yf-bottom-bg1 { left: 0; }
+#lb-yf-bottom-bg2 { left: 305px; }
 
-/* Sector label (item_1_33r0r0r0r0_6r0r0): 170×55 at left:10, top:50  26px gold right-aligned */
+/* Sector label (item_1_41r0r0r0r0_7): 170×55 at left:100 (normal) — 28px gold right-aligned */
 #lb-yf-sector-label {
-    left: 10px;
+    left: 100px;
     top: 50px;
     width: 170px;
     height: 55px;
     font-family: 'F1TV-2022';
     font-weight: 400;
-    font-size: 26px;
-    color: rgb(255, 215, 0);
+    font-size: 28px;
+    color: rgb(255, 208, 82);
     display: flex;
     justify-content: flex-end;
     align-items: center;
     white-space: pre;
-    transition: left 200ms ease, font-size 200ms ease;
+    transition: left 200ms ease;
 }
 
-/* Sector number (item_1_33r0r0r0r0_7r0r0): 90×55 at left:190, top:50  40px gold left-aligned */
+/* Sector number (item_1_41r0r0r0r0_8): 90×55 at left:280 (normal) — 40px gold left-aligned */
 #lb-yf-sector-num {
-    left: 190px;
+    left: 280px;
     top: 50px;
     width: 90px;
     height: 55px;
     font-family: 'Formula1 Display Wide';
     font-weight: 300;
     font-size: 40px;
-    color: rgb(255, 215, 0);
+    color: rgb(255, 208, 82);
     display: flex;
     justify-content: flex-start;
     align-items: center;
     white-space: pre;
-    transition: left 200ms ease, font-size 200ms ease;
+    transition: left 200ms ease;
 }
 
-/* Green Flag layer (item_1_33r0r0r0r0_10): 306×105 at left:0, top:0 */
+/* Green Flag layer (item_1_42r0r0r0r0): 485×105 at left:0, top:0 — top shifts +105px while the
+   Time/Laps Remaining banner is active (same trigger as the Yellow Flag layer). */
 #lb-gf-layer {
     display: none;
     left: 0;
     top: 0;
-    width: 306px;
+    width: 485px;
     height: 105px;
-    transition: opacity 333ms ease;
+    transition: top 300ms ease, opacity 333ms ease;
 }
 #lb-gf-layer > * { position: absolute; }
 
-/* Top BG (item_1_33r0r0r0r0_11r0): GreenFlag_Banner.png 307×50 at top:0 — width 0→306 on show */
-#lb-gf-top-bg {
-    left: 0;
+/* Top BG (item_1_42r0r0r0r0_1/_2): two overlapping GreenFlag_Banner.png 307×50 tiles
+   (one copy alone doesn't cover 485px) — same technique as #lb-yf-top-bg1/-bg2. */
+#lb-gf-top-bg1,
+#lb-gf-top-bg2 {
     top: 0;
-    width: 0;
+    width: 307px;
     height: 50px;
-    background-image: url('/images/leaderboard/GreenFlag_Banner.png');
-    background-size: 306px 50px;
-    transition: width 333ms ease;
+    background-image: url('/images/leaderboard-lastname/GreenFlag_Banner.png');
+    background-size: 307px 50px;
+    background-repeat: no-repeat;
 }
+#lb-gf-top-bg1 { left: 0; }
+#lb-gf-top-bg2 { left: 296px; }
 
-/* "GREEN FLAG" (item_1_33r0r0r0r0_12r0): 295×52 at left:0, top:0  30px ObliqueBold black centered */
+/* "GREEN FLAG" (item_1_42r0r0r0r0_3): 295×52 at left:92 (normal) — 32px ObliqueBold black
+   centered. Single element now covers both panes via left-slide (JS narrows to 25px) — the
+   old narrow-pane "FLAG" fallback no longer exists. */
 #lb-gf-top-text {
-    left: 0;
+    left: 92px;
     top: 0;
     width: 295px;
     height: 52px;
     font-family: 'F1TV-2022';
     font-style: oblique;
     font-weight: 700;
-    font-size: 30px;
+    font-size: 32px;
     color: rgb(0, 0, 0);
     display: flex;
     justify-content: center;
     align-items: center;
     white-space: pre;
-    transition: opacity 333ms ease;
+    transition: left 200ms ease;
 }
 
-/* Shine sweep (item_1_33r0r0r0r0_15r0): white blur overlay — one-shot transition on green flag appear */
+/* Shine sweep (item_1_42r0r0r0r0_7): white blur overlay — one-shot transition on green flag appear */
 #lb-gf-shine {
     left: 0;
     top: 0;
@@ -826,77 +831,67 @@ body { background: black; overflow: hidden; }
     transition: width 500ms ease, opacity 500ms ease;
 }
 
-/* Narrow pane "FLAG" (item_1_33r0r0r0r0_16r0): 210×50 at left:-10, top:0 — fades in when narrow */
-#lb-gf-top-text-pane {
-    left: -10px;
-    top: 0;
-    width: 210px;
-    height: 50px;
-    font-family: 'F1TV-2022';
-    font-style: oblique;
-    font-weight: 700;
-    font-size: 32px;
-    color: rgb(0, 0, 0);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    white-space: pre;
-    opacity: 0;
-    transition: opacity 333ms ease;
-}
-
-/* Bottom BG (item_1_33r0r0r0r0_13r0): Header_BG.png 306×55 at top:50 */
-#lb-gf-bottom-bg {
-    left: 0;
+/* Bottom BG (item_1_42r0r0r0r0_4/_5): two overlapping Header_BG.png 305×55 tiles */
+#lb-gf-bottom-bg1,
+#lb-gf-bottom-bg2 {
     top: 50px;
-    width: 306px;
+    width: 305px;
     height: 55px;
-    background-image: url('/images/leaderboard/Header_BG.png');
-    background-size: 306px 55px;
+    background-image: url('/images/leaderboard-lastname/Header_BG.png');
+    background-size: 305px 55px;
+    background-repeat: no-repeat;
 }
+#lb-gf-bottom-bg1 { left: 0; }
+#lb-gf-bottom-bg2 { left: 305px; }
 
-/* "TRACK CLEAR" (item_1_33r0r0r0r0_14r0): 250×55 at left:27, top:50  28px lime centered */
+/* "TRACK CLEAR" (item_1_42r0r0r0r0_6): 430×55 at left:27 — 28px Formula1 TV, lime-green
+   centered. Narrows via width (JS: 430→280) instead of a left-slide — same text, no
+   narrow-pane "CLEAR" abbreviation anymore. */
 #lb-gf-bottom-text {
     left: 27px;
     top: 50px;
-    width: 250px;
+    width: 430px;
     height: 55px;
-    font-family: 'F1TV-2022';
-    font-weight: 300;
+    font-family: 'Formula1 TV';
+    font-weight: 400;
     font-size: 28px;
-    color: rgb(0, 255, 0);
+    color: rgb(39, 203, 90);
     display: flex;
     justify-content: center;
     align-items: center;
     white-space: pre;
+    transition: width 200ms ease;
 }
 
-/* ── Time/Laps Remaining banner (item_1_28r0r0r0) ──────────────────────── */
+/* ── Time/Laps Remaining banner (item_1_39r0r0r0) ──────────────────────── */
 #lb-timelaps-banner {
-    left: 28px;
-    top: 147px;
-    width: 306px;
+    left: 32px;
+    top: 145px;
+    width: 480px;
     height: 105px;
     display: none;
     transition: opacity 0.25s, width 300ms;
     overflow: hidden;
 }
 #lb-timelaps-banner > * { position: absolute; }
-#lb-timelaps-finallap > * { position: absolute; }
 
-/* Background (item_1_28r0r0r0_2r0): TimeLapsRemBG.png 306×105 */
-#lb-timelaps-bg {
-    left: 0;
+/* Two overlapping copies of the same 305×105 asset tile the 480px width seamlessly
+   (one copy alone doesn't cover it) — same technique as #lb-mfd-header-bg1/-bg2. */
+#lb-timelaps-bg1,
+#lb-timelaps-bg2 {
     top: 0;
-    width: 306px;
+    width: 305px;
     height: 105px;
-    background-image: url('/images/leaderboard/TimeLapsRemBG.png');
-    background-size: 306px 105px;
+    background-image: url('/images/leaderboard-lastname/TimeLapsRemBG.png');
+    background-size: 305px 105px;
+    background-repeat: no-repeat;
 }
+#lb-timelaps-bg1 { left: 0; }
+#lb-timelaps-bg2 { left: 303px; }
 
-/* Number/value (item_1_28r0r0r0_3r0): 145×105 at left:15  80px red oblique bold */
+/* Number/value (item_1_39r0r0r0_3): 145×105, left set dynamically by pane/session (see JS) —
+   80px red oblique bold, shrinks to 44px white "FINAL LAP" text (295px) on the final lap. */
 #lb-timelaps-num {
-    left: 15px;
     top: 0;
     width: 145px;
     height: 105px;
@@ -911,15 +906,15 @@ body { background: black; overflow: hidden; }
     white-space: pre;
 }
 
-/* Label text (item_1_28r0r0r0_4r0): 140×85 at left:145, top:13  25px white bold centered */
+/* Label text (item_1_39r0r0r0_4): 85px tall, left/width set dynamically by pane/session (see JS) —
+   30px white bold centered. Single element now covers both normal and narrow panes via repositioning
+   — the old narrow-pane label and Final Lap sub-elements no longer exist in this layout. */
 #lb-timelaps-label {
-    left: 145px;
     top: 13px;
-    width: 140px;
     height: 85px;
     font-family: 'F1TVname';
     font-weight: 700;
-    font-size: 25px;
+    font-size: 30px;
     color: rgb(255, 255, 255);
     display: flex;
     justify-content: center;
@@ -928,77 +923,35 @@ body { background: black; overflow: hidden; }
     white-space: pre;
 }
 
-/* Label text — narrow pane (item_1_28r0r0r0_5r0): 170×20 at left:0, top:80  16px white bold centered */
-#lb-timelaps-label-pane {
-    left: 0;
-    top: 80px;
-    width: 170px;
-    height: 20px;
-    font-family: 'F1TVname';
-    font-weight: 700;
-    font-size: 16px;
-    color: rgb(255, 255, 255);
-    display: none;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    white-space: pre;
-    transition: opacity 200ms;
-}
-
-/* Final Lap — narrow pane only (item_1_28r0r0r0_6): 306×105, hidden by default */
-#lb-timelaps-finallap {
-    left: 0;
-    top: 0;
-    width: 306px;
-    height: 105px;
-    display: none;
-}
-
-/* "FINAL" text (item_1_28r0r0r0_7r0): 155×105 at left:13, top:-20  44px oblique bold white */
-#lb-timelaps-final {
-    left: 13px;
-    top: -20px;
-    width: 155px;
-    height: 105px;
-    font-family: 'F1TV-2022';
-    font-weight: 700;
-    font-style: oblique;
-    font-size: 44px;
-    color: rgb(255, 255, 255);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-/* "LAP" text (item_1_28r0r0r0_8r0): 155×105 at left:13, top:20  44px oblique bold white */
-#lb-timelaps-lap {
-    left: 13px;
-    top: 20px;
-    width: 155px;
-    height: 105px;
-    font-family: 'F1TV-2022';
-    font-weight: 700;
-    font-style: oblique;
-    font-size: 44px;
-    color: rgb(255, 255, 255);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-/* Background (item_1_33r0r0r0r0_19r0r0): SafetyCar_Banner.png 306×105 at left:0, top:0 — width 0→305 on show */
+/* Background (item_1_43r0r0r0r0_2r0): 485×105 at left:0, top:0 — width 0→485 slide-in wrapper for
+   the two SafetyCar_Banner.png tiles inside; also shifts +105px while the Time/Laps Remaining
+   banner is active (same trigger as the Yellow/Green Flag layers, see getFlagLayerTop()). */
 #lb-vsc-bg {
     left: 0;
     top: 0;
     width: 0;
     height: 105px;
-    transition: width 333ms ease;
-    background-image: url('/images/leaderboard/SafetyCar_Banner.png');
-    background-size: 306px 105px;
+    overflow: hidden;
+    transition: width 333ms ease, top 300ms ease;
 }
+#lb-vsc-bg > * { position: absolute; }
 
-/* Shine sweep (item_1_33r0r0r0r0_26r0r0): golden blur overlay — one-shot transition on SC/VSC appear */
+/* The two SafetyCar_Banner.png tiles (item_1_43r0r0r0r0_2r0_1/_2r0_2), revealed as #lb-vsc-bg's
+   width animates in — same technique as #lb-timelaps-bg1/-bg2. */
+#lb-vsc-bg1,
+#lb-vsc-bg2 {
+    top: 0;
+    width: 305px;
+    height: 105px;
+    background-image: url('/images/leaderboard-lastname/SafetyCar_Banner.png');
+    background-size: 305px 105px;
+    background-repeat: no-repeat;
+}
+#lb-vsc-bg1 { left: 0; }
+#lb-vsc-bg2 { left: 301.7px; }
+
+/* Shine sweep (item_1_43r0r0r0r0_9r0): golden blur overlay — one-shot transition on SC/VSC appear.
+   Also shifts +105px per getFlagLayerTop(). */
 #lb-vsc-shine {
     left: 0;
     top: 0;
@@ -1008,22 +961,24 @@ body { background: black; overflow: hidden; }
     background-color: rgb(255, 208, 82);
     opacity: 1;
     pointer-events: none;
-    transition: width 500ms ease, opacity 500ms ease;
+    transition: width 500ms ease, opacity 500ms ease, top 300ms ease;
 }
 
-/* VSC text layer (item_1_33r0r0r0r0_20r0r0): 306×105 at left:0, top:0 */
+/* VSC text layer (item_1_43r0r0r0r0_3r0): 485×105 at left:0, top:0 — shifts +105px per
+   getFlagLayerTop(). */
 #lb-vsc-text {
     display: none;
     left: 0;
     top: 0;
-    width: 306px;
+    width: 485px;
     height: 105px;
+    transition: top 300ms ease;
 }
 #lb-vsc-text > * { position: absolute; }
 
-/* "VIRTUAL" (item_1_33r0r0r0r0_21r0r0r0): 204×35 at left:102, top:21  38px ObliqueBold black left */
+/* "VIRTUAL" (item_1_43r0r0r0r0_4r0r0): 204×35 at left:159 (normal) — 38px ObliqueBold black left */
 #lb-vsc-text-virtual {
-    left: 102px;
+    left: 159px;
     top: 21px;
     width: 204px;
     height: 35px;
@@ -1039,9 +994,9 @@ body { background: black; overflow: hidden; }
     transition: left 250ms ease;
 }
 
-/* "SAFETY CAR" (item_1_33r0r0r0r0_22r0r0r0): 206×35 at left:100, top:51.5  26px ObliqueBold black left */
+/* "SAFETY CAR" (item_1_43r0r0r0r0_5r0r0): 206×35 at left:157 (normal) — 26px ObliqueBold black left */
 #lb-vsc-text-safetycar {
-    left: 100px;
+    left: 157px;
     top: 51.5px;
     width: 206px;
     height: 35px;
@@ -1057,37 +1012,43 @@ body { background: black; overflow: hidden; }
     transition: left 250ms ease;
 }
 
-/* FIA logo glyph (item_1_33r0r0r0r0_27r0r0): 110×80 at left:0, top:15  F1TV-2022-Logos 80px centered */
+/* FIA logo glyph (item_1_43r0r0r0r0_10r0): 115×105 at left:10 (normal), top:0 — 90px centered.
+   Repositions/shrinks in narrow panes now instead of hiding. Shifts +105px per getFlagLayerTop(). */
 #lb-vsc-fia-logo {
-    left: 0;
-    top: 15px;
-    width: 110px;
-    height: 80px;
+    left: 10px;
+    top: 0;
+    width: 115px;
+    height: 105px;
     font-family: 'F1TV-2022-Logos';
     font-weight: 400;
-    font-size: 80px;
+    font-size: 90px;
     color: rgb(0, 0, 0);
     display: flex;
     justify-content: center;
     align-items: center;
     white-space: pre;
+    transition: left 200ms ease, font-size 200ms ease, top 300ms ease;
 }
 
-/* SC text layer (item_1_33r0r0r0r0_23r0r0): 306×105 at left:0, top:0 */
+/* SC text layer (item_1_43r0r0r0r0_6r0): 485×105 at left:0, top:0 — shifts +105px per
+   getFlagLayerTop(). */
 #lb-sc-text {
     display: none;
     left: 0;
     top: 0;
-    width: 306px;
+    width: 485px;
     height: 105px;
+    transition: top 300ms ease;
 }
 #lb-sc-text > * { position: absolute; }
 
-/* "SAFETY" (item_1_33r0r0r0r0_24r0r0r0): 195×35 at left:100, top:18  37px ObliqueBold black centered */
+/* "SAFETY CAR"/"SAFETY" (item_1_43r0r0r0r0_7r0r0): 310×35 at left:130 (normal), top:35 (normal) —
+   37px ObliqueBold black centered. Text switches to "SAFETY" in narrow panes, alongside the
+   separate "CAR" second line below — "SAFETY CAR" doesn't fit on one line at narrow widths. */
 #lb-sc-text-safety {
-    left: 100px;
-    top: 18px;
-    width: 195px;
+    left: 130px;
+    top: 35px;
+    width: 310px;
     height: 35px;
     font-family: 'F1TV-2022';
     font-style: oblique;
@@ -1098,11 +1059,16 @@ body { background: black; overflow: hidden; }
     justify-content: center;
     align-items: center;
     white-space: pre;
-    transition: left 250ms ease;
+    transition: left 250ms ease, top 250ms ease;
 }
 
-/* "CAR" (item_1_33r0r0r0r0_25r0r0r0): 160×35 at left:110, top:53  37px ObliqueBold black left */
+/* "CAR" (item_1_43r0r0r0r0_8r0r0): 160×35 at left:110, top:53 — 37px ObliqueBold black left.
+   Narrow-pane only. The source's Left formula also has a "Lap 1, no best lap yet" branch, but it
+   shares the exact same 110px result as the narrow branch, and this element's own Visible formula
+   is narrow-only — so the Lap-1 case never actually differs from what's already showing, same
+   "dead branch, never actually seen" pattern used elsewhere in this file. Left stays static. */
 #lb-sc-text-car {
+    display: none;
     left: 110px;
     top: 53px;
     width: 160px;
@@ -1112,63 +1078,60 @@ body { background: black; overflow: hidden; }
     font-weight: 700;
     font-size: 37px;
     color: rgb(0, 0, 0);
-    display: flex;
     justify-content: flex-start;
     align-items: center;
     white-space: pre;
-    transition: left 250ms ease;
 }
 
-/* Red Flag layer (item_1_33r0r0r0r0_28r0): 306×105 at left:0, top:0 — fades in over 200ms on rf */
+/* Red Flag layer (item_1_43r0r0r0r0_11): 485×105 at left:0, top:0 — fades in over 200ms on rf.
+   Simple opacity-fade "container" (unlike SC/VSC's width-reveal "widget"), no width narrowing. */
 #lb-rf-layer {
     display: none;
     left: 0;
     top: 0;
-    width: 306px;
+    width: 485px;
     height: 105px;
     transition: opacity 200ms ease;
 }
 #lb-rf-layer > * { position: absolute; }
 
-/* RedFlag_Banner.png ×3 (items _29/_30/_31): 306×50 each */
-#lb-rf-img-1 {
-    left: 0;
-    top: 0;
-    width: 306px;
+/* RedFlag_Banner.png ×6 (items _12r0/_13r0/_14r0/_16r0r0/_17r0r0/_18r0r0): 305×50 each, two
+   overlapping horizontal copies (left:0 and left:299) of the same 3-tile vertical stack —
+   same "two tiles to cover the wider banner" technique used elsewhere in this file. */
+#lb-rf-img-1,
+#lb-rf-img-2,
+#lb-rf-img-3,
+#lb-rf-img-4,
+#lb-rf-img-5,
+#lb-rf-img-6 {
+    width: 305px;
     height: 50px;
-    background-image: url('/images/leaderboard/RedFlag_Banner.png');
-    background-size: 306px 50px;
+    background-image: url('/images/leaderboard-lastname/RedFlag_Banner.png');
+    background-size: 305px 50px;
+    background-repeat: no-repeat;
 }
-#lb-rf-img-2 {
-    left: 0;
-    top: 49px;
-    width: 306px;
-    height: 50px;
-    background-image: url('/images/leaderboard/RedFlag_Banner.png');
-    background-size: 306px 50px;
-}
-#lb-rf-img-3 {
-    left: 0;
-    top: 57px;
-    width: 306px;
-    height: 50px;
-    background-image: url('/images/leaderboard/RedFlag_Banner.png');
-    background-size: 306px 50px;
-}
+#lb-rf-img-1 { left: 0px;   top: 0px; }
+#lb-rf-img-2 { left: 0px;   top: 49px; }
+#lb-rf-img-3 { left: 0px;   top: 57px; }
+#lb-rf-img-4 { left: 299px; top: 0px; }
+#lb-rf-img-5 { left: 299px; top: 49px; }
+#lb-rf-img-6 { left: 299px; top: 57px; }
 
-/* Semi-transparent red overlay (item_1_33r0r0r0r0_32r0r0): 306×105 */
+/* Semi-transparent red overlay (item_1_43r0r0r0r0_19r0): 490×105 */
 #lb-rf-overlay {
     left: 0;
     top: 0;
-    width: 306px;
+    width: 490px;
     height: 105px;
     background-color: rgb(255, 0, 0);
     opacity: 0.15;
 }
 
-/* "RED FLAG" text (item_1_33r0r0r0r0_33r0r0): 302×105  48px ObliqueBold white centered */
+/* "RED FLAG" text (item_1_43r0r0r0r0_20r0): 302×105 at left:91 (normal) — 48px ObliqueBold white
+   centered. Single element covers both panes via left-slide (JS narrows to 25px) — no separate
+   narrow-pane "FLAG" abbreviation anymore. */
 #lb-rf-text {
-    left: 0;
+    left: 91px;
     top: 0;
     width: 302px;
     height: 105px;
@@ -1965,7 +1928,7 @@ body { background: black; overflow: hidden; }
 #lb-mfd-header > * { position: absolute; }
 
 /* Two overlapping copies of the same 305×105 asset tile the 484px width seamlessly
-   (one copy alone doesn't cover it) — same asset already used by #lb-timelaps-bg. */
+   (one copy alone doesn't cover it) — same asset/technique as #lb-timelaps-bg1/-bg2. */
 #lb-mfd-header-bg1,
 #lb-mfd-header-bg2 {
     top: 0;

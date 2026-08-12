@@ -271,69 +271,105 @@
                 <div id="lb-deco-border-timelaps"></div>
             </div>
 
-            <!-- VSC Flags banner (item_1_33r0r0r0r0): 306×105 at left:27.5, top:145 -->
+            <!-- VSC Flags banner (item_1_40r0r0r0): 485×105 at left:26, top:145 — every flag "widget"
+                 (Yellow/Green/SC/VSC/RF) is its own independent element at this exact same spot in the
+                 real source; ported here as one shared positioned container with each flag type as a
+                 same-spot child layer (0,0-relative), same structure as before. -->
             <div id="lb-vsc-banner">
-                <!-- Background (item_1_33r0r0r0r0_19r0r0): SafetyCar_Banner.png 306×105 at left:0, top:0 -->
-                <div id="lb-vsc-bg"></div>
-                <!-- Shine sweep (item_1_33r0r0r0r0_26r0r0): golden blur overlay, one-shot on SC/VSC appear -->
+                <!-- Background (item_1_43r0r0r0r0_2r0): 485×105, width 0→485 slide-in wrapper for
+                     the two SafetyCar_Banner.png tiles inside — shifts +105px while the Time/Laps
+                     Remaining banner is active (see JS). -->
+                <div id="lb-vsc-bg">
+                    <div id="lb-vsc-bg1"></div>
+                    <div id="lb-vsc-bg2"></div>
+                </div>
+                <!-- Shine sweep (item_1_43r0r0r0r0_9r0): golden blur overlay, one-shot on SC/VSC appear -->
                 <div id="lb-vsc-shine"></div>
-                <!-- Yellow Flag layer (item_1_33r0r0r0r0_1) -->
+                <!-- Yellow Flag layer (item_1_41r0r0r0r0): 485×105 — top shifts +105px while the
+                     Time/Laps Remaining banner is active (same trigger condition, see JS). -->
                 <div id="lb-yf-layer">
-                    <!-- Top BG (item_1_33r0r0r0r0_2r0): YellowFlag_Banner.png 306×50 at top:0 -->
-                    <div id="lb-yf-top-bg"></div>
-                    <!-- "YELLOW FLAG" (item_1_33r0r0r0r0_3r0): 295×50 at left:0, top:0  30px ObliqueBold black centered -->
+                    <!-- Top BG (item_1_41r0r0r0r0_2r0/_3r0): two overlapping YellowFlag_Banner.png
+                         305×50 tiles, same technique as #lb-timelaps-bg1/-bg2. -->
+                    <div id="lb-yf-top-bg1"></div>
+                    <div id="lb-yf-top-bg2"></div>
+                    <!-- "YELLOW FLAG" (item_1_41r0r0r0r0_6): 300×50, left varies by pane (see JS) —
+                         32px ObliqueBold black centered. Single element covers both panes via
+                         left-slide — the old narrow-pane "FLAG" fallback no longer exists. -->
                     <div id="lb-yf-top-text">YELLOW FLAG</div>
-                    <!-- Shine sweep (item_1_33r0r0r0r0_8r0): white blur overlay, one-shot on flag appear -->
+                    <!-- Shine sweep (item_1_41r0r0r0r0_9): white blur overlay, one-shot on flag appear -->
                     <div id="lb-yf-shine"></div>
-                    <!-- Narrow pane "FLAG" (item_1_33r0r0r0r0_9r0): 210×50 at left:-10, shown in pane 1/3 -->
-                    <div id="lb-yf-top-text-pane">FLAG</div>
-                    <!-- Bottom BG (item_1_33r0r0r0r0_4r0): Header_BG.png 306×55 at top:50 -->
-                    <div id="lb-yf-bottom-bg"></div>
-                    <!-- Sector label (item_1_33r0r0r0r0_6r0r0): 170×55 at left:10, top:50  26px gold right-aligned -->
+                    <!-- Bottom BG (item_1_41r0r0r0r0_4r0/_5r0): two overlapping Header_BG.png
+                         305×55 tiles -->
+                    <div id="lb-yf-bottom-bg1"></div>
+                    <div id="lb-yf-bottom-bg2"></div>
+                    <!-- Sector label (item_1_41r0r0r0r0_7): 170×55, left varies by pane (see JS) —
+                         28px gold right-aligned -->
                     <div id="lb-yf-sector-label">SECTOR</div>
-                    <!-- Sector number (item_1_33r0r0r0r0_7r0r0): 90×55 at left:190, top:50  40px gold left-aligned -->
+                    <!-- Sector number (item_1_41r0r0r0r0_8): 90×55, left varies by pane (see JS) —
+                         40px gold left-aligned -->
                     <div id="lb-yf-sector-num">-</div>
                 </div>
-                <!-- Green Flag layer (item_1_33r0r0r0r0_10) -->
+                <!-- Green Flag layer (item_1_42r0r0r0r0): 485×105 — top shifts +105px while the
+                     Time/Laps Remaining banner is active (same trigger as the Yellow Flag layer). -->
                 <div id="lb-gf-layer">
-                    <!-- Top BG (item_1_33r0r0r0r0_11r0): GreenFlag_Banner.png 307×50 at top:0 -->
-                    <div id="lb-gf-top-bg"></div>
-                    <!-- "GREEN FLAG" (item_1_33r0r0r0r0_12r0): 295×52 at left:0, top:0  30px ObliqueBold black centered -->
+                    <!-- Top BG (item_1_42r0r0r0r0_1/_2): two overlapping GreenFlag_Banner.png
+                         307×50 tiles, same technique as #lb-yf-top-bg1/-bg2. -->
+                    <div id="lb-gf-top-bg1"></div>
+                    <div id="lb-gf-top-bg2"></div>
+                    <!-- "GREEN FLAG" (item_1_42r0r0r0r0_3): 295×52, left varies by pane (see JS) —
+                         32px ObliqueBold black centered. Single element covers both panes via
+                         left-slide — the old narrow-pane "FLAG" fallback no longer exists. -->
                     <div id="lb-gf-top-text">GREEN FLAG</div>
-                    <!-- Shine sweep (item_1_33r0r0r0r0_15r0): white blur overlay, one-shot on flag appear -->
+                    <!-- Shine sweep (item_1_42r0r0r0r0_7): white blur overlay, one-shot on flag appear -->
                     <div id="lb-gf-shine"></div>
-                    <!-- Narrow pane "FLAG" (item_1_33r0r0r0r0_16r0): 210×50 at left:-10, shown in pane 1/3 -->
-                    <div id="lb-gf-top-text-pane">FLAG</div>
-                    <!-- Bottom BG (item_1_33r0r0r0r0_13r0): Header_BG.png 306×55 at top:50 -->
-                    <div id="lb-gf-bottom-bg"></div>
-                    <!-- "TRACK CLEAR" (item_1_33r0r0r0r0_14r0): 250×55 at left:27, top:50  28px lime centered -->
+                    <!-- Bottom BG (item_1_42r0r0r0r0_4/_5): two overlapping Header_BG.png
+                         305×55 tiles -->
+                    <div id="lb-gf-bottom-bg1"></div>
+                    <div id="lb-gf-bottom-bg2"></div>
+                    <!-- "TRACK CLEAR" (item_1_42r0r0r0r0_6): 430×55, width varies by pane (see JS) —
+                         28px Formula1 TV centered. Narrows via width instead of a left-slide, so the
+                         same "TRACK CLEAR" text stays put (no narrow-pane "CLEAR" abbreviation anymore). -->
                     <div id="lb-gf-bottom-text">TRACK CLEAR</div>
                 </div>
-                <!-- VSC text layer (item_1_33r0r0r0r0_20r0r0) -->
+                <!-- VSC text layer (item_1_43r0r0r0r0_3r0): 485×105 — shifts +105px while the
+                     Time/Laps Remaining banner is active (see JS). -->
                 <div id="lb-vsc-text">
-                    <!-- "VIRTUAL" (item_1_33r0r0r0r0_21r0r0r0): 204×35 at left:102, top:21  38px ObliqueBold black left -->
+                    <!-- "VIRTUAL" (item_1_43r0r0r0r0_4r0r0): 204×35, left varies by pane (see JS) —
+                         38px ObliqueBold black left -->
                     <div id="lb-vsc-text-virtual">VIRTUAL</div>
-                    <!-- "SAFETY CAR" (item_1_33r0r0r0r0_22r0r0r0): 206×35 at left:100, top:51.5  26px ObliqueBold black left -->
+                    <!-- "SAFETY CAR" (item_1_43r0r0r0r0_5r0r0): 206×35, left varies by pane (see JS) —
+                         26px ObliqueBold black left -->
                     <div id="lb-vsc-text-safetycar">SAFETY CAR</div>
                 </div>
-                <!-- SC text layer (item_1_33r0r0r0r0_23r0r0) -->
+                <!-- SC text layer (item_1_43r0r0r0r0_6r0): 485×105 — shifts +105px while the
+                     Time/Laps Remaining banner is active (see JS). -->
                 <div id="lb-sc-text">
-                    <!-- "SAFETY" (item_1_33r0r0r0r0_24r0r0r0): 195×35 at left:100, top:18  37px ObliqueBold black centered -->
-                    <div id="lb-sc-text-safety">SAFETY</div>
-                    <!-- "CAR" (item_1_33r0r0r0r0_25r0r0r0): 160×35 at left:110, top:53  37px ObliqueBold black left -->
+                    <!-- "SAFETY CAR"/"SAFETY" (item_1_43r0r0r0r0_7r0r0): 310×35, text/left/top vary
+                         by pane (see JS) — 37px ObliqueBold black centered -->
+                    <div id="lb-sc-text-safety">SAFETY CAR</div>
+                    <!-- "CAR" (item_1_43r0r0r0r0_8r0r0): 160×35 at left:110, top:53 — 37px ObliqueBold
+                         black left. Narrow-pane only, second line alongside "SAFETY" above. -->
                     <div id="lb-sc-text-car">CAR</div>
                 </div>
-                <!-- FIA logo glyph (item_1_33r0r0r0r0_27r0r0): 110×80 at left:0, top:15  F1TV-2022-Logos 80px -->
+                <!-- FIA logo glyph (item_1_43r0r0r0r0_10r0): 115×105, left/font-size vary by pane
+                     (see JS) — F1TV-2022-Logos 90px. Shifts +105px while the Time/Laps Remaining
+                     banner is active (see JS). -->
                 <div id="lb-vsc-fia-logo">f</div>
-                <!-- Red Flag layer (item_1_33r0r0r0r0_28r0) -->
+                <!-- Red Flag layer (item_1_43r0r0r0r0_11): 485×105, simple opacity-fade — no
+                     width-reveal "widget" animation like SC/VSC's own layer. -->
                 <div id="lb-rf-layer">
-                    <!-- RedFlag_Banner.png ×3 stacked (items _29/_30/_31): 306×50 each -->
+                    <!-- RedFlag_Banner.png ×6 (items _12r0/_13r0/_14r0/_16r0r0/_17r0r0/_18r0r0):
+                         305×50 each, two overlapping horizontal copies of the same 3-tile stack. -->
                     <div id="lb-rf-img-1"></div>
                     <div id="lb-rf-img-2"></div>
                     <div id="lb-rf-img-3"></div>
-                    <!-- Semi-transparent red overlay (item_1_33r0r0r0r0_32r0r0): 305×105 opacity:0.15 -->
+                    <div id="lb-rf-img-4"></div>
+                    <div id="lb-rf-img-5"></div>
+                    <div id="lb-rf-img-6"></div>
+                    <!-- Semi-transparent red overlay (item_1_43r0r0r0r0_19r0): 490×105 opacity:0.15 -->
                     <div id="lb-rf-overlay"></div>
-                    <!-- "RED FLAG" text (item_1_33r0r0r0r0_33r0r0): 302×105  48px white centered -->
+                    <!-- "RED FLAG" text (item_1_43r0r0r0r0_20r0): 302×105, left varies by pane
+                         (see JS) — 48px white centered -->
                     <div id="lb-rf-text">RED FLAG</div>
                 </div>
             </div>
@@ -351,29 +387,32 @@
                 <div id="lb-formation-banner-gradient"></div>
             </div>
 
-            <!-- SC/VSC Ending Banner (item_1_29r0r0r0): 306×55 at left:27.5, top:201 — hidden by default -->
+            <!-- SC/VSC Ending Banner (item_1_29r0r0r0): 485×55 at left:26, top:201 — hidden by
+                 default. Narrow/full sizing (365/485) matches #lb-vsc-banner's own, since this
+                 overlays the lower portion of whatever width that banner is currently using. -->
             <div id="lb-sc-ending-banner">
-                <!-- Background (item_1_29r0r0r0_1): Header_BG.png 306×55 -->
-                <div id="lb-sc-ending-bg"></div>
+                <!-- Background (item_1_29r0r0r0_1): two overlapping Header_BG.png 305×55 tiles,
+                     same technique as #lb-yf-bottom-bg1/-bg2 and #lb-gf-bottom-bg1/-bg2. -->
+                <div id="lb-sc-ending-bg1"></div>
+                <div id="lb-sc-ending-bg2"></div>
                 <!-- "ENDING" text (item_1_29r0r0r0_2): F1TV-2022 35px gold centered -->
                 <div id="lb-sc-ending-text">ENDING</div>
             </div>
 
-            <!-- Time/Laps Remaining banner (item_1_28r0r0r0): 306×105 at left:28, top:147 — hidden by default -->
+            <!-- Time/Laps Remaining banner (item_1_39r0r0r0): 480×105 at left:32, top:145 — hidden by
+                 default; width animates 480 (normal) / 358 (narrow). -->
             <div id="lb-timelaps-banner">
-                <!-- Background (item_1_28r0r0r0_2r0): TimeLapsRemBG.png 306×105 -->
-                <div id="lb-timelaps-bg"></div>
-                <!-- Number/value (item_1_28r0r0r0_3r0): 145×105 at left:15  80px red oblique bold -->
+                <!-- Background (item_1_39r0r0r0_1/_2): two overlapping TimeLapsRemBG.png 305×105 tiles,
+                     same technique as #lb-mfd-header-bg1/-bg2 — one copy alone doesn't cover 480px. -->
+                <div id="lb-timelaps-bg1"></div>
+                <div id="lb-timelaps-bg2"></div>
+                <!-- Number/value (item_1_39r0r0r0_3): 145×105, left varies by pane/session (see JS) —
+                     80px red oblique bold, shrinks to 44px white "FINAL LAP" text (295px) on the final lap -->
                 <div id="lb-timelaps-num"></div>
-                <!-- Label text — normal pane (item_1_28r0r0r0_4r0): 140×85 at left:145, top:13  25px white bold centered -->
+                <!-- Label text (item_1_39r0r0r0_4): 85px tall, left/width vary by pane/session (see JS) —
+                     30px white bold centered. One shared element covers both normal and narrow panes via
+                     repositioning — the old narrow-pane label and Final Lap sub-elements no longer exist. -->
                 <div id="lb-timelaps-label"></div>
-                <!-- Label text — narrow pane (item_1_28r0r0r0_5r0): 170×20 at left:0, top:80  16px white bold centered -->
-                <div id="lb-timelaps-label-pane"></div>
-                <!-- Final Lap — narrow pane only (item_1_28r0r0r0_6): shown instead of num on final lap in pane 1/3 -->
-                <div id="lb-timelaps-finallap">
-                    <div id="lb-timelaps-final">FINAL</div>
-                    <div id="lb-timelaps-lap">LAP</div>
-                </div>
             </div>
 
             <!-- Series logo (item_1_36r0): F1.png  140.8×36.08 at left:35, top:46 -->
@@ -530,17 +569,13 @@
         const elRfLayer      = document.getElementById('lb-rf-layer');
         const elRfText       = document.getElementById('lb-rf-text');
         const elYfLayer        = document.getElementById('lb-yf-layer');
-        const elYfTopBg        = document.getElementById('lb-yf-top-bg');
         const elYfTopText      = document.getElementById('lb-yf-top-text');
         const elYfShine        = document.getElementById('lb-yf-shine');
-        const elYfTopTextPane  = document.getElementById('lb-yf-top-text-pane');
         const elYfSectorLabel  = document.getElementById('lb-yf-sector-label');
         const elYfSectorNum    = document.getElementById('lb-yf-sector-num');
         const elGfLayer        = document.getElementById('lb-gf-layer');
-        const elGfTopBg        = document.getElementById('lb-gf-top-bg');
         const elGfTopText      = document.getElementById('lb-gf-top-text');
         const elGfShine        = document.getElementById('lb-gf-shine');
-        const elGfTopTextPane  = document.getElementById('lb-gf-top-text-pane');
         const elGfBottomText   = document.getElementById('lb-gf-bottom-text');
         const elFlagsImg     = document.getElementById('lb-flags-img');
         const elDecoBorderWidget      = document.getElementById('lb-deco-border-widget');
@@ -554,8 +589,6 @@
         const elTimeLapsBanner    = document.getElementById('lb-timelaps-banner');
         const elTimeLapsNum       = document.getElementById('lb-timelaps-num');
         const elTimeLapsLabel     = document.getElementById('lb-timelaps-label');
-        const elTimeLapsPaneLabel = document.getElementById('lb-timelaps-label-pane');
-        const elTimeLapsFinalLap  = document.getElementById('lb-timelaps-finallap');
         const elThickStrokeBg = document.getElementById('lb-thick-stroke-bg');
         const elFlagsBorder  = document.getElementById('lb-flags-border');
         const elBorderRect   = document.getElementById('lb-border-rect');
@@ -1228,6 +1261,8 @@
         let timeLapsBannerActive   = false;
         let timeLapsBannerTimer    = null;
         let timeLapsBannerType     = null; // 'minutes' | 'laps' | 'finallap' — for dynamic pane updates
+        let timeLapsBannerValue    = null; // raw minutes/laps value passed to showTimeLapsBanner — needed by
+                                            // updateTimeLapsBanner() to recompute the 15/10-laps label offset
         let sessionDuration        = 0;
         let prevTimeLeft           = Infinity;
         let prevLapsRemaining      = Infinity;
@@ -1360,13 +1395,13 @@
             elStandingsLogo.style.transform = `scale(${isSprintSession ? 0.88 : 0.98})`;
 
             // Session name (item_1_11r0r0r0 / _12r0r0r0):
-            // Hidden for F2 Practice (types 1-4) and F2 Qualifying (types 5-9),
-            // and for any Sprint/SQ session. Unlike lb-sprint-logo, stays visible in narrow
-            // panes here — the narrowed 185px width still fits the name.
-            // Also hidden during Formation Lap (m_safetyCarStatus === 3).
-            const isF2Practice = formulaType === 2 && (sessionType >= 1 && sessionType <= 4);  // We cover all sessions, even though only Quick Practice is used (sessionType 4)
-            const isF2Quali    = formulaType === 2 && (sessionType >= 5 && sessionType <= 9);  // We cover all sessions, even though only Short Q (sessionType 8) and OSQ (sessionType 9) are used
-            const hideSessionName = formationLap || isSQ || isSprintSession || isF2Practice || isF2Quali;
+            // Hidden during the Sprint Race itself (isSprintSession — the generic "RACE" label
+            // would be less informative than the Sprint logo already showing in its place) and
+            // during Formation Lap. SQ1-3/Short SQ/OSSQ and F2's FP/Q labels show normally
+            // alongside the Sprint/F2 series logos — those logos are branding, not a segment
+            // indicator, so the name still carries real information there. Unlike lb-sprint-logo,
+            // stays visible in narrow panes here — the narrowed 185px width still fits the name.
+            const hideSessionName = formationLap || isSprintSession;
             elSessionName.style.display = hideSessionName ? 'none' : 'block';
             elSessionName.style.width   = narrow ? '185px' : '300px';
             elSessionName.style.top     = formulaType === 2 ? '40px' : '45px';
@@ -1414,49 +1449,69 @@
             elScTeamLogo.style.display = isAston ? 'none' : 'block';
         }
 
+        // ── Flag layer top-shift helper ───────────────────────────────────────────
+        // Yellow and Green flag layers share the exact same +105px shift while the Time/Laps
+        // Remaining banner is active, so the two banners don't occupy the same space at once.
+        function getFlagLayerTop() {
+            return timeLapsBannerActive ? '105px' : '';
+        }
+
         // ── Yellow flag banner pane adjustments ───────────────────────────────────
-        // Called on pane change and when yellow mode activates; applies narrow-mode offsets.
+        // Called on pane change, when yellow mode activates, and whenever the Time/Laps Remaining
+        // banner shows/hides (see getFlagLayerTop()).
         function updateYellowFlagBanner() {
             const narrow = paneMode === 1 || paneMode === 3;
-            elYfTopText.style.opacity      = narrow ? '0'     : '1';
-            elYfTopTextPane.style.display  = narrow ? 'flex'  : 'none';
-            elYfSectorLabel.style.left     = narrow ? '-48px' : '10px';
-            elYfSectorLabel.style.fontSize = narrow ? '24px'  : '26px';
-            elYfSectorNum.style.left       = narrow ? '130px' : '190px';
-            elYfSectorNum.style.fontSize   = narrow ? '30px'  : '40px';
+            elYfLayer.style.top        = getFlagLayerTop();
+            elYfTopText.style.left     = narrow ? '25px'  : '';
+            elYfSectorLabel.style.left = narrow ? '40px'  : '';
+            elYfSectorNum.style.left   = narrow ? '220px' : '';
         }
 
         // ── Green flag banner pane adjustments ────────────────────────────────────
+        // Called on pane change, when green mode activates, and whenever the Time/Laps Remaining
+        // banner shows/hides (see getFlagLayerTop()).
         function updateGreenFlagBanner() {
             const narrow = paneMode === 1 || paneMode === 3;
-            elGfTopText.style.opacity     = narrow ? '0'     : '1';
-            elGfTopTextPane.style.opacity = narrow ? '1'     : '0';
-            elGfBottomText.style.left     = narrow ? '-33px' : '27px';
-            elGfBottomText.textContent    = narrow ? 'CLEAR' : 'TRACK CLEAR';
+            elGfLayer.style.top        = getFlagLayerTop();
+            elGfTopText.style.left     = narrow ? '25px'  : '';
+            elGfBottomText.style.width = narrow ? '280px' : '';
         }
 
         // ── SC/VSC banner pane adjustments ────────────────────────────────────────
-        // Handles narrow-mode text offsets, font sizes, and FIA logo visibility.
+        // Handles narrow-mode text offsets, FIA logo repositioning, and the shared +105px
+        // top-shift (see getFlagLayerTop()) whenever the Time/Laps Remaining banner is active.
         function updateScVscBanner() {
             const narrow   = paneMode === 1 || paneMode === 3;
             const scVscNow = flagsBannerMode === 'sc' || flagsBannerMode === 'vsc';
-            // FIA logo: hidden in narrow pane
-            elVscFiaLogo.style.display       = (scVscNow && !narrow) ? '' : 'none';
+            const flagTop  = getFlagLayerTop();
+
+            elVscBg.style.top    = flagTop;
+            elVscShine.style.top = flagTop;
+            elVscText.style.top  = flagTop;
+            elScText.style.top   = flagTop;
+
+            // FIA logo: repositions/shrinks in narrow panes instead of hiding
+            elVscFiaLogo.style.display  = scVscNow ? '' : 'none';
+            elVscFiaLogo.style.top      = flagTop;
+            elVscFiaLogo.style.left     = narrow ? '0px'  : '';
+            elVscFiaLogo.style.fontSize = narrow ? '70px' : '';
+
             // VSC text offsets
-            elVscTextVirtual.style.left      = narrow ? '5px'   : '102px';
-            elVscTextVirtual.style.fontSize  = narrow ? '34px'  : '38px';
-            elVscTextSafetyCar.style.left    = narrow ? '3px'   : '100px';
-            elVscTextSafetyCar.style.fontSize = narrow ? '24px' : '26px';
-            // SC text offsets
-            elScTextSafety.style.left        = narrow ? '-8px'  : '100px';
-            elScTextCar.style.left           = narrow ? '2px'   : '110px';
+            elVscTextVirtual.style.left   = narrow ? '114px' : '';
+            elVscTextSafetyCar.style.left = narrow ? '112px' : '';
+
+            // SC text: normal pane shows one "SAFETY CAR" line; narrow pane splits into a
+            // "SAFETY" line plus the separate "CAR" line below (doesn't fit on one line narrow)
+            elScTextSafety.textContent = narrow ? 'SAFETY' : 'SAFETY CAR';
+            elScTextSafety.style.top   = narrow ? '20px' : '';
+            elScTextSafety.style.left  = narrow ? '40px' : '';
+            elScTextCar.style.display  = narrow ? 'flex' : 'none';
         }
 
         // ── Red flag banner pane adjustments ──────────────────────────────────────
         function updateRfBanner() {
             const narrow = paneMode === 1 || paneMode === 3;
-            elRfText.style.left    = narrow ? '-63px' : '0px';
-            elRfText.textContent   = narrow ? 'FLAG'  : 'RED FLAG';
+            elRfText.style.left = narrow ? '25px' : '';
         }
 
         // ── SC/VSC Ending banner (item_1_29r0r0r0) ────────────────────────────────
@@ -1465,12 +1520,11 @@
         function updateScEndingBanner() {
             const narrow = paneMode === 1 || paneMode === 3;
             elScEndingBanner.style.display = (scEnding && !mfdActive) ? 'block' : 'none';
-            elScEndingBanner.style.width   = narrow ? '186px' : '306px';
-            elScEndingText.style.left      = narrow ? '-48px' : '10px';
-            elScEndingText.style.width     = narrow ? '277px' : '306px';
+            elScEndingBanner.style.width   = narrow ? '365px' : '485px';
+            elScEndingText.style.width     = narrow ? '365px' : '485px';
             // VSC banner shifts up when ending banner is active; narrows in narrow pane
             elVscBanner.style.top   = scEnding ? '95px'  : '145px';
-            elVscBanner.style.width = narrow   ? '186px' : '306px';
+            elVscBanner.style.width = narrow   ? '365px' : '485px';
         }
 
         // ── Starting Tyres banner (item_1_38r0r0r0) ───────────────────────────────
@@ -2092,6 +2146,8 @@
             if (timeLapsBannerTimer) clearTimeout(timeLapsBannerTimer);
             timeLapsBannerTimer            = null;
             timeLapsBannerActive           = false;
+            timeLapsBannerType             = null;
+            timeLapsBannerValue            = null;
             sessionDuration                = 0;
             prevTimeLeft                   = Infinity;
             prevLapsRemaining              = Infinity;
@@ -2332,41 +2388,36 @@
             if (mode === 'yellow') {
                 updateYellowFlagBanner();
                 if (prevMode !== 'yellow') {
-                    // Snap layer + top-bg + shine to start state, shared reflow, then trigger all transitions
+                    // Snap layer + shine to start state, shared reflow, then trigger all transitions.
+                    // Top BG is now two static tiles (no reveal animation), so only opacity/shine remain.
                     elYfLayer.style.transition = 'none';
                     elYfLayer.style.opacity    = '0';
-                    elYfTopBg.style.transition = 'none';
-                    elYfTopBg.style.width      = '0px';
                     elYfShine.style.transition = 'none';
                     elYfShine.style.width      = '0px';
                     elYfShine.style.opacity    = '1';
                     void elYfShine.offsetWidth;
                     elYfLayer.style.transition = '';
                     elYfLayer.style.opacity    = '1';
-                    elYfTopBg.style.transition = '';
                     elYfShine.style.transition = '';
-                    elYfTopBg.style.width      = '306px';
-                    elYfShine.style.width      = '305px';
+                    elYfShine.style.width      = '485px';
                     elYfShine.style.opacity    = '0';
                 }
             }
             if (mode === 'green') {
                 updateGreenFlagBanner();
                 if (prevMode !== 'green') {
+                    // Snap layer + shine to start state, shared reflow, then trigger all transitions.
+                    // Top BG is two static tiles (no reveal animation), so only opacity/shine remain.
                     elGfLayer.style.transition = 'none';
                     elGfLayer.style.opacity    = '0';
-                    elGfTopBg.style.transition = 'none';
-                    elGfTopBg.style.width      = '0px';
                     elGfShine.style.transition = 'none';
                     elGfShine.style.width      = '0px';
                     elGfShine.style.opacity    = '1';
                     void elGfShine.offsetWidth;
                     elGfLayer.style.transition = '';
                     elGfLayer.style.opacity    = '1';
-                    elGfTopBg.style.transition = '';
                     elGfShine.style.transition = '';
-                    elGfTopBg.style.width      = '306px';
-                    elGfShine.style.width      = '305px';
+                    elGfShine.style.width      = '485px';
                     elGfShine.style.opacity    = '0';
                 }
             }
@@ -2388,8 +2439,8 @@
                 }
                 elVscBg.style.transition    = '';
                 elVscShine.style.transition = '';
-                elVscBg.style.width         = '305px';
-                elVscShine.style.width      = '305px';
+                elVscBg.style.width         = '485px';
+                elVscShine.style.width      = '485px';
                 elVscShine.style.opacity    = '0';
             }
             if (mode === 'rf') {
@@ -2409,39 +2460,52 @@
             updateOverlayHeight();
         }
 
+        // ── Time/Laps Remaining banner — Left position helpers ───────────────────
+        // Mirror the reference formula's narrow/race/non-race branching. Shared by
+        // showTimeLapsBanner/showFinalLapBanner/updateTimeLapsBanner so a pane switch
+        // while the banner is already showing recomputes the exact same values.
+        function getTimeLapsNumLeft(narrow, isRace) {
+            if (narrow) return 30;
+            return isRace ? 90 : 110;
+        }
+        function getTimeLapsLabelLeft(narrow, isRace, milestoneHit) {
+            if (narrow) return 150;
+            if (!isRace) return 230;
+            return milestoneHit ? 230 : 210;
+        }
+
         // ── Time/Laps Remaining banner helpers ────────────────────────────
         function showTimeLapsBanner(type, value) {
             if (formationLap) return;
             if (timeLapsBannerTimer) clearTimeout(timeLapsBannerTimer);
-            const narrow     = paneMode === 1 || paneMode === 3;
-            const scVscActive = flagsBannerMode === 'sc' || flagsBannerMode === 'vsc';
+            const narrow      = paneMode === 1 || paneMode === 3;
+            const isRace      = RACE_TYPES.has(sessionType);
             timeLapsBannerActive = true;
             timeLapsBannerType   = type;
+            timeLapsBannerValue  = value;
             updateOverlayHeight();
             updateDecoBorders();
             elTimeLapsBanner.style.opacity    = '0';
             elTimeLapsBanner.style.display    = 'block';
-            elTimeLapsBanner.style.top        = (type === 'laps' && scVscActive) ? '247px' : '';
-            elTimeLapsBanner.style.width      = narrow ? '185px' : '';
-            elTimeLapsFinalLap.style.display  = 'none';
+            elTimeLapsBanner.style.width      = narrow ? '358px' : '';
             elTimeLapsNum.style.display       = '';
             elTimeLapsNum.textContent         = value;
             elTimeLapsNum.style.color         = formulaType === 2 ? '#0090D0' : 'rgb(255, 0, 0)';
-            elTimeLapsNum.style.top           = narrow ? '-15px' : '';
-            elTimeLapsNum.style.left          = narrow ? '18px' : '';
-            // Normal label (hidden in narrow pane)
-            elTimeLapsLabel.style.display     = narrow ? 'none' : '';
-            elTimeLapsLabel.textContent       = type === 'minutes' ? 'MINUTES\nTO GO' : 'LAPS\nTO GO';
-            elTimeLapsLabel.style.width       = RACE_TYPES.has(sessionType) ? '110px' : '140px';
-            elTimeLapsLabel.style.left        = (type === 'laps' && (value === 15 || value === 10)) ? '150px' : '145px';
-            // Narrow pane label (hidden in normal pane)
-            elTimeLapsPaneLabel.style.display = narrow ? 'flex' : 'none';
-            elTimeLapsPaneLabel.textContent   = type === 'minutes' ? 'MINUTES TO GO' : 'LAPS TO GO';
+            elTimeLapsNum.style.fontSize      = '';
+            elTimeLapsNum.style.width         = '';
+            elTimeLapsNum.style.left          = `${getTimeLapsNumLeft(narrow, isRace)}px`;
+            elTimeLapsLabel.style.display     = '';
+            elTimeLapsLabel.textContent       = type === 'minutes' ? 'MINUTES\nTO GO' : 'LAPS\nTO GO';  // split into two rows for better layout
+            elTimeLapsLabel.style.width       = isRace ? '130px' : '180px';
+            elTimeLapsLabel.style.left        = `${getTimeLapsLabelLeft(narrow, isRace, value === 15 || value === 10)}px`;
             requestAnimationFrame(() => requestAnimationFrame(() => { elTimeLapsBanner.style.opacity = '1'; }));
             updateAllRowPositions();
             updateBatteryLayout();
             updatePenaltyLayout();
             updateFlLogoLayout();
+            updateYellowFlagBanner(); // reacts to timeLapsBannerActive for its own +105px top shift
+            updateGreenFlagBanner();  // same +105px top-shift trigger as the Yellow Flag layer
+            updateScVscBanner();      // same +105px top-shift trigger, applied to the SC/VSC pieces
             updateMfdHeaderVisibility();
             updateMfd1DataVisibility();
             updateMfd2DataVisibility();
@@ -2450,18 +2514,19 @@
             timeLapsBannerTimer = setTimeout(() => {
                 timeLapsBannerActive = false;
                 timeLapsBannerType   = null;
+                timeLapsBannerValue  = null;
                 elTimeLapsBanner.style.display    = 'none';
                 elTimeLapsBanner.style.opacity    = '';
-                elTimeLapsBanner.style.top        = '';
                 elTimeLapsBanner.style.width      = '';
-                elTimeLapsNum.style.top           = '';
                 elTimeLapsNum.style.left          = '';
-                elTimeLapsPaneLabel.style.display = '';
                 updateDecoBorders();
                 updateAllRowPositions();
                 updateBatteryLayout();
                 updatePenaltyLayout();
                 updateFlLogoLayout();
+                updateYellowFlagBanner(); // reacts to timeLapsBannerActive for its own +105px top shift
+                updateGreenFlagBanner();  // same +105px top-shift trigger as the Yellow Flag layer
+                updateScVscBanner();      // same +105px top-shift trigger, applied to the SC/VSC pieces
                 updateOverlayHeight();
                 updateMfdHeaderVisibility();
                 updateMfd1DataVisibility();
@@ -2475,37 +2540,30 @@
             if (formationLap) return;
             if (timeLapsBannerTimer) clearTimeout(timeLapsBannerTimer);
             const narrow      = paneMode === 1 || paneMode === 3;
-            const scVscActive = flagsBannerMode === 'sc' || flagsBannerMode === 'vsc';
+            const isRace      = RACE_TYPES.has(sessionType);
             timeLapsBannerActive = true;
             timeLapsBannerType   = 'finallap';
+            timeLapsBannerValue  = null;
             updateOverlayHeight();
             updateDecoBorders();
             elTimeLapsBanner.style.opacity    = '0';
             elTimeLapsBanner.style.display    = 'block';
-            elTimeLapsBanner.style.top        = scVscActive ? '247px' : '';
-            elTimeLapsBanner.style.width      = narrow ? '185px' : '';
+            elTimeLapsBanner.style.width      = narrow ? '358px' : '';
             elTimeLapsLabel.style.display     = 'none';
-            elTimeLapsPaneLabel.style.display = 'none';
-            if (narrow) {
-                // Narrow pane: hide num, show FINAL/LAP stacked element
-                elTimeLapsNum.style.display      = 'none';
-                elTimeLapsFinalLap.style.display = 'block';
-            } else {
-                // Normal pane: num element shows "FINAL LAP" with adjusted styling
-                elTimeLapsFinalLap.style.display = 'none';
-                elTimeLapsNum.style.display      = '';
-                elTimeLapsNum.textContent        = 'FINAL LAP';
-                elTimeLapsNum.style.color        = 'rgb(255, 255, 255)';
-                elTimeLapsNum.style.fontSize     = '44px';
-                elTimeLapsNum.style.width        = '298px';
-                elTimeLapsNum.style.top          = '';
-                elTimeLapsNum.style.left         = '0px';
-            }
+            elTimeLapsNum.style.display       = '';
+            elTimeLapsNum.textContent         = 'FINAL LAP';
+            elTimeLapsNum.style.color         = 'rgb(255, 255, 255)';
+            elTimeLapsNum.style.fontSize      = '44px';
+            elTimeLapsNum.style.width         = '295px';
+            elTimeLapsNum.style.left          = `${getTimeLapsNumLeft(narrow, isRace)}px`;
             requestAnimationFrame(() => requestAnimationFrame(() => { elTimeLapsBanner.style.opacity = '1'; }));
             updateAllRowPositions();
             updateBatteryLayout();
             updatePenaltyLayout();
             updateFlLogoLayout();
+            updateYellowFlagBanner(); // reacts to timeLapsBannerActive for its own +105px top shift
+            updateGreenFlagBanner();  // same +105px top-shift trigger as the Yellow Flag layer
+            updateScVscBanner();      // same +105px top-shift trigger, applied to the SC/VSC pieces
             updateMfdHeaderVisibility();
             updateMfd1DataVisibility();
             updateMfd2DataVisibility();
@@ -2514,24 +2572,24 @@
             timeLapsBannerTimer = setTimeout(() => {
                 timeLapsBannerActive = false;
                 timeLapsBannerType   = null;
+                timeLapsBannerValue  = null;
                 elTimeLapsBanner.style.display    = 'none';
                 elTimeLapsBanner.style.opacity    = '';
-                elTimeLapsBanner.style.top        = '';
                 elTimeLapsBanner.style.width      = '';
                 elTimeLapsNum.style.fontSize      = '';
                 elTimeLapsNum.style.width         = '';
-                elTimeLapsNum.style.top           = '';
                 elTimeLapsNum.style.left          = '';
                 elTimeLapsNum.style.color         = '';
                 elTimeLapsNum.style.display       = '';
                 elTimeLapsLabel.style.display     = '';
-                elTimeLapsPaneLabel.style.display = '';
-                elTimeLapsFinalLap.style.display  = '';
                 updateDecoBorders();
                 updateAllRowPositions();
                 updateBatteryLayout();
                 updatePenaltyLayout();
                 updateFlLogoLayout();
+                updateYellowFlagBanner(); // reacts to timeLapsBannerActive for its own +105px top shift
+                updateGreenFlagBanner();  // same +105px top-shift trigger as the Yellow Flag layer
+                updateScVscBanner();      // same +105px top-shift trigger, applied to the SC/VSC pieces
                 updateOverlayHeight();
                 updateMfdHeaderVisibility();
                 updateMfd1DataVisibility();
@@ -2545,29 +2603,15 @@
         function updateTimeLapsBanner() {
             if (!timeLapsBannerActive) return;
             const narrow = paneMode === 1 || paneMode === 3;
-            elTimeLapsBanner.style.width = narrow ? '185px' : '';
+            const isRace = RACE_TYPES.has(sessionType);
+            elTimeLapsBanner.style.width = narrow ? '358px' : '';
+            elTimeLapsNum.style.left     = `${getTimeLapsNumLeft(narrow, isRace)}px`;
             if (timeLapsBannerType === 'finallap') {
-                elTimeLapsLabel.style.display     = 'none';
-                elTimeLapsPaneLabel.style.display = 'none';
-                if (narrow) {
-                    elTimeLapsNum.style.display      = 'none';
-                    elTimeLapsFinalLap.style.display = 'block';
-                } else {
-                    elTimeLapsFinalLap.style.display = 'none';
-                    elTimeLapsNum.style.display      = '';
-                    elTimeLapsNum.textContent        = 'FINAL LAP';
-                    elTimeLapsNum.style.color        = 'rgb(255, 255, 255)';
-                    elTimeLapsNum.style.fontSize     = '44px';
-                    elTimeLapsNum.style.width        = '298px';
-                    elTimeLapsNum.style.top          = '';
-                    elTimeLapsNum.style.left         = '0px';
-                }
+                elTimeLapsLabel.style.display = 'none';
             } else {
-                elTimeLapsFinalLap.style.display  = 'none';
-                elTimeLapsNum.style.top           = narrow ? '-15px' : '';
-                elTimeLapsNum.style.left          = narrow ? '18px' : '';
-                elTimeLapsLabel.style.display     = narrow ? 'none' : '';
-                elTimeLapsPaneLabel.style.display = narrow ? 'flex' : 'none';
+                const milestoneHit = timeLapsBannerValue === 15 || timeLapsBannerValue === 10;
+                elTimeLapsLabel.style.display = '';
+                elTimeLapsLabel.style.left    = `${getTimeLapsLabelLeft(narrow, isRace, milestoneHit)}px`;
             }
         }
 
