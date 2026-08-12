@@ -517,10 +517,12 @@ body { background: black; overflow: hidden; }
    484×105 at left:27, top:145  opacity:0 by default; fades in during Formation Lap.
    Text was previously "STARTING GRID" — corrected to "STARTING TYRES", matching what
    the banner actually shows (MFD1's tyre data) per the source's own description.
+   top:145 matches the reference position — getRowTop()'s formationLap branch pushes
+   P1 (and onward) down far enough to clear it, see leaderboard-lastname.html.
    ════════════════════════════════════════════════════════════════ */
 #lb-formation-banner {
     left: 27px;
-    top: 95px;
+    top: 145px;
     width: 485px;
     height: 105px;
     overflow: hidden;

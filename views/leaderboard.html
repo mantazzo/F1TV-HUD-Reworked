@@ -457,7 +457,7 @@
             9:  'OSQ',     18: 'TT',
             10: 'SQ1', 11: 'SQ2', 12: 'SQ3',
             13: 'SHORT SQ', 14: 'OSSQ',
-            15: 'RACE', 16: 'RACE 2', 17: 'RACE 3'
+            15: 'RACE', 16: 'RACE', 17: 'RACE'
         };
 
         // ── Element refs ───────────────────────────────────────────────────
@@ -1403,7 +1403,7 @@
             const eraYear = DriverUtils.getCarEraYear(carTeamIds[playerCarIdx]);
             const isAston = eraYear !== 2026 && ASTON_MARTIN_TRACKS.has(trackId);
             elScTeamName.style.display = isAston ? '' : 'none';
-            elScTeamLogo.style.display = isAston ? 'none' : '';
+            elScTeamLogo.style.display = isAston ? 'none' : 'block';
             elScPaneName.style.display = isAston ? '' : 'none';
             elScPaneLogo.style.display = isAston ? 'none' : '';
         }
@@ -2080,7 +2080,11 @@
         // Returns the correct top px value for row at 0-based index i.
         // MFD mode takes priority (banner is hidden when MFD is active).
         function getRowTop(i) {
-            if (mfdActive || formationLap)               return i * 50 + Math.max(0, 47.5 - i * 2.5);
+            // Formation Lap: the Starting Grid banner (105px tall) needs more clearance than the
+            // plain MFD header below, so it gets its own doubled push — same fix applied to the
+            // Last Name variant after recorded formation-lap footage showed P1 overlapping the banner.
+            if (formationLap)                            return i * 50 + Math.max(0, 95   - i * 5);
+            if (mfdActive)                               return i * 50 + Math.max(0, 47.5 - i * 2.5);
             if (flagsBannerMode || timeLapsBannerActive) return i * 50 + Math.max(0, 95   - i * 5);
             return i * 50;
         }

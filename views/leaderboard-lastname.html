@@ -483,7 +483,7 @@
             9:  'OSQ',     18: 'TIME TRIAL',
             10: 'SQ1', 11: 'SQ2', 12: 'SQ3',
             13: 'SHORT SQ', 14: 'OSSQ',
-            15: 'RACE', 16: 'RACE 2', 17: 'RACE 3'
+            15: 'RACE', 16: 'RACE', 17: 'RACE'
         };
 
         // ── Element refs ───────────────────────────────────────────────────
@@ -1411,7 +1411,7 @@
             const eraYear = DriverUtils.getCarEraYear(carTeamIds[playerCarIdx]);
             const isAston = eraYear !== 2026 && ASTON_MARTIN_TRACKS.has(trackId);
             elScTeamName.style.display = isAston ? '' : 'none';
-            elScTeamLogo.style.display = isAston ? 'none' : '';
+            elScTeamLogo.style.display = isAston ? 'none' : 'block';
         }
 
         // ── Yellow flag banner pane adjustments ───────────────────────────────────
@@ -2113,7 +2113,11 @@
             // -5px/row decrement as the flags-only branch instead — floors to 0 right around Position
             // 20 anyway, matching the "doesn't apply past P20" behavior, but without the overlap.
             if (mfdActive && flagsBannerMode)            return i * 50 + Math.max(0, 92.5 - i * 5);
-            if (mfdActive || formationLap)               return i * 50 + Math.max(0, 47.5 - i * 2.5);
+            // Formation Lap: the Starting Tyres banner (105px tall) needs more clearance than the
+            // plain MFD header (55px) below, so it gets its own doubled push — confirmed via recorded
+            // formation-lap footage that the plain 47.5/-2.5 push left P1 overlapping the banner.
+            if (formationLap)                            return i * 50 + Math.max(0, 95   - i * 5);
+            if (mfdActive)                               return i * 50 + Math.max(0, 47.5 - i * 2.5);
             if (flagsBannerMode || timeLapsBannerActive) return i * 50 + Math.max(0, 95   - i * 5);
             return i * 50;
         }
