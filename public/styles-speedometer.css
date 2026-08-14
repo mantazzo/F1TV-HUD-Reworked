@@ -346,6 +346,12 @@
     border: none;
 }
 
+/* Overtake Mode (2026-regs cars): same Active state, turquoise instead of green — matches the
+   Leaderboard's lb-drs-row--overtake color */
+.multiviewer-mode .drs-rectangle.drs-active.drs-overtake {
+    background: #0eace6;
+}
+
 /* DRS image - only visible in F1TV mode */
 .drs-image {
     position: absolute;

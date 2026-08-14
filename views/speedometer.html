@@ -222,6 +222,18 @@
         // DRS State Management
         let drsState = { m_drs: null, m_drsAllowed: null, m_drsActivationDistance: null };
 
+        // Overtake Mode state (2026 Season Pack only) — replaces the DRS display for 2026-regs cars,
+        // since those cars don't have DRS (Active Aero + Overtake Mode replace it). Player-scoped;
+        // mirrors the per-car car2026Regulations/carOvertakeActive pattern already used in the
+        // Leaderboard overlays (see project_2026_drs_rework_idea memory).
+        let overtakeState = { m_overtakeActive: null, m_overtakeAvailable: null, m_overtakeActivationDistance: null };
+        let ersDeployMode = null; // m_ersDeployMode from pid 7 — 3 = Boost
+        let player2026Regulations = -1; // -1 unknown (pre-2026 UDP formats never send pid 16), 0 pre-2026, 1 2026 regs
+
+        function useOvertakeMode() {
+            return player2026Regulations === 1;
+        }
+
         // Helper function to determine DRS state
         function determineDrsState() {
             if (drsState.m_drs === 1) return 2; // Active
@@ -229,47 +241,69 @@
             return 0; // Unavailable
         }
 
+        // Helper function to determine Overtake Mode state. Unlike DRS, there's no "available but
+        // not yet triggered" image tier here — both non-zero tiers require Overtake to already be
+        // active; Boost ERS on top of that just escalates which image/blink state is shown.
+        function determineOvertakeState() {
+            if (overtakeState.m_overtakeActive === 1) {
+                return ersDeployMode === 3 ? 2 : 1; // 2 = Active + Boost, 1 = Active only
+            }
+            return 0; // Inactive
+        }
+
+        // Single entry point for "what state should the DRS/Overtake indicator show" — routes to
+        // whichever mechanic applies to the player's current car.
+        function determineDisplayState() {
+            return useOvertakeMode() ? determineOvertakeState() : determineDrsState();
+        }
+
         // Function to update DRS display based on design mode and state
         function updateDrsDisplay(state) {
             const isMultiviewer = currentConfig.designMode === 'multiviewer';
-            
+            const overtake = useOvertakeMode();
+
             // Clean up all DRS rectangle classes first
             drsRectangle.classList.remove('drs-unavailable', 'drs-available', 'drs-active');
-            
+            drsRectangle.classList.toggle('drs-overtake', overtake); // Multiviewer-only: recolors the Active state turquoise
+
             if (isMultiviewer) {
                 // Multiviewer mode: use rectangle with CSS classes
-                
+
                 if (state === 2) {
-                    // DRS Active - green background, stop blinking
+                    // Active - green (DRS) / turquoise (Overtake) background, stop blinking
                     drsRectangle.classList.add('drs-active');
                     pauseAndResetDrsBlink();
                     drsLabel.style.textShadow = '3px 1px 0px black';
                 } else if (state === 1) {
-                    // DRS Available - white border, apply blinking
+                    // DRS Available / Overtake active (no Boost) - white border, apply blinking
                     drsRectangle.classList.add('drs-available');
                     playDrsBlink();
                     drsLabel.style.textShadow = '0px 0px 0px black';
                 } else {
-                    // DRS Unavailable - no styling, stop blinking
+                    // Unavailable / Inactive - no styling, stop blinking
                     drsRectangle.classList.add('drs-unavailable');
                     pauseAndResetDrsBlink();
                     drsLabel.style.textShadow = '0px 0px 0px black';
                 }
             } else {
                 // F1TV mode: use images with blinking
+                const images = overtake
+                    ? { active: '/images/speedometer/F1TV/OT2.png', pending: '/images/speedometer/F1TV/OT1.png', off: '/images/speedometer/F1TV/OT.png' }
+                    : { active: '/images/speedometer/F1TV/drs1.png', pending: '/images/speedometer/F1TV/drs2.png', off: '/images/speedometer/F1TV/drs.png' };
+
                 if (state === 2) {
-                    // DRS Active - show drs1.png, stop blinking
-                    drsImage.src = '/images/speedometer/F1TV/drs1.png';
+                    // Active (DRS) / Active + Boost (Overtake) - stop blinking
+                    drsImage.src = images.active;
                     pauseAndResetDrsBlink();
                     drsLabel.style.textShadow = '3px 1px 0px black';
                 } else if (state === 1) {
-                    // DRS Available - show drs2.png, apply blinking
-                    drsImage.src = '/images/speedometer/F1TV/drs2.png';
+                    // Available (DRS) / Active, no Boost (Overtake) - apply blinking
+                    drsImage.src = images.pending;
                     playDrsBlink();
                     drsLabel.style.textShadow = '0px 0px 0px black';
                 } else {
-                    // DRS Unavailable - show drs.png, stop blinking
-                    drsImage.src = '/images/speedometer/F1TV/drs.png';
+                    // Unavailable (DRS) / Inactive (Overtake) - stop blinking
+                    drsImage.src = images.off;
                     pauseAndResetDrsBlink();
                     drsLabel.style.textShadow = '0px 0px 0px black';
                 }
@@ -439,20 +473,21 @@
                     }
                 });
                 
-                // Handle DRS state from telemetry
+                // Handle DRS / Overtake Mode state from telemetry
                 const telemetryData = data.m_carTelemetryData?.[playerIndex];
                 if (telemetryData && telemetryData.hasOwnProperty('m_drs')) {
                     drsState.m_drs = telemetryData.m_drs;
-                    
-                    const newDrsDisplayState = determineDrsState();
-                    
+
+                    const newDrsDisplayState = determineDisplayState();
+
                     // Only update if state has changed
                     if (newDrsDisplayState !== currentDrsDisplayState) {
                         currentDrsDisplayState = newDrsDisplayState;
                         updateDrsDisplay(currentDrsDisplayState);
                     } else {
                         // State hasn't changed, just update text shadow for active state (F1TV mode only)
-                        if (drsState.m_drs === 1 && currentConfig.designMode === 'f1tv') {
+                        const isActive = useOvertakeMode() ? overtakeState.m_overtakeActive === 1 : drsState.m_drs === 1;
+                        if (isActive && currentConfig.designMode === 'f1tv') {
                             drsLabel.style.textShadow = '3px 1px 0px black';
                         }
                     }
@@ -462,25 +497,51 @@
                 if (statusData) {
                     drsState.m_drsAllowed = statusData.m_drsAllowed || null;
                     drsState.m_drsActivationDistance = statusData.m_drsActivationDistance || null;
-                    
-                    const newDrsDisplayState = determineDrsState();
-                    
-                    // Only update if state has changed and DRS is not currently active
-                    if (newDrsDisplayState !== currentDrsDisplayState && drsState.m_drs !== 1) {
+                    ersDeployMode = statusData.m_ersDeployMode ?? ersDeployMode; // needed for Overtake Mode's Boost tier
+
+                    const newDrsDisplayState = determineDisplayState();
+
+                    // DRS: only update if not currently active — "active" only ever comes from pid 6's
+                    // m_drs, so pid 7's drsAllowed/activationDistance are stale/irrelevant once deployed.
+                    // Overtake Mode needs no such guard: m_overtakeActive (the only thing that can move
+                    // the state to/from 0) only ever comes from pid 16, never this handler — this handler's
+                    // own ersDeployMode change can only toggle between the 1/2 (Boost) tiers, which is
+                    // exactly the live update wanted, even while Overtake is already active.
+                    const drsGuardBlocks = !useOvertakeMode() && drsState.m_drs === 1;
+                    if (newDrsDisplayState !== currentDrsDisplayState && !drsGuardBlocks) {
+                        currentDrsDisplayState = newDrsDisplayState;
+                        updateDrsDisplay(currentDrsDisplayState);
+                    }
+                }
+            } else if (data.m_header?.m_packetId === 16) { // Car Telemetry 2 (2026 Season Pack only)
+                const tel2Data = data.m_carTelemetry2Data?.[playerIndex];
+                if (tel2Data) {
+                    player2026Regulations = tel2Data.m_2026Regulations ?? player2026Regulations;
+                    overtakeState.m_overtakeActive = tel2Data.m_overtakeActive;
+                    overtakeState.m_overtakeAvailable = tel2Data.m_overtakeAvailable;
+                    overtakeState.m_overtakeActivationDistance = tel2Data.m_overtakeActivationDistance;
+
+                    drsLabel.textContent = useOvertakeMode() ? 'OT' : 'DRS';
+
+                    const newDrsDisplayState = determineDisplayState();
+                    if (newDrsDisplayState !== currentDrsDisplayState) {
                         currentDrsDisplayState = newDrsDisplayState;
                         updateDrsDisplay(currentDrsDisplayState);
                     }
                 }
             }
             
-            // Update DRS text color, default to gray unless any value is non-zero
-            const drs = drsState.m_drs === null ? 0 : drsState.m_drs;
-            const drsAllowed = drsState.m_drsAllowed === null ? 0 : drsState.m_drsAllowed;
-            const drsActivationDistance = drsState.m_drsActivationDistance === null ? 0 : drsState.m_drsActivationDistance;
-            if (drs === 0 && drsAllowed === 0 && drsActivationDistance === 0) {
-                drsLabel.style.color = 'gray';
+            // Update DRS/Overtake text color, default to gray unless any value is non-zero
+            if (useOvertakeMode()) {
+                const active = overtakeState.m_overtakeActive === null ? 0 : overtakeState.m_overtakeActive;
+                const available = overtakeState.m_overtakeAvailable === null ? 0 : overtakeState.m_overtakeAvailable;
+                const activationDistance = overtakeState.m_overtakeActivationDistance === null ? 0 : overtakeState.m_overtakeActivationDistance;
+                drsLabel.style.color = (active === 0 && available === 0 && activationDistance === 0) ? 'gray' : 'white';
             } else {
-                drsLabel.style.color = 'white';
+                const drs = drsState.m_drs === null ? 0 : drsState.m_drs;
+                const drsAllowed = drsState.m_drsAllowed === null ? 0 : drsState.m_drsAllowed;
+                const drsActivationDistance = drsState.m_drsActivationDistance === null ? 0 : drsState.m_drsActivationDistance;
+                drsLabel.style.color = (drs === 0 && drsAllowed === 0 && drsActivationDistance === 0) ? 'gray' : 'white';
             }
         });
 
