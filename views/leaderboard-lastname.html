@@ -1639,8 +1639,19 @@
         // Controls visible leaderboard height via overflow:hidden parent.
         // All values are SimHub display px × 2 (native 482-wide scale).
         function computeLeaderboardHeight() {
-            const hasFlag    = flagsBannerMode === 'yellow' || flagsBannerMode === 'green';
+            // "Flag" banner set: yellow/green apply in any session; SC/VSC/RF are race-only concepts,
+            // so they only count here during a race. Broadened from the original SimHub formula's
+            // yellow/green-only check per user direction — SC/VSC/RF should extend height too.
+            const hasFlag = flagsBannerMode === 'yellow' || flagsBannerMode === 'green'
+                || (isRace && (flagsBannerMode === 'sc' || flagsBannerMode === 'vsc' || flagsBannerMode === 'rf'));
             const hasTrigger = timeLapsBannerActive;
+            // Any banner showing (flag or the time/laps-remaining banner) — used wherever a single
+            // "needs more room" bump is enough. Pane 2/3 below still distinguishes flag-and-trigger
+            // together from either alone, since those two banners stack vertically in the header area
+            // (see getFlagLayerTop()'s +105px shift) and genuinely need more room when both are shown.
+            // Everywhere else, driver rows just get pushed down by the same amount either way
+            // (getRowTop()'s `flagsBannerMode || timeLapsBannerActive` doesn't stack), so one bump covers it.
+            const hasBanner = hasFlag || hasTrigger;
 
             // Pane 2 on Lap 1: force Short-pane (header-only) height during the race's first lap,
             // regardless of the selected pane mode. "Lap 1" is detected the same way as the original
@@ -1651,47 +1662,50 @@
                 if (!leaderHasBestLap) return hasFlag ? 250 : 147; // 125×2 : 73.5×2
             }
 
-            // Pane 2 (Short) or Pane 3 (Narrow Short): header-only; expands for yellow/green flags and time/lap triggers
+            // Pane 2 (Short) or Pane 3 (Narrow Short): header-only; expands for any banner
             if (paneMode === 2 || paneMode === 3) {
-                if (hasFlag && hasTrigger) return 355;   // 177.5 × 2
-                if (hasFlag || hasTrigger) return 250;   // 125 × 2
-                return 147;                              // 73.5 × 2
+                if (hasFlag && hasTrigger) return 355;   // 177.5 × 2 — flag + timelaps banner stacked
+                if (hasBanner) return 250;               // 125 × 2 — either banner alone
+                return 147;                              // 73.5 × 2 — header only
             }
 
-            // Q3 (sessionType 7): always 10 drivers; time-trigger and flag heights override session size
+            // Q3 (sessionType 7): always 10 drivers; grows for any active banner (rows get pushed down)
             if (sessionType === 7) {
-                if (hasTrigger) return 790;  // 395 × 2
-                if (hasFlag)    return 710;  // 355 × 2
-                return 690;                  // 345 × 2
+                return hasBanner ? 790 : 690;  // 395 × 2 : 345 × 2
             }
 
-            // Q2 (sessionType 6) with time triggers: specific heights for 15/16 drivers
-            if (sessionType === 6 && hasTrigger && numActiveCars >= 15) {
+            // Q2 (sessionType 6) with an active banner: specific heights for 15/16 drivers
+            if (sessionType === 6 && hasBanner && numActiveCars >= 15) {
                 return numActiveCars >= 16 ? 1080 : 1040;  // 540 × 2 : 520 × 2
             }
 
             // Pane 4 (Logo only): header area only
             if (paneMode === 4) return 147;  // 73.5 × 2
 
-            // Sprint Q3 (sessionType 12, 10 drivers): same height as regular Q3
-            if (sessionType === 12 && numActiveCars === 10) return 690;  // 345 × 2
+            // Sprint Q3 (sessionType 12, 10 drivers): same height as regular Q3, same banner growth
+            if (sessionType === 12 && numActiveCars === 10) return hasBanner ? 790 : 690;
 
-            // Sprint Q2 (sessionType 11): specific heights for 15/16 drivers
+            // Sprint Q2 (sessionType 11): same heights/banner growth as regular Q2, for 15/16 drivers
             if (sessionType === 11 && numActiveCars >= 15) {
-                return numActiveCars >= 16 ? 990 : 940;  // 495 × 2 : 470 × 2
+                if (hasBanner) return numActiveCars >= 16 ? 1080 : 1040;  // 540 × 2 : 520 × 2
+                return numActiveCars >= 16 ? 990 : 940;                   // 495 × 2 : 470 × 2
             }
 
-            // Q2 (sessionType 6, no trigger): specific heights for 15/16 drivers
+            // Q2 (sessionType 6, no banner): specific heights for 15/16 drivers
             if (sessionType === 6 && numActiveCars >= 15) {
                 return numActiveCars >= 16 ? 990 : 940;  // 495 × 2 : 470 × 2
             }
 
-            // Generic: height based on active cars (formula: (25n + 140) × 2 native px, valid for n = 2..18)
+            // Generic: height based on active cars, fitted to this theme's actual row layout
+            // (160px row-start top + 50px/row + 30px trailing margin — confirmed against the
+            // already-correct 15/16/19-22/23-24 driver tiers above, all of which satisfy this
+            // same 50n+190 formula exactly). Valid for n = 2..18; larger counts use the flat
+            // fallbacks below since growth is deliberately capped once a grid is "basically full".
             if (numActiveCars >= 2 && numActiveCars <= 18) {
-                return 50 * numActiveCars + 280;
+                return 50 * numActiveCars + 190;
             }
-            if (numActiveCars > 22) return 1390;  // 695 × 2 — 23-24 car grid (2026 season)
-            return 1290;  // 645 × 2 — full-height fallback for 19-22 cars (standard F1 race, F2, etc.)
+            if (numActiveCars > 22) return 1390;  // 23-24 car grid (2026 season) — 50×24+190
+            return 1290;  // full-height fallback for 19-22 cars (standard F1 race, F2, etc.) — 50×22+190
         }
 
         function updateOverlayHeight() {
