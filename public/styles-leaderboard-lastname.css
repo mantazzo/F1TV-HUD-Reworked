@@ -2523,7 +2523,7 @@ body { background: transparent; overflow: hidden; }
     top: 225px;
     width: 36.8px;
     height: 945px;
-    background-image: url('/images/leaderboard/Gradient_Vertical.png');
+    background-image: url('/images/leaderboard-lastname/Gradient_Vertical.png');
     background-size: 36.8px 945px;
     opacity: 0.75;
     transition: height 800ms ease, background-size 800ms ease;
@@ -2715,7 +2715,7 @@ body { background: transparent; overflow: hidden; }
     top: -1px;
     width: 332px;
     height: 1190px;
-    background-image: url('/images/leaderboard/BG.png');
+    background-image: url('/images/leaderboard-lastname/BG.png');
     background-size: 332px 1190px;
     opacity: 0.05;
     transition: height 800ms ease, background-size 800ms ease;
@@ -2740,7 +2740,7 @@ body { background: transparent; overflow: hidden; }
     top: 0;
     width: 332px;
     height: 1190px;
-    background-image: url('/images/leaderboard/BG.png');
+    background-image: url('/images/leaderboard-lastname/BG.png');
     background-size: 332px 1190px;
     opacity: 0.05;
     transition: height 800ms ease, background-size 800ms ease;
