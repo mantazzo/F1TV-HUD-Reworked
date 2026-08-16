@@ -1401,6 +1401,8 @@
             // alongside the Sprint/F2 series logos — those logos are branding, not a segment
             // indicator, so the name still carries real information there. Unlike lb-sprint-logo,
             // stays visible in narrow panes here — the narrowed 185px width still fits the name.
+            // TODO: Hide SessionName during Qualifying sessions when in "narrow" mode and reposition
+            // the SessionName for Sprint Qualifying sessions to ~265px
             const hideSessionName = formationLap || isSprintSession;
             elSessionName.style.display = hideSessionName ? 'none' : 'block';
             elSessionName.style.width   = narrow ? '185px' : '300px';
