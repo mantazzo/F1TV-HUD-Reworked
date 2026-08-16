@@ -44,7 +44,10 @@ Use these overlays in recording software (e.g. OBS). Size is described in (Width
 - Leaderboard (Initials version)
     - http://localhost:3000/leaderboard
     - Size: 482 x 1390
-      - Updated to fit 24 drivers, used to be 482 x 1292
+        - Updated to fit 24 drivers, used to be 482 x 1292
+- Leaderboard (Last Name version)
+    - http://localhost:3000/leaderboard-lastname
+    - Size: 650 x 1390
 - Position Debug **(DEBUG OVERLAY ONLY)**
     - http://localhost:3000/debug/position-debug
     - Debug only, useful for turn position setup

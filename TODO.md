@@ -7,6 +7,7 @@
     - Includes an automatic MPH units toggle
         - Can override it in Extended Controller to use the units you want instead
     - Includes F1TV style and Multiviewer style
+    - NEW: Added Overtake Mode display for F1 2026 cars (replaces DRS for these cars): Blue Outline when Active, Filled with Blue Tint when OT is Active and using Boost
     - Likely the first fully finished overlay
 - Lap Timer
     - Remade with some personal adjustments
@@ -14,7 +15,7 @@
     - Dynamic comparison for Qualifying 1 and Qualifying 2 sessions (if in knockout positions)
     - Compare against your Personal Best in Race and in Time Trial (if set)
     - Sector bar works and shows yellow, green and purple sectors (some game issues with packet 11 in Time Trial, though)
-    - Might come back to it later to expand functionality even more
+    - Will come back to it later to expand functionality even more
 - Pit Timer
     - Remade in full, uses Primary Color from the game, can be overwritten in JSON
     - Only shows up when in race and only when in pitlane
@@ -109,7 +110,15 @@
         - Can be shown automatically during Formation Lap
         - Name displays use textFit library to fit names better for display
     - DRS Indicator was updated to also show "Overtake Active" Mode for 2026 F1 cars when enabled
-    - Likely feature complete, may get a few improvements to support F1 '26 cars a bit better over time
+    - Likely feature complete, may get a few improvements to support F1 '26 cars a bit better over time (and bugfixes)
+- Leaderboard ("Last Name" version)
+    - A fully remade version of the old "Last Name" version Leaderboard, with some upgrades
+    - Feature list should be identical to the "Initials" version
+        - The main change is that instead of Initials, it now shows Last Name/Display Name in full size
+    - Implemented textFit library across multiple areas to help with fitting the data to properly display it with more space available
+    - 24 drivers support is available as well
+    - Uses the same controls in the Controller as the "Initials" version of the Leaderboard (Controller feature parity)
+    - Might have some bugs remaining, I haven't fully tested out every single situation yet
 
 ## Overlay Controllers
 
@@ -131,11 +140,11 @@
 
 ## Currently Working On
 
-Bugfixes and Improvements for the older overlays (need to go back through old overlays to make sure all of them work with 2026 UDP format properly)
+... (maybe a few tweaks for older ones, then start a new one)
 
 ## Next Planned Overlay
 
-Leaderboard - Last Name version (shouldn't be too difficult)
+Driver Name (and the extensions)
 
 ## Not started
 
@@ -143,7 +152,6 @@ In no particular order:
 - Battery Level (from older version, so might need some extra work)
 - Driver Ahead and Behind (the three versions of the overlay)
 - Driver Name (and relevant info extensions like fastest lap and stuff)
-- Leaderboard - Last Name version (much older and might need to be reworked to an extent, but with the "main" version complete, this might be easier to do now)
 - Control Dashboard (original version, likely saved for last)
 
 ## Debatable
