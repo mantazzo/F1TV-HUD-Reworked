@@ -3,6 +3,7 @@
     "ShortName": "Mercedes",
     "FullName": "Mercedes-AMG Petronas F1 Team",
     "Logo": "2025mercedeslogowhite.svg",
+    "Logo_Alt": "2025mercedeslogo.svg",
     "NumberDesign_12": "2025mercedesandant01numberwhite.svg",
     "NumberDesign_63": "2025mercedesgeorus01numberwhite.svg"
   },
@@ -25,6 +26,7 @@
     "ShortName": "Williams",
     "FullName": "Atlassian Williams Racing",
     "Logo": "2025williamslogo.svg",
+    "Logo_Alt": "2025williamslogowhite.svg",
     "NumberDesign_23": "2025williamsalealb01numberwhite.svg",
     "NumberDesign_55": "2025williamscarsai01numberwhite.svg"
   },
@@ -32,6 +34,7 @@
     "ShortName": "Aston Martin Aramco",
     "FullName": "Aston Martin Aramco F1 Team",
     "Logo": "2025astonmartinlogowhite.svg",
+    "Logo_Alt": "2025astonmartinlogo.svg",
     "NumberDesign_14": "2025astonmartinferalo01numberwhite.svg",
     "NumberDesign_18": "2025astonmartinlanstr01numberwhite.svg"
   },
@@ -39,6 +42,7 @@
     "ShortName": "Alpine",
     "FullName": "BWT Alpine F1 Team",
     "Logo": "2025alpinelogo.svg",
+    "Logo_Alt": "2025alpinelogowhite.svg",
     "NumberDesign_7": "2025alpinejacdoo01numberwhite.svg",
     "NumberDesign_10": "2025alpinepiegas01numberwhite.svg",
     "NumberDesign_43": "2025alpinefracol01numberwhite.svg"
@@ -47,6 +51,7 @@
     "ShortName": "Racing Bulls",
     "FullName": "Visa Cash App Racing Bulls F1 Team",
     "Logo": "2025racingbullslogo.svg",
+    "Logo_Alt": "2025racingbullslogowhite.svg",
     "NumberDesign_6": "2025racingbullsisahad01number.svg",
     "NumberDesign_30": "2025racingbullslialaw01number.svg"
   },
@@ -94,13 +99,14 @@
   "41": {
     "ShortName": "F1 Generic",
     "FullName": "F1 World Car",
-    "Logo": "fia.svg"
+    "Logo": "fia.svg",
+    "Note": "This is the generic entry for the F1 World Car '25 (a.k.a. Generic 2025 Team)."
   },
   "104": {
     "ShortName": "F1 Custom Team",
     "FullName": "My Team Custom Team",
     "Logo": "fia.svg",
-    "Note": "As far as I know, this it the team that is used in MyTeam career mode. If you want to set up your team, edit this entry."
+    "Note": "This it the team that is used in MyTeam '25 career mode. If you want to set up your team, edit this entry."
   },
   "129": {
     "ShortName": "Konnersport",
@@ -286,6 +292,7 @@
     "ShortName": "Mercedes ‘26",
     "FullName": "Mercedes-AMG Petronas F1 Team",
     "Logo": "2026mercedeslogowhite.svg",
+    "Logo_Alt": "2026mercedeslogo.svg",
     "NumberDesign_12": "2026mercedesandant01numberwhite.svg",
     "NumberDesign_63": "2026mercedesgeorus01numberwhite.svg"
   },
@@ -307,6 +314,7 @@
     "ShortName": "Williams ‘26",
     "FullName": "Atlassian Williams F1 Team",
     "Logo": "2026williamslogo.svg",
+    "Logo_Alt": "2026williamslogowhite.svg",
     "NumberDesign_23": "2026williamsalealb01numberwhite.svg",
     "NumberDesign_55": "2026williamscarsai01numberwhite.svg"
   },
@@ -314,6 +322,7 @@
     "ShortName": "Aston Martin ‘26",
     "FullName": "Aston Martin Aramco F1 Team",
     "Logo": "2026astonmartinlogowhite.svg",
+    "Logo_Alt": "2026astonmartinlogo.svg",
     "NumberDesign_14": "2026astonmartinferalo01numberwhite.svg",
     "NumberDesign_18": "2026astonmartinlanstr01numberwhite.svg"
   },
@@ -321,6 +330,7 @@
     "ShortName": "Alpine ‘26",
     "FullName": "BWT Alpine F1 Team",
     "Logo": "2026alpinelogo.svg",
+    "Logo_Alt": "2026alpinelogowhite.svg",
     "NumberDesign_10": "2026alpinepiegas01numberwhite.svg",
     "NumberDesign_43": "2026alpinefracol01numberwhite.svg"
   },
@@ -328,6 +338,7 @@
     "ShortName": "RB ‘26",
     "FullName": "Visa Cash App Racing Bulls F1 Team",
     "Logo": "2026racingbullslogo.svg",
+    "Logo_Alt": "2026racingbullslogowhite.svg",
     "NumberDesign_30": "2026racingbullslialaw01number.svg",
     "NumberDesign_41": "2026racingbullsarvlin01number.svg"
   },
@@ -351,6 +362,7 @@
     "ShortName": "Audi ‘26",
     "FullName": "Audi Revolut F1 Team",
     "Logo": "2026audilogowhite.svg",
+    "Logo_Alt": "2026audilogo.svg",
     "NumberDesign_5": "2026audigabbor01numberwhite.svg",
     "NumberDesign_27": "2026audinichul01numberwhite.svg"
   },
@@ -358,6 +370,7 @@
     "ShortName": "Cadillac ‘26",
     "FullName": "Cadillac Formula 1 Team",
     "Logo": "2026cadillaclogowhite.svg",
+    "Logo_Alt": "2026cadillaclogo.svg",
     "NumberDesign_11": "2026cadillacserper01numberwhite.svg",
     "NumberDesign_77": "2026cadillacvalbot01numberwhite.svg"
   },
@@ -420,6 +433,7 @@
     "ShortName": "Mercedes ‘26",
     "FullName": "Mercedes-AMG Petronas F1 Team",
     "Logo": "2026mercedeslogowhite.svg",
+    "Logo_Alt": "2026mercedeslogo.svg",
     "NumberDesign_12": "2026mercedesandant01numberwhite.svg",
     "NumberDesign_63": "2026mercedesgeorus01numberwhite.svg"
   },
@@ -441,6 +455,7 @@
     "ShortName": "Williams ‘26",
     "FullName": "Atlassian Williams F1 Team",
     "Logo": "2026williamslogo.svg",
+    "Logo_Alt": "2026williamslogowhite.svg",
     "NumberDesign_23": "2026williamsalealb01numberwhite.svg",
     "NumberDesign_55": "2026williamscarsai01numberwhite.svg"
   },
@@ -448,6 +463,7 @@
     "ShortName": "Aston Martin ‘26",
     "FullName": "Aston Martin Aramco F1 Team",
     "Logo": "2026astonmartinlogowhite.svg",
+    "Logo_Alt": "2026astonmartinlogo.svg",
     "NumberDesign_14": "2026astonmartinferalo01numberwhite.svg",
     "NumberDesign_18": "2026astonmartinlanstr01numberwhite.svg"
   },
@@ -455,6 +471,7 @@
     "ShortName": "Alpine ‘26",
     "FullName": "BWT Alpine F1 Team",
     "Logo": "2026alpinelogo.svg",
+    "Logo_Alt": "2026alpinelogowhite.svg",
     "NumberDesign_10": "2026alpinepiegas01numberwhite.svg",
     "NumberDesign_43": "2026alpinefracol01numberwhite.svg"
   },
@@ -462,6 +479,7 @@
     "ShortName": "RB ‘26",
     "FullName": "Visa Cash App Racing Bulls F1 Team",
     "Logo": "2026racingbullslogo.svg",
+    "Logo_Alt": "2026racingbullslogowhite.svg",
     "NumberDesign_30": "2026racingbullslialaw01number.svg",
     "NumberDesign_41": "2026racingbullsarvlin01number.svg"
   },
@@ -485,6 +503,7 @@
     "ShortName": "Audi ‘26",
     "FullName": "Audi Revolut F1 Team",
     "Logo": "2026audilogowhite.svg",
+    "Logo_Alt": "2026audilogo.svg",
     "NumberDesign_5": "2026audigabbor01numberwhite.svg",
     "NumberDesign_27": "2026audinichul01numberwhite.svg"
   },
@@ -492,6 +511,7 @@
     "ShortName": "Cadillac ‘26",
     "FullName": "Cadillac Formula 1 Team",
     "Logo": "2026cadillaclogowhite.svg",
+    "Logo_Alt": "2026cadillaclogo.svg",
     "NumberDesign_11": "2026cadillacserper01numberwhite.svg",
     "NumberDesign_77": "2026cadillacvalbot01numberwhite.svg"
   },
