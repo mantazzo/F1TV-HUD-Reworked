@@ -4,12 +4,14 @@
     <meta charset="UTF-8">
     <title>F1 Car Damage Overlay</title>
     <link rel="stylesheet" href="/fonts.css">
+    <link rel="stylesheet" href="/styles-tauri-overlay.css">
     <link rel="stylesheet" href="/styles-car-damage.css">
     <script src="/socket.io/socket.io.js"></script>
+    <script src="/utils/overlay-scale.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/textfit@2.4.0/textFit.min.js"></script>
     <script src="/utils/driver-utils.js"></script>
 </head>
-<body>
+<body data-tauri-drag-region>
     <!--
     Overlay canvas: 280 × 600 px.
     Car model elements live inside #cd-car-container (CSS scale 0.75, placed at left:27.5 top:141.25).

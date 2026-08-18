@@ -5,12 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>F1 Live Speed Overlay</title>
     <link rel="stylesheet" href="/fonts.css">
+    <link rel="stylesheet" href="/styles-tauri-overlay.css">
     <link rel="stylesheet" href="/styles-live-speed.css">
     <script src="/socket.io/socket.io.js"></script>
+    <script src="/utils/overlay-scale.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/textfit@2.4.0/textFit.min.js"></script>
     <script src="/utils/driver-utils.js"></script>
 </head>
-<body>
+<body data-tauri-drag-region>
     <div class="overlay-container">
         <!-- Base background -->
         <div class="background-base"></div>

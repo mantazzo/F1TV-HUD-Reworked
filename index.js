@@ -118,7 +118,22 @@ function startServer(portNumber, forwardAddresses) {
                 console.log(`Config updated: ${update.overlay}.${update.property} = ${update.value}`);
             }
         });
-        
+
+        // Desktop (Tauri) overlay rescaling — ephemeral, not persisted to OverlayConfig.json
+        socket.on('set_scale', (data) => {
+            if (data && data.overlay && typeof data.scale === 'number') {
+                io.emit('set_scale', data);
+            }
+        });
+
+        // Desktop (Tauri) reposition mode — shows a placeholder border for overlays
+        // that are otherwise invisible until a game event triggers them. Ephemeral.
+        socket.on('set_reposition_mode', (data) => {
+            if (data && data.overlay && typeof data.active === 'boolean') {
+                io.emit('set_reposition_mode', data);
+            }
+        });
+
         socket.on('disconnect', () => {
             console.log(`Overlay disconnected: ${overlayName}`);
         });
@@ -277,7 +292,10 @@ function startServer(portNumber, forwardAddresses) {
     app.get('/leaderboard-lastname', (req, res) => res.sendFile(path.join(__dirname, 'views', 'leaderboard-lastname.html')));   // Leaderboard overlay (Last Name version)
 
     // Controllers
-    app.get('/controller/controller-extended', (req, res) => res.sendFile(path.join(__dirname, 'views', 'controller', 'controller-extended.html'))); 
+    app.get('/controller/controller-extended', (req, res) => res.sendFile(path.join(__dirname, 'views', 'controller', 'controller-extended.html')));
+
+    // Desktop (Tauri) launcher — opens/closes individual overlay windows
+    app.get('/launcher', (req, res) => res.sendFile(path.join(__dirname, 'views', 'launcher.html')));
 
     // Debug overlays
     app.get('/debug/position-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'position-debug.html')));

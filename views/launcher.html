@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>F1TV HUD — Launcher</title>
+    <link rel="stylesheet" href="/styles-launcher.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <div class="launcher-container">
+        <div class="launcher-header">
+            <h1>F1TV HUD</h1>
+            <div class="connection-status">
+                <span class="status-dot" id="status-dot"></span>
+                <span id="status-text">Connecting…</span>
+            </div>
+        </div>
+
+        <div class="overlay-list" id="overlay-list"></div>
+
+        <button class="quit-button" id="quit-button">Quit</button>
+    </div>
+
+    <script>
+        const OVERLAYS = [
+            { id: 'speedometer', title: 'Speedometer', path: '/speedometer', width: 520, height: 520 },
+            { id: 'lap-timer', title: 'Lap Timer', path: '/lap-timer', width: 480, height: 270 },
+            { id: 'pit-timer', title: 'Pit Timer', path: '/pit-timer', width: 340, height: 220 },
+            { id: 'live-speed', title: 'Live Speed', path: '/live-speed', width: 310, height: 365 },
+            { id: 'fastest-lap', title: 'Fastest Lap', path: '/fastest-lap', width: 920, height: 125 },
+            { id: 'weather', title: 'Weather', path: '/weather', width: 280, height: 725 },
+            { id: 'turn-indicator', title: 'Turn Indicator', path: '/turn-indicator', width: 300, height: 80 },
+            { id: 'fastest-sectors', title: 'Fastest Sectors', path: '/fastest-sectors', width: 310, height: 625 },
+            { id: 'message-box', title: 'Message Box', path: '/message-box', width: 710, height: 115 },
+            { id: 'mini-leaderboard', title: 'Mini Leaderboard', path: '/mini-leaderboard', width: 320, height: 250 },
+            { id: 'session-info', title: 'Session Info', path: '/session-info', width: 810, height: 135 },
+            { id: 'pit-window', title: 'Pit Window', path: '/pit-window', width: 310, height: 340 },
+            { id: 'car-damage', title: 'Car Damage', path: '/car-damage', width: 280, height: 600 },
+            { id: 'leaderboard', title: 'Leaderboard (Initials)', path: '/leaderboard', width: 482, height: 1390 },
+            { id: 'leaderboard-lastname', title: 'Leaderboard (Last Name)', path: '/leaderboard-lastname', width: 650, height: 1390 }
+        ];
+
+        const openWindows = {};
+        // In-memory only — not persisted, resets to defaults on every launch.
+        const scales = {};
+        const repositionActive = {};
+        OVERLAYS.forEach(cfg => { scales[cfg.id] = 1; repositionActive[cfg.id] = false; });
+
+        const { WebviewWindow, getCurrentWebviewWindow } = window.__TAURI__.webviewWindow;
+        const { LogicalSize } = window.__TAURI__.dpi;
+
+        const list = document.getElementById('overlay-list');
+        OVERLAYS.forEach(cfg => {
+            const row = document.createElement('div');
+            row.className = 'overlay-row';
+            row.innerHTML = `
+                <div class="overlay-row-top">
+                    <span class="overlay-name">${cfg.title}</span>
+                    <button class="toggle" id="toggle-${cfg.id}" data-id="${cfg.id}" aria-pressed="false">Off</button>
+                </div>
+                <div class="overlay-row-scale">
+                    <input type="range" class="scale-slider" id="scale-${cfg.id}" data-id="${cfg.id}"
+                           min="50" max="150" step="5" value="100">
+                    <span class="scale-label" id="scale-label-${cfg.id}">100%</span>
+                </div>
+                <div class="overlay-row-actions">
+                    <button class="reposition-toggle" id="reposition-${cfg.id}" data-id="${cfg.id}" aria-pressed="false">
+                        Reposition
+                    </button>
+                </div>
+            `;
+            list.appendChild(row);
+        });
+
+        function setToggleState(id, isOpen) {
+            const btn = document.getElementById(`toggle-${id}`);
+            btn.classList.toggle('on', isOpen);
+            btn.setAttribute('aria-pressed', String(isOpen));
+            btn.textContent = isOpen ? 'On' : 'Off';
+        }
+
+        function setRepositionButtonState(id, active) {
+            const btn = document.getElementById(`reposition-${id}`);
+            btn.classList.toggle('on', active);
+            btn.setAttribute('aria-pressed', String(active));
+        }
+
+        function openOverlay(cfg) {
+            const scale = scales[cfg.id];
+            const reposition = repositionActive[cfg.id] ? 1 : 0;
+            const win = new WebviewWindow(cfg.id, {
+                url: `http://localhost:3000${cfg.path}?scale=${scale}&width=${cfg.width}&height=${cfg.height}`
+                    + `&title=${encodeURIComponent(cfg.title)}&reposition=${reposition}`,
+                title: `F1TV HUD — ${cfg.title}`,
+                width: Math.round(cfg.width * scale),
+                height: Math.round(cfg.height * scale),
+                resizable: true,
+                fullscreen: false,
+                transparent: true,
+                decorations: false,
+                alwaysOnTop: true,
+                shadow: false
+            });
+
+            win.once('tauri://error', (e) => {
+                console.error(`Failed to open overlay "${cfg.id}":`, e);
+                delete openWindows[cfg.id];
+                setToggleState(cfg.id, false);
+            });
+
+            win.once('tauri://destroyed', () => {
+                delete openWindows[cfg.id];
+                setToggleState(cfg.id, false);
+            });
+
+            openWindows[cfg.id] = win;
+            setToggleState(cfg.id, true);
+        }
+
+        function closeOverlay(id) {
+            const win = openWindows[id];
+            if (win) win.close();
+        }
+
+        list.addEventListener('click', (e) => {
+            const toggleBtn = e.target.closest('.toggle');
+            if (toggleBtn) {
+                const cfg = OVERLAYS.find(o => o.id === toggleBtn.dataset.id);
+                if (openWindows[cfg.id]) {
+                    closeOverlay(cfg.id);
+                } else {
+                    openOverlay(cfg);
+                }
+                return;
+            }
+
+            const repositionBtn = e.target.closest('.reposition-toggle');
+            if (repositionBtn) {
+                const cfg = OVERLAYS.find(o => o.id === repositionBtn.dataset.id);
+                const active = !repositionActive[cfg.id];
+                repositionActive[cfg.id] = active;
+                setRepositionButtonState(cfg.id, active);
+
+                if (!openWindows[cfg.id]) {
+                    openOverlay(cfg); // opens with reposition mode already active, via the URL param
+                } else {
+                    socket.emit('set_reposition_mode', { overlay: cfg.id, active });
+                }
+            }
+        });
+
+        list.addEventListener('input', (e) => {
+            const slider = e.target.closest('.scale-slider');
+            if (!slider) return;
+            const cfg = OVERLAYS.find(o => o.id === slider.dataset.id);
+            const scale = Number(slider.value) / 100;
+            scales[cfg.id] = scale;
+            document.getElementById(`scale-label-${cfg.id}`).textContent = `${slider.value}%`;
+
+            const win = openWindows[cfg.id];
+            if (win) {
+                socket.emit('set_scale', { overlay: cfg.id, scale });
+                win.setSize(new LogicalSize(Math.round(cfg.width * scale), Math.round(cfg.height * scale)))
+                    .catch(err => console.error(`Failed to resize "${cfg.id}":`, err));
+            }
+        });
+
+        document.getElementById('quit-button').addEventListener('click', async () => {
+            try { socket.emit('shutdown_server'); } catch (e) { /* server may already be down */ }
+            for (const id of Object.keys(openWindows)) {
+                try { await openWindows[id].close(); } catch (e) { /* already closing */ }
+            }
+            await getCurrentWebviewWindow().close();
+        });
+
+        const socket = io();
+        socket.on('connect', () => {
+            document.getElementById('status-dot').classList.add('connected');
+            document.getElementById('status-text').textContent = 'Connected';
+        });
+        socket.on('disconnect', () => {
+            document.getElementById('status-dot').classList.remove('connected');
+            document.getElementById('status-text').textContent = 'Disconnected';
+        });
+    </script>
+</body>
+</html>

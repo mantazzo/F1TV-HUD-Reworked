@@ -3,12 +3,14 @@
 <head>
     <title>F1 Session Info Overlay</title>
     <link rel="stylesheet" href="/fonts.css">
+    <link rel="stylesheet" href="/styles-tauri-overlay.css">
     <link rel="stylesheet" href="/styles-session-info.css">
     <script src="/socket.io/socket.io.js"></script>
+    <script src="/utils/overlay-scale.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/textfit@2.4.0/textFit.min.js"></script>
     <script src="/utils/driver-utils.js"></script>
 </head>
-<body>
+<body data-tauri-drag-region>
     <div class="session-info-container">
         <div class="background-pattern">
             <div class="bg-image bg-image-1"></div>

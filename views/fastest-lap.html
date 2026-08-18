@@ -3,13 +3,15 @@
 <head>
     <title>F1 Fastest Lap Overlay</title>
     <link rel="stylesheet" href="/fonts.css">
+    <link rel="stylesheet" href="/styles-tauri-overlay.css">
     <link rel="stylesheet" href="/styles-fastest-lap.css">
     <script src="/socket.io/socket.io.js"></script>
+    <script src="/utils/overlay-scale.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/textfit@2.4.0/textFit.min.js"></script>
     <script src="/utils/driver-utils.js"></script>
 </head>
-<body>
+<body data-tauri-drag-region>
     <div class="fastest-lap-container">
         <!-- Background -->
         <div class="fl-background"></div>

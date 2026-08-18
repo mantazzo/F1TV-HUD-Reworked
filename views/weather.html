@@ -3,11 +3,13 @@
 <head>
     <title>F1 Weather Overlay</title>
     <link rel="stylesheet" href="/fonts.css">
+    <link rel="stylesheet" href="/styles-tauri-overlay.css">
     <link rel="stylesheet" href="/styles-weather.css">
     <script src="/socket.io/socket.io.js"></script>
+    <script src="/utils/overlay-scale.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/textfit@2.4.0/textFit.min.js"></script>
 </head>
-<body>
+<body data-tauri-drag-region>
     <div class="weather-container">
         <!-- Top Header: CURRENT CONDITIONS -->
         <div class="header-section">

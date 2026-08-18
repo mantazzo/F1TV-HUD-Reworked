@@ -3,11 +3,13 @@
 <head>
     <title>F1 Turn Indicator Overlay</title>
     <link rel="stylesheet" href="/fonts.css">
+    <link rel="stylesheet" href="/styles-tauri-overlay.css">
     <link rel="stylesheet" href="/styles-turn-indicator.css">
     <script src="/socket.io/socket.io.js"></script>
+    <script src="/utils/overlay-scale.js"></script>
     <script src="/utils/driver-utils.js"></script>
 </head>
-<body>
+<body data-tauri-drag-region>
     <div class="turn-indicator-container">
         <div class="turn-label" id="turn-label">TURN</div>
         <div class="turn-number" id="turn-number">3</div>

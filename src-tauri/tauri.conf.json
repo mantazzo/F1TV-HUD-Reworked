@@ -5,21 +5,19 @@
   "identifier": "com.mantazzo.f1tvhudoverlays",
   "build": {
     "frontendDist": "dist",
-    "devUrl": "http://localhost:3000/speedometer",
+    "devUrl": "http://localhost:3000",
     "beforeDevCommand": "npm run start:test"
   },
   "app": {
+    "withGlobalTauri": true,
     "windows": [
       {
-        "title": "F1TV HUD Overlays",
-        "width": 520,
-        "height": 520,
-        "resizable": true,
-        "fullscreen": false,
-        "transparent": true,
-        "decorations": false,
-        "alwaysOnTop": true,
-        "shadow": false
+        "label": "launcher",
+        "title": "F1TV HUD — Launcher",
+        "url": "http://localhost:3000/launcher",
+        "width": 420, "height": 900,
+        "resizable": true, "fullscreen": false,
+        "transparent": false, "decorations": true, "alwaysOnTop": false
       }
     ],
     "security": {
