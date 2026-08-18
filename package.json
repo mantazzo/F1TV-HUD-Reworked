@@ -5,8 +5,10 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
+    "start:test": "node index.js --test",
     "record": "node recorder.js",
     "play": "node player.js",
+    "tauri": "tauri",
     "postinstall": "patch-package"
   },
   "keywords": [
@@ -27,6 +29,7 @@
     "socket.io": "^4.8.3"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "^2.11.4",
     "patch-package": "^8.0.1",
     "socket.io-client": "^4.8.3"
   }
