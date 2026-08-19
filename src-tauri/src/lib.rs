@@ -1,3 +1,8 @@
+#[cfg(windows)]
+pub mod webview2_check;
+#[cfg(windows)]
+pub mod server_check;
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
