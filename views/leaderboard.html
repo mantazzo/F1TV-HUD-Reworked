@@ -909,10 +909,13 @@
         });
 
         // ── MFD1 compound name rows — one per car, shows full compound name ──────────
+        // Stride/container-top match #lb-drivers (160px/i*50) and the container is in
+        // ROW_CONTAINERS so getRowTop() actually applies to it (banner/flag/Formation Lap
+        // pushes) — see the identical fix already applied to leaderboard-lastname.html.
         const mfd1Rows = Array.from({ length: NUM_CARS }, (_, i) => {
             const row = document.createElement('div');
             row.className = 'lb-mfd1-row';
-            row.style.top = `${i * 47.5}px`;
+            row.style.top = `${i * 50}px`;
             elMfd1.appendChild(row);
             return { row };
         });
@@ -921,7 +924,7 @@
         const mfd2Rows = Array.from({ length: NUM_CARS }, (_, i) => {
             const row = document.createElement('div');
             row.className = 'lb-mfd2-row';
-            row.style.top = `${i * 47.5}px`;
+            row.style.top = `${i * 50}px`;
             elMfd2.appendChild(row);
             return { row };
         });
@@ -930,7 +933,7 @@
         const mfd3Rows = Array.from({ length: NUM_CARS }, (_, i) => {
             const row = document.createElement('div');
             row.className = 'lb-mfd3-row';
-            row.style.top = `${i * 47.5}px`;
+            row.style.top = `${i * 50}px`;
             elMfd3.appendChild(row);
             return { row };
         });
@@ -939,7 +942,7 @@
         const mfd4Rows = Array.from({ length: NUM_CARS }, (_, i) => {
             const row = document.createElement('div');
             row.className = 'lb-mfd4-row';
-            row.style.top = `${i * 47.5}px`;
+            row.style.top = `${i * 50}px`;
 
             const arrow = document.createElement('div');
             arrow.className = 'lb-mfd4-arrow';
@@ -1274,6 +1277,24 @@
 
         // Run once on load so "NO DATA" is fitted from the start
         fitSessionName();
+
+        // textFit forces a synchronous layout reflow (it iteratively resizes font-size and
+        // re-measures scrollWidth). Elements fit on every Lap Data packet for up to 24 rows can
+        // rack up hundreds-1000s of reflows/sec at typical UDP rates even when nothing visible
+        // actually changed — ported from leaderboard-lastname.html after that overlay was found
+        // to visibly desync from incoming telemetry under load for this exact reason. Skip the
+        // reflow when the text is identical to the last time THIS element was fit — safe only for
+        // elements whose box width never changes independent of text (driver names, timing deltas
+        // — NOT elSessionName, whose width depends on pane/session state too).
+        function textFitIfChanged(el, text, opts) {
+            if (el._lastFitText === text) return;
+            try {
+                textFit(el, opts);
+                el._lastFitText = text;
+            } catch (e) {
+                // Defensive only, see the equivalent try/catch in renderDriverStandings().
+            }
+        }
 
         function formatSessionTime(seconds) {
             if (seconds <= 0) return '0:00';
@@ -1651,16 +1672,23 @@
             const narrow         = paneMode === 1 || paneMode === 3;
             const doubleDigitLap = (currentLap || 1) >= 10;
 
-            // Container left: shifts left in narrow pane and for short-lap-count races
+            // Container left: shifts left in narrow pane and for short-lap-count races.
+            // Grouped by narrow first (user's own restructure) — the old flat totalLaps<6/<7
+            // chain only checked narrow on the <6 branch, so a totalLaps===6 race stayed
+            // pane-blind (stuck at the wide-mode 75px value regardless of pane). Now every
+            // narrow-mode branch lives under one `if (narrow)`, so a 6-lap race in narrow pane
+            // falls through to the general 14px default instead of the wide-mode value.
             let raceLeft;
-            if (totalLaps < 6 && narrow) {
-                raceLeft = '20px';
+            if (narrow) {
+                if (totalLaps < 6) {
+                    raceLeft = '20px';
+                } else if (doubleDigitLap) {
+                    raceLeft = '5px';
+                } else {
+                    raceLeft = '14px';
+                }
             } else if (totalLaps < 7) {
                 raceLeft = '75px';
-            } else if (narrow && doubleDigitLap) {
-                raceLeft = '5px';
-            } else if (narrow) {
-                raceLeft = '14px';
             } else {
                 raceLeft = '61.5px';
             }
@@ -1922,11 +1950,8 @@
 
                 // Shrink-to-fit for wide lap times/deltas (e.g. "2:15.678" on long tracks), same
                 // approach as Race Timing. Only the currently-visible sub-layer is fit.
-                try {
-                    textFit(showQualiTimes ? row.tText : row.gText, { minFontSize: 14, maxFontSize: 22, multiLine: false, widthOnly: true });
-                } catch (e) {
-                    // Defensive only, see the equivalent try/catch in renderDriverStandings().
-                }
+                const activeQualiText = showQualiTimes ? row.tText : row.gText;
+                textFitIfChanged(activeQualiText, activeQualiText.textContent, { minFontSize: 14, maxFontSize: 22, multiLine: false, widthOnly: true });
             }
         }
 
@@ -2095,6 +2120,7 @@
             elDrivers, elBattery, elPenalty, elFlLogo,
             elTimingInterval, elTimingLeader, elQualiGaps, elQualiTimes,
             elInPit, elFinish, elOut, elPitStatus, elTyre, elDrs,
+            elMfd1, elMfd2, elMfd3, elMfd4,
         ];
 
         function updateAllRowPositions() {
@@ -2153,7 +2179,7 @@
             elDecoBorder.style.display = (sessionEnded || formationLap || flagBorderActive) ? 'none' : '';
 
             // Formation border: shown only during formation lap, no transition
-            elDecoBorderFormation.style.height  = `${extendedGrid2026 ? 1272 : extendedGrid ? 1172 : 1072}px`;
+            elDecoBorderFormation.style.height  = `${extendedGrid2026 ? 1222 : extendedGrid ? 1122 : 1022}px`;
             elDecoBorderFormation.style.display = formationLap ? 'block' : 'none';
 
             // Finished border: fades in (333ms) when session ends
@@ -2205,7 +2231,7 @@
 
             // lb-formation-bg
             elFormationBg.style.width   = narrow ? '195px' : '315px';
-            elFormationBg.style.height  = `${extendedGrid2026 ? 1276 : extendedGrid ? 1176 : 1076}px`;
+            elFormationBg.style.height  = `${extendedGrid2026 ? 1226 : extendedGrid ? 1126 : 1026}px`;
             elFormationBg.style.display = formationLap ? 'block' : 'none'; // changed to "block" to display the BG
 
             // lb-pos-col-bg
@@ -2626,9 +2652,7 @@
                 row.driverNumber.style.opacity       = '0';
                 row.abbrev.style.opacity   = '0';
                 row.lastNamePI.textContent = piLastName.toUpperCase();
-                row.lastNamePI.className   = piLastName.length > 9
-                    ? 'lb-driver-lastname-pi lb-driver-lastname-pi--long'
-                    : 'lb-driver-lastname-pi';
+                textFitIfChanged(row.lastNamePI, piLastName, { minFontSize: 12, maxFontSize: 25, multiLine: false, widthOnly: true });
                 row.lastNamePI.style.opacity = '1';
                 row.lastName.style.opacity   = '0';
                 row.position.style.color     = 'rgb(0, 0, 0)';
@@ -2665,9 +2689,7 @@
                 row.driverNumber.style.opacity       = '0';
                 row.abbrev.style.opacity   = '0';
                 row.lastNamePI.textContent = tmLastName.toUpperCase();
-                row.lastNamePI.className   = tmLastName.length > 9
-                    ? 'lb-driver-lastname-pi lb-driver-lastname-pi--long'
-                    : 'lb-driver-lastname-pi';
+                textFitIfChanged(row.lastNamePI, tmLastName, { minFontSize: 12, maxFontSize: 25, multiLine: false, widthOnly: true });
                 row.lastNamePI.style.opacity = '1';
                 row.lastName.style.opacity   = '0';
                 row.position.style.color     = 'rgb(0, 0, 0)';
@@ -3098,19 +3120,22 @@
                     const logoUrl     = carTeamLogos[carIdx];
                     const raceNum     = carRaceNumbers[carIdx];
                     dRow.abbrev.textContent       = abbrev;
+                    // lastNamePI is intentionally NOT fit here — its visibility is per-row (at
+                    // most 2 rows: PI's + teammate's), so it's fit only in applyIndicators(),
+                    // where it's confirmed about to be visible. Fitting it unconditionally for
+                    // all 24 rows every tick here would be wasted work for an element that's
+                    // essentially always hidden. Same reasoning as leaderboard-lastname.html.
                     dRow.lastNamePI.textContent   = lastNameStr.toUpperCase();
-                    dRow.lastNamePI.className     = lastNameStr.length > 9
-                        ? 'lb-driver-lastname-pi lb-driver-lastname-pi--long'
-                        : 'lb-driver-lastname-pi';
                     dRow.lastName.textContent     = lastNameStr;
-                    dRow.lastName.className       = lastNameStr.length > 9
-                        ? 'lb-driver-lastname lb-driver-lastname--long'
-                        : 'lb-driver-lastname';
                     const rsA = carResultStatus[carIdx];
                     const dimA = rsA === 5 || rsA === 7;
                     const showLNA = showLastNames && paneMode !== 1;
                     dRow.lastName.style.opacity = showLNA ? (dimA ? '0.65' : '1') : '0';
                     dRow.abbrev.style.opacity   = showLNA ? '0' : '1';
+                    // Only fit while actually visible — same cost-saving as Quali Timing's textFit.
+                    if (showLNA) {
+                        textFitIfChanged(dRow.lastName, lastNameStr, { minFontSize: 12, maxFontSize: 24, multiLine: false, widthOnly: true });
+                    }
                     dRow.driverNumber.textContent  = raceNum > 0 ? raceNum : '';
                     dRow.driverNumber.style.color   = carPrimaryColors[carIdx];
                     if (showDriverNumbers && raceNum > 0) {
@@ -3165,6 +3190,12 @@
                         : (pos === 1 ? 'Interval' : getLappedText(carDeltaFront[carIdx], frontLapNum, frontLapDist));
                     tRow.lText.textContent = showFastestLap ? formatLapTimeMs(fastestLapDisplayMs)
                         : (pos === 1 ? 'Leader'   : getLappedText(carDeltaLeader[carIdx], leaderLapNum, leaderLapDist));
+
+                    // Shrink-to-fit for wide deltas (e.g. "+1:23.456", "+12 LAPS") that would otherwise
+                    // overflow the fixed 125px-wide box — same fix leaderboard-lastname.html already
+                    // had. Only the currently-visible sub-layer is fit.
+                    const activeTRowText = showLeaderGaps ? tRow.lText : tRow.iText;
+                    textFitIfChanged(activeTRowText, activeTRowText.textContent, { minFontSize: 14, maxFontSize: 22, multiLine: false, widthOnly: true });
                 }
 
                 // Track race leader's current lap for header
@@ -3356,19 +3387,18 @@
                         if (pos >= 1 && pos <= NUM_CARS) {
                             const row = driverRows[pos - 1];
                             row.abbrev.textContent        = abbrev;
+                            // lastNamePI not fit here — see the equivalent comment in the pid 2
+                            // per-tick loop above; only fit in applyIndicators() where visible.
                             row.lastNamePI.textContent    = lastNameStr.toUpperCase();
-                            row.lastNamePI.className      = lastNameStr.length > 9
-                                ? 'lb-driver-lastname-pi lb-driver-lastname-pi--long'
-                                : 'lb-driver-lastname-pi';
                             row.lastName.textContent  = lastNameStr;
-                            row.lastName.className    = lastNameStr.length > 9
-                                ? 'lb-driver-lastname lb-driver-lastname--long'
-                                : 'lb-driver-lastname';
                             const rsB = carResultStatus[carIdx];
                             const dimB = rsB > 3; // Any DNF/DSQ/NotClassified/Retired status
                             const showLNB = showLastNames && paneMode !== 1;
                             row.lastName.style.opacity = showLNB ? (dimB ? '0.65' : '1') : '0';
                             row.abbrev.style.opacity   = showLNB ? '0' : '1';
+                            if (showLNB) {
+                                textFitIfChanged(row.lastName, lastNameStr, { minFontSize: 12, maxFontSize: 24, multiLine: false, widthOnly: true });
+                            }
                             if (logoUrl) {
                                 row.teamLogoNormal.src          = logoUrl;
                                 row.teamLogoNormal.style.display = 'block';

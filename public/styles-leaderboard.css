@@ -121,9 +121,9 @@ body { background: transparent; overflow: hidden; }
 #lb-formation-bg {
     display: none;
     left: 19px;
-    top: 95px;
+    top: 146px;
     width: 315px;
-    height: 1076px;
+    height: 1026px;
     border-radius: 0 0 0 25px;
     background-color: rgb(18, 20, 24);
     opacity: 0.85;
@@ -361,9 +361,9 @@ body { background: transparent; overflow: hidden; }
 #lb-deco-border-formation {
     display: none;
     left: 22px;
-    top: 93px;
+    top: 143px;
     width: 309px;
-    height: 1138px;
+    height: 1022px;
     border-radius: 0 0 0 20px;
     border-style: solid;
     border-width: 0 0 4px 4px;
@@ -1615,7 +1615,9 @@ body { background: transparent; overflow: hidden; }
 }
 
 /* Driver last name (item_1_24r0r0_4r0r0 / item_1_24r0r0_27r0r0): 210×49 at left:100
-   F1TV-2022-Name-Bold 24px  white  left-aligned  hidden by default */
+   F1TV-2022-Name-Bold 24px  white  left-aligned  hidden by default.
+   Long names are shrunk to fit via textFit (JS) rather than a condensed "--long" variant —
+   same approach as leaderboard-lastname.html's own .lb-driver-lastname. */
 .lb-driver-lastname {
     display: flex;
     opacity: 0;
@@ -1633,13 +1635,6 @@ body { background: transparent; overflow: hidden; }
     align-items: center;
     white-space: pre;
     transition: opacity 200ms ease;
-}
-
-/* Long last name variant (>9 chars) — condensed font to fit in the same space */
-.lb-driver-lastname--long {
-    font-family: 'F1TV-2022-Name';
-    font-size: 24px;
-    font-stretch: condensed;
 }
 
 /* Position-gained arrow (item_1_24r0r0_62r0r0r0): Arrow_Up.png 35×20 at left:5, top:0
@@ -1692,7 +1687,9 @@ body { background: transparent; overflow: hidden; }
 }
 
 /* Driver last name — PI variant (item_1_24r0r0_60r0r0): 200×50 at left:115
-   F1TV-2022 ObliqueBold 25px black — opacity 0 by default, 1 when PI/teammate indicator active */
+   F1TV-2022 ObliqueBold 25px black — opacity 0 by default, 1 when PI/teammate indicator active.
+   Long names are shrunk to fit via textFit (JS) rather than a reduced-size "--long" variant —
+   same approach as leaderboard-lastname.html's own .lb-driver-lastname-pi. */
 .lb-driver-lastname-pi {
     left: 115px;
     top: 0;
@@ -1710,11 +1707,6 @@ body { background: transparent; overflow: hidden; }
     align-items: center;
     white-space: pre;
     transition: opacity 200ms ease;
-}
-
-/* Long last name variant for PI mode (>9 chars) — reduced font size */
-.lb-driver-lastname-pi--long {
-    font-size: 22px;
 }
 
 /* ── Timing widget (item_1_18r0r0r0): 150×1100 at left:167, top:161 ──────── */
@@ -2012,7 +2004,7 @@ body { background: transparent; overflow: hidden; }
 
 #lb-mfd1 {
     left: 167px;
-    top: 207.5px;
+    top: 160px;
     width: 180px;
     height: 1200px;
     opacity: 0;
@@ -2070,7 +2062,7 @@ body { background: transparent; overflow: hidden; }
 
 #lb-mfd2 {
     left: 167px;
-    top: 207.5px;
+    top: 160px;
     width: 180px;
     height: 1200px;
     opacity: 0;
@@ -2130,7 +2122,7 @@ body { background: transparent; overflow: hidden; }
 
 #lb-mfd3 {
     left: 167px;
-    top: 207.5px;
+    top: 160px;
     width: 180px;
     height: 1200px;
     opacity: 0;
@@ -2191,7 +2183,7 @@ body { background: transparent; overflow: hidden; }
 
 #lb-mfd4 {
     left: 167px;
-    top: 207.5px;
+    top: 160px;
     width: 180px;
     height: 1200px;
     opacity: 0;
