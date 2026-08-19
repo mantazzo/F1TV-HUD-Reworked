@@ -37,25 +37,25 @@
 
             <!-- Driver Ahead -->
             <div class="driver-row driver-ahead">
-                <div class="driver-name" id="name-ahead">PEREZ</div>
+                <div class="driver-name" id="name-ahead">NO DATA</div>
                 <img src="/images/common/Knockout.png" class="knockout-overlay" alt="">
-                <div class="position-number" id="position-ahead">1</div>
+                <div class="position-number" id="position-ahead">-</div>
                 <div class="position-stroke"></div>
             </div>
 
             <!-- Current Player (Highlighted) -->
             <div class="driver-row driver-current">
                 <img src="/images/common/PlayerIndicator.png" class="player-indicator" alt="">
-                <div class="driver-name" id="name-current">VERSTAPPEN</div>
+                <div class="driver-name" id="name-current">WAITING...</div>
                 <img src="/images/common/Knockout.png" class="knockout-overlay" alt="">
-                <div class="position-number" id="position-current">2</div>
+                <div class="position-number" id="position-current">-</div>
             </div>
 
             <!-- Driver Behind -->
             <div class="driver-row driver-behind">
-                <div class="driver-name" id="name-behind">LECLERC</div>
+                <div class="driver-name" id="name-behind">NO DATA</div>
                 <img src="/images/common/Knockout.png" class="knockout-overlay" alt="">
-                <div class="position-number" id="position-behind">3</div>
+                <div class="position-number" id="position-behind">-</div>
                 <div class="position-stroke"></div>
             </div>
         </div>
@@ -180,7 +180,8 @@
             
             // Participants packet (ID 4) - Get driver names using DriverUtils
             if (packetId === 4) {
-                numActiveCars = data.m_numActiveCars || 0;
+                const activeFromPacket = data.m_numActiveCars || 0;
+                if (activeFromPacket > numActiveCars) numActiveCars = activeFromPacket;
                 participants = data.m_participants || [];
                 participantLastNames = {};
                 
@@ -199,7 +200,15 @@
             if (packetId === 2 && playerIndex !== null && Array.isArray(data.m_lapData)) {
                 const playerLapData = data.m_lapData[playerIndex];
                 if (!playerLapData) return;
-                
+
+                // Fall back to the highest assigned position seen in Lap Data — m_numActiveCars
+                // (from packet 4) can under-report, same fix as leaderboard.html / leaderboard-lastname.html.
+                let maxPos = 0;
+                for (const lap of data.m_lapData) {
+                    if (lap.m_carPosition > maxPos) maxPos = lap.m_carPosition;
+                }
+                if (maxPos > numActiveCars) numActiveCars = maxPos;
+
                 const currentPosition = playerLapData.m_carPosition;
                 
                 // Calculate ahead and behind positions
