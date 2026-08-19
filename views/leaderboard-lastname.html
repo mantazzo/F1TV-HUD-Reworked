@@ -1345,6 +1345,25 @@
         // Run once on load so "NO DATA" is fitted from the start
         fitSessionName();
 
+        // textFit forces a synchronous layout reflow (it iteratively resizes font-size and
+        // re-measures scrollWidth). The per-car Lap Data loop calls this for up to 24 rows on
+        // every single packet — at typical UDP rates that's 100s-1000s of calls/sec even when
+        // nothing visible actually changed, which was causing this overlay to visibly lag behind
+        // incoming telemetry (unlike the Initials leaderboard, which has no equivalent per-row
+        // per-tick textFit calls). Skip the reflow entirely when the text is identical to the
+        // last time THIS element was fit — safe only for elements whose box width never changes
+        // independent of text (driver names, timing deltas — NOT elSessionName, whose width
+        // depends on pane/session state too).
+        function textFitIfChanged(el, text, opts) {
+            if (el._lastFitText === text) return;
+            try {
+                textFit(el, opts);
+                el._lastFitText = text;
+            } catch (e) {
+                // Defensive only, see the equivalent try/catch in renderDriverStandings().
+            }
+        }
+
         function formatSessionTime(seconds) {
             if (seconds <= 0) return '0:00';
             const h = Math.floor(seconds / 3600);
@@ -1401,12 +1420,14 @@
             // would be less informative than the Sprint logo already showing in its place) and
             // during Formation Lap. SQ1-3/Short SQ/OSSQ and F2's FP/Q labels show normally
             // alongside the Sprint/F2 series logos — those logos are branding, not a segment
-            // indicator, so the name still carries real information there. Unlike lb-sprint-logo,
-            // stays visible in narrow panes here — the narrowed 185px width still fits the name.
-            // TODO: Hide SessionName during Qualifying sessions when in "narrow" mode and reposition
-            // the SessionName for Sprint Qualifying sessions to ~265px
-            const hideSessionName = formationLap || isSprintSession;
+            // indicator, so the name still carries real information there.
+            // Sprint Qualifying (isSQ) is the one case that needs special handling: in full width
+            // it shifts right (200px -> 265px) so its centered text clears lb-sprint-logo (spans
+            // 171-326.72px); in narrow panes there's no room for both, so it hides instead, same
+            // as lb-sprint-logo already does for other elements.
+            const hideSessionName = formationLap || isSprintSession || (narrow && isSQ);
             elSessionName.style.display = hideSessionName ? 'none' : 'block';
+            elSessionName.style.left    = (!narrow && isSQ) ? '265px' : '200px';
             elSessionName.style.width   = narrow ? '185px' : '300px';
             elSessionName.style.top     = formulaType === 2 ? '40px' : '45px';
             elSessionName.style.color   = formulaType === 2 ? 'rgb(255, 255, 255)' : 'rgb(192, 192, 192)';
@@ -2012,11 +2033,8 @@
 
                 // Shrink-to-fit for wide lap times/deltas (e.g. "2:15.678" on long tracks), same
                 // approach as Race Timing. Only the currently-visible sub-layer is fit.
-                try {
-                    textFit(showQualiTimes ? row.tText : row.gText, { minFontSize: 14, maxFontSize: 22, multiLine: false, widthOnly: true });
-                } catch (e) {
-                    // Defensive only, see the equivalent try/catch in renderDriverStandings().
-                }
+                const activeQualiText = showQualiTimes ? row.tText : row.gText;
+                textFitIfChanged(activeQualiText, activeQualiText.textContent, { minFontSize: 14, maxFontSize: 22, multiLine: false, widthOnly: true });
             }
         }
 
@@ -3435,11 +3453,7 @@
                     // "abbrev" now displays the full last name in the compact/default slot
                     // (kept the property/class name to avoid touching every call site — see memory).
                     dRow.abbrev.textContent = lastNameStr;
-                    try {
-                        textFit(dRow.abbrev, { minFontSize: 12, maxFontSize: 23, multiLine: false, widthOnly: true });
-                    } catch (e) {
-                        // Defensive only, see the equivalent try/catch in renderDriverStandings().
-                    }
+                    textFitIfChanged(dRow.abbrev, lastNameStr, { minFontSize: 12, maxFontSize: 23, multiLine: false, widthOnly: true });
                     dRow.lastNamePI.textContent   = lastNameStr.toUpperCase();
                     dRow.lastName.textContent     = lastNameStr;
                     const rsA = carResultStatus[carIdx];
@@ -3449,11 +3463,7 @@
                     dRow.abbrev.style.opacity   = showLNA ? '0' : '1';
                     // Only fit while actually visible — same cost-saving as Race Timing's textFit.
                     if (showLNA) {
-                        try {
-                            textFit(dRow.lastName, { minFontSize: 12, maxFontSize: 24, multiLine: false, widthOnly: true });
-                        } catch (e) {
-                            // Defensive only, see the equivalent try/catch in renderDriverStandings().
-                        }
+                        textFitIfChanged(dRow.lastName, lastNameStr, { minFontSize: 12, maxFontSize: 24, multiLine: false, widthOnly: true });
                     }
                     // Whole-row dim for any DNF/DSQ/NotClassified/Retired status — overridden
                     // back to 1 for the PI/teammate-highlighted row in applyIndicators().
@@ -3517,11 +3527,8 @@
                     // overflow the fixed 125px-wide box. Only the currently-visible sub-layer is fit —
                     // the hidden one still gets its textContent updated above (cheap), but skipping
                     // textFit on it halves the per-packet cost across up to 24 rows.
-                    try {
-                        textFit(showLeaderGaps ? tRow.lText : tRow.iText, { minFontSize: 14, maxFontSize: 22, multiLine: false, widthOnly: true });
-                    } catch (e) {
-                        // Defensive only, see the equivalent try/catch in renderDriverStandings().
-                    }
+                    const activeTRowText = showLeaderGaps ? tRow.lText : tRow.iText;
+                    textFitIfChanged(activeTRowText, activeTRowText.textContent, { minFontSize: 14, maxFontSize: 22, multiLine: false, widthOnly: true });
                 }
 
                 // Track race leader's current lap for header
