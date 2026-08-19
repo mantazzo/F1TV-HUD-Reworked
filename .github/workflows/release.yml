@@ -6,13 +6,17 @@ on:
       - main
     paths:
       - 'package.json'
+  workflow_dispatch: {}
 
 jobs:
   create-release:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    
+    outputs:
+      version: ${{ steps.package_version.outputs.version }}
+      tag_created: ${{ steps.check_tag.outputs.exists == 'false' }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -53,18 +57,59 @@ jobs:
           name: Release v${{ steps.package_version.outputs.version }}
           body: |
             ## F1TV HUD Reworked v${{ steps.package_version.outputs.version }}
-            
+
             Automatic release created from package.json version update.
-            
+
             ### Download
             Download the source code (zip or tar.gz) below to get this version.
-            
+
             ### Installation
             1. Extract the archive
             2. Run `npm install` to install dependencies
             3. Run `npm start` to start the server
-            
+
+            ### Desktop Mode (optional)
+            Want the overlays as windows on screen while you play, instead of only through OBS?
+            Grab `F1TVHUDReworked_DesktopMode.exe` below — no installation needed, just run it
+            alongside the server. See the README for details.
+
             See [README.md](https://github.com/mantazzo/F1TV-HUD-Reworked#readme) for full documentation.
           draft: false
           prerelease: false
           generate_release_notes: true
+
+  build-desktop-mode:
+    needs: create-release
+    if: needs.create-release.outputs.tag_created == 'true'
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Desktop Mode (portable exe)
+        run: npm run tauri build
+
+      - name: Attach portable exe to release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.create-release.outputs.version }}
+          files: src-tauri/target/release/F1TVHUDReworked_DesktopMode.exe
