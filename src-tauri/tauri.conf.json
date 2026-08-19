@@ -1,12 +1,12 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "f1tv-hud-overlays",
-  "version": "0.1.0",
+  "productName": "F1TV HUD Reworked - Desktop Mode",
+  "version": "../package.json",
   "identifier": "com.mantazzo.f1tvhudoverlays",
   "build": {
     "frontendDist": "dist",
     "devUrl": "http://localhost:3000",
-    "beforeDevCommand": "npm run start:test"
+    "beforeDevCommand": "npm run tauri:dev-server"
   },
   "app": {
     "withGlobalTauri": true,
@@ -27,6 +27,10 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "publisher": "mantazzo",
+    "homepage": "https://github.com/mantazzo/F1TV-HUD-Reworked",
+    "shortDescription": "Desktop Mode support for the F1TV HUD Reworked project",
+    "copyright": "© 2026 mantazzo",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

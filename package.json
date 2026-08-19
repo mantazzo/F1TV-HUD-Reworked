@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node index.js",
     "start:test": "node index.js --test",
+    "tauri:dev-server": "node tauri-dev-server.js",
     "record": "node recorder.js",
     "play": "node player.js",
     "tauri": "tauri",

@@ -9,6 +9,7 @@
     "core:default",
     "core:window:allow-start-dragging",
     "core:window:allow-close",
+    "core:window:allow-destroy",
     "core:window:allow-set-size",
     "core:webview:allow-create-webview-window"
   ],

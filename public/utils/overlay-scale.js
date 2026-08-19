@@ -63,6 +63,7 @@
 
         if (window.io) {
             const scaleSocket = window.io();
+            scaleSocket.emit('identify', `${overlayId} (Controls for Desktop Mode)`);
             scaleSocket.on('set_scale', (data) => {
                 if (data && data.overlay === overlayId) {
                     applyScale(data.scale);

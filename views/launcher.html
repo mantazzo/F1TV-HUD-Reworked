@@ -164,16 +164,27 @@
             }
         });
 
-        document.getElementById('quit-button').addEventListener('click', async () => {
-            try { socket.emit('shutdown_server'); } catch (e) { /* server may already be down */ }
+        async function closeAllOverlays() {
             for (const id of Object.keys(openWindows)) {
                 try { await openWindows[id].close(); } catch (e) { /* already closing */ }
             }
+        }
+
+        // Runs whenever the launcher is about to close, whether via the native
+        // title bar close button or the Quit button below — keeps overlay
+        // windows from being orphaned (no title bar, no launcher left to close them).
+        getCurrentWebviewWindow().onCloseRequested(async () => {
+            await closeAllOverlays();
+        });
+
+        document.getElementById('quit-button').addEventListener('click', async () => {
+            try { socket.emit('shutdown_server'); } catch (e) { /* server may already be down */ }
             await getCurrentWebviewWindow().close();
         });
 
         const socket = io();
         socket.on('connect', () => {
+            socket.emit('identify', 'Desktop Mode Launcher');
             document.getElementById('status-dot').classList.add('connected');
             document.getElementById('status-text').textContent = 'Connected';
         });
