@@ -47,6 +47,7 @@
         let isSpectating = 0;     // from Session packet m_isSpectating
         let spectatorCarIndex = 255; // from Session packet m_spectatorCarIndex
         let detectedEraYear = null; // 2024/2025/2026 from player's m_teamId, or null to fall back to gameYear
+        let isSprintWeekend = false; // true when m_weekendStructure contains both session type 15 and 16
         let overlayVisible = true;
         let visibilityMode = 'toggle'; // 'toggle', 'automatic', 'controlled'
         let hideTimer = null;
@@ -81,9 +82,9 @@
             12: 'SPRINT SHOOTOUT 3',
             13: 'SPRINT SHOOTOUT (SHORT)',
             14: 'SPRINT SHOOTOUT (ONE SHOT)',
-            15: 'RACE',
-            16: 'RACE 2',
-            17: 'RACE 3',
+            15: 'RACE',  // Sprint Race on a Sprint weekend (type 16 also present) - see getSessionTypeName()
+            16: 'RACE',
+            17: 'RACE',
             18: 'TIME TRIAL'
         };
         
@@ -219,6 +220,11 @@
         
         // Get session type name
         function getSessionTypeName(sessionType) {
+            // On a Sprint weekend, session type 15 is the Sprint Race (16 is the Main Race);
+            // on a normal weekend, 15 is the only race and stays "RACE".
+            if (sessionType === 15 && isSprintWeekend) {
+                return 'SPRINT RACE';
+            }
             return SESSION_TYPE_NAMES[sessionType] || 'UNKNOWN';
         }
         
@@ -284,7 +290,17 @@
                 const gameYear = data.m_header.m_gameYear !== undefined ? data.m_header.m_gameYear : null;
                 const sessionType = data.m_sessionType !== undefined ? data.m_sessionType : null;
                 const formula = data.m_formula !== undefined ? data.m_formula : null;
-                
+
+                // Sprint weekend detection: m_weekendStructure lists every session type for the
+                // whole weekend (length m_numSessionsInWeekend) using the same type enum as
+                // m_sessionType. It contains both 15 (Sprint Race) and 16 (Main Race) only on
+                // Sprint weekends; on normal weekends it only contains 15.
+                if (Array.isArray(data.m_weekendStructure)) {
+                    const numSessions = data.m_numSessionsInWeekend ?? data.m_weekendStructure.length;
+                    const weekendStructure = data.m_weekendStructure.slice(0, numSessions);
+                    isSprintWeekend = weekendStructure.includes(16);
+                }
+
                 // Update current values
                 currentYear = gameYear;
                 currentSessionType = sessionType;
