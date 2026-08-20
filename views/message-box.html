@@ -304,7 +304,7 @@
                 
                 for (let i = 0; i < numActiveCars; i++) {
                     const participant = data.m_participants[i];
-                    const index = participant.m_participantIndex !== undefined ? participant.m_participantIndex : i;
+                    const index = i; // m_participantIndex doesn't exist in the current parser output; array index is the real car index
                     
                     // Store full participant data
                     participantData[index] = participant;

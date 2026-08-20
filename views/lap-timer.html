@@ -507,7 +507,7 @@
             participantNames = {};
             
             participants.forEach((participant, i) => {
-                const index = participant.m_participantIndex !== undefined ? participant.m_participantIndex : i;
+                const index = i; // m_participantIndex doesn't exist in the current parser output; array index is the real car index
                 
                 // Get driver name using DriverUtils
                 const driverName = DriverUtils.getDriverLastName(
