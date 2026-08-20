@@ -108,24 +108,34 @@
             }
         }
 
-        // Update team logo
-        function updateTeamLogo(teamId) {
+        // Update team logo image + background color. Background matches the team color —
+        // same OverridePrimaryColor → livery priority (and useTeamColor gate) already
+        // established by updateStopTimeColor() below, falling back to the original static
+        // navy plate when Team Color display is off. Logo_Alt takes priority over Logo,
+        // matching the Leaderboard/Fastest Sectors treatment — some logos would otherwise
+        // blend into a same-color background. Reads teamId/primaryColor from module state
+        // rather than taking parameters, same idiom as updateStopTimeColor().
+        function updateTeamLogo() {
             const teamData = teamNames[teamId];
-            
-            if (teamData && teamData.Logo) {
-                const logoPath = `/images/team-logos/${teamData.Logo}`;
+            const logoFile = teamData?.Logo_Alt ?? teamData?.Logo ?? null;
+            const bgColor = !useTeamColor
+                ? '#081425FF'
+                : (teamData?.OverridePrimaryColor || primaryColor || '#081425FF');
+
+            if (logoFile) {
+                const logoPath = `/images/team-logos/${logoFile}`;
                 const img = new Image();
-                
+
                 img.onload = () => {
-                    teamLogoElement.style.backgroundColor = '#081425FF';
+                    teamLogoElement.style.backgroundColor = bgColor;
                     teamLogoElement.style.backgroundImage = `url(${logoPath})`;
                 };
-                
+
                 img.onerror = () => {
                     teamLogoElement.style.backgroundColor = 'transparent';
                     teamLogoElement.style.backgroundImage = 'none';
                 };
-                
+
                 img.src = logoPath;
             } else {
                 teamLogoElement.style.backgroundColor = 'transparent';
@@ -303,9 +313,10 @@
                 if (pitTimerConfig.useTeamColor !== undefined) {
                     useTeamColor = pitTimerConfig.useTeamColor;
                     console.debug('[PitTimer] Team color setting updated:', useTeamColor);
-                    
-                    // Refresh stop time color with new setting
+
+                    // Refresh stop time color and team logo background with new setting
                     updateStopTimeColor();
+                    updateTeamLogo();
                 }
             }
         });
@@ -425,7 +436,7 @@
                             if (newTeamId !== teamId) {
                                 teamId = newTeamId;
                                 console.debug('[PitTimer] Packet 4 received. playerIdx:', playerIdx, 'teamId:', teamId);
-                                updateTeamLogo(teamId);
+                                updateTeamLogo();
                                 updateStopTimeColor();
                             }
                         }
