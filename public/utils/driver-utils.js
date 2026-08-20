@@ -190,39 +190,6 @@ const DriverUtils = {
     },
 
     /**
-     * Get driver last name for display
-     * Handles AI drivers (via driverId), custom drivers (driverId 255), and fallback
-     * 
-     * @param {Object} participant - Participant data from telemetry
-     * @param {Object} aiDrivers - AI drivers lookup object (key: driverId)
-     * @param {Array} customDrivers - Array of custom driver objects
-     * @param {Object} teamNames - Team names lookup object
-     * @returns {string} Driver's last name for display
-     */
-    getDriverLastName(participant, aiDrivers, customDrivers, teamNames) {
-        if (!participant) {
-            return 'UNKNOWN';
-        }
-
-        // Custom driver (player or custom roster)
-        if (CUSTOM_DRIVER_IDS.has(participant.m_driverId)) {
-            const customMatch = this.matchCustomDriver(participant, customDrivers, teamNames);
-            if (customMatch) {
-                return customMatch.LastName || customMatch.DisplayName || 'PLAYER';
-            }
-            return participant.m_name || 'PLAYER';
-        }
-        
-        // AI driver
-        if (aiDrivers && aiDrivers[participant.m_driverId]) {
-            return aiDrivers[participant.m_driverId].lastName || 'UNKNOWN';
-        }
-        
-        // Fallback
-        return participant.m_name || 'UNKNOWN';
-    },
-
-    /**
      * Get driver first name for display
      * Handles AI drivers (via driverId), custom drivers (driverId 255), and fallback
      * 
