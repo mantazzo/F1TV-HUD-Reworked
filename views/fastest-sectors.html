@@ -31,7 +31,7 @@
                 <img src="/images/common/PlayerIndicator.png" class="sector-background">
                 <div class="sector-label">S1</div>
                 <div class="sector-time"></div>
-                <img src="/images/team-logos/red_bull_racing.png" class="team-logo">
+                <img class="team-logo">
                 <div class="driver-name">NO DATA</div>
             </div>
             
@@ -40,7 +40,7 @@
                 <img src="/images/common/PlayerIndicator.png" class="sector-background">
                 <div class="sector-label">S2</div>
                 <div class="sector-time"></div>
-                <img src="/images/team-logos/red_bull_racing.png" class="team-logo">
+                <img class="team-logo">
                 <div class="driver-name">NO DATA</div>
             </div>
             
@@ -49,7 +49,7 @@
                 <img src="/images/common/PlayerIndicator.png" class="sector-background">
                 <div class="sector-label">S3</div>
                 <div class="sector-time"></div>
-                <img src="/images/team-logos/red_bull_racing.png" class="team-logo">
+                <img class="team-logo">
                 <div class="driver-name">NO DATA</div>
             </div>
         </div>
@@ -90,6 +90,7 @@
         let participants = []; // Store full participant data
         let participantNames = {};
         let participantTeamIds = {};
+        let participantPrimaryColors = {};
         let teamNames = {};
         let customDrivers = [];
         let aiDrivers = {};
@@ -166,23 +167,31 @@
             }
         }
         
-        // Update team logo for a sector
-        function updateTeamLogo(teamLogoElement, teamId) {
+        // Update team logo (and its background color) for a sector.
+        // Background: matches the team's primary color, same resolution/priority as the
+        // Leaderboard's PI team logo background (OverridePrimaryColor → livery → white,
+        // F2 fixed navy override — see handleParticipantsPacket()).
+        // Logo: Logo_Alt takes priority over Logo, same as the Leaderboard — some logos
+        // (e.g. McLaren orange) would otherwise blend into a same-color background.
+        function updateTeamLogo(teamLogoElement, teamId, primaryColor) {
             const teamData = teamNames[teamId];
-            
-            if (teamData && teamData.Logo) {
-                const logoPath = `/images/team-logos/${teamData.Logo}`;
+            const logoFile = teamData?.Logo_Alt ?? teamData?.Logo ?? null;
+
+            teamLogoElement.style.backgroundColor = primaryColor ?? 'transparent';
+
+            if (logoFile) {
+                const logoPath = `/images/team-logos/${logoFile}`;
                 const img = new Image();
-                
+
                 img.onload = () => {
                     teamLogoElement.src = logoPath;
                     teamLogoElement.style.display = 'block';
                 };
-                
+
                 img.onerror = () => {
                     teamLogoElement.style.display = 'none';
                 };
-                
+
                 img.src = logoPath;
             } else {
                 teamLogoElement.style.display = 'none';
@@ -207,13 +216,29 @@
             participants = data.m_participants;
             participantNames = {};
             participantTeamIds = {};
-            
+            participantPrimaryColors = {};
+
             participants.forEach((participant, i) => {
-                const index = participant.m_participantIndex !== undefined ? participant.m_participantIndex : i;
-                
+                const index = i; // m_participantIndex doesn't exist in the current parser output; array index is the real car index
+
                 // Store team ID
                 participantTeamIds[index] = participant.m_teamId;
-                
+
+                // Team primary color: OverridePrimaryColor → livery[0] → fallback white,
+                // same resolution as the Leaderboard's team-logo background. F2 uses a fixed
+                // dark navy background instead of the team color, also matching the Leaderboard.
+                const teamData = teamNames[participant.m_teamId];
+                if (formulaType === 2) {
+                    participantPrimaryColors[index] = '#000019';
+                } else if (teamData?.OverridePrimaryColor) {
+                    participantPrimaryColors[index] = teamData.OverridePrimaryColor;
+                } else {
+                    const livery = participant.m_liveryColour?.[0];
+                    participantPrimaryColors[index] = (livery && typeof livery.red === 'number')
+                        ? `rgb(${livery.red}, ${livery.green}, ${livery.blue})`
+                        : 'rgb(255, 255, 255)';
+                }
+
                 // Get driver name using DriverUtils
                 const driverName = DriverUtils.getDriverLastName(
                     participant,
@@ -223,8 +248,16 @@
                 );
                 participantNames[index] = driverName.toUpperCase();
             });
+
+            // Re-render with the freshly-resolved names/logos. Without this, a car that set a
+            // fastest sector before its very first Participants packet arrived (plausible in a
+            // short race — Session History can report a completed sector before this packet and
+            // the async custom-driver fetch have caught up) gets its name permanently stuck on
+            // "UNKNOWN": updateOverallFastestSectors() only re-renders when a sector time is
+            // actually beaten, so nothing else would ever refresh that stale name otherwise.
+            updateDisplay();
         }
-        
+
         // Store session history data for a car
         function storeSessionHistory(data) {
             sessionHistoryByCarIdx[data.m_carIdx] = {
@@ -364,7 +397,7 @@
                 sectorElements.s1.driverName.textContent = driverName.toUpperCase();
                 updateDriverNameStyling(sectorElements.s1.driverName, driverName);
                 sectorElements.s1.sectorTime.textContent = formatTime(overallFastestSectors.s1.time);
-                updateTeamLogo(sectorElements.s1.teamLogo, participantTeamIds[carIdx]);
+                updateTeamLogo(sectorElements.s1.teamLogo, participantTeamIds[carIdx], participantPrimaryColors[carIdx]);
             }
             
             // Update Sector 2
@@ -374,7 +407,7 @@
                 sectorElements.s2.driverName.textContent = driverName.toUpperCase();
                 updateDriverNameStyling(sectorElements.s2.driverName, driverName);
                 sectorElements.s2.sectorTime.textContent = formatTime(overallFastestSectors.s2.time);
-                updateTeamLogo(sectorElements.s2.teamLogo, participantTeamIds[carIdx]);
+                updateTeamLogo(sectorElements.s2.teamLogo, participantTeamIds[carIdx], participantPrimaryColors[carIdx]);
             }
             
             // Update Sector 3
@@ -384,7 +417,7 @@
                 sectorElements.s3.driverName.textContent = driverName.toUpperCase();
                 updateDriverNameStyling(sectorElements.s3.driverName, driverName);
                 sectorElements.s3.sectorTime.textContent = formatTime(overallFastestSectors.s3.time);
-                updateTeamLogo(sectorElements.s3.teamLogo, participantTeamIds[carIdx]);
+                updateTeamLogo(sectorElements.s3.teamLogo, participantTeamIds[carIdx], participantPrimaryColors[carIdx]);
             }
         }
         

@@ -201,8 +201,10 @@
     box-sizing: border-box;
 }
 
-/* Team logo */
+/* Team logo — hidden by default (no valid team data yet); updateTeamLogo() in JS
+   sets display:block once a real logo has loaded successfully */
 .team-logo {
+    display: none;
     position: absolute;
     top: 0;
     left: 45px;
