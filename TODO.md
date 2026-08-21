@@ -7,15 +7,17 @@
     - Includes an automatic MPH units toggle
         - Can override it in Extended Controller to use the units you want instead
     - Includes F1TV style and Multiviewer style
-    - NEW: Added Overtake Mode display for F1 2026 cars (replaces DRS for these cars): Blue Outline when Active, Filled with Blue Tint when OT is Active and using Boost
+    - NEW: Added Overtake Mode display for F1 2026 cars (replaces DRS for these cars): blinking Blue Outline when Active, Filled with Blue Tint when OT is Active and using Boost
     - Likely the first fully finished overlay
 - Lap Timer
     - Remade with some personal adjustments
     - Shows your current time (if no reference time) or delta (if there is a reference time)
-    - Dynamic comparison for Qualifying 1 and Qualifying 2 sessions (if in knockout positions)
-    - Compare against your Personal Best in Race and in Time Trial (if set)
-    - Sector bar works and shows yellow, green and purple sectors (some game issues with packet 11 in Time Trial, though)
-    - Will come back to it later to expand functionality even more
+    - Dynamic comparison for Qualifying 1 and Qualifying 2 sessions (if in knockout positions), or you can override the check in the Extended Controller to Always compare to Leader's time
+    - Compare against your Personal Best in Race and in Time Trial (if set), or use the Extended Controller to compare to other times
+        - Select between Session Best, Personal Best or Rival times for Time Trial
+        - Select between Fastest Lap, Personal Best or Last Lap times for Race
+    - Sector bar works and shows yellow, green and purple sectors
+    - May come back to it later to expand functionality even more
 - Pit Timer
     - Remade in full, uses Primary Color from the game, can be overwritten in JSON
     - Only shows up when in race and only when in pitlane
@@ -64,7 +66,7 @@
         - If there is no driver ahead or behind, the row will be empty instead
         - Might change it in the future to show two places ahead (if you're last) or two places behind (if you're first)
     - Decorations on the sides are now infinitely animated
-    - Also supports the Knockout Zone indicator for Qualifying
+    - Also supports the Knockout Zone indicator for Qualifying (supports 2026 24 drivers grid size for Q1/SQ1)
 - Session Info
     - Fully remade, with some improvements
     - Shows Event Name, Year, Current Session and Location
@@ -110,7 +112,7 @@
         - Can be shown automatically during Formation Lap
         - Name displays use textFit library to fit names better for display
     - DRS Indicator was updated to also show "Overtake Active" Mode for 2026 F1 cars when enabled
-    - Likely feature complete, may get a few improvements to support F1 '26 cars a bit better over time (and bugfixes)
+    - Likely feature complete, may get a few improvements over time (and bugfixes)
 - Leaderboard ("Last Name" version)
     - A fully remade version of the old "Last Name" version Leaderboard, with some upgrades
     - Feature list should be identical to the "Initials" version
@@ -140,7 +142,7 @@
 
 ## Currently Working On
 
-... (maybe a few tweaks for older ones, then start a new one)
+Bugfixes, improvements and "Desktop Mode" (overlays can be used WITHOUT Recording or Streaming - straight on the screen, on top of the game)
 
 ## Next Planned Overlay
 
