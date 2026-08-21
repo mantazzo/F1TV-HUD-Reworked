@@ -295,7 +295,7 @@
             <div class="status-bar" style="margin-bottom:16px">
                 <span>Total packets: <strong id="totalPackets">0</strong></span>
                 <span>Last update: <strong id="lastPacketTime">--</strong></span>
-                <span>Cars seen: <strong id="carsSeen">0 / 22</strong></span>
+                <span>Cars seen: <strong id="carsSeen">0 / 24</strong></span>
                 <span>Player car: <strong id="playerCarIdx">--</strong></span>
             </div>
 
@@ -445,6 +445,9 @@
 
         // --- State -----------------------------------------------------------
 
+        // UDP output max car slots: 22 pre-2026 format, 24 in the 2026 format (matches leaderboard.html).
+        // Actual grid size varies: 20 (pre-2026 standard) / 22 (pre-2026 MyTeam or F2, or 2026 standard - 11 teams incl. Cadillac) / 24 (2026 MyTeam - 12 teams)
+        const NUM_CARS = 24;
         const carCache   = {};   // carIdx → { data, time }
         let selectedCar  = 0;
         let playerIdx    = 255;
@@ -457,13 +460,13 @@
         function buildSelector() {
             const sel = document.getElementById('carSelect');
             sel.innerHTML = '';
-            for (let i = 0; i < 22; i++) {
+            for (let i = 0; i < NUM_CARS; i++) {
                 const opt = document.createElement('option');
                 opt.value = i;
                 opt.textContent = `Car ${i}`;
                 sel.appendChild(opt);
             }
-            if (playerIdx < 22) { sel.value = playerIdx; selectedCar = playerIdx; }
+            if (playerIdx < NUM_CARS) { sel.value = playerIdx; selectedCar = playerIdx; }
             selectorBuilt = true;
         }
 
@@ -637,7 +640,7 @@
             carCache[carIdx] = { data, time: new Date().toLocaleTimeString() };
 
             const seen = Object.keys(carCache).length;
-            document.getElementById('carsSeen').textContent = `${seen} / 22`;
+            document.getElementById('carsSeen').textContent = `${seen} / ${NUM_CARS}`;
             document.getElementById('playerCarIdx').textContent = playerIdx === 255 ? '--' : playerIdx;
 
             // Build selector once on first arrival
@@ -647,7 +650,7 @@
 
             // If the dropdown hasn't been manually changed yet, keep defaulting to player car
             if (!selectorBuilt || selectedCar === 0) {
-                if (playerIdx < 22) {
+                if (playerIdx < NUM_CARS) {
                     selectedCar = playerIdx;
                     document.getElementById('carSelect').value = playerIdx;
                 }
