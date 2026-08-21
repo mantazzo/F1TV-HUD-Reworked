@@ -137,6 +137,35 @@
                     </select>
                 </label>
             </div>
+            <div class="option-row">
+                <label class="select-label">
+                    <span class="select-text">Time Trial Comparison:</span>
+                    <select id="lap-timer-tt-comparison-mode" class="select-dropdown">
+                        <option value="playerSessionBest">Player Session Best</option>
+                        <option value="personalBest">Personal Best</option>
+                        <option value="rival">Rival</option>
+                    </select>
+                </label>
+            </div>
+            <div class="option-row">
+                <label class="select-label">
+                    <span class="select-text">Knockout Qualifying Comparison:</span>
+                    <select id="lap-timer-knockout-comparison-mode" class="select-dropdown">
+                        <option value="default">Default</option>
+                        <option value="alwaysLeader">Always Leader</option>
+                    </select>
+                </label>
+            </div>
+            <div class="option-row">
+                <label class="select-label">
+                    <span class="select-text">Race Comparison:</span>
+                    <select id="lap-timer-race-comparison-mode" class="select-dropdown">
+                        <option value="fastestLap">Fastest Lap</option>
+                        <option value="personalBest">Personal Best</option>
+                        <option value="lastLap">Last Lap</option>
+                    </select>
+                </label>
+            </div>
         </section>
 
         <section class="overlay-section" id="speedometer-options-section">
@@ -565,12 +594,45 @@
 
         // Lap timer visibility mode handling
         const lapTimerVisibilityMode = document.getElementById('lap-timer-visibility-mode');
-        
+
         lapTimerVisibilityMode.addEventListener('change', () => {
             socket.emit('config_update', {
                 overlay: 'lap-timer',
                 property: 'visibilityMode',
                 value: lapTimerVisibilityMode.value
+            });
+        });
+
+        // Lap timer Time Trial comparison mode handling
+        const lapTimerTTComparisonMode = document.getElementById('lap-timer-tt-comparison-mode');
+
+        lapTimerTTComparisonMode.addEventListener('change', () => {
+            socket.emit('config_update', {
+                overlay: 'lap-timer',
+                property: 'ttComparisonMode',
+                value: lapTimerTTComparisonMode.value
+            });
+        });
+
+        // Lap timer Knockout Qualifying comparison mode handling
+        const lapTimerKnockoutComparisonMode = document.getElementById('lap-timer-knockout-comparison-mode');
+
+        lapTimerKnockoutComparisonMode.addEventListener('change', () => {
+            socket.emit('config_update', {
+                overlay: 'lap-timer',
+                property: 'knockoutComparisonMode',
+                value: lapTimerKnockoutComparisonMode.value
+            });
+        });
+
+        // Lap timer Race comparison mode handling
+        const lapTimerRaceComparisonMode = document.getElementById('lap-timer-race-comparison-mode');
+
+        lapTimerRaceComparisonMode.addEventListener('change', () => {
+            socket.emit('config_update', {
+                overlay: 'lap-timer',
+                property: 'raceComparisonMode',
+                value: lapTimerRaceComparisonMode.value
             });
         });
 
@@ -613,6 +675,9 @@
             
             const lapTimerConfig = currentConfig.overlays['lap-timer'];
             lapTimerVisibilityMode.value = lapTimerConfig.visibilityMode || 'automatic';
+            lapTimerTTComparisonMode.value = lapTimerConfig.ttComparisonMode || 'personalBest';
+            lapTimerKnockoutComparisonMode.value = lapTimerConfig.knockoutComparisonMode || 'default';
+            lapTimerRaceComparisonMode.value = lapTimerConfig.raceComparisonMode || 'personalBest';
         }
 
         // Update speedometer options when config changes

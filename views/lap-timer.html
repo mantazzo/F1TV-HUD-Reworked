@@ -84,13 +84,29 @@
         // Visibility mode from controller
         let visibilityMode = 'automatic'; // off, automatic, always-on
         let isInitialConfigLoad = true; // Track first config load to prevent flash
-        
+
+        // Time Trial comparison dataset from controller: playerSessionBest, personalBest, rival
+        let ttComparisonMode = 'personalBest';
+
+        // Knockout Qualifying (Q1/Q2/SQ1/SQ2) comparison override from controller:
+        // default = knockout-threshold car when in the drop zone, else leader (existing behavior)
+        // alwaysLeader = always compare to the leader, regardless of position
+        let knockoutComparisonMode = 'default';
+
+        // Race comparison dataset from controller: fastestLap, personalBest, lastLap
+        let raceComparisonMode = 'personalBest';
+
         // Handle overlay visibility mode from controller
         socket.on('overlay_config', (config) => {
             if (config.overlays && config.overlays['lap-timer']) {
-                const newMode = config.overlays['lap-timer'].visibilityMode || 'automatic';
+                const lapTimerConfig = config.overlays['lap-timer'];
+                const newMode = lapTimerConfig.visibilityMode || 'automatic';
                 const modeChanged = newMode !== visibilityMode;
                 visibilityMode = newMode;
+
+                ttComparisonMode = lapTimerConfig.ttComparisonMode || 'personalBest';
+                knockoutComparisonMode = lapTimerConfig.knockoutComparisonMode || 'default';
+                raceComparisonMode = lapTimerConfig.raceComparisonMode || 'personalBest';
                 
                 // On initial load, set state without animation
                 if (isInitialConfigLoad) {
@@ -221,6 +237,8 @@
         let prevPosition = '1';
         let driverName = 'PLAYER';
         let tyreCompound = 'S';
+        let teamId = 0;
+        let primaryColor = null; // player's livery primary color (hex), from Participants packet
         let sessionType = 0;
         let formulaType = DriverUtils.FORMULA_TYPE.F1_MODERN;
         let leaderCarIdx = -1;
@@ -248,6 +266,8 @@
         let currentLapSectorSum = 0;
         const sessionHistoryByCarIdx = {};
         const overallBestSectors = { s1: -1, s2: -1, s3: -1 };
+        // Fastest full lap across the whole field (Race "Fastest Lap" comparison mode)
+        const overallFastestLap = { sector1MS: -1, sector2MS: -1, lapMS: -1, carIdx: -1 };
         let newCurrentLapNum = -1;
         let trackLength = -1;
         let safetyCarStatus = 0;
@@ -363,17 +383,62 @@
             }
         }
 
+        // Per-lap time getters for the manual best-lap scan below (index 0-2 = sector 1-3)
+        const LAP_METRIC_GETTERS = [
+            lap => calculateSectorTime(lap.m_sector1TimeMinutesPart, lap.m_sector1TimeMSPart),
+            lap => calculateSectorTime(lap.m_sector2TimeMinutesPart, lap.m_sector2TimeMSPart),
+            lap => calculateSectorTime(lap.m_sector3TimeMinutesPart, lap.m_sector3TimeMSPart),
+            lap => lap.m_lapTimeInMS
+        ];
+
+        /**
+         * Scan this session's actual completed laps for the fastest one by a given metric.
+         * Returns a 1-based lap number (matching m_bestLapTimeLapNum's own convention), or -1
+         * if no completed lap has a valid time for that metric yet.
+         */
+        function findBestLapNumByMetric(lapHistory, numLaps, getTimeMS) {
+            let bestLapNum = -1;
+            let bestTimeMS = -1;
+            const limit = Math.min(numLaps, lapHistory.length);
+            for (let i = 0; i < limit; i++) {
+                const timeMS = getTimeMS(lapHistory[i]);
+                if (timeMS > 0 && (bestTimeMS === -1 || timeMS < bestTimeMS)) {
+                    bestTimeMS = timeMS;
+                    bestLapNum = i + 1;
+                }
+            }
+            return bestLapNum;
+        }
+
+        /**
+         * Resolve a game-reported bestXLapNum, falling back to a manual scan when it's out of
+         * range for this session. Time Trial reports these as a sentinel like 199 (pointing at
+         * a Personal Best set in an earlier session, not tracked in this session's lap history)
+         * whenever a Personal Best already exists on load - left as-is, that reads as "always
+         * beaten" downstream (personalBest defaults to -1, which shows green unconditionally)
+         * instead of "unknown, go find the real one."
+         */
+        function resolveBestLapNum(reportedLapNum, lapHistory, numLaps, getTimeMS) {
+            if (reportedLapNum > 0 && reportedLapNum <= numLaps && reportedLapNum <= lapHistory.length) {
+                return reportedLapNum;
+            }
+            return findBestLapNumByMetric(lapHistory, numLaps, getTimeMS);
+        }
+
         /**
          * Store session history data for a car
          */
         function storeSessionHistory(data) {
+            const lapHistory = data.m_lapHistoryData;
+            const numLaps = data.m_numLaps || 0;
+
             sessionHistoryByCarIdx[data.m_carIdx] = {
-                numLaps: data.m_numLaps,
-                bestLapNum: data.m_bestLapTimeLapNum,
-                bestSector1LapNum: data.m_bestSector1LapNum,
-                bestSector2LapNum: data.m_bestSector2LapNum,
-                bestSector3LapNum: data.m_bestSector3LapNum,
-                lapHistory: data.m_lapHistoryData
+                numLaps,
+                bestLapNum: resolveBestLapNum(data.m_bestLapTimeLapNum, lapHistory, numLaps, LAP_METRIC_GETTERS[3]),
+                bestSector1LapNum: resolveBestLapNum(data.m_bestSector1LapNum, lapHistory, numLaps, LAP_METRIC_GETTERS[0]),
+                bestSector2LapNum: resolveBestLapNum(data.m_bestSector2LapNum, lapHistory, numLaps, LAP_METRIC_GETTERS[1]),
+                bestSector3LapNum: resolveBestLapNum(data.m_bestSector3LapNum, lapHistory, numLaps, LAP_METRIC_GETTERS[2]),
+                lapHistory
             };
         }
 
@@ -427,13 +492,14 @@
         }
 
         /**
-         * Calculate overall best sectors across all cars in the session
-         * Used for purple/magenta sector indicator colors
+         * Calculate overall best sectors and overall fastest full lap across all cars in the
+         * session. Sectors feed the purple/magenta sector indicator colors; the fastest lap
+         * feeds Race "Fastest Lap" comparison mode.
          */
         function updateOverallBestSectors() {
             for (let idx in sessionHistoryByCarIdx) {
                 const history = sessionHistoryByCarIdx[idx];
-                
+
                 // Get best sector times for this car
                 const s1Time = history.lapHistory[history.bestSector1LapNum - 1]
                     ? calculateSectorTime(
@@ -441,21 +507,21 @@
                         history.lapHistory[history.bestSector1LapNum - 1].m_sector1TimeMSPart
                     )
                     : -1;
-                    
+
                 const s2Time = history.lapHistory[history.bestSector2LapNum - 1]
                     ? calculateSectorTime(
                         history.lapHistory[history.bestSector2LapNum - 1].m_sector2TimeMinutesPart,
                         history.lapHistory[history.bestSector2LapNum - 1].m_sector2TimeMSPart
                     )
                     : -1;
-                    
+
                 const s3Time = history.lapHistory[history.bestSector3LapNum - 1]
                     ? calculateSectorTime(
                         history.lapHistory[history.bestSector3LapNum - 1].m_sector3TimeMinutesPart,
                         history.lapHistory[history.bestSector3LapNum - 1].m_sector3TimeMSPart
                     )
                     : -1;
-                
+
                 // Update overall bests if this car's sector is faster
                 if (s1Time > 0 && (overallBestSectors.s1 === -1 || s1Time < overallBestSectors.s1)) {
                     overallBestSectors.s1 = s1Time;
@@ -466,7 +532,86 @@
                 if (s3Time > 0 && (overallBestSectors.s3 === -1 || s3Time < overallBestSectors.s3)) {
                     overallBestSectors.s3 = s3Time;
                 }
+
+                // This car's own fastest lap of the session - candidate for the overall fastest lap
+                const bestLap = history.lapHistory[history.bestLapNum - 1];
+                if (bestLap && bestLap.m_lapTimeInMS > 0 &&
+                    (overallFastestLap.lapMS === -1 || bestLap.m_lapTimeInMS < overallFastestLap.lapMS)) {
+                    overallFastestLap.lapMS = bestLap.m_lapTimeInMS;
+                    overallFastestLap.sector1MS = calculateSectorTime(bestLap.m_sector1TimeMinutesPart, bestLap.m_sector1TimeMSPart);
+                    overallFastestLap.sector2MS = calculateCombinedSectorTime(
+                        bestLap.m_sector1TimeMinutesPart,
+                        bestLap.m_sector1TimeMSPart,
+                        bestLap.m_sector2TimeMinutesPart,
+                        bestLap.m_sector2TimeMSPart
+                    );
+                    overallFastestLap.carIdx = Number(idx);
+                }
             }
+        }
+
+        /**
+         * Update reference times for Race "Fastest Lap" comparison mode from the
+         * field-wide fastest lap tracked in overallFastestLap.
+         */
+        function updateReferenceTimesForFastestLap() {
+            if (overallFastestLap.lapMS <= 0) {
+                lapTimeComparisonElement.style.display = 'none';
+                lapTimeComparisonNameElement.style.display = 'none';
+                refSector1TimeMS = -1;
+                refSector2TimeMS = -1;
+                refLastLapTimeMS = -1;
+                return;
+            }
+
+            lapTimeComparisonName = 'FASTEST LAP';
+
+            // Hide comparison for first 2 laps in races, same as Personal Best
+            if (currentLapNum < 3) {
+                lapTimeComparisonElement.style.display = 'none';
+                lapTimeComparisonNameElement.style.display = 'none';
+            } else {
+                lapTimeComparisonElement.style.display = 'flex';
+                lapTimeComparisonNameElement.style.display = 'flex';
+            }
+
+            refSector1TimeMS = overallFastestLap.sector1MS;
+            refSector2TimeMS = overallFastestLap.sector2MS;
+            refLastLapTimeMS = overallFastestLap.lapMS;
+        }
+
+        /**
+         * Update reference times for Race "Last Lap" comparison mode from the player's own
+         * Session History. m_numLaps counts the current in-progress lap too, so the last
+         * *completed* lap sits one slot before it; that entry only changes once a lap actually
+         * finishes, and handleSessionHistoryPacket's canUpdateReference gate already holds off
+         * applying it while the Sector 3 delta / last-lap popup for that transition is showing.
+         */
+        function updateReferenceTimesForLastLap(data) {
+            const lastCompletedLapIdx = data.m_numLaps - 2;
+            const lap = data.m_lapHistoryData?.[lastCompletedLapIdx];
+
+            if (!lap || lap.m_lapTimeInMS <= 0) {
+                lapTimeComparisonElement.style.display = 'none';
+                lapTimeComparisonNameElement.style.display = 'none';
+                refSector1TimeMS = -1;
+                refSector2TimeMS = -1;
+                refLastLapTimeMS = -1;
+                return;
+            }
+
+            lapTimeComparisonName = 'LAST LAP';
+            lapTimeComparisonElement.style.display = 'flex';
+            lapTimeComparisonNameElement.style.display = 'flex';
+
+            refSector1TimeMS = calculateSectorTime(lap.m_sector1TimeMinutesPart, lap.m_sector1TimeMSPart);
+            refSector2TimeMS = calculateCombinedSectorTime(
+                lap.m_sector1TimeMinutesPart,
+                lap.m_sector1TimeMSPart,
+                lap.m_sector2TimeMinutesPart,
+                lap.m_sector2TimeMSPart
+            );
+            refLastLapTimeMS = lap.m_lapTimeInMS;
         }
 
         /**
@@ -520,7 +665,16 @@
                 
                 // Update team logo if this is the player
                 if (i === playerCarIdx) {
-                    updateTeamLogo(participant.m_teamId);
+                    teamId = participant.m_teamId;
+
+                    // Primary livery color: OverridePrimaryColor is resolved inside updateTeamLogo();
+                    // this is just the livery[0] fallback, same as Leaderboard/Pit Timer.
+                    const livery = participant.m_liveryColour?.[0];
+                    primaryColor = (livery && typeof livery.red === 'number')
+                        ? `rgb(${livery.red}, ${livery.green}, ${livery.blue})`
+                        : null;
+
+                    updateTeamLogo();
                 }
             });
             
@@ -681,28 +835,30 @@
             
             targetCarIdx = leaderCarIdx; // Default to leader
             
-            // Q1/Sprint Shootout 1 - compare to knockout threshold
+            // Q1/Sprint Shootout 1 - compare to knockout threshold (unless overridden to always compare to leader)
             if ([SESSION_TYPE.QUALIFYING_1, SESSION_TYPE.SPRINT_SHOOTOUT_1].includes(sessionType)) {
-                const threshold = numActiveCars > 22
-                    ? DriverUtils.KNOCKOUT_ZONE_POSITIONS.Q1_24_CARS
-                    : numActiveCars > 20
-                        ? DriverUtils.KNOCKOUT_ZONE_POSITIONS.Q1_22_CARS
-                        : DriverUtils.KNOCKOUT_ZONE_POSITIONS.Q1_20_CARS;
-                if (currentPosition > threshold) {
-                    for (let i = 0; i < allLapData.length; i++) {
-                        if (allLapData[i].m_carPosition === threshold) {
-                            targetCarIdx = i;
-                            if (sessionHistoryByCarIdx[targetCarIdx]?.bestLapNum < 1) {
-                                targetCarIdx = leaderCarIdx; // Fallback if no valid lap
+                if (knockoutComparisonMode !== 'alwaysLeader') {
+                    const threshold = numActiveCars > 22
+                        ? DriverUtils.KNOCKOUT_ZONE_POSITIONS.Q1_24_CARS
+                        : numActiveCars > 20
+                            ? DriverUtils.KNOCKOUT_ZONE_POSITIONS.Q1_22_CARS
+                            : DriverUtils.KNOCKOUT_ZONE_POSITIONS.Q1_20_CARS;
+                    if (currentPosition > threshold) {
+                        for (let i = 0; i < allLapData.length; i++) {
+                            if (allLapData[i].m_carPosition === threshold) {
+                                targetCarIdx = i;
+                                if (sessionHistoryByCarIdx[targetCarIdx]?.bestLapNum < 1) {
+                                    targetCarIdx = leaderCarIdx; // Fallback if no valid lap
+                                }
+                                break;
                             }
-                            break;
                         }
                     }
                 }
             }
-            // Q2/Sprint Shootout 2 - compare to P10
+            // Q2/Sprint Shootout 2 - compare to P10 (unless overridden to always compare to leader)
             else if ([SESSION_TYPE.QUALIFYING_2, SESSION_TYPE.SPRINT_SHOOTOUT_2].includes(sessionType)) {
-                if (currentPosition > DriverUtils.KNOCKOUT_ZONE_POSITIONS.Q2) {
+                if (knockoutComparisonMode !== 'alwaysLeader' && currentPosition > DriverUtils.KNOCKOUT_ZONE_POSITIONS.Q2) {
                     for (let i = 0; i < allLapData.length; i++) {
                         if (allLapData[i].m_carPosition === DriverUtils.KNOCKOUT_ZONE_POSITIONS.Q2) {
                             targetCarIdx = i;
@@ -868,21 +1024,45 @@
 
             // Store session history for this car (works for all session types)
             storeSessionHistory(data);
-            
-            // Update reference times if this is the target car we're comparing against
-            // (Not used in Time Trial - that uses Packet 14 instead)
-            if (sessionType !== SESSION_TYPE.TIME_TRIAL && data.m_carIdx === targetCarIdx && targetCarIdx !== -1) {
+
+            // Calculate overall best sectors + fastest lap across all cars (for purple sector
+            // indicators and Race "Fastest Lap" comparison mode)
+            updateOverallBestSectors();
+
+            const isRace = [SESSION_TYPE.RACE, SESSION_TYPE.RACE_2, SESSION_TYPE.RACE_3].includes(sessionType);
+
+            if (isRace && raceComparisonMode === 'fastestLap') {
+                // Fastest Lap tracks the field's quickest lap dynamically - re-evaluate on every car's packet
+                updateReferenceTimesForFastestLap();
+            } else if (isRace && raceComparisonMode === 'lastLap') {
+                // Last Lap uses the player's own Session History - only their own packet is relevant
+                if (data.m_carIdx === playerCarIdx) {
+                    updateReferenceTimesForLastLap(data);
+                }
+            } else if (sessionType !== SESSION_TYPE.TIME_TRIAL && data.m_carIdx === targetCarIdx && targetCarIdx !== -1) {
+                // Personal Best (Race) / Qualifying knockout comparisons - existing per-target-car behavior
+                // (Not used in Time Trial - that uses Packet 14 instead)
                 updateReferenceTimesFromHistory(data);
             }
-            
-            // Calculate overall best sectors across all cars (for purple sector indicators)
-            updateOverallBestSectors();
         }
+
+        // Time Trial dataset selection - which of the packet's 3 datasets to compare against,
+        // controlled from the Controller (lap-timer.ttComparisonMode)
+        const TT_COMPARISON_DATASET_KEYS = {
+            playerSessionBest: 'm_playerSessionBestDataSet',
+            personalBest: 'm_personalBestDataSet',
+            rival: 'm_rivalDataSet'
+        };
+        const TT_COMPARISON_LABELS = {
+            playerSessionBest: 'SESSION BEST',
+            personalBest: 'PERSONAL BEST',
+            rival: 'RIVAL'
+        };
 
         /**
          * Handle Time Trial packet (ID: 14)
-         * Updates reference times from personal best in Time Trial mode
-         * Uses m_personalBestDataSet to maintain persistent comparison across sessions
+         * Updates reference times from the selected comparison dataset in Time Trial mode
+         * (Player Session Best / Personal Best / Rival - see ttComparisonMode)
          */
         function handleTimeTrialPacket(data) {
             // Only process in Time Trial mode and when updates are allowed (not immediately after crossing line)
@@ -890,21 +1070,21 @@
                 return;
             }
 
-            const personalBestData = data.m_personalBestDataSet;
-            const personalBestTime = personalBestData?.m_lapTimeInMS;
-            
-            if (personalBestTime != null && personalBestTime > 0) {
-                // Valid personal best exists - show comparison and update reference times
-                lapTimeComparisonName = 'PERSONAL BEST';
+            const datasetKey = TT_COMPARISON_DATASET_KEYS[ttComparisonMode] || TT_COMPARISON_DATASET_KEYS.personalBest;
+            const comparisonData = data[datasetKey];
+
+            if (comparisonData?.m_valid && comparisonData.m_lapTimeInMS > 0) {
+                // Valid comparison dataset - show comparison and update reference times
+                lapTimeComparisonName = TT_COMPARISON_LABELS[ttComparisonMode] || TT_COMPARISON_LABELS.personalBest;
                 lapTimeComparisonElement.style.display = 'flex';
                 lapTimeComparisonNameElement.style.display = 'flex';
-                
+
                 // Set sector reference times (Sector 2 is cumulative: S1 + S2)
-                refSector1TimeMS = personalBestData.m_sector1TimeInMS || -1;
-                refSector2TimeMS = (personalBestData.m_sector1TimeInMS || 0) + (personalBestData.m_sector2TimeInMS || 0);
-                refLastLapTimeMS = personalBestTime;
+                refSector1TimeMS = comparisonData.m_sector1TimeInMS || -1;
+                refSector2TimeMS = (comparisonData.m_sector1TimeInMS || 0) + (comparisonData.m_sector2TimeInMS || 0);
+                refLastLapTimeMS = comparisonData.m_lapTimeInMS;
             } else {
-                // No personal best yet - hide comparison display
+                // No valid dataset yet - hide comparison display
                 lapTimeComparisonElement.style.display = 'none';
                 lapTimeComparisonNameElement.style.display = 'none';
                 refSector1TimeMS = -1;
@@ -954,29 +1134,31 @@
             }
         }
 
-        function updateTeamLogo(teamId) {
+        // Team logo standard (matches Leaderboard/Fastest Sectors/Pit Timer): background is
+        // the team color (OverridePrimaryColor → livery → static fallback), logo prefers
+        // Logo_Alt over Logo (some logos would otherwise blend into a same-color background),
+        // and the layer goes fully transparent/hidden if neither logo file resolves.
+        function updateTeamLogo() {
             const teamData = teamNames[teamId];
-            
-            if (teamData && teamData.Logo) {
-                // Team data exists, use the specified logo
-                const logoPath = `/images/team-logos/${teamData.Logo}`;
+            const logoFile = teamData?.Logo_Alt ?? teamData?.Logo ?? null;
+            const bgColor = teamData?.OverridePrimaryColor || primaryColor || '#081425FF';
+
+            if (logoFile) {
+                const logoPath = `/images/team-logos/${logoFile}`;
                 const img = new Image();
-                
+
                 img.onload = () => {
-                    // Image loaded successfully, use the CSS background color and set the image
-                    teamLogoElement.style.backgroundColor = '#081425';
+                    teamLogoElement.style.backgroundColor = bgColor;
                     teamLogoElement.style.backgroundImage = `url(${logoPath})`;
                 };
-                
+
                 img.onerror = () => {
-                    // Image failed to load, set to transparent with no image
                     teamLogoElement.style.backgroundColor = 'transparent';
                     teamLogoElement.style.backgroundImage = 'none';
                 };
-                
+
                 img.src = logoPath;
             } else {
-                // No team data found, set to transparent with no image
                 teamLogoElement.style.backgroundColor = 'transparent';
                 teamLogoElement.style.backgroundImage = 'none';
             }
@@ -1056,7 +1238,11 @@
             overallBestSectors.s1 = -1;
             overallBestSectors.s2 = -1;
             overallBestSectors.s3 = -1;
-            
+            overallFastestLap.sector1MS = -1;
+            overallFastestLap.sector2MS = -1;
+            overallFastestLap.lapMS = -1;
+            overallFastestLap.carIdx = -1;
+
             // Reset UI elements
             lastLapTimeElement.textContent = '';
             lastLapTimeElement.style.opacity = '0';

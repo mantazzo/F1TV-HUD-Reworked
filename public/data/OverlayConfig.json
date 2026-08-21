@@ -15,7 +15,10 @@
     "lap-timer": {
       "visible": true,
       "name": "Lap Timer",
-      "visibilityMode": "automatic"
+      "visibilityMode": "automatic",
+      "ttComparisonMode": "personalBest",
+      "knockoutComparisonMode": "default",
+      "raceComparisonMode": "personalBest"
     },
     "live-speed": {
       "visible": true,
