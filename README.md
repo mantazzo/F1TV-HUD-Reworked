@@ -40,7 +40,7 @@ This project is worked on with Windows systems in mind - it may work on other sy
       - (Note 1: Keep in mind that "Desktop Mode" usage will require extra resources from your computer.)
       - (Note 2: While you can see overlays in Desktop Mode, you can still access them using links as well.)
       - (Note 3: WebView2 Runtime **MUST** be installed on your PC if you want to run the "Desktop Mode". It usually comes in by default with Windows 11 systems, and on Windows 10 it comes by default if you have Microsoft Edge installed.)
-      - (Note 4: Usually on first launch, Windows SmartScreen may pop up, blocking the "Desktop Mode" run - this is because the executable isn't signed. Just select to "Run Anyway". If I decide to get the proper license to be able to sign the app, then it should get fixed.)
+      - (Note 4: Usually on first launch, Windows Defender SmartScreen may likely pop up, blocking the "Desktop Mode" run - this is because the executable isn't signed. Just click on "More info" and select to "Run anyway". If I decide to get the proper license to be able to sign the app, then it should get fixed.)
 
 ## Quick Setup
 
