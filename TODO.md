@@ -142,7 +142,7 @@
 
 ## Currently Working On
 
-Bugfixes, improvements and "Desktop Mode" (overlays can be used WITHOUT Recording or Streaming - straight on the screen, on top of the game)
+Driver Name (with extensions, and maybe something extra if possible)
 
 ## Next Planned Overlay
 
