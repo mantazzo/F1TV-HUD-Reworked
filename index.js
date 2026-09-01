@@ -288,6 +288,7 @@ function startServer(portNumber, forwardAddresses) {
     app.get('/message-box', (req, res) => res.sendFile(path.join(__dirname, 'views', 'message-box.html')));                     // Message Box overlay (known as FIA Stewards previously)
     app.get('/mini-leaderboard', (req, res) => res.sendFile(path.join(__dirname, 'views', 'mini-leaderboard.html')));           // Mini Leaderboard overlay
     app.get('/session-info', (req, res) => res.sendFile(path.join(__dirname, 'views', 'session-info.html')));                   // Session Info overlay
+    app.get('/driver-name', (req, res) => res.sendFile(path.join(__dirname, 'views', 'driver-name.html')));                     // Driver Name overlay
     app.get('/leaderboard', (req, res) => res.sendFile(path.join(__dirname, 'views', 'leaderboard.html')));                     // Leaderboard overlay (Initials version)
     app.get('/leaderboard-lastname', (req, res) => res.sendFile(path.join(__dirname, 'views', 'leaderboard-lastname.html')));   // Leaderboard overlay (Last Name version)
 

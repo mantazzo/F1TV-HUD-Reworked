@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>F1 Driver Name Overlay</title>
+    <link rel="stylesheet" href="/fonts.css">
+    <link rel="stylesheet" href="/styles-tauri-overlay.css">
+    <link rel="stylesheet" href="/styles-driver-name.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/utils/overlay-scale.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/textfit@2.4.0/textFit.min.js"></script>
+    <script src="/utils/driver-utils.js"></script>
+</head>
+<body data-tauri-drag-region>
+    <div class="overlay-container">
+        <div class="dn-reveal">
+            <div class="dn-background"></div>
+            <div class="dn-f2blur">
+                <div class="dn-f2blur-scale">
+                    <div class="dn-f2blur-clip">
+                        <div class="dn-f2blur-ellipse">
+                            <div class="dn-f2blur-circle"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dn-stroke">
+                <div class="dn-stroke-bg"></div>
+                <div class="dn-stroke-effect"></div>
+                <div class="dn-stroke-shadow"></div>
+            </div>
+            <div class="dn-accent-bar"></div>
+
+            <div class="dn-position-bg"></div>
+            <div class="dn-knockout"></div>
+            <div class="dn-position">-</div>
+
+            <div class="dn-first-name"></div>
+            <div class="dn-last-name">NO DATA</div>
+            <img class="dn-team-logo">
+            <div class="dn-team-name"></div>
+
+            <div class="dn-separator"></div>
+            <div class="dn-raceleader-race">RACE</div>
+            <div class="dn-raceleader-leader">LEADER</div>
+
+            <div class="dn-number-blur">
+                <div class="dn-number-blur-shape"></div>
+            </div>
+            <div class="dn-number"></div>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        socket.emit('identify', 'Driver Name');
+
+        const revealElement = document.querySelector('.dn-reveal');
+        const accentBar = document.querySelector('.dn-accent-bar');
+        const f2BlurElement = document.querySelector('.dn-f2blur');
+        const strokeElement = document.querySelector('.dn-stroke');
+        const knockoutElement = document.querySelector('.dn-knockout');
+        const positionElement = document.querySelector('.dn-position');
+        const firstNameElement = document.querySelector('.dn-first-name');
+        const lastNameElement = document.querySelector('.dn-last-name');
+        const teamLogoElement = document.querySelector('.dn-team-logo');
+        const teamNameElement = document.querySelector('.dn-team-name');
+        const separatorElement = document.querySelector('.dn-separator');
+        const raceLeaderRaceElement = document.querySelector('.dn-raceleader-race');
+        const raceLeaderLeaderElement = document.querySelector('.dn-raceleader-leader');
+        const numberBlurElement = document.querySelector('.dn-number-blur');
+        const numberBlurShapeElement = document.querySelector('.dn-number-blur-shape');
+        const numberElement = document.querySelector('.dn-number');
+
+        // State
+        let position = 0;
+        let firstName = '';
+        let lastName = '';
+        let raceNumber = null;
+        let teamId = null;
+        let primaryColor = null;
+        let isSpectating = 0;
+        let spectatorCarIndex = 255;
+        let sessionType = 0;
+        let numActiveCars = 0;
+        let bestLapMs = 0;
+
+        // Which right-side "page" is active — controller-driven, only one at a time. Only
+        // 'number' (the original "Observed Driver") and 'raceLeader' are built so far; the
+        // other three (raceStory, personalBest, chasingDriverAhead) render nothing yet.
+        let activeVariant = 'number';
+        let overlayVisible = false;
+
+        // Each variant's own full width (see .dn-reveal) — matches each source widget's own
+        // canvas width (item_1 through item_5).
+        const VARIANT_WIDTHS = {
+            number: 530,
+            raceLeader: 850,
+            raceStory: 830,
+            personalBest: 905,
+            chasingDriverAhead: 905
+        };
+
+        // F2Blur is a shared element repositioned per active variant (same effect, source
+        // widget just hand-placed it differently each time). Falls back to the 'number'
+        // position for variants that don't have their own spec yet.
+        const F2BLUR_POSITIONS = {
+            number:     { left: 270, top: -139, width: 260, height: 240 },
+            raceLeader: { left: 493, top: -140, width: 360, height: 240 }
+        };
+
+        // Qualifying-type sessions, for the "no time set yet" dash — same session-type
+        // grouping used by the Leaderboard's own quali-dash logic.
+        const QUALI_TYPES = new Set([5, 6, 7, 8, 9]);   // Q1, Q2, Q3, Short Quali, One-Shot Quali
+        const SQ_TYPES = new Set([10, 11, 12, 13, 14]); // Sprint Shootout 1/2/3, Short/One-Shot SQ
+
+        let teamNames = {};
+        let customDrivers = [];
+        let driversData = {};
+        let formulaType = DriverUtils.FORMULA_TYPE.F1_MODERN;
+
+        async function loadDriverData() {
+            try {
+                const data = await DriverUtils.loadDriverData(formulaType);
+                customDrivers = data.customDrivers;
+                teamNames = data.teamNames;
+                console.debug('[DriverName] Loaded driver data:', customDrivers.length, 'custom drivers');
+            } catch (error) {
+                console.error('[DriverName] Error loading driver data:', error);
+            }
+        }
+
+        // No Logo_Alt fallback here — unlike the Leaderboard/Fastest Sectors/Pit Timer, this
+        // logo has no colored background behind it, so there's no same-color-blend risk.
+        function updateTeamLogo() {
+            const teamData = teamNames[teamId];
+            const logoFile = teamData?.Logo ?? null;
+
+            if (logoFile) {
+                const logoPath = `/images/team-logos/${logoFile}`;
+                const img = new Image();
+
+                img.onload = () => {
+                    teamLogoElement.src = logoPath;
+                    teamLogoElement.style.display = 'block';
+                };
+
+                img.onerror = () => {
+                    teamLogoElement.style.display = 'none';
+                };
+
+                img.src = logoPath;
+            } else {
+                teamLogoElement.style.display = 'none';
+            }
+        }
+
+        function updateTeamColor() {
+            const teamData = teamNames[teamId];
+            const teamColor = teamData?.OverridePrimaryColor || primaryColor || null;
+
+            // Last Name (and, for now, Number) fall back to First Name's own color when no
+            // team color is known. The accent stripe falls back to transparent instead per
+            // spec — no stripe at all reads better than a wrong static color.
+            lastNameElement.style.color = teamColor || 'rgb(245, 245, 245)';
+            numberElement.style.color = teamColor || 'rgb(245, 245, 245)';
+            accentBar.style.backgroundColor = teamColor || 'transparent';
+            numberBlurShapeElement.style.backgroundColor = teamColor || 'transparent';
+            raceLeaderLeaderElement.style.color = teamColor || 'rgb(255, 255, 255)';
+        }
+
+        // Drives the "grow from center" reveal (see .dn-reveal). When the overlay activates
+        // (overlayVisible false -> true), Left eases from half the active variant's width down
+        // to 0 while Width eases from 0 up to full and Opacity fades 0->1 — matches the source
+        // widgets' own activation transition (simplified to one shared 333ms timing, per user's
+        // own note, instead of Player Name's original one-off 500ms opacity). When only the
+        // active variant changes while already visible, Left is already 0 and doesn't move —
+        // only Width (and Opacity, once per-variant content crossfade exists — TODO, deferred
+        // per user's own "additional check logic, next pass" note) animates to the new variant.
+        function updateRevealTransition() {
+            const targetWidth = VARIANT_WIDTHS[activeVariant] ?? VARIANT_WIDTHS.number;
+
+            if (overlayVisible) {
+                revealElement.style.left = '0px';
+                revealElement.style.width = `${targetWidth}px`;
+                revealElement.style.opacity = '1';
+            } else {
+                revealElement.style.left = `${targetWidth / 2}px`;
+                revealElement.style.width = '0px';
+                revealElement.style.opacity = '0';
+            }
+        }
+
+        function updateVariantVisibility() {
+            const isNumber = activeVariant === 'number';
+            const isRaceLeader = activeVariant === 'raceLeader';
+
+            numberElement.style.display = isNumber ? 'flex' : 'none';
+            numberBlurElement.style.display = isNumber ? 'block' : 'none';
+
+            // Separator is shared by every variant except Number.
+            separatorElement.style.display = isNumber ? 'none' : 'block';
+
+            raceLeaderRaceElement.style.display = isRaceLeader ? 'flex' : 'none';
+            raceLeaderLeaderElement.style.display = isRaceLeader ? 'flex' : 'none';
+
+            const f2BlurPos = F2BLUR_POSITIONS[activeVariant] || F2BLUR_POSITIONS.number;
+            f2BlurElement.style.left = `${f2BlurPos.left}px`;
+            f2BlurElement.style.top = `${f2BlurPos.top}px`;
+            f2BlurElement.style.width = `${f2BlurPos.width}px`;
+            f2BlurElement.style.height = `${f2BlurPos.height}px`;
+        }
+
+        function updateKnockoutDisplay() {
+            const inZone = DriverUtils.isInKnockoutZone(position, sessionType, numActiveCars);
+            knockoutElement.style.display = inZone ? 'block' : 'none';
+        }
+
+        // F2Blur and the diagonal Stroke decoration are mutually exclusive — Stroke is the
+        // default backdrop, F2Blur replaces it during F2 sessions.
+        function updateBackgroundDecoration() {
+            const isF2 = formulaType === DriverUtils.FORMULA_TYPE.F2;
+            f2BlurElement.style.display = isF2 ? 'block' : 'none';
+            // TODO: Adjust blur position - currently set only for the basic driver data overlay display
+            strokeElement.style.display = isF2 ? 'none' : 'block';
+        }
+
+        function updateDisplay() {
+            const isQuali = QUALI_TYPES.has(sessionType) || SQ_TYPES.has(sessionType);
+            const noQualiTime = isQuali && bestLapMs === 0;
+            positionElement.textContent = (noQualiTime || !(position > 0)) ? '-' : position;
+
+            // First Name displays as-is (no uppercase) per spec.
+            firstNameElement.textContent = firstName;
+
+            lastNameElement.textContent = (lastName || 'NO DATA').toUpperCase();
+            textFit(lastNameElement, {
+                minFontSize: 20,
+                maxFontSize: 34,
+                multiLine: false,
+                alignHoriz: true,
+                alignVert: false,
+                widthOnly: true
+            });
+
+            const teamNameText = (teamId !== null && teamId !== undefined)
+                ? (teamNames[teamId]?.ShortName || `Team ID ${teamId}`)
+                : '';
+            teamNameElement.textContent = teamNameText.toUpperCase();
+            numberElement.textContent = (raceNumber !== null && raceNumber !== undefined) ? raceNumber : '';
+        }
+
+        socket.on('overlay_config', (config) => {
+            if (config.overlays && config.overlays['driver-name']) {
+                const dnConfig = config.overlays['driver-name'];
+                overlayVisible = !!dnConfig.visible;
+                activeVariant = dnConfig.activeVariant || 'number';
+                updateVariantVisibility();
+                updateRevealTransition();
+            }
+        });
+
+        socket.on('drivers_data', (data) => {
+            driversData = data;
+        });
+
+        socket.on('f1_data', (data) => {
+            try {
+                const rawPlayerIdx = data?.m_header?.m_playerCarIndex;
+                const playerIdx = DriverUtils.getActiveDriverIndex(rawPlayerIdx, isSpectating, spectatorCarIndex);
+                const packetId = data?.m_header?.m_packetId;
+
+                if (packetId === 1) { // Session
+                    isSpectating = data.m_isSpectating ?? isSpectating;
+                    spectatorCarIndex = data.m_spectatorCarIndex ?? spectatorCarIndex;
+                    sessionType = data.m_sessionType ?? sessionType;
+
+                    if (typeof data.m_formula === 'number' && data.m_formula !== formulaType) {
+                        formulaType = data.m_formula;
+                        console.debug('[DriverName] Formula type:', formulaType);
+                        loadDriverData();
+                    }
+
+                    updateDisplay();
+                    updateKnockoutDisplay();
+                    updateBackgroundDecoration();
+                }
+
+                if (packetId === 2) { // Lap Data
+                    const lapData = Array.isArray(data.m_lapData) ? data.m_lapData[playerIdx] : undefined;
+                    if (lapData && typeof lapData.m_carPosition === 'number') {
+                        position = lapData.m_carPosition;
+
+                        // numActiveCars from the highest position seen across the whole grid, same
+                        // fix as the Leaderboard: a retired car still holds a valid m_carPosition
+                        // here, so this doesn't shrink the moment someone retires — unlike trusting
+                        // Participants' own m_numActiveCars directly. See updateKnockoutDisplay().
+                        if (Array.isArray(data.m_lapData)) {
+                            let maxPos = 0;
+                            for (const car of data.m_lapData) {
+                                if (car.m_carPosition > maxPos) maxPos = car.m_carPosition;
+                            }
+                            numActiveCars = maxPos;
+                        }
+
+                        updateDisplay();
+                        updateKnockoutDisplay();
+                    }
+                }
+
+                if (packetId === 3) { // Event
+                    if (data.m_eventStringCode === 'SSTA') {
+                        console.debug('[DriverName] New Session Started - resetting best lap');
+                        bestLapMs = 0;
+                        updateDisplay();
+                    }
+                }
+
+                if (packetId === 11) { // Session History
+                    if (data.m_carIdx === playerIdx) {
+                        const bestLapNum = data.m_bestLapTimeLapNum ?? 0;
+                        if (bestLapNum > 0) {
+                            const laps = data.m_lapHistoryData;
+                            const lapMs = Array.isArray(laps) ? (laps[bestLapNum - 1]?.m_lapTimeInMS ?? 0) : 0;
+                            if (lapMs > 0 && lapMs !== bestLapMs) {
+                                bestLapMs = lapMs;
+                                updateDisplay();
+                            }
+                        }
+                    }
+                }
+
+                if (packetId === 4) { // Participants
+                    // Merge up only — never trust this packet's value to lower numActiveCars
+                    // (it drops on retirement even though the grid size hasn't changed).
+                    const activeFromPacket = data.m_numActiveCars ?? 0;
+                    if (activeFromPacket > numActiveCars) numActiveCars = activeFromPacket;
+
+                    const participant = Array.isArray(data.m_participants) ? data.m_participants[playerIdx] : undefined;
+                    if (participant) {
+                        firstName = DriverUtils.getDriverFirstName(participant, driversData, customDrivers, teamNames);
+                        lastName = DriverUtils.getDriverLastName(participant, driversData, customDrivers, teamNames);
+                        raceNumber = participant.m_raceNumber;
+
+                        if (participant.m_liveryColour?.[0]) {
+                            const c = participant.m_liveryColour[0];
+                            if (typeof c.red === 'number' && typeof c.green === 'number' && typeof c.blue === 'number') {
+                                primaryColor = `#${c.red.toString(16).padStart(2, '0')}${c.green.toString(16).padStart(2, '0')}${c.blue.toString(16).padStart(2, '0')}`;
+                            }
+                        }
+
+                        if (participant.m_teamId !== teamId) {
+                            teamId = participant.m_teamId;
+                            updateTeamLogo();
+                        }
+
+                        updateTeamColor();
+                        updateDisplay();
+                        updateKnockoutDisplay();
+                    }
+                }
+            } catch (e) {
+                console.warn('[DriverName] Error handling f1_data:', e);
+            }
+        });
+
+        // Initialize
+        loadDriverData();
+    </script>
+</body>
+</html>

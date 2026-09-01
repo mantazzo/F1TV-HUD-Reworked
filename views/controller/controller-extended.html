@@ -330,6 +330,20 @@
             </div>
         </section>
 
+        <section class="overlay-section" id="driver-name-options-section">
+            <h2>Driver Name Options</h2>
+            <div class="option-row">
+                <span class="select-text">Display Variant:</span>
+                <div class="mfd-button-group" id="driver-name-variant-button-group">
+                    <button class="mfd-button" data-variant="number">Player Name</button>
+                    <button class="mfd-button" data-variant="raceLeader">Race Leader</button>
+                    <button class="mfd-button" data-variant="raceStory">Race Story</button>
+                    <button class="mfd-button" data-variant="personalBest">Best Lap Time</button>
+                    <button class="mfd-button" data-variant="chasingDriverAhead">Chasing Driver Ahead</button>
+                </div>
+            </div>
+        </section>
+
         <section class="overlay-section" id="session-info-options-section">
             <h2>Session Info Options</h2>
             <div class="option-row">
@@ -423,7 +437,8 @@
                 'session-info': 'ℹ️',
                 'pit-window': '🪟',
                 'car-damage': '💣',
-                'leaderboard': '📋'
+                'leaderboard': '📋',
+                'driver-name': '👤'
             };
             return icons[overlayId] || '📺';
         }
@@ -697,6 +712,24 @@
             sessionInfoVisibilityMode.value = sessionInfoConfig.visibilityMode || 'toggle';
         }
 
+        // Driver Name variant button handling
+        document.getElementById('driver-name-variant-button-group').addEventListener('click', (e) => {
+            const btn = e.target.closest('.mfd-button');
+            if (!btn) return;
+            const variant = btn.dataset.variant;
+            socket.emit('config_update', { overlay: 'driver-name', property: 'activeVariant', value: variant });
+            if (currentConfig?.overlays?.['driver-name']) currentConfig.overlays['driver-name'].activeVariant = variant;
+            updateDriverNameOptions();
+        });
+
+        function updateDriverNameOptions() {
+            if (!currentConfig?.overlays?.['driver-name']) return;
+            const variant = currentConfig.overlays['driver-name'].activeVariant || 'number';
+            document.querySelectorAll('#driver-name-variant-button-group .mfd-button').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.variant === variant);
+            });
+        }
+
         // MFD page button handling
         const mfdButtonGroup = document.getElementById('mfd-button-group');
         mfdButtonGroup.addEventListener('click', (e) => {
@@ -916,6 +949,7 @@
             updateSessionInfoOptions();
             updateCarDamageOptions();
             updateLeaderboardOptions();
+            updateDriverNameOptions();
         };
 
         // Stop server button

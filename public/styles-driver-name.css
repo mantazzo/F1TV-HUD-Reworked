@@ -1,0 +1,401 @@
+/* Driver Name overlay — rough first-pass layout only. Sizing/positioning/fonts will be
+   reconciled element-by-element against the original SimHub source later, same workflow
+   as the Leaderboard (Last Name) rework. */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+.overlay-container {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 910px;
+    height: 117px;
+    overflow: hidden;
+}
+
+/* item_1 "Observed Driver" (and its item_2-5 siblings) — the actual per-variant reveal box.
+   Source widgets animate Left/Width/Opacity together (333ms ease) when they activate: Left
+   starts at exactly half the widget's own final width and eases to 0 while Width eases from
+   0 to full, i.e. a "grow outward from center" reveal — not a plain fade. Width varies by
+   active variant (see VARIANT_WIDTHS in the script); default here matches the Number variant
+   (530px) since that's the default active variant. Collapsed by default (0 width, centered,
+   invisible) until updateRevealTransition() expands it. overflow:hidden makes the width
+   change a wipe-reveal of the fixed-position children inside, same clipping technique used
+   throughout this file, rather than stretching their content. */
+.dn-reveal {
+    position: absolute;
+    left: 265px;
+    top: 0;
+    width: 0;
+    height: 117px;
+    overflow: hidden;
+    opacity: 0;
+    transition: left 333ms ease, width 333ms ease, opacity 333ms ease;
+}
+
+/* item_1_2r0 (Observed Driver's own BG is 830px, but per user's instruction this uses
+   ChasingDriverAhead's item_5_2r0 width instead — the widest of the 5 source widgets'
+   BG rectangles). */
+.dn-background {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 905px;
+    height: 103px;
+    background-color: rgb(18, 20, 26);
+}
+
+/* F2blur (item_1_3r0 + nested item_1_3r0_1): a soft blurred navy circle shown only
+   during F2 sessions. Kept as the real nested structure (scale wrapper -> clip -> rotated
+   blurred ellipse) rather than flattened, since the outer 260x240 slot genuinely clips the
+   widget's native 300x200 (scaled to 360x240) canvas on the right by design here — other
+   source widgets (e.g. RaceLeader's item_2_3r0) use a wider slot that doesn't clip at all,
+   so this crop isn't a mistake to "fix" away. */
+.dn-f2blur {
+    position: absolute;
+    left: 270px;
+    top: -139px;
+    width: 260px;
+    height: 240px;
+    opacity: 0.75;
+    overflow: hidden;
+    display: none;
+}
+
+.dn-f2blur-scale {
+    width: 300px;
+    height: 200px;
+    transform: scale(1.2);
+    transform-origin: left top 0px;
+}
+
+.dn-f2blur-clip {
+    width: 300px;
+    height: 200px;
+    overflow: hidden;
+}
+
+.dn-f2blur-ellipse {
+    position: relative;
+    left: 8px;
+    top: -127px;
+    width: 500px;
+    height: 400px;
+    filter: blur(49.5px);
+    transform: rotate(-21deg);
+}
+
+.dn-f2blur-circle {
+    box-sizing: border-box;
+    width: 500px;
+    height: 400px;
+    border-radius: 50%;
+    background-color: rgb(14, 38, 52);
+}
+
+/* item_1_18r0 "Stroke" — a diagonal-hatch decoration strip below the main BG, visible only
+   when NOT F2 (F2Blur takes its place instead, see updateBackgroundDecoration()). Width
+   follows the BG's 905px per user note (not the raw dump's stale 830px); overflow:hidden
+   since the child layers below are deliberately oversized past this width. */
+.dn-stroke {
+    position: absolute;
+    left: 0;
+    top: 103px;
+    width: 905px;
+    height: 15px;
+    opacity: 0.5;
+    overflow: hidden;
+    display: none;
+}
+
+/* item_1_18r0_1 "Stroke BG" — flat translucent tint under the hatch pattern. */
+.dn-stroke-bg {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1250px;
+    height: 15px;
+    opacity: 0.1;
+    background-color: rgb(255, 255, 255);
+}
+
+/* item_1_18r0_2/item_1_18r0_3r0..r179 "Stroke effect" — the source repeats 180 individual
+   2px-tall rotated bars every 7px to build a diagonal hatch (per the user's own note, "why
+   the source code gets bloated"). Reused the repeating-linear-gradient technique already
+   established for #lb-fl-anim-bg/#lb-fl-race-anim-bg instead of generating 180 elements. */
+.dn-stroke-effect {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1250px;
+    height: 15px;
+    opacity: 0.1;
+    background-image: repeating-linear-gradient(
+        -45deg,
+        rgb(0, 0, 0) 0,
+        rgb(0, 0, 0) 1.25px,
+        transparent 1.25px,
+        transparent 4px
+    );
+}
+
+/* item_1_18r0_4 "Stroke additional effect" — soft blurred dark edge under the hatch. */
+.dn-stroke-shadow {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1500px;
+    height: 15px;
+    opacity: 0.15;
+    filter: blur(1.5px);
+    border-style: solid;
+    border-width: 0 0 8px;
+    border-color: rgb(0, 0, 0);
+}
+
+/* item_1_12r0r0 "Team Color Stripe". Width follows the BG's 905px (per user note, not the
+   raw dump's stale 830px). Color is Team Color-driven in JS (see updateTeamColor()); the
+   static value here is just the pre-data fallback, and unlike Last Name's fallback this one
+   is transparent — no stripe at all rather than a wrong-looking default color. */
+.dn-accent-bar {
+    position: absolute;
+    left: 0;
+    top: 95px;
+    width: 905px;
+    height: 3px;
+    background-color: transparent;
+}
+
+/* item_1_5r0r0 "Position#BG" — sits behind the position number, giving it a slightly
+   different (0.65 opacity) fill than the main background plus a thin right-edge divider. */
+.dn-position-bg {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 85px;
+    height: 95px;
+    opacity: 0.65;
+    background-color: rgb(18, 20, 26);
+    border-style: solid;
+    border-width: 0 2px 0 0;
+    border-color: rgb(36, 35, 38);
+}
+
+/* item_1_7r0r0r0 "Knockout Zone" — shown only for a driver sitting in the knockout zone
+   during Q1/Q2/SQ1/SQ2 (see DriverUtils.isInKnockoutZone, reused from the Leaderboard). The
+   wrapping "Knockout" Layer (item_1_6r0r0) contributed no offset of its own, so this is
+   positioned directly at its own effective left/top. */
+.dn-knockout {
+    position: absolute;
+    left: -15px;
+    top: 0;
+    width: 100px;
+    height: 95px;
+    background-image: url('/images/common/Knockout.png');
+    background-size: 100px 95px;
+    background-repeat: no-repeat;
+    display: none;
+}
+
+/* item_1_8r0r0r0 "Position". Source font-family "F1TV-2022-ObliqueBold-Pos" is just the
+   regular F1TV-2022 Bold Oblique face with an alternate "0" glyph we don't have as a
+   separate asset — per user instruction, map to the same F1TV-2022 bold+oblique combo
+   used everywhere else in this codebase instead of hunting for a missing font file. */
+.dn-position {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 85px;
+    height: 95px;
+    box-sizing: border-box;
+    font-family: "F1TV-2022";
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 35px;
+    color: rgb(192, 192, 192);
+    white-space: pre;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* item_1_9r0r0 "FirstName". Not uppercased in JS — per spec, First Name displays as-is. */
+.dn-first-name {
+    position: absolute;
+    left: 95px;
+    top: 2px;
+    width: 300px;
+    height: 35px;
+    box-sizing: border-box;
+    font-family: "F1TV-2022";
+    font-weight: 400;
+    font-style: oblique;
+    font-size: 27px;
+    color: rgb(245, 245, 245);
+    white-space: pre;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+/* item_1_10r0r0/item_1_11r0r0 "LastName". Always uppercase; textFit (see updateDisplay())
+   shrinks long names down from the 34px base instead of overflowing the 305px box. */
+.dn-last-name {
+    position: absolute;
+    left: 95px;
+    top: 31px;
+    width: 305px;
+    height: 35px;
+    box-sizing: border-box;
+    font-family: "F1TV-2022";
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 34px;
+    color: rgb(245, 245, 245);
+    white-space: pre;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+/* item_1_14r0r0r0 "Team Logo". No colored background box here, so unlike the Leaderboard/
+   Fastest Sectors/Pit Timer this one doesn't need Logo_Alt — see updateTeamLogo(). */
+.dn-team-logo {
+    position: absolute;
+    left: 85px;
+    top: 60px;
+    width: 45px;
+    height: 40px;
+    object-fit: contain;
+    display: none;
+    padding: 5px;
+}
+
+/* item_1_15r0r0 "Team Name". Falls back to "TEAM ID <id>" when the team isn't in
+   DefaultTeams.json (see updateDisplay()). */
+.dn-team-name {
+    position: absolute;
+    left: 130px;
+    top: 61px;
+    width: 305px;
+    height: 38px;
+    box-sizing: border-box;
+    font-family: "F1TV-2022";
+    font-weight: 400;
+    font-style: normal;
+    font-size: 17px;
+    color: rgb(204, 204, 204);
+    white-space: pre;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+/* item_2_4r0 "Separator" — shared by every variant except Number (see
+   updateVariantVisibility()). */
+.dn-separator {
+    position: absolute;
+    left: 400px;
+    top: 0;
+    width: 2px;
+    height: 94px;
+    opacity: 0.65;
+    border-style: solid;
+    border-width: 0 2px;
+    border-color: rgb(36, 35, 38);
+    display: none;
+}
+
+/* item_2_5r0 "RACE" (Race Leader variant, word 1) — static text, always white. */
+.dn-raceleader-race {
+    position: absolute;
+    left: 420px;
+    top: 10px;
+    width: 170px;
+    height: 80px;
+    box-sizing: border-box;
+    font-family: "F1TV-2022";
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 50px;
+    color: rgb(255, 255, 255);
+    white-space: pre;
+    text-align: center;
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+
+/* item_2_6r0 "LEADER" (Race Leader variant, word 2) — Team Color-driven in JS, falls back
+   to white (not Last Name's rgb(245,245,245) — a different fallback per spec). */
+.dn-raceleader-leader {
+    position: absolute;
+    left: 585px;
+    top: 10px;
+    width: 245px;
+    height: 80px;
+    box-sizing: border-box;
+    font-family: "F1TV-2022";
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 50px;
+    color: rgb(255, 255, 255);
+    white-space: pre;
+    text-align: center;
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+
+/* item_1_16r0 "Team Color Blur widget" — positions the blurred Team Color glow behind
+   the driver number. */
+.dn-number-blur {
+    position: absolute;
+    left: 475px;
+    top: -40px;
+    width: 120px;
+    height: 135px;
+}
+
+/* item_1_16r0_1 "Team Color Blur effect". BackgroundColor is Team Color-driven in JS (see
+   updateTeamColor()), same fallback to transparent as the accent stripe. */
+.dn-number-blur-shape {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 90px;
+    height: 150px;
+    border-radius: 50px;
+    opacity: 0.25;
+    filter: blur(20px);
+    background-color: transparent;
+}
+
+/* item_1_17r0 "Number" — text-only for now, no custom number-design image form yet. Font:
+   F1TV-2022 Oblique Condensed — per the user's own "Font:" instruction (not the raw dump's
+   literal weight:700, which doesn't exist as a combined Bold+Condensed face; same
+   established-face-over-literal-weight pattern already applied to Position's "-Pos" digit
+   variant elsewhere in this file). TextColor is Team Color-driven in JS, same fallback as
+   Last Name (see updateTeamColor()). */
+.dn-number {
+    position: absolute;
+    left: 420px;
+    top: 5px;
+    width: 100px;
+    height: 85px;
+    opacity: 0.85;
+    box-sizing: border-box;
+    font-family: "F1TV-2022";
+    font-weight: 400;
+    font-style: oblique;
+    font-stretch: condensed;
+    font-size: 60px;
+    color: rgb(245, 245, 245);
+    text-shadow: 1.41421px 1.41421px 3px rgb(0, 0, 0);
+    white-space: pre;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
