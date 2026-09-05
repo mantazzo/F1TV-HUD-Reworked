@@ -348,6 +348,376 @@
     align-items: center;
 }
 
+/* item_3_6 "Race Story widget" — container for all Race Story-specific elements below.
+   Children use their raw source-relative left/top values directly (no manual +400 offset
+   needed) since this wrapper itself carries the real 400px offset. */
+.dn-racestory {
+    position: absolute;
+    left: 400px;
+    top: 0;
+    width: 430px;
+    height: 95px;
+    display: none;
+}
+
+/* item_3_6_2r0 "RACE STORY"/"SPRINT STORY" label — text set in JS (see
+   updateRaceStoryDisplay()), not oblique this time per spec (plain Bold, unlike most other
+   bold text in this file). */
+.dn-racestory-label {
+    position: absolute;
+    left: 15px;
+    top: 0;
+    width: 415px;
+    height: 40px;
+    box-sizing: border-box;
+    font-family: "F1TV-2022";
+    font-weight: 700;
+    font-style: normal;
+    font-size: 22px;
+    color: rgb(255, 0, 0);
+    white-space: pre;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* item_3_6_3r0/item_3_6_4r0 — plain decorative box outlines (no fill), separating the
+   Started/Now sections. */
+.dn-racestory-started-box {
+    position: absolute;
+    left: 2px;
+    top: 40px;
+    width: 223px;
+    height: 50px;
+    opacity: 0.25;
+    border-style: solid;
+    border-width: 1px 1px 0 0;
+    border-color: rgb(128, 128, 128);
+}
+
+.dn-racestory-now-box {
+    position: absolute;
+    left: 225px;
+    top: 40px;
+    width: 205px;
+    height: 50px;
+    opacity: 0.25;
+    border-style: solid;
+    border-width: 1px 0 0;
+    border-color: rgb(128, 128, 128);
+}
+
+/* item_3_6_5r0 "STARTED:" — static label. */
+.dn-racestory-started-label {
+    position: absolute;
+    left: 5px;
+    top: 40px;
+    width: 110px;
+    height: 55px;
+    box-sizing: border-box;
+    font-family: "F1TV-2022";
+    font-weight: 400;
+    font-style: normal;
+    font-size: 17px;
+    color: rgb(192, 192, 192);
+    white-space: pre;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* item_3_6_9r0 "NOW:"/"STILL:" — text set in JS (see updateRaceStoryDisplay()), otherwise
+   identical styling to the Started label. */
+.dn-racestory-now-label {
+    position: absolute;
+    left: 222px;
+    top: 40px;
+    width: 90px;
+    height: 55px;
+    box-sizing: border-box;
+    font-family: "F1TV-2022";
+    font-weight: 400;
+    font-style: normal;
+    font-size: 17px;
+    color: rgb(192, 192, 192);
+    white-space: pre;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* item_3_6_6r0+item_3_6_7r0 and item_3_6_8r0+item_3_6_10r0 (Number+Suffix, merged per user's
+   own simplification note) — each pair is one flexbox instead of two separately absolute-
+   positioned pieces with digit-count-conditional Left shifts. Right-aligning the pair within
+   a box matching its section's own separator-box width naturally keeps it flush against that
+   box's edge regardless of digit count, so the fragile ">9 ? shiftedLeft : normalLeft" source
+   formulas (four of them total) are no longer needed at all — only the font-size shrink for
+   double-digit values is still applied in JS (a real, user-confirmed-worth-keeping design
+   difference, not just alignment plumbing). */
+.dn-racestory-started-value,
+.dn-racestory-now-value {
+    position: absolute;
+    top: 40px;
+    height: 55px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 8px;
+}
+
+.dn-racestory-started-value {
+    left: 2px;
+    width: 223px;
+}
+
+.dn-racestory-now-value {
+    left: 225px;
+    width: 205px;
+}
+
+.dn-racestory-started-num,
+.dn-racestory-now-num {
+    font-family: "F1TV-2022";
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 40px; /* JS shrinks to 35px for double-digit positions */
+    color: rgb(192, 192, 192);
+    white-space: pre;
+}
+
+.dn-racestory-started-suffix,
+.dn-racestory-now-suffix {
+    font-family: "F1TV-2022";
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 25px;
+    color: rgb(192, 192, 192);
+    white-space: pre;
+}
+
+/* item_4_15 "Personal Best folder" — zero-offset wrapper (left:0/top:0, same size as the
+   variant's own 905px canvas), flattened like other zero-offset Layers in this file; children
+   below use their raw source-absolute left/top values directly, no addition needed. Kept as
+   a real element only so the whole group can be shown/hidden with one toggle. */
+.dn-personalbest {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 905px;
+    height: 118px;
+    display: none;
+}
+
+/* item_4_16r0 "Lap Time" — Top/FontSize both toggle in JS (updatePersonalBestDisplay())
+   depending on whether a best lap time exists yet; values here are the "has a time" state. */
+.dn-personalbest-laptime {
+    position: absolute;
+    left: 402px;
+    top: 10px;
+    width: 320px;
+    height: 60px;
+    box-sizing: border-box;
+    font-family: "F1TV-2022";
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 54px;
+    color: rgb(255, 255, 255);
+    white-space: pre;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* item_4_17r0 "Lap Time Label" — font swapped to F1TV-2022 per user's own instruction
+   (source's literal 'F1DisplayDH MonospaceDH' isn't one of this project's fonts). Hidden
+   until a best lap time exists; text set in JS (FASTEST OVERALL / PERSONAL BEST). */
+.dn-personalbest-laptime-label {
+    position: absolute;
+    left: 400px;
+    top: 66px;
+    width: 335px;
+    height: 25px;
+    box-sizing: border-box;
+    font-family: "F1TV-2022";
+    font-weight: 400;
+    font-style: normal;
+    font-size: 15px;
+    color: rgb(192, 192, 192);
+    white-space: pre;
+    text-align: center;
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+
+/* item_4_18r0 "Tyre Compound" — text/color set in JS from TYRE_COMPOUND (reused from the
+   Leaderboard's own lookup table). Static red here is just the pre-data fallback. */
+.dn-personalbest-tyre {
+    position: absolute;
+    left: 737px;
+    top: 6px;
+    width: 165px;
+    height: 70px;
+    box-sizing: border-box;
+    font-family: "F1TV-2022";
+    font-weight: 400;
+    font-style: normal;
+    font-size: 21px;
+    color: rgb(255, 0, 0);
+    white-space: pre;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* item_4_19r0 "Tyre Compound Label" — static text. */
+.dn-personalbest-tyre-label {
+    position: absolute;
+    left: 737px;
+    top: 51px;
+    width: 165px;
+    height: 25px;
+    box-sizing: border-box;
+    font-family: "F1TV-2022";
+    font-weight: 400;
+    font-style: normal;
+    font-size: 16px;
+    color: rgb(192, 192, 192);
+    white-space: pre;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* item_4_20r0 "Separator" — only the 2px right border ever renders, at the box's right edge
+   (left + width). Source was left:652/width:85, so the visible line sits at 737 — trimming
+   width down per the user's own "wide for no real reason" note had to shift left to 727 to
+   keep that same right edge (737), not stay at 652 (which drags the visible line left with
+   it — first attempt at this got that backwards and overlapped the Lap Time text). Distinct
+   from the shared .dn-separator (left:400 for every non-Number variant) — this one marks the
+   boundary within Personal Best's own content, between the Lap Time and Tyre sections. */
+.dn-personalbest-separator {
+    position: absolute;
+    left: 727px;
+    top: 0;
+    width: 10px;
+    height: 94px;
+    border-style: solid;
+    border-width: 0 2px 0 0;
+    border-color: rgb(36, 35, 38);
+}
+
+/* item_5_15 "Chasing Driver Ahead widget" — offset wrapper (left:400/top:0), children below
+   use their raw source-relative left/top values directly. */
+.dn-chasingahead {
+    position: absolute;
+    left: 400px;
+    top: 0;
+    width: 505px;
+    height: 94px;
+    display: none;
+}
+
+/* item_5_15_3r0 "CHASING" + item_5_15_4r0 (driver ahead's name), merged into one centered
+   flex line per the user's own note — the source's Left formulas for both of these were
+   "complex" specifically to handle varying name lengths; centering the pair as a unit inside
+   the full 505px width sidesteps that entirely, no name-length-dependent math needed. */
+.dn-chasingahead-line1 {
+    position: absolute;
+    left: 0;
+    top: 10px;
+    width: 505px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: baseline;
+    gap: 10px;
+}
+
+.dn-chasingahead-chasing {
+    font-family: "F1TV-2022";
+    font-weight: 400;
+    font-style: oblique;
+    font-size: 25px;
+    color: rgb(255, 255, 255);
+    white-space: pre;
+}
+
+/* Driver-ahead's name — Team Color-driven in JS (see updateChasingAheadDisplay()), static
+   red here is just the pre-data fallback (matches the source's own static default). Capped
+   at max-width + textFit (see updateChasingAheadDisplay()) as a safety net for unusually
+   long custom-driver names, same protection Last Name already has elsewhere in this file. */
+.dn-chasingahead-name {
+    max-width: 350px;
+    overflow: hidden;
+    font-family: "F1TV-2022";
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 35px;
+    color: rgb(237, 27, 36);
+    white-space: pre;
+}
+
+/* item_5_15_5r0 "FOR" — static text, fixed position (not flagged as needing the name-length
+   workaround, unlike the line above). */
+.dn-chasingahead-for {
+    position: absolute;
+    left: 165px;
+    top: 50px;
+    width: 60px;
+    height: 35px;
+    box-sizing: border-box;
+    font-family: "F1TV-2022";
+    font-weight: 400;
+    font-style: oblique;
+    font-size: 25px;
+    color: rgb(255, 255, 255);
+    white-space: pre;
+    display: flex;
+    align-items: flex-end;
+}
+
+/* item_5_15_6r0 (position number ahead) + item_5_15_7r0 (its suffix), merged the same way
+   Race Story's Started/Now numbers were — the suffix's own Left formula (a manual per-
+   digit-count shift table) is what the user's note said to replace with this. Anchored at
+   the number's own stable left (230px, never flagged as needing the workaround) since a
+   fixed-width "FOR" before it means this pair never needs to shift as a whole either. */
+.dn-chasingahead-position-value {
+    position: absolute;
+    left: 230px;
+    top: 50px;
+    width: 110px;
+    height: 35px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: baseline;
+}
+
+.dn-chasingahead-position-num {
+    font-family: "F1TV-2022";
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 35px;
+    color: rgb(255, 255, 255);
+    white-space: pre;
+}
+
+.dn-chasingahead-position-suffix {
+    font-family: "F1TV-2022";
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 25px;
+    color: rgb(255, 255, 255);
+    white-space: pre;
+}
+
 /* item_1_16r0 "Team Color Blur widget" — positions the blurred Team Color glow behind
    the driver number. */
 .dn-number-blur {

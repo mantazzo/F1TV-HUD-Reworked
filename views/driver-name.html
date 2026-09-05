@@ -43,6 +43,38 @@
             <div class="dn-raceleader-race">RACE</div>
             <div class="dn-raceleader-leader">LEADER</div>
 
+            <div class="dn-racestory">
+                <div class="dn-racestory-label"></div>
+                <div class="dn-racestory-started-box"></div>
+                <div class="dn-racestory-now-box"></div>
+                <div class="dn-racestory-started-label">STARTED:</div>
+                <div class="dn-racestory-started-value">
+                    <span class="dn-racestory-started-num"></span><span class="dn-racestory-started-suffix"></span>
+                </div>
+                <div class="dn-racestory-now-label"></div>
+                <div class="dn-racestory-now-value">
+                    <span class="dn-racestory-now-num"></span><span class="dn-racestory-now-suffix"></span>
+                </div>
+            </div>
+
+            <div class="dn-personalbest">
+                <div class="dn-personalbest-laptime"></div>
+                <div class="dn-personalbest-laptime-label"></div>
+                <div class="dn-personalbest-tyre"></div>
+                <div class="dn-personalbest-tyre-label">TYRE</div>
+                <div class="dn-personalbest-separator"></div>
+            </div>
+
+            <div class="dn-chasingahead">
+                <div class="dn-chasingahead-line1">
+                    <span class="dn-chasingahead-chasing">CHASING</span><span class="dn-chasingahead-name"></span>
+                </div>
+                <div class="dn-chasingahead-for">FOR</div>
+                <div class="dn-chasingahead-position-value">
+                    <span class="dn-chasingahead-position-num"></span><span class="dn-chasingahead-position-suffix"></span>
+                </div>
+            </div>
+
             <div class="dn-number-blur">
                 <div class="dn-number-blur-shape"></div>
             </div>
@@ -67,6 +99,21 @@
         const separatorElement = document.querySelector('.dn-separator');
         const raceLeaderRaceElement = document.querySelector('.dn-raceleader-race');
         const raceLeaderLeaderElement = document.querySelector('.dn-raceleader-leader');
+        const raceStoryElement = document.querySelector('.dn-racestory');
+        const raceStoryLabelElement = document.querySelector('.dn-racestory-label');
+        const raceStoryStartedNumElement = document.querySelector('.dn-racestory-started-num');
+        const raceStoryStartedSuffixElement = document.querySelector('.dn-racestory-started-suffix');
+        const raceStoryNowLabelElement = document.querySelector('.dn-racestory-now-label');
+        const raceStoryNowNumElement = document.querySelector('.dn-racestory-now-num');
+        const raceStoryNowSuffixElement = document.querySelector('.dn-racestory-now-suffix');
+        const personalBestElement = document.querySelector('.dn-personalbest');
+        const personalBestLapTimeElement = document.querySelector('.dn-personalbest-laptime');
+        const personalBestLapTimeLabelElement = document.querySelector('.dn-personalbest-laptime-label');
+        const personalBestTyreElement = document.querySelector('.dn-personalbest-tyre');
+        const chasingAheadElement = document.querySelector('.dn-chasingahead');
+        const chasingAheadNameElement = document.querySelector('.dn-chasingahead-name');
+        const chasingAheadPosNumElement = document.querySelector('.dn-chasingahead-position-num');
+        const chasingAheadPosSuffixElement = document.querySelector('.dn-chasingahead-position-suffix');
         const numberBlurElement = document.querySelector('.dn-number-blur');
         const numberBlurShapeElement = document.querySelector('.dn-number-blur-shape');
         const numberElement = document.querySelector('.dn-number');
@@ -83,10 +130,32 @@
         let sessionType = 0;
         let numActiveCars = 0;
         let bestLapMs = 0;
+        let gridPosition = 0;   // Lap Data m_gridPosition — the driver's starting position
+        let isSprintWeekend = false; // true when the weekend's Session list includes sessionType 16
+        let bestLapNum = 0;     // Session History m_bestLapTimeLapNum — which lap bestLapMs was set on
+        let numTyreStints = 0;
+        let tyreStintsHistoryData = [];
+        let participants = []; // full Participants array — needed to look up the driver ahead
+        let aheadCarIdx = -1;   // carIdx currently holding position-1 (no one ahead if -1)
 
-        // Which right-side "page" is active — controller-driven, only one at a time. Only
-        // 'number' (the original "Observed Driver") and 'raceLeader' are built so far; the
-        // other three (raceStory, personalBest, chasingDriverAhead) render nothing yet.
+        // Visual compound ID -> { displayText, color }. Reused from the Leaderboard's own
+        // lookup table (public/styles-leaderboard-lastname.css / views/leaderboard-lastname.html).
+        const TYRE_COMPOUND = {
+            7:  { displayText: 'INTER', color: '#31AF49' },
+            8:  { displayText: 'WET', color: '#0073AD' },
+            15: { displayText: 'WET', color: '#0073AD' },
+            16: { displayText: 'SOFT', color: '#EC1C24' },
+            17: { displayText: 'MEDIUM', color: '#FFD604' },
+            18: { displayText: 'HARD', color: '#F0F0EC' },
+            19: { displayText: 'SUPER SOFT', color: '#97528F' },
+            20: { displayText: 'SOFT', color: '#EC1C24' },
+            21: { displayText: 'MEDIUM', color: '#FFD604' },
+            22: { displayText: 'HARD', color: '#F0F0EC' }
+        };
+
+        // Which right-side "page" is active — controller-driven, only one at a time. All five
+        // variants are now built: 'number' (the original "Observed Driver"), 'raceLeader',
+        // 'raceStory', 'personalBest', and 'chasingDriverAhead'.
         let activeVariant = 'number';
         let overlayVisible = false;
 
@@ -193,6 +262,9 @@
         function updateVariantVisibility() {
             const isNumber = activeVariant === 'number';
             const isRaceLeader = activeVariant === 'raceLeader';
+            const isRaceStory = activeVariant === 'raceStory';
+            const isPersonalBest = activeVariant === 'personalBest';
+            const isChasingAhead = activeVariant === 'chasingDriverAhead';
 
             numberElement.style.display = isNumber ? 'flex' : 'none';
             numberBlurElement.style.display = isNumber ? 'block' : 'none';
@@ -203,11 +275,137 @@
             raceLeaderRaceElement.style.display = isRaceLeader ? 'flex' : 'none';
             raceLeaderLeaderElement.style.display = isRaceLeader ? 'flex' : 'none';
 
+            raceStoryElement.style.display = isRaceStory ? 'block' : 'none';
+            if (isRaceStory) updateRaceStoryDisplay();
+
+            personalBestElement.style.display = isPersonalBest ? 'block' : 'none';
+            if (isPersonalBest) updatePersonalBestDisplay();
+
+            chasingAheadElement.style.display = isChasingAhead ? 'block' : 'none';
+            if (isChasingAhead) updateChasingAheadDisplay();
+
             const f2BlurPos = F2BLUR_POSITIONS[activeVariant] || F2BLUR_POSITIONS.number;
             f2BlurElement.style.left = `${f2BlurPos.left}px`;
             f2BlurElement.style.top = `${f2BlurPos.top}px`;
             f2BlurElement.style.width = `${f2BlurPos.width}px`;
             f2BlurElement.style.height = `${f2BlurPos.height}px`;
+        }
+
+        // Source's own ordinal rule: only exact matches for 1/21 (ST), 2/22 (ND), 3/23 (RD),
+        // everything else TH — not a general mod-10 algorithm. That's actually complete for
+        // our domain (max 24-car grid), since 11/12/13 never need a "TH exception" carve-out
+        // when the rule is this literal — they already fall through to TH correctly.
+        function getOrdinalSuffix(pos) {
+            if (pos === 1 || pos === 21) return 'ST';
+            if (pos === 2 || pos === 22) return 'ND';
+            if (pos === 3 || pos === 23) return 'RD';
+            return 'TH';
+        }
+
+        function updateRaceStoryDisplay() {
+            raceStoryLabelElement.textContent =
+                (sessionType === 15 && isSprintWeekend) ? 'SPRINT STORY' : 'RACE STORY';
+
+            const hasStarted = gridPosition > 0;
+            raceStoryStartedNumElement.textContent = hasStarted ? gridPosition : '-';
+            raceStoryStartedNumElement.style.fontSize = gridPosition > 9 ? '35px' : '40px';
+            raceStoryStartedSuffixElement.textContent = hasStarted ? getOrdinalSuffix(gridPosition) : '';
+
+            const hasPosition = position > 0;
+            raceStoryNowLabelElement.textContent =
+                (hasStarted && gridPosition === position) ? 'STILL:' : 'NOW:';
+            raceStoryNowNumElement.textContent = hasPosition ? position : '-';
+            raceStoryNowNumElement.style.fontSize = position > 9 ? '35px' : '40px';
+            raceStoryNowSuffixElement.textContent = hasPosition ? getOrdinalSuffix(position) : '';
+        }
+
+        function formatLapTime(ms) {
+            const minutes = Math.floor(ms / 60000);
+            const seconds = Math.floor((ms % 60000) / 1000);
+            const millis = ms % 1000;
+            return minutes > 0
+                ? `${minutes}:${String(seconds).padStart(2, '0')}.${String(millis).padStart(3, '0')}`
+                : `${seconds}.${String(millis).padStart(3, '0')}`;
+        }
+
+        // Finds which tyre stint covers a given lap (stints are contiguous, m_endLap===255
+        // means "still fitted"/covers every remaining lap) — used to show the compound the
+        // driver was on when they set their best lap, not just whatever's currently fitted.
+        function getCompoundAtLap(lapNum) {
+            if (!lapNum || !Array.isArray(tyreStintsHistoryData)) return null;
+            for (let i = 0; i < numTyreStints; i++) {
+                const stint = tyreStintsHistoryData[i];
+                if (!stint) continue;
+                if (stint.m_endLap === 255 || stint.m_endLap >= lapNum) {
+                    return stint.m_tyreVisualCompound;
+                }
+            }
+            return null;
+        }
+
+        function updatePersonalBestDisplay() {
+            const hasTime = bestLapMs > 0;
+
+            personalBestLapTimeElement.textContent = hasTime ? formatLapTime(bestLapMs) : 'NO TIME SET';
+            personalBestLapTimeElement.style.top = hasTime ? '10px' : '20px';
+            personalBestLapTimeElement.style.fontSize = hasTime ? '54px' : '37px';
+
+            personalBestLapTimeLabelElement.style.display = hasTime ? 'flex' : 'none';
+            if (hasTime) {
+                // The FASTEST OVERALL/PERSONAL BEST distinction only applies outside Time
+                // Trial — this variant is only ever shown in non-race sessions (per design),
+                // so no separate race-session guard is needed here.
+                const isTT = sessionType === DriverUtils.SESSION_TYPE.TIME_TRIAL;
+                personalBestLapTimeLabelElement.textContent =
+                    (!isTT && position === 1) ? 'FASTEST OVERALL' : 'PERSONAL BEST';
+            }
+
+            const compoundId = getCompoundAtLap(bestLapNum);
+            const compound = TYRE_COMPOUND[compoundId];
+            personalBestTyreElement.textContent = compound ? compound.displayText : '';
+            personalBestTyreElement.style.color = compound ? compound.color : 'rgb(255, 0, 0)';
+        }
+
+        // No one ahead when leading (position 1) or before data arrives — leaves the dynamic
+        // fields blank/dashed rather than showing something nonsensical like "FOR 0TH". Not
+        // explicitly specced; same graceful-empty pattern used elsewhere in this file for the
+        // pre-data state (e.g. Last Name's own blank-before-first-packet behavior).
+        function updateChasingAheadDisplay() {
+            const aheadParticipant = (aheadCarIdx >= 0) ? participants[aheadCarIdx] : undefined;
+
+            if (!aheadParticipant) {
+                chasingAheadNameElement.textContent = '';
+                chasingAheadPosNumElement.textContent = '-';
+                chasingAheadPosSuffixElement.textContent = '';
+                return;
+            }
+
+            const aheadName = DriverUtils.getDriverLastName(aheadParticipant, driversData, customDrivers, teamNames);
+            chasingAheadNameElement.textContent = (aheadName || 'UNKNOWN').toUpperCase();
+            textFit(chasingAheadNameElement, {
+                minFontSize: 20,
+                maxFontSize: 35,
+                multiLine: false,
+                alignHoriz: true,
+                alignVert: false,
+                widthOnly: true
+            });
+
+            // Same Team Color resolution as the active driver's own (OverridePrimaryColor ->
+            // livery -> fallback), just sourced from the driver ahead's own team/livery data.
+            const aheadTeamData = teamNames[aheadParticipant.m_teamId];
+            let aheadColor = aheadTeamData?.OverridePrimaryColor || null;
+            if (!aheadColor && aheadParticipant.m_liveryColour?.[0]) {
+                const c = aheadParticipant.m_liveryColour[0];
+                if (typeof c.red === 'number' && typeof c.green === 'number' && typeof c.blue === 'number') {
+                    aheadColor = `#${c.red.toString(16).padStart(2, '0')}${c.green.toString(16).padStart(2, '0')}${c.blue.toString(16).padStart(2, '0')}`;
+                }
+            }
+            chasingAheadNameElement.style.color = aheadColor || 'rgb(237, 27, 36)';
+
+            const aheadPos = position - 1;
+            chasingAheadPosNumElement.textContent = aheadPos > 0 ? aheadPos : '-';
+            chasingAheadPosSuffixElement.textContent = aheadPos > 0 ? getOrdinalSuffix(aheadPos) : '';
         }
 
         function updateKnockoutDisplay() {
@@ -274,6 +472,15 @@
                     spectatorCarIndex = data.m_spectatorCarIndex ?? spectatorCarIndex;
                     sessionType = data.m_sessionType ?? sessionType;
 
+                    // Sprint weekend detection: m_weekendStructure lists every session type for
+                    // the whole weekend (length m_numSessionsInWeekend) using the same type enum
+                    // as m_sessionType. Contains both 15 (Sprint Race) and 16 (Main Race) only on
+                    // Sprint weekends — same pattern already established in session-info.html.
+                    if (Array.isArray(data.m_weekendStructure)) {
+                        const numSessions = data.m_numSessionsInWeekend ?? data.m_weekendStructure.length;
+                        isSprintWeekend = data.m_weekendStructure.slice(0, numSessions).includes(16);
+                    }
+
                     if (typeof data.m_formula === 'number' && data.m_formula !== formulaType) {
                         formulaType = data.m_formula;
                         console.debug('[DriverName] Formula type:', formulaType);
@@ -283,27 +490,41 @@
                     updateDisplay();
                     updateKnockoutDisplay();
                     updateBackgroundDecoration();
+                    if (activeVariant === 'raceStory') updateRaceStoryDisplay();
+                    if (activeVariant === 'personalBest') updatePersonalBestDisplay();
                 }
 
                 if (packetId === 2) { // Lap Data
                     const lapData = Array.isArray(data.m_lapData) ? data.m_lapData[playerIdx] : undefined;
                     if (lapData && typeof lapData.m_carPosition === 'number') {
                         position = lapData.m_carPosition;
+                        gridPosition = lapData.m_gridPosition ?? gridPosition;
 
                         // numActiveCars from the highest position seen across the whole grid, same
                         // fix as the Leaderboard: a retired car still holds a valid m_carPosition
                         // here, so this doesn't shrink the moment someone retires — unlike trusting
                         // Participants' own m_numActiveCars directly. See updateKnockoutDisplay().
+                        // Same pass also finds which carIdx currently holds position-1 (the driver
+                        // ahead), for the Chasing Driver Ahead variant.
                         if (Array.isArray(data.m_lapData)) {
                             let maxPos = 0;
-                            for (const car of data.m_lapData) {
+                            let foundAheadIdx = -1;
+                            const targetAheadPos = position - 1;
+                            for (let i = 0; i < data.m_lapData.length; i++) {
+                                const car = data.m_lapData[i];
+                                if (!car) continue;
                                 if (car.m_carPosition > maxPos) maxPos = car.m_carPosition;
+                                if (targetAheadPos > 0 && car.m_carPosition === targetAheadPos) foundAheadIdx = i;
                             }
                             numActiveCars = maxPos;
+                            aheadCarIdx = foundAheadIdx;
                         }
 
                         updateDisplay();
                         updateKnockoutDisplay();
+                        if (activeVariant === 'raceStory') updateRaceStoryDisplay();
+                        if (activeVariant === 'personalBest') updatePersonalBestDisplay();
+                        if (activeVariant === 'chasingDriverAhead') updateChasingAheadDisplay();
                     }
                 }
 
@@ -311,20 +532,47 @@
                     if (data.m_eventStringCode === 'SSTA') {
                         console.debug('[DriverName] New Session Started - resetting best lap');
                         bestLapMs = 0;
+                        bestLapNum = 0;
+                        numTyreStints = 0;
+                        tyreStintsHistoryData = [];
                         updateDisplay();
+                        if (activeVariant === 'personalBest') updatePersonalBestDisplay();
                     }
                 }
 
                 if (packetId === 11) { // Session History
                     if (data.m_carIdx === playerIdx) {
-                        const bestLapNum = data.m_bestLapTimeLapNum ?? 0;
-                        if (bestLapNum > 0) {
-                            const laps = data.m_lapHistoryData;
-                            const lapMs = Array.isArray(laps) ? (laps[bestLapNum - 1]?.m_lapTimeInMS ?? 0) : 0;
-                            if (lapMs > 0 && lapMs !== bestLapMs) {
-                                bestLapMs = lapMs;
-                                updateDisplay();
+                        // Time Trial has its own authoritative source (packet 14's session-best
+                        // dataset, which accounts for invalidated laps) — don't let this packet's
+                        // lap-history-derived time compete with it. Tyre stint tracking below is
+                        // independent of that gate, it's a separate concern.
+                        if (sessionType !== DriverUtils.SESSION_TYPE.TIME_TRIAL) {
+                            const bestLapNumFromPacket = data.m_bestLapTimeLapNum ?? 0;
+                            if (bestLapNumFromPacket > 0) {
+                                const laps = data.m_lapHistoryData;
+                                const lapMs = Array.isArray(laps) ? (laps[bestLapNumFromPacket - 1]?.m_lapTimeInMS ?? 0) : 0;
+                                if (lapMs > 0 && lapMs !== bestLapMs) {
+                                    bestLapMs = lapMs;
+                                    bestLapNum = bestLapNumFromPacket;
+                                    updateDisplay();
+                                }
                             }
+                        }
+
+                        numTyreStints = data.m_numTyreStints ?? numTyreStints;
+                        tyreStintsHistoryData = data.m_tyreStintsHistoryData ?? tyreStintsHistoryData;
+
+                        if (activeVariant === 'personalBest') updatePersonalBestDisplay();
+                    }
+                }
+
+                if (packetId === 14) { // Time Trial
+                    if (sessionType === DriverUtils.SESSION_TYPE.TIME_TRIAL) {
+                        const ds = data.m_playerSessionBestDataSet;
+                        if (ds && typeof ds.m_lapTimeInMS === 'number' && ds.m_lapTimeInMS !== bestLapMs) {
+                            bestLapMs = ds.m_lapTimeInMS;
+                            updateDisplay();
+                            if (activeVariant === 'personalBest') updatePersonalBestDisplay();
                         }
                     }
                 }
@@ -334,6 +582,10 @@
                     // (it drops on retirement even though the grid size hasn't changed).
                     const activeFromPacket = data.m_numActiveCars ?? 0;
                     if (activeFromPacket > numActiveCars) numActiveCars = activeFromPacket;
+
+                    // Kept in full (not just the active driver's own entry) so the driver-ahead
+                    // lookup (Chasing Driver Ahead variant) can resolve any car's data.
+                    if (Array.isArray(data.m_participants)) participants = data.m_participants;
 
                     const participant = Array.isArray(data.m_participants) ? data.m_participants[playerIdx] : undefined;
                     if (participant) {
@@ -357,6 +609,8 @@
                         updateDisplay();
                         updateKnockoutDisplay();
                     }
+
+                    if (activeVariant === 'chasingDriverAhead') updateChasingAheadDisplay();
                 }
             } catch (e) {
                 console.warn('[DriverName] Error handling f1_data:', e);
