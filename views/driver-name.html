@@ -78,6 +78,7 @@
             <div class="dn-number-blur">
                 <div class="dn-number-blur-shape"></div>
             </div>
+            <img class="dn-number-img">
             <div class="dn-number"></div>
         </div>
     </div>
@@ -116,6 +117,7 @@
         const chasingAheadPosSuffixElement = document.querySelector('.dn-chasingahead-position-suffix');
         const numberBlurElement = document.querySelector('.dn-number-blur');
         const numberBlurShapeElement = document.querySelector('.dn-number-blur-shape');
+        const numberImgElement = document.querySelector('.dn-number-img');
         const numberElement = document.querySelector('.dn-number');
 
         // State
@@ -137,6 +139,16 @@
         let tyreStintsHistoryData = [];
         let participants = []; // full Participants array — needed to look up the driver ahead
         let aheadCarIdx = -1;   // carIdx currently holding position-1 (no one ahead if -1)
+        let showDriverNumberImage = false; // controller toggle
+        let numImgUrl = null;   // null = not yet resolved, false = no design found, string = resolved URL
+
+        // Auto-hide: purely ephemeral client-side state, never written back to config — the
+        // controller's own "visible" toggle stays accurate regardless of whether this has
+        // temporarily hidden the overlay. Only ever armed while hideAutomatically is on.
+        const AUTO_HIDE_DELAY_MS = 15000;
+        let hideAutomatically = false; // controller toggle
+        let autoHidden = false;        // true once the auto-hide timer has fired
+        let autoHideTimer = null;
 
         // Visual compound ID -> { displayText, color }. Reused from the Leaderboard's own
         // lookup table (public/styles-leaderboard-lastname.css / views/leaderboard-lastname.html).
@@ -169,12 +181,49 @@
             chasingDriverAhead: 905
         };
 
+        const RACE_SESSION_TYPES = new Set([
+            DriverUtils.SESSION_TYPE.RACE,
+            DriverUtils.SESSION_TYPE.RACE_2,
+            DriverUtils.SESSION_TYPE.RACE_3
+        ]);
+
+        // Per-variant eligibility rules (user's own spec, 2026-09-06): some variants only make
+        // sense for certain session types/positions. Number has no restriction.
+        function isVariantEligible(variant, sType, pos) {
+            const isRace = RACE_SESSION_TYPES.has(sType);
+            switch (variant) {
+                case 'number': return true;
+                case 'raceLeader': return isRace && pos === 1;
+                case 'raceStory': return isRace;
+                case 'personalBest': return !isRace; // any timed session + Time Trial
+                case 'chasingDriverAhead': return isRace && pos !== 1;
+                default: return true;
+            }
+        }
+
+        // Resolves which variant should actually render right now. If the controller-selected
+        // activeVariant isn't eligible for the current session/position, falls back to 'number'
+        // (always eligible, the "default" per the user) — except Chasing Driver Ahead's one
+        // defined fallback: once the driver becomes the leader there's nothing left to chase,
+        // but Race Leader fits that exact context perfectly instead of showing nothing.
+        function getEffectiveVariant() {
+            if (isVariantEligible(activeVariant, sessionType, position)) return activeVariant;
+            if (activeVariant === 'chasingDriverAhead' && RACE_SESSION_TYPES.has(sessionType) && position === 1) {
+                return 'raceLeader';
+            }
+            return 'number';
+        }
+
         // F2Blur is a shared element repositioned per active variant (same effect, source
-        // widget just hand-placed it differently each time). Falls back to the 'number'
-        // position for variants that don't have their own spec yet.
+        // widget just hand-placed it differently each time). Only 'number' needs its own
+        // narrower slot (260 wide, clips the widget's native 360-wide render) — the other four
+        // all use the same unclipped 360x240 native size, just at different left offsets.
         const F2BLUR_POSITIONS = {
-            number:     { left: 270, top: -139, width: 260, height: 240 },
-            raceLeader: { left: 493, top: -140, width: 360, height: 240 }
+            number:              { left: 270, top: -139, width: 260, height: 240 },
+            raceLeader:          { left: 493, top: -140, width: 360, height: 240 },
+            raceStory:           { left: 472, top: -140, width: 360, height: 240 },
+            personalBest:        { left: 545, top: -140, width: 360, height: 240 },
+            chasingDriverAhead:  { left: 545, top: -140, width: 360, height: 240 }
         };
 
         // Qualifying-type sessions, for the "no time set yet" dash — same session-type
@@ -223,6 +272,49 @@
             }
         }
 
+        // Tries each candidate URL in order, first one that actually loads wins. Same helper
+        // as the Leaderboard's own (views/leaderboard-lastname.html) — duplicated locally per
+        // this project's existing convention rather than centralized in driver-utils.js.
+        function preloadImageCascade(urls, onSuccess, onFail) {
+            const tryNext = (i) => {
+                if (i >= urls.length) { onFail(); return; }
+                const img = new Image();
+                img.onload = () => onSuccess(urls[i]);
+                img.onerror = () => tryNext(i + 1);
+                img.src = urls[i];
+            };
+            tryNext(0);
+        }
+
+        // Resolves the driver-number image (team-curated design -> generic SVG -> generic PNG),
+        // same priority chain as the Leaderboard via DriverUtils.getDriverNumberImageCandidates.
+        // Re-run on race number or team change (see the Participants handler below).
+        function updateNumberImage() {
+            numImgUrl = null;
+            if (!raceNumber || raceNumber <= 0) {
+                numImgUrl = false;
+                updateNumberVisual();
+                return;
+            }
+
+            const candidates = DriverUtils.getDriverNumberImageCandidates(raceNumber, teamNames[teamId]);
+            preloadImageCascade(
+                candidates,
+                (url) => { numImgUrl = url; numberImgElement.src = url; updateNumberVisual(); },
+                ()    => { numImgUrl = false; updateNumberVisual(); }
+            );
+        }
+
+        // Chooses image vs text for the Number variant's driver number, only when that variant
+        // is actually active — unlike the Leaderboard, Team Logo and Number are always-separate
+        // elements here, so there's no "falls back to team logo" case to handle.
+        function updateNumberVisual() {
+            const isNumber = getEffectiveVariant() === 'number';
+            const useImage = isNumber && showDriverNumberImage && typeof numImgUrl === 'string';
+            numberImgElement.style.display = useImage ? 'block' : 'none';
+            numberElement.style.display = isNumber && !useImage ? 'flex' : 'none';
+        }
+
         function updateTeamColor() {
             const teamData = teamNames[teamId];
             const teamColor = teamData?.OverridePrimaryColor || primaryColor || null;
@@ -237,6 +329,25 @@
             raceLeaderLeaderElement.style.color = teamColor || 'rgb(255, 255, 255)';
         }
 
+        function clearAutoHideTimer() {
+            if (autoHideTimer) {
+                clearTimeout(autoHideTimer);
+                autoHideTimer = null;
+            }
+        }
+
+        // Arms the auto-hide countdown — no-ops entirely when the toggle is off, so the timer
+        // genuinely never exists (and never fires) unless hideAutomatically is on.
+        function scheduleAutoHide() {
+            clearAutoHideTimer();
+            if (!hideAutomatically) return;
+            autoHideTimer = setTimeout(() => {
+                autoHidden = true;
+                autoHideTimer = null;
+                updateRevealTransition();
+            }, AUTO_HIDE_DELAY_MS);
+        }
+
         // Drives the "grow from center" reveal (see .dn-reveal). When the overlay activates
         // (overlayVisible false -> true), Left eases from half the active variant's width down
         // to 0 while Width eases from 0 up to full and Opacity fades 0->1 — matches the source
@@ -245,10 +356,14 @@
         // active variant changes while already visible, Left is already 0 and doesn't move —
         // only Width (and Opacity, once per-variant content crossfade exists — TODO, deferred
         // per user's own "additional check logic, next pass" note) animates to the new variant.
+        // Auto-hide (see scheduleAutoHide()) reuses this exact same mechanism — autoHidden just
+        // makes it treat the overlay as not-visible without touching the real config value, so
+        // the controller's own "visible" toggle stays accurate throughout.
         function updateRevealTransition() {
-            const targetWidth = VARIANT_WIDTHS[activeVariant] ?? VARIANT_WIDTHS.number;
+            const targetWidth = VARIANT_WIDTHS[getEffectiveVariant()] ?? VARIANT_WIDTHS.number;
+            const effectivelyVisible = overlayVisible && !autoHidden;
 
-            if (overlayVisible) {
+            if (effectivelyVisible) {
                 revealElement.style.left = '0px';
                 revealElement.style.width = `${targetWidth}px`;
                 revealElement.style.opacity = '1';
@@ -260,13 +375,14 @@
         }
 
         function updateVariantVisibility() {
-            const isNumber = activeVariant === 'number';
-            const isRaceLeader = activeVariant === 'raceLeader';
-            const isRaceStory = activeVariant === 'raceStory';
-            const isPersonalBest = activeVariant === 'personalBest';
-            const isChasingAhead = activeVariant === 'chasingDriverAhead';
+            const effectiveVariant = getEffectiveVariant();
+            const isNumber = effectiveVariant === 'number';
+            const isRaceLeader = effectiveVariant === 'raceLeader';
+            const isRaceStory = effectiveVariant === 'raceStory';
+            const isPersonalBest = effectiveVariant === 'personalBest';
+            const isChasingAhead = effectiveVariant === 'chasingDriverAhead';
 
-            numberElement.style.display = isNumber ? 'flex' : 'none';
+            updateNumberVisual();
             numberBlurElement.style.display = isNumber ? 'block' : 'none';
 
             // Separator is shared by every variant except Number.
@@ -284,7 +400,7 @@
             chasingAheadElement.style.display = isChasingAhead ? 'block' : 'none';
             if (isChasingAhead) updateChasingAheadDisplay();
 
-            const f2BlurPos = F2BLUR_POSITIONS[activeVariant] || F2BLUR_POSITIONS.number;
+            const f2BlurPos = F2BLUR_POSITIONS[effectiveVariant] || F2BLUR_POSITIONS.number;
             f2BlurElement.style.left = `${f2BlurPos.left}px`;
             f2BlurElement.style.top = `${f2BlurPos.top}px`;
             f2BlurElement.style.width = `${f2BlurPos.width}px`;
@@ -418,7 +534,6 @@
         function updateBackgroundDecoration() {
             const isF2 = formulaType === DriverUtils.FORMULA_TYPE.F2;
             f2BlurElement.style.display = isF2 ? 'block' : 'none';
-            // TODO: Adjust blur position - currently set only for the basic driver data overlay display
             strokeElement.style.display = isF2 ? 'none' : 'block';
         }
 
@@ -445,15 +560,43 @@
                 : '';
             teamNameElement.textContent = teamNameText.toUpperCase();
             numberElement.textContent = (raceNumber !== null && raceNumber !== undefined) ? raceNumber : '';
+            updateNumberVisual();
         }
 
         socket.on('overlay_config', (config) => {
             if (config.overlays && config.overlays['driver-name']) {
                 const dnConfig = config.overlays['driver-name'];
+
+                const wasVisible = overlayVisible;
+                const previousVariant = activeVariant;
+                const wasHideAutomatically = hideAutomatically;
+
                 overlayVisible = !!dnConfig.visible;
                 activeVariant = dnConfig.activeVariant || 'number';
+                showDriverNumberImage = !!dnConfig.showDriverNumberImage;
+                hideAutomatically = !!dnConfig.hideAutomatically;
+
+                // A "fresh appearance" (becoming visible, or switching variant while already
+                // visible) restarts the auto-hide clock — same trigger the user described for
+                // "changing pages". Manual off always wins over the timer; turning the toggle
+                // itself off restores visibility immediately rather than waiting for the next
+                // fresh appearance.
+                const justBecameVisible = overlayVisible && !wasVisible;
+                const variantChangedWhileVisible = overlayVisible && activeVariant !== previousVariant;
+                const hideAutomaticallyTurnedOn = hideAutomatically && !wasHideAutomatically;
+                const hideAutomaticallyTurnedOff = !hideAutomatically && wasHideAutomatically;
+
+                if (!overlayVisible || hideAutomaticallyTurnedOff) {
+                    clearAutoHideTimer();
+                    autoHidden = false;
+                } else if (justBecameVisible || variantChangedWhileVisible || hideAutomaticallyTurnedOn) {
+                    autoHidden = false;
+                    scheduleAutoHide();
+                }
+
                 updateVariantVisibility();
                 updateRevealTransition();
+                updateNumberVisual();
             }
         });
 
@@ -490,8 +633,11 @@
                     updateDisplay();
                     updateKnockoutDisplay();
                     updateBackgroundDecoration();
-                    if (activeVariant === 'raceStory') updateRaceStoryDisplay();
-                    if (activeVariant === 'personalBest') updatePersonalBestDisplay();
+                    // sessionType affects variant eligibility (see getEffectiveVariant()) — both
+                    // need to re-run any time it changes, not just the affected variant's own
+                    // content-update function.
+                    updateVariantVisibility();
+                    updateRevealTransition();
                 }
 
                 if (packetId === 2) { // Lap Data
@@ -522,9 +668,10 @@
 
                         updateDisplay();
                         updateKnockoutDisplay();
-                        if (activeVariant === 'raceStory') updateRaceStoryDisplay();
-                        if (activeVariant === 'personalBest') updatePersonalBestDisplay();
-                        if (activeVariant === 'chasingDriverAhead') updateChasingAheadDisplay();
+                        // position affects variant eligibility too (Race Leader/Chasing Driver
+                        // Ahead both key off it) — same reasoning as the Session packet above.
+                        updateVariantVisibility();
+                        updateRevealTransition();
                     }
                 }
 
@@ -536,7 +683,7 @@
                         numTyreStints = 0;
                         tyreStintsHistoryData = [];
                         updateDisplay();
-                        if (activeVariant === 'personalBest') updatePersonalBestDisplay();
+                        updateVariantVisibility();
                     }
                 }
 
@@ -562,7 +709,7 @@
                         numTyreStints = data.m_numTyreStints ?? numTyreStints;
                         tyreStintsHistoryData = data.m_tyreStintsHistoryData ?? tyreStintsHistoryData;
 
-                        if (activeVariant === 'personalBest') updatePersonalBestDisplay();
+                        updateVariantVisibility();
                     }
                 }
 
@@ -572,7 +719,7 @@
                         if (ds && typeof ds.m_lapTimeInMS === 'number' && ds.m_lapTimeInMS !== bestLapMs) {
                             bestLapMs = ds.m_lapTimeInMS;
                             updateDisplay();
-                            if (activeVariant === 'personalBest') updatePersonalBestDisplay();
+                            updateVariantVisibility();
                         }
                     }
                 }
@@ -591,7 +738,10 @@
                     if (participant) {
                         firstName = DriverUtils.getDriverFirstName(participant, driversData, customDrivers, teamNames);
                         lastName = DriverUtils.getDriverLastName(participant, driversData, customDrivers, teamNames);
-                        raceNumber = participant.m_raceNumber;
+
+                        const newRaceNumber = participant.m_raceNumber;
+                        const raceNumberChanged = newRaceNumber !== raceNumber;
+                        raceNumber = newRaceNumber;
 
                         if (participant.m_liveryColour?.[0]) {
                             const c = participant.m_liveryColour[0];
@@ -600,17 +750,21 @@
                             }
                         }
 
-                        if (participant.m_teamId !== teamId) {
-                            teamId = participant.m_teamId;
-                            updateTeamLogo();
-                        }
+                        const newTeamId = participant.m_teamId;
+                        const teamChanged = newTeamId !== teamId;
+                        teamId = newTeamId;
+                        if (teamChanged) updateTeamLogo();
+
+                        // Re-resolve on team change too (not just number change) — a team swap
+                        // can keep the same personal number but need the new team's design.
+                        if (raceNumberChanged || teamChanged) updateNumberImage();
 
                         updateTeamColor();
                         updateDisplay();
                         updateKnockoutDisplay();
                     }
 
-                    if (activeVariant === 'chasingDriverAhead') updateChasingAheadDisplay();
+                    updateVariantVisibility();
                 }
             } catch (e) {
                 console.warn('[DriverName] Error handling f1_data:', e);

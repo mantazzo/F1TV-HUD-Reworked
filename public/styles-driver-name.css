@@ -748,6 +748,20 @@
    established-face-over-literal-weight pattern already applied to Position's "-Pos" digit
    variant elsewhere in this file). TextColor is Team Color-driven in JS, same fallback as
    Last Name (see updateTeamColor()). */
+/* Image form of item_1_17r0 (see .dn-number below) — same box, shown instead of the text
+   form when the "Show Image Version of Driver Number" controller toggle is on and a design
+   resolved (see updateNumberImage()/updateNumberVisual() in the script). */
+.dn-number-img {
+    position: absolute;
+    left: 420px;
+    top: 5px;
+    width: 100px;
+    height: 85px;
+    opacity: 0.85;
+    object-fit: contain;
+    display: none;
+}
+
 .dn-number {
     position: absolute;
     left: 420px;

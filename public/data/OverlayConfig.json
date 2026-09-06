@@ -45,7 +45,9 @@
     "driver-name": {
       "visible": true,
       "name": "Driver Name",
-      "activeVariant": "number"
+      "activeVariant": "number",
+      "showDriverNumberImage": false,
+      "hideAutomatically": false
     },
     "pit-timer": {
       "visible": true,

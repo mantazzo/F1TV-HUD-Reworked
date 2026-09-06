@@ -342,6 +342,20 @@
                     <button class="mfd-button" data-variant="chasingDriverAhead">Chasing Driver Ahead</button>
                 </div>
             </div>
+            <div class="option-row">
+                <label class="toggle-label">
+                    <input type="checkbox" id="driver-name-number-image-toggle" class="toggle-checkbox">
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-text">Show Image Version of Driver Number</span>
+                </label>
+            </div>
+            <div class="option-row">
+                <label class="toggle-label">
+                    <input type="checkbox" id="driver-name-hide-automatically-toggle" class="toggle-checkbox">
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-text">Hide Automatically</span>
+                </label>
+            </div>
         </section>
 
         <section class="overlay-section" id="session-info-options-section">
@@ -724,11 +738,32 @@
 
         function updateDriverNameOptions() {
             if (!currentConfig?.overlays?.['driver-name']) return;
-            const variant = currentConfig.overlays['driver-name'].activeVariant || 'number';
+            const dn = currentConfig.overlays['driver-name'];
+            const variant = dn.activeVariant || 'number';
             document.querySelectorAll('#driver-name-variant-button-group .mfd-button').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.variant === variant);
             });
+            driverNameNumberImageToggle.checked = !!dn.showDriverNumberImage;
+            driverNameHideAutomaticallyToggle.checked = !!dn.hideAutomatically;
         }
+
+        // Driver Name "show image version of driver number" toggle handling
+        const driverNameNumberImageToggle = document.getElementById('driver-name-number-image-toggle');
+        driverNameNumberImageToggle.addEventListener('change', () => {
+            const newVal = driverNameNumberImageToggle.checked;
+            socket.emit('config_update', { overlay: 'driver-name', property: 'showDriverNumberImage', value: newVal });
+            if (currentConfig?.overlays?.['driver-name']) currentConfig.overlays['driver-name'].showDriverNumberImage = newVal;
+            updateDriverNameOptions();
+        });
+
+        // Driver Name "hide automatically" toggle handling
+        const driverNameHideAutomaticallyToggle = document.getElementById('driver-name-hide-automatically-toggle');
+        driverNameHideAutomaticallyToggle.addEventListener('change', () => {
+            const newVal = driverNameHideAutomaticallyToggle.checked;
+            socket.emit('config_update', { overlay: 'driver-name', property: 'hideAutomatically', value: newVal });
+            if (currentConfig?.overlays?.['driver-name']) currentConfig.overlays['driver-name'].hideAutomatically = newVal;
+            updateDriverNameOptions();
+        });
 
         // MFD page button handling
         const mfdButtonGroup = document.getElementById('mfd-button-group');
