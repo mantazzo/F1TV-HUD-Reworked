@@ -121,6 +121,8 @@
     - 24 drivers support is available as well
     - Uses the same controls in the Controller as the "Initials" version of the Leaderboard (Controller feature parity)
     - Might have some bugs remaining, I haven't fully tested out every single situation yet
+- Driver Name
+    - Info Soon™
 
 ## Overlay Controllers
 
@@ -128,11 +130,11 @@
     - Not available currently, will probably be done once I get most overlays working
 - Extended Controller
     - Self-made Controller, with the primary aim of introducing more functions or controls while keeping the setup relatively easy
-    - Somewhat limited functionality at the moment, but hey, it works, and it's pretty easy to expand!
-    - Will hopefully be expanded with various functionality from F1TV plugin settings later on
+    - Maybe somewhat limited functionality at the moment, but hey, it works, and it's pretty easy to expand!
+    - Expanded with various functionality from F1TV plugin settings (and personal ideas)
     - Also offers a simple "Shutdown" button
 
-## Debug overlays (for private use)
+## Debug overlays (for non-public use)
 
 - Position Debug
     - Shows current position on track (meters)
@@ -153,7 +155,6 @@ Driver Name (and the extensions)
 In no particular order:
 - Battery Level (from older version, so might need some extra work)
 - Driver Ahead and Behind (the three versions of the overlay)
-- Driver Name (and relevant info extensions like fastest lap and stuff)
 - Control Dashboard (original version, likely saved for last)
 
 ## Debatable
