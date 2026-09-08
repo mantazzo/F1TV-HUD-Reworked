@@ -377,57 +377,62 @@
   "233": {
     "ShortName": "Art GP ‘26",
     "FullName": "ART Grand Prix",
-    "Logo": "F2/ART_Grand_Prix.svg"
+    "Logo": "F2/2026artgrandprixlogowhite.svg",
+    "Logo_Alt": "F2/2026artgrandprixlogo.svg"
   },
   "234": {
     "ShortName": "Campos ‘26",
     "FullName": "Campos Racing",
-    "Logo": "F2/Campos_Racing.svg"
+    "Logo": "F2/2026camposracinglogo.svg"
   },
   "235": {
     "ShortName": "Rodin Motorsport ‘26",
     "FullName": "Rodin Motorsport",
-    "Logo": "F2/Rodin_Motorsport.svg"
+    "Logo": "F2/2026rodinmotorsportlogo.svg"
   },
   "236": {
     "ShortName": "AIX Racing ‘26",
     "FullName": "AIX Racing",
-    "Logo": "F2/AIX_Racing.svg"
+    "Logo": "F2/2026aixracinglogowhite.svg",
+    "Logo_Alt": "F2/2026aixracinglogo.svg"
   },
   "237": {
     "ShortName": "DAMS ‘26",
     "FullName": "DAMS Lucas Oil",
-    "Logo": "F2/DAMS.svg"
+    "Logo": "F2/2026damslucasoillogowhite.svg",
+    "Logo_Alt": "F2/2026damslucasoillogo.svg"
   },
   "238": {
     "ShortName": "Hitech ‘26",
     "FullName": "Hitech TGR",
-    "Logo": "F2/Hitech.svg"
+    "Logo": "F2/2026hitechlogo.svg"
   },
   "239": {
     "ShortName": "MP Motorsport ‘26",
     "FullName": "MP Motorsport",
-    "Logo": "F2/MP_Motorsport.svg"
+    "Logo": "F2/2026mpmotorsportlogowhite.svg",
+    "Logo_Alt": "F2/2026mpmotorsportlogo.svg"
   },
   "240": {
     "ShortName": "Prema ‘26",
     "FullName": "Prema Racing",
-    "Logo": "F2/PREMA_Racing.svg"
+    "Logo": "F2/2026premaracinglogo.svg"
   },
   "241": {
     "ShortName": "Trident ‘26",
     "FullName": "Trident",
-    "Logo": "F2/Trident_Motorsport.svg"
+    "Logo": "F2/2026tridentlogowhite.svg",
+    "Logo_Alt": "F2/2026tridentlogo.svg"
   },
   "242": {
     "ShortName": "Van Amersfoort Racing ‘26",
     "FullName": "Van Amersfoort Racing",
-    "Logo": "F2/Van_Amersfoort_Racing.svg"
+    "Logo": "F2/2026vanamersfoortracinglogo.svg"
   },
   "243": {
     "ShortName": "Invicta ‘26",
     "FullName": "Invicta Racing",
-    "Logo": "F2/Invicta_Racing.svg"
+    "Logo": "F2/2026invictaracinglogo.svg"
   },
   "465": {
     "ShortName": "Art GP ‘25",
@@ -578,57 +583,62 @@
   "489": {
     "ShortName": "Art GP ‘26",
     "FullName": "ART Grand Prix",
-    "Logo": "F2/ART_Grand_Prix.svg"
+    "Logo": "F2/2026artgrandprixlogowhite.svg",
+    "Logo_Alt": "F2/2026artgrandprixlogo.svg"
   },
   "490": {
     "ShortName": "Campos ‘26",
     "FullName": "Campos Racing",
-    "Logo": "F2/Campos_Racing.svg"
+    "Logo": "F2/2026camposracinglogo.svg"
   },
   "491": {
     "ShortName": "Rodin Motorsport ‘26",
     "FullName": "Rodin Motorsport",
-    "Logo": "F2/Rodin_Motorsport.svg"
+    "Logo": "F2/2026rodinmotorsportlogo.svg"
   },
   "492": {
     "ShortName": "AIX Racing ‘26",
     "FullName": "AIX Racing",
-    "Logo": "F2/AIX_Racing.svg"
+    "Logo": "F2/2026aixracinglogowhite.svg",
+    "Logo_Alt": "F2/2026aixracinglogo.svg"
   },
   "493": {
     "ShortName": "DAMS ‘26",
     "FullName": "DAMS Lucas Oil",
-    "Logo": "F2/DAMS.svg"
+    "Logo": "F2/2026damslucasoillogowhite.svg",
+    "Logo_Alt": "F2/2026damslucasoillogo.svg"
   },
   "494": {
     "ShortName": "Hitech ‘26",
     "FullName": "Hitech TGR",
-    "Logo": "F2/Hitech.svg"
+    "Logo": "F2/2026hitechlogo.svg"
   },
   "495": {
     "ShortName": "MP Motorsport ‘26",
     "FullName": "MP Motorsport",
-    "Logo": "F2/MP_Motorsport.svg"
+    "Logo": "F2/2026mpmotorsportlogowhite.svg",
+    "Logo_Alt": "F2/2026mpmotorsportlogo.svg"
   },
   "496": {
     "ShortName": "Prema ‘26",
     "FullName": "Prema Racing",
-    "Logo": "F2/PREMA_Racing.svg"
+    "Logo": "F2/2026premaracinglogo.svg"
   },
   "497": {
     "ShortName": "Trident ‘26",
     "FullName": "Trident",
-    "Logo": "F2/Trident_Motorsport.svg"
+    "Logo": "F2/2026tridentlogowhite.svg",
+    "Logo_Alt": "F2/2026tridentlogo.svg"
   },
   "498": {
     "ShortName": "Van Amersfoort Racing ‘26",
     "FullName": "Van Amersfoort Racing",
-    "Logo": "F2/Van_Amersfoort_Racing.svg"
+    "Logo": "F2/2026vanamersfoortracinglogo.svg"
   },
   "499": {
     "ShortName": "Invicta ‘26",
     "FullName": "Invicta Racing",
-    "Logo": "F2/Invicta_Racing.svg"
+    "Logo": "F2/2026invictaracinglogo.svg"
   },
   "65535": {
     "ShortName": "F1 Custom Team ‘26",
