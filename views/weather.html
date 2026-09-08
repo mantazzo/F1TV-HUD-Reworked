@@ -22,6 +22,12 @@
         
         <!-- Content wrapper for current weather + forecast (animated together) -->
         <div class="weather-content">
+            <!-- Covers the placeholder values below until the first real Session
+                 packet arrives; fades out once actual weather data is received -->
+            <div class="weather-waiting" id="weather-waiting">
+                <span>NO DATA</span>
+            </div>
+
             <!-- Current Weather Section -->
             <div class="current-weather-section">
                 <div class="section-bg"></div>
@@ -39,11 +45,11 @@
                 <div class="air-temp-values">
                     <div class="weather-icon-large" id="current-weather-icon"></div>
                     <div class="temp-celsius">
-                        <span class="temp-value-main" id="air-temp-primary">22</span>
+                        <span class="temp-value-main" id="air-temp-primary">--</span>
                         <span class="temp-unit" id="air-unit-primary">°C</span>
                     </div>
                     <div class="temp-fahrenheit">
-                        <span class="temp-value-secondary" id="air-temp-secondary">72</span>
+                        <span class="temp-value-secondary" id="air-temp-secondary">--</span>
                         <span class="temp-unit-secondary" id="air-unit-secondary">°F</span>
                     </div>
                 </div>
@@ -58,11 +64,11 @@
                 <div class="track-temp-values">
                     <div class="track-icon"></div>
                     <div class="temp-celsius">
-                        <span class="temp-value-main" id="track-temp-primary">35</span>
+                        <span class="temp-value-main" id="track-temp-primary">--</span>
                         <span class="temp-unit" id="track-unit-primary">°C</span>
                     </div>
                     <div class="temp-fahrenheit">
-                        <span class="temp-value-secondary" id="track-temp-secondary">95</span>
+                        <span class="temp-value-secondary" id="track-temp-secondary">--</span>
                         <span class="temp-unit-secondary" id="track-unit-secondary">°F</span>
                     </div>
                 </div>
@@ -85,10 +91,10 @@
                 <div class="forecast-row" id="forecast-row-1">
                     <div class="forecast-icon" id="forecast-icon-1"></div>
                     <div class="forecast-info">
-                        <div class="forecast-condition" id="forecast-condition-1">CLEAR</div>
+                        <div class="forecast-condition" id="forecast-condition-1">--</div>
                         <div class="forecast-time">+5m</div>
                     </div>
-                    <div class="forecast-chance" id="forecast-chance-1">0%</div>
+                    <div class="forecast-chance" id="forecast-chance-1">--%</div>
                     <div class="forecast-divider"></div>
                 </div>
                 
@@ -96,10 +102,10 @@
                 <div class="forecast-row" id="forecast-row-2">
                     <div class="forecast-icon" id="forecast-icon-2"></div>
                     <div class="forecast-info">
-                        <div class="forecast-condition" id="forecast-condition-2">CLEAR</div>
+                        <div class="forecast-condition" id="forecast-condition-2">--</div>
                         <div class="forecast-time">+10m</div>
                     </div>
-                    <div class="forecast-chance" id="forecast-chance-2">0%</div>
+                    <div class="forecast-chance" id="forecast-chance-2">--%</div>
                     <div class="forecast-divider"></div>
                 </div>
                 
@@ -107,10 +113,10 @@
                 <div class="forecast-row" id="forecast-row-3">
                     <div class="forecast-icon" id="forecast-icon-3"></div>
                     <div class="forecast-info">
-                        <div class="forecast-condition" id="forecast-condition-3">CLEAR</div>
+                        <div class="forecast-condition" id="forecast-condition-3">--</div>
                         <div class="forecast-time">+15m</div>
                     </div>
-                    <div class="forecast-chance" id="forecast-chance-3">0%</div>
+                    <div class="forecast-chance" id="forecast-chance-3">--%</div>
                     <div class="forecast-divider"></div>
                 </div>
                 
@@ -118,10 +124,10 @@
                 <div class="forecast-row" id="forecast-row-4">
                     <div class="forecast-icon" id="forecast-icon-4"></div>
                     <div class="forecast-info">
-                        <div class="forecast-condition" id="forecast-condition-4">CLEAR</div>
+                        <div class="forecast-condition" id="forecast-condition-4">--</div>
                         <div class="forecast-time">+30m</div>
                     </div>
-                    <div class="forecast-chance" id="forecast-chance-4">0%</div>
+                    <div class="forecast-chance" id="forecast-chance-4">--%</div>
                 </div>
             </div>
         </div><!-- End weather-content wrapper -->
@@ -133,6 +139,11 @@
         
         const weatherContainer = document.querySelector('.weather-container');
         const forecastSection = document.querySelector('.forecast-section');
+        const weatherContent = document.querySelector('.weather-content');
+
+        // Tracks whether a real Session packet has arrived yet — the "NO DATA"
+        // cover stays up over the placeholder values until it does.
+        let hasReceivedWeatherData = false;
         
         // Handle overlay visibility from controller with animation
         socket.on('overlay_config', (config) => {
@@ -374,6 +385,11 @@
                     
                     if (airTemp !== undefined && trackTemp !== undefined) {
                         updateCurrentWeather(airTemp, trackTemp, weather);
+
+                        if (!hasReceivedWeatherData) {
+                            hasReceivedWeatherData = true;
+                            weatherContent.classList.add('data-received');
+                        }
                     }
                     
                     // Forecast data (if available)

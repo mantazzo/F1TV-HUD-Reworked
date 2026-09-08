@@ -100,6 +100,38 @@ body {
     margin-top: 2px;
 }
 
+/* ===== WAITING-FOR-DATA COVER ===== */
+/* Sits over the placeholder values until the first real Session packet arrives */
+.weather-waiting {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 280px;
+    height: 635px;
+    background-color: rgb(18, 20, 26);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    z-index: 10;
+    transition: opacity 250ms ease-out;
+}
+
+.weather-waiting span {
+    font-family: 'F1TV-2022', sans-serif;
+    font-weight: 400;
+    font-size: 22px;
+    color: rgb(255, 255, 255);
+    opacity: 0.9;
+    letter-spacing: 1px;
+    padding: 0 30px;
+}
+
+.weather-content.data-received .weather-waiting {
+    opacity: 0;
+    pointer-events: none;
+}
+
 /* ===== CURRENT WEATHER SECTION ===== */
 .current-weather-section {
     position: absolute;
