@@ -105,9 +105,11 @@ const DriverUtils = {
             return 2025;
         }
 
-        // 2026 Season Pack teams (real F1 '26, F2 '26 reserved range, F1 Generic '26, My Team '26)
+        // 2026 Season Pack teams (real F1 '26, F2 '26, F1 Generic '26, My Team '26)
         if ((teamId >= 220 && teamId <= 230) ||
+            (teamId >= 233 && teamId <= 243) ||
             (teamId >= 476 && teamId <= 486) ||
+            (teamId >= 489 && teamId <= 499) ||
             teamId === 488 || teamId === 65535) {
             return 2026;
         }
