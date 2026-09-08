@@ -40,27 +40,33 @@
             "name": ""
         },
         {
-            "number": 6,
+            "number": "5A",
             "trigger": 1550,
+            "end": 1580,
+            "name": ""
+        },
+        {
+            "number": 6,
+            "trigger": 1580,
             "end": 1635,
             "name": ""
         },
         {
             "number": 7,
-            "trigger": 1665,
-            "end": 1795,
-            "name": ""
-        },
-        {
-            "number": 8,
             "trigger": 1870,
             "end": 1945,
             "name": ""
         },
         {
-            "number": 9,
+            "number": 8,
             "trigger": 1945,
             "end": 2030,
+            "name": ""
+        },
+        {
+            "number": 9,
+            "trigger": 2040,
+            "end": 2150,
             "name": ""
         },
         {
@@ -126,6 +132,12 @@
         {
             "number": 20,
             "trigger": 4740,
+            "end": 4810,
+            "name": ""
+        },
+        {
+            "number": "20A",
+            "trigger": 4810,
             "end": 4860,
             "name": ""
         },
