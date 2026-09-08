@@ -51,7 +51,11 @@
             'RDFL': 'Red Flag',
             'OVTK': 'Overtake',
             'SCAR': 'Safety Car',
-            'COLL': 'Collision'
+            'COLL': 'Collision',
+            'PMEN': 'Partial Mode Enabled',
+            'PMDI': 'Partial Mode Disabled',
+            'OVEN': 'Overtake Mode Enabled',
+            'OVDI': 'Overtake Mode Disabled'
         };
         
         // Listen for F1 data packets
@@ -124,7 +128,7 @@
         function getEventClass(eventCode) {
             // Color coding for different event types
             const criticalEvents = ['PENA', 'RDFL', 'COLL', 'RTMT'];
-            const importantEvents = ['SCAR', 'DRSE', 'DRSD', 'FTLP'];
+            const importantEvents = ['SCAR', 'DRSE', 'DRSD', 'FTLP', 'PMEN', 'PMDI', 'OVEN', 'OVDI'];
             const infoEvents = ['SSTA', 'SEND', 'CHQF', 'RCWN', 'LGOT'];
             
             if (criticalEvents.includes(eventCode)) return 'event-critical';
