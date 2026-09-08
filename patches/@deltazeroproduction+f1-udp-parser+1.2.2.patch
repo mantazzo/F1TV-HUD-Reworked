@@ -1,8 +1,8 @@
 diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/drivers.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/drivers.js
-index f0c6134..2dc0004 100644
+index f0c6134..205c6d6 100644
 --- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/drivers.js
 +++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/drivers.js
-@@ -169,7 +169,20 @@ exports.DRIVERS = {
+@@ -169,7 +169,30 @@ exports.DRIVERS = {
      174: { abbreviation: 'TSO', firstName: 'Nikola', lastName: 'Tsolov' },
      175: { abbreviation: 'TRA', firstName: 'Tim', lastName: 'Tramnitz' },
      185: { abbreviation: 'COR', firstName: 'Luca', lastName: 'Cortez' },
@@ -18,6 +18,16 @@ index f0c6134..2dc0004 100644
 +    195: { abbreviation: 'EST', firstName: 'Max', lastName: 'Esterson' },
 +    196: { abbreviation: 'MEG', firstName: 'Sami', lastName: 'Meguetounif' },
 +    197: { abbreviation: 'BEN', firstName: 'John', lastName: 'Bennett' },
++    198: { abbreviation: 'FIT', firstName: 'Emerson', lastName: 'Fittipaldi' },
++    199: { abbreviation: 'INT', firstName: 'Tasanopol', lastName: 'Inthraphuvasak' },
++    200: { abbreviation: 'LEO', firstName: 'Noel', lastName: 'León' },
++    201: { abbreviation: 'BIL', firstName: 'Roman', lastName: 'Bilinski' },
++    202: { abbreviation: 'HER', firstName: 'Colton', lastName: 'Herta' },
++    203: { abbreviation: 'CAM', firstName: 'Rafael', lastName: 'Câmara' },
++    204: { abbreviation: 'BOY', firstName: 'Mari', lastName: 'Boya' },
++    205: { abbreviation: 'STE', firstName: 'Martinius', lastName: 'Stenshorne' },
++    206: { abbreviation: 'VAN', firstName: 'Laurens', lastName: 'van Hoepen' },
++    207: { abbreviation: 'VAR', firstName: 'Nico', lastName: 'Varrone' },
      255: { abbreviation: 'DRV', firstName: 'Network', lastName: 'Human' },
 +    65535: { abbreviation: 'DRV', firstName: 'Network', lastName: 'Human' },
  };
@@ -35,6 +45,21 @@ index 3c219ce..82a2395 100644
 +    'Boost',
  ];
  //# sourceMappingURL=ersDeployMode.js.map
+\ No newline at end of file
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/eventCodes.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/eventCodes.js
+index 2d30a26..295683f 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/eventCodes.js
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/eventCodes.js
+@@ -23,5 +23,9 @@ exports.EVENT_CODES = {
+     Overtake: 'OVTK',
+     SafetyCar: 'SCAR',
+     Collision: 'COLL',
++    PartialModeEnabled: 'PMEN',
++    PartialModeDisabled: 'PMDI',
++    OvertakeEnabled: 'OVEN',
++    OvertakeDisabled: 'OVDI',
+ };
+ //# sourceMappingURL=eventCodes.js.map
 \ No newline at end of file
 diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/formulas.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/formulas.js
 index 50cf924..3ef6526 100644
@@ -150,10 +175,10 @@ index c37763c..07b0846 100644
  //# sourceMappingURL=sessionTypes.js.map
 \ No newline at end of file
 diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/teams.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/teams.js
-index 7c1040f..57c74ec 100644
+index 7c1040f..6f79670 100644
 --- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/teams.js
 +++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/constants/teams.js
-@@ -171,6 +171,89 @@ exports.TEAMS = {
+@@ -171,6 +171,111 @@ exports.TEAMS = {
          192: { name: 'Haas 24', color: HAAS_COLOR },
          193: { name: 'McLaren 24', color: MCLAREN_COLOR },
          194: { name: 'Sauber 24', color: ALFA_ROMEO_COLOR },
@@ -179,6 +204,17 @@ index 7c1040f..57c74ec 100644
 +        228: { name: "McLaren '26", color: MCLAREN_COLOR },
 +        229: { name: "Audi '26", color: '#FF2D00' },
 +        230: { name: "Cadillac '26", color: '#AAAAAD' },
++        233: { name: "Art GP '26", color: ART_GRAND_PRIX_COLOR },
++        234: { name: "Campos '26", color: CAMPOS_VEXATEC_COLOR },
++        235: { name: "Rodin Motorsport '26", color: '#FFFFFF' },
++        236: { name: "AIX Racing '26", color: '#FFFFFF' },
++        237: { name: "DAMS '26", color: DAMS_COLOR },
++        238: { name: "Hitech '26", color: HITECH_COLOR },
++        239: { name: "MP Motorsport '26", color: MP_MOTORSPORT_COLOR },
++        240: { name: "Prema '26", color: PREMA_COLOR },
++        241: { name: "Trident '26", color: TRIDENT_COLOR },
++        242: { name: "Van Amersfoort Racing '26", color: '#FFFFFF' },
++        243: { name: "Invicta '26", color: '#FFFFFF' },
 +    },
 +    2026: {
 +        0: { name: 'Mercedes', color: MERCEDES_COLOR },
@@ -240,6 +276,17 @@ index 7c1040f..57c74ec 100644
 +        484: { name: "McLaren '26", color: MCLAREN_COLOR },
 +        485: { name: "Audi '26", color: '#FF2D00' },
 +        486: { name: "Cadillac '26", color: '#AAAAAD' },
++        489: { name: "Art GP '26", color: ART_GRAND_PRIX_COLOR },
++        490: { name: "Campos '26", color: CAMPOS_VEXATEC_COLOR },
++        491: { name: "Rodin Motorsport '26", color: '#FFFFFF' },
++        492: { name: "AIX Racing '26", color: '#FFFFFF' },
++        493: { name: "DAMS '26", color: DAMS_COLOR },
++        494: { name: "Hitech '26", color: HITECH_COLOR },
++        495: { name: "MP Motorsport '26", color: MP_MOTORSPORT_COLOR },
++        496: { name: "Prema '26", color: PREMA_COLOR },
++        497: { name: "Trident '26", color: TRIDENT_COLOR },
++        498: { name: "Van Amersfoort Racing '26", color: '#FFFFFF' },
++        499: { name: "Invicta '26", color: '#FFFFFF' },
      },
  };
  //# sourceMappingURL=teams.js.map
@@ -258,6 +305,28 @@ index 8be154d..7c8c6f7 100644
  ];
  //# sourceMappingURL=tracks.js.map
 \ No newline at end of file
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/index.d.ts b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/index.d.ts
+index 8b92a8e..a53f598 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/index.d.ts
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/index.d.ts
+@@ -5,7 +5,7 @@ import * as dgram from 'dgram';
+ import { EventEmitter } from 'events';
+ import * as constants from './constants';
+ import * as constantsTypes from './constants/types';
+-import { PacketCarDamageDataParser, PacketCarSetupDataParser, PacketCarStatusDataParser, PacketCarTelemetryDataParser, PacketEventDataParser, PacketFinalClassificationDataParser, PacketLapDataParser, PacketLobbyInfoDataParser, PacketMotionDataParser, PacketParticipantsDataParser, PacketSessionDataParser, PacketSessionHistoryDataParser, PacketTyreSetsDataParser, PacketMotionExDataParser, PacketTimeTrialDataParser, PacketLapPositionsDataParser } from './parsers/packets';
++import { PacketCarDamageDataParser, PacketCarSetupDataParser, PacketCarStatusDataParser, PacketCarTelemetryDataParser, PacketCarTelemetry2DataParser, PacketEventDataParser, PacketFinalClassificationDataParser, PacketLapDataParser, PacketLobbyInfoDataParser, PacketMotionDataParser, PacketParticipantsDataParser, PacketSessionDataParser, PacketSessionHistoryDataParser, PacketTyreSetsDataParser, PacketMotionExDataParser, PacketTimeTrialDataParser, PacketLapPositionsDataParser } from './parsers/packets';
+ import * as packetTypes from './parsers/packets/types';
+ import { Address, Options, ParsedMessage, TestMode } from './types';
+ declare const DEFAULT_PORT = 20777;
+@@ -40,7 +40,7 @@ declare class F1TelemetryClient extends EventEmitter {
+      *
+      * @param {Number} packetId
+      */
+-    static getParserByPacketId(packetId: number): typeof PacketCarDamageDataParser | typeof PacketCarSetupDataParser | typeof PacketCarStatusDataParser | typeof PacketCarTelemetryDataParser | typeof PacketEventDataParser | typeof PacketFinalClassificationDataParser | typeof PacketLapDataParser | typeof PacketLobbyInfoDataParser | typeof PacketMotionDataParser | typeof PacketParticipantsDataParser | typeof PacketSessionDataParser | typeof PacketSessionHistoryDataParser | typeof PacketTyreSetsDataParser | typeof PacketMotionExDataParser | typeof PacketTimeTrialDataParser | typeof PacketLapPositionsDataParser | null;
++    static getParserByPacketId(packetId: number): typeof PacketCarDamageDataParser | typeof PacketCarSetupDataParser | typeof PacketCarStatusDataParser | typeof PacketCarTelemetryDataParser | typeof PacketCarTelemetry2DataParser | typeof PacketEventDataParser | typeof PacketFinalClassificationDataParser | typeof PacketLapDataParser | typeof PacketLobbyInfoDataParser | typeof PacketMotionDataParser | typeof PacketParticipantsDataParser | typeof PacketSessionDataParser | typeof PacketSessionHistoryDataParser | typeof PacketTyreSetsDataParser | typeof PacketMotionExDataParser | typeof PacketTimeTrialDataParser | typeof PacketLapPositionsDataParser | null;
+     /**
+      *
+      * @param {Buffer} message
 diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/index.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/index.js
 index e191222..6c3e44d 100644
 --- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/index.js
@@ -271,9 +340,19 @@ index e191222..6c3e44d 100644
              default:
                  return null;
          }
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/ActiveAeroZoneParser.d.ts b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/ActiveAeroZoneParser.d.ts
+new file mode 100644
+index 0000000..8bbdcdd
+--- /dev/null
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/ActiveAeroZoneParser.d.ts
+@@ -0,0 +1,4 @@
++import { F1Parser } from '../F1Parser';
++export declare class ActiveAeroZoneParser extends F1Parser {
++    constructor();
++}
 diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/ActiveAeroZoneParser.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/ActiveAeroZoneParser.js
 new file mode 100644
-index 0000000..7faa3a4
+index 0000000..5a9337b
 --- /dev/null
 +++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/ActiveAeroZoneParser.js
 @@ -0,0 +1,12 @@
@@ -382,9 +461,19 @@ index b3b4935..4524184 100644
              .uint8('m_networkPaused');
      }
  }
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/CarTelemetry2DataParser.d.ts b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/CarTelemetry2DataParser.d.ts
+new file mode 100644
+index 0000000..3729b15
+--- /dev/null
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/CarTelemetry2DataParser.d.ts
+@@ -0,0 +1,4 @@
++import { F1Parser } from '../F1Parser';
++export declare class CarTelemetry2DataParser extends F1Parser {
++    constructor();
++}
 diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/CarTelemetry2DataParser.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/CarTelemetry2DataParser.js
 new file mode 100644
-index 0000000..0ea445c
+index 0000000..2c06825
 --- /dev/null
 +++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/CarTelemetry2DataParser.js
 @@ -0,0 +1,20 @@
@@ -440,9 +529,19 @@ index ed3b8c7..996febf 100644
              length: 4,
              type: new binary_parser_1.Parser().floatle(''),
          })
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/DRSZoneParser.d.ts b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/DRSZoneParser.d.ts
+new file mode 100644
+index 0000000..bc7fa0c
+--- /dev/null
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/DRSZoneParser.d.ts
+@@ -0,0 +1,4 @@
++import { F1Parser } from '../F1Parser';
++export declare class DRSZoneParser extends F1Parser {
++    constructor();
++}
 diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/DRSZoneParser.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/DRSZoneParser.js
 new file mode 100644
-index 0000000..ba081c2
+index 0000000..2357be0
 --- /dev/null
 +++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/DRSZoneParser.js
 @@ -0,0 +1,12 @@
@@ -598,9 +697,22 @@ index 93de3a1..5cab8bb 100644
              type: new CarStatusDataParser_1.CarStatusDataParser(packetFormat),
          });
          this.data = this.fromBuffer(buffer);
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketCarTelemetry2DataParser.d.ts b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketCarTelemetry2DataParser.d.ts
+new file mode 100644
+index 0000000..fe858c7
+--- /dev/null
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketCarTelemetry2DataParser.d.ts
+@@ -0,0 +1,7 @@
++/// <reference types="node" />
++import { F1Parser } from '../F1Parser';
++import { PacketCarTelemetry2Data } from './types';
++export declare class PacketCarTelemetry2DataParser extends F1Parser {
++    data: PacketCarTelemetry2Data;
++    constructor(buffer: Buffer, packetFormat: number);
++}
 diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketCarTelemetry2DataParser.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketCarTelemetry2DataParser.js
 new file mode 100644
-index 0000000..90e787e
+index 0000000..08cd379
 --- /dev/null
 +++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketCarTelemetry2DataParser.js
 @@ -0,0 +1,23 @@
@@ -643,19 +755,43 @@ index b92f964..1f84192 100644
          });
          this.uint8('m_mfdPanelIndex')
              .uint8('m_mfdPanelIndexSecondaryPlayer')
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketEventDataParser.d.ts b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketEventDataParser.d.ts
+index 7edab3f..6d6d7f4 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketEventDataParser.d.ts
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketEventDataParser.d.ts
+@@ -52,6 +52,12 @@ export declare class SafetyCarParser extends F1Parser {
+ export declare class CollisionParser extends F1Parser {
+     constructor();
+ }
++export declare class CollisionParser2026 extends F1Parser {
++    constructor();
++}
++export declare class PartialModeEnabledParser extends F1Parser {
++    constructor();
++}
+ export declare class PacketEventDataParser extends F1Parser {
+     data: PacketEventData;
+     constructor(buffer: Buffer, packetFormat: number);
+@@ -59,5 +65,6 @@ export declare class PacketEventDataParser extends F1Parser {
+     unpack2023Format: (buffer: Buffer, packetFormat: number) => void;
+     unpack2024Format: (buffer: Buffer, packetFormat: number) => void;
+     unpack2025Format: (buffer: Buffer, packetFormat: number) => void;
++    unpack2026Format: (buffer: Buffer, packetFormat: number) => void;
+     getEventStringCode: (buffer: Buffer, packetFormat: number) => any;
+ }
 diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketEventDataParser.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketEventDataParser.js
-index 1d0bfc0..3972661 100644
+index 1d0bfc0..ba00c61 100644
 --- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketEventDataParser.js
 +++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/PacketEventDataParser.js
 @@ -1,6 +1,6 @@
  "use strict";
  Object.defineProperty(exports, "__esModule", { value: true });
 -exports.PacketEventDataParser = exports.CollisionParser = exports.SafetyCarParser = exports.OvertakeParser = exports.ButtonsParser = exports.FlashbackParser = exports.StopGoPenaltyServedParser2025 = exports.StopGoPenaltyServedParser = exports.DriveThroughPenaltyServedParser = exports.StartLightsParser = exports.SpeedTrapParser = exports.PenaltyParser = exports.RaceWinnerParser = exports.TeamMateInPitsParser = exports.DRSDisabledParser = exports.RetirementParser2025 = exports.RetirementParser = exports.FastestLapParser = void 0;
-+exports.PacketEventDataParser = exports.CollisionParser2026 = exports.CollisionParser = exports.SafetyCarParser = exports.OvertakeParser = exports.ButtonsParser = exports.FlashbackParser = exports.StopGoPenaltyServedParser2025 = exports.StopGoPenaltyServedParser = exports.DriveThroughPenaltyServedParser = exports.StartLightsParser = exports.SpeedTrapParser = exports.PenaltyParser = exports.RaceWinnerParser = exports.TeamMateInPitsParser = exports.DRSDisabledParser = exports.RetirementParser2025 = exports.RetirementParser = exports.FastestLapParser = void 0;
++exports.PacketEventDataParser = exports.PartialModeEnabledParser = exports.CollisionParser2026 = exports.CollisionParser = exports.SafetyCarParser = exports.OvertakeParser = exports.ButtonsParser = exports.FlashbackParser = exports.StopGoPenaltyServedParser2025 = exports.StopGoPenaltyServedParser = exports.DriveThroughPenaltyServedParser = exports.StartLightsParser = exports.SpeedTrapParser = exports.PenaltyParser = exports.RaceWinnerParser = exports.TeamMateInPitsParser = exports.DRSDisabledParser = exports.RetirementParser2025 = exports.RetirementParser = exports.FastestLapParser = void 0;
  const binary_parser_1 = require("binary-parser");
  const constants_1 = require("../../constants");
  const F1Parser_1 = require("../F1Parser");
-@@ -143,6 +143,16 @@ class CollisionParser extends F1Parser_1.F1Parser {
+@@ -143,6 +143,23 @@ class CollisionParser extends F1Parser_1.F1Parser {
      }
  }
  exports.CollisionParser = CollisionParser;
@@ -669,10 +805,17 @@ index 1d0bfc0..3972661 100644
 +    }
 +}
 +exports.CollisionParser2026 = CollisionParser2026;
++class PartialModeEnabledParser extends F1Parser_1.F1Parser {
++    constructor() {
++        super();
++        this.endianess('little').uint8('reason');
++    }
++}
++exports.PartialModeEnabledParser = PartialModeEnabledParser;
  class PacketEventDataParser extends F1Parser_1.F1Parser {
      data;
      constructor(buffer, packetFormat) {
-@@ -163,6 +173,9 @@ class PacketEventDataParser extends F1Parser_1.F1Parser {
+@@ -163,6 +180,9 @@ class PacketEventDataParser extends F1Parser_1.F1Parser {
          if (packetFormat === 2025) {
              this.unpack2025Format(buffer, packetFormat);
          }
@@ -682,7 +825,7 @@ index 1d0bfc0..3972661 100644
          this.data = this.fromBuffer(buffer);
      }
      unpack2022Format = (buffer, packetFormat) => {
-@@ -341,6 +354,56 @@ class PacketEventDataParser extends F1Parser_1.F1Parser {
+@@ -341,6 +361,59 @@ class PacketEventDataParser extends F1Parser_1.F1Parser {
              this.nest('m_eventDetails', { type: new CollisionParser() });
          }
      };
@@ -734,6 +877,9 @@ index 1d0bfc0..3972661 100644
 +        }
 +        else if (eventStringCode === constants_1.EVENT_CODES.Collision) {
 +            this.nest('m_eventDetails', { type: new CollisionParser2026() });
++        }
++        else if (eventStringCode === constants_1.EVENT_CODES.PartialModeEnabled) {
++            this.nest('m_eventDetails', { type: new PartialModeEnabledParser() });
 +        }
 +    };
      getEventStringCode = (buffer, packetFormat) => {
@@ -1017,6 +1163,24 @@ index 2221c41..5e89996 100644
              .uint32('m_sector1TimeInMS')
              .uint32('m_sector2TimeInMS')
              .uint32('m_sector3TimeInMS')
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/index.d.ts b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/index.d.ts
+index 08e4d5e..4ed424a 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/index.d.ts
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/index.d.ts
+@@ -2,6 +2,7 @@ import { PacketCarDamageDataParser } from './PacketCarDamageDataParser';
+ import { PacketCarSetupDataParser } from './PacketCarSetupDataParser';
+ import { PacketCarStatusDataParser } from './PacketCarStatusDataParser';
+ import { PacketCarTelemetryDataParser } from './PacketCarTelemetryDataParser';
++import { PacketCarTelemetry2DataParser } from './PacketCarTelemetry2DataParser';
+ import { PacketEventDataParser } from './PacketEventDataParser';
+ import { PacketFinalClassificationDataParser } from './PacketFinalClassificationDataParser';
+ import { PacketFormatParser } from './PacketFormatParser';
+@@ -16,4 +17,4 @@ import { PacketTyreSetsDataParser } from './PacketTyreSetsDataParser';
+ import { PacketMotionExDataParser } from './PacketMotionExDataParser';
+ import { PacketTimeTrialDataParser } from './PacketTimeTrialDataParser';
+ import { PacketLapPositionsDataParser } from './PacketLapPositionsDataParser';
+-export { PacketCarSetupDataParser, PacketCarStatusDataParser, PacketCarTelemetryDataParser, PacketEventDataParser, PacketFinalClassificationDataParser, PacketFormatParser, PacketHeaderParser, PacketLapDataParser, PacketLobbyInfoDataParser, PacketMotionDataParser, PacketParticipantsDataParser, PacketSessionDataParser, PacketCarDamageDataParser, PacketSessionHistoryDataParser, PacketTyreSetsDataParser, PacketMotionExDataParser, PacketTimeTrialDataParser, PacketLapPositionsDataParser, };
++export { PacketCarSetupDataParser, PacketCarStatusDataParser, PacketCarTelemetryDataParser, PacketCarTelemetry2DataParser, PacketEventDataParser, PacketFinalClassificationDataParser, PacketFormatParser, PacketHeaderParser, PacketLapDataParser, PacketLobbyInfoDataParser, PacketMotionDataParser, PacketParticipantsDataParser, PacketSessionDataParser, PacketCarDamageDataParser, PacketSessionHistoryDataParser, PacketTyreSetsDataParser, PacketMotionExDataParser, PacketTimeTrialDataParser, PacketLapPositionsDataParser, };
 diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/index.js b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/index.js
 index 12fa901..658702f 100644
 --- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/index.js
@@ -1030,3 +1194,63 @@ index 12fa901..658702f 100644
  const PacketEventDataParser_1 = require("./PacketEventDataParser");
  Object.defineProperty(exports, "PacketEventDataParser", { enumerable: true, get: function () { return PacketEventDataParser_1.PacketEventDataParser; } });
  const PacketFinalClassificationDataParser_1 = require("./PacketFinalClassificationDataParser");
+diff --git a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/types.d.ts b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/types.d.ts
+index 5e351fa..62ff732 100644
+--- a/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/types.d.ts
++++ b/node_modules/@deltazeroproduction/f1-udp-parser/build/src/parsers/packets/types.d.ts
+@@ -70,6 +70,14 @@ export interface WeatherForecastSample {
+     m_airTemperatureChange: number;
+     m_rainPercentage: number;
+ }
++export interface ActiveAeroZone {
++    m_zoneStart: number;
++    m_zoneEnd: number;
++}
++export interface DRSZone {
++    m_zoneStart: number;
++    m_zoneEnd: number;
++}
+ export interface PacketSessionData {
+     m_header: PacketHeader;
+     m_weather: number;
+@@ -149,6 +157,19 @@ export interface PacketSessionData {
+     m_weekendStructure: number[];
+     m_sector2LapDistanceStart: number;
+     m_sector3LapDistanceStart: number;
++    m_activeAeroTrackStatus: number;
++    m_numActiveAeroZonesFull: number;
++    m_activeAeroZonesFull: ActiveAeroZone[];
++    m_numActiveAeroZonesPartial: number;
++    m_activeAeroZonesPartial: ActiveAeroZone[];
++    m_numDRSZones: number;
++    m_drsZones: DRSZone[];
++    m_startReactionTime: number;
++    m_antiLockBrakesAssist: number;
++    m_tractionControlAssist: number;
++    m_dynamicRacingLineHiVis: number;
++    m_dynamicRacingLineColourBlind: number;
++    m_recurringRewindPrompt: number;
+ }
+ export interface LapData {
+     m_lastLapTimeInMs: number;
+@@ -311,6 +332,20 @@ export interface PacketCarTelemetryData {
+     m_mfdPanelIndexSecondaryPlayer: number;
+     m_suggestedGear: number;
+ }
++export interface CarTelemetry2Data {
++    m_activeAeroMode: number;
++    m_activeAeroAvailable: number;
++    m_activeAeroActivationDistance: number;
++    m_overtakeAvailable: number;
++    m_overtakeActive: number;
++    m_overtakeActivationDistance: number;
++    m_2026Regulations: number;
++    m_drivingWrongWay: number;
++}
++export interface PacketCarTelemetry2Data {
++    m_header: PacketHeader;
++    m_carTelemetry2Data: CarTelemetry2Data[];
++}
+ export interface CarStatusData {
+     m_tractionControl: number;
+     m_antiLockBrakes: number;
