@@ -374,6 +374,61 @@
     "NumberDesign_11": "2026cadillacserper01numberwhite.svg",
     "NumberDesign_77": "2026cadillacvalbot01numberwhite.svg"
   },
+  "233": {
+    "ShortName": "Art GP ‘26",
+    "FullName": "ART Grand Prix",
+    "Logo": "F2/ART_Grand_Prix.svg"
+  },
+  "234": {
+    "ShortName": "Campos ‘26",
+    "FullName": "Campos Racing",
+    "Logo": "F2/Campos_Racing.svg"
+  },
+  "235": {
+    "ShortName": "Rodin Motorsport ‘26",
+    "FullName": "Rodin Motorsport",
+    "Logo": "F2/Rodin_Motorsport.svg"
+  },
+  "236": {
+    "ShortName": "AIX Racing ‘26",
+    "FullName": "AIX Racing",
+    "Logo": "F2/AIX_Racing.svg"
+  },
+  "237": {
+    "ShortName": "DAMS ‘26",
+    "FullName": "DAMS Lucas Oil",
+    "Logo": "F2/DAMS.svg"
+  },
+  "238": {
+    "ShortName": "Hitech ‘26",
+    "FullName": "Hitech TGR",
+    "Logo": "F2/Hitech.svg"
+  },
+  "239": {
+    "ShortName": "MP Motorsport ‘26",
+    "FullName": "MP Motorsport",
+    "Logo": "F2/MP_Motorsport.svg"
+  },
+  "240": {
+    "ShortName": "Prema ‘26",
+    "FullName": "Prema Racing",
+    "Logo": "F2/PREMA_Racing.svg"
+  },
+  "241": {
+    "ShortName": "Trident ‘26",
+    "FullName": "Trident",
+    "Logo": "F2/Trident_Motorsport.svg"
+  },
+  "242": {
+    "ShortName": "Van Amersfoort Racing ‘26",
+    "FullName": "Van Amersfoort Racing",
+    "Logo": "F2/Van_Amersfoort_Racing.svg"
+  },
+  "243": {
+    "ShortName": "Invicta ‘26",
+    "FullName": "Invicta Racing",
+    "Logo": "F2/Invicta_Racing.svg"
+  },
   "465": {
     "ShortName": "Art GP ‘25",
     "FullName": "ART Grand Prix",
@@ -519,6 +574,61 @@
     "ShortName": "F1 Generic ‘26",
     "FullName": "F1 World Car '26",
     "Logo": "fia.svg"
+  },
+  "489": {
+    "ShortName": "Art GP ‘26",
+    "FullName": "ART Grand Prix",
+    "Logo": "F2/ART_Grand_Prix.svg"
+  },
+  "490": {
+    "ShortName": "Campos ‘26",
+    "FullName": "Campos Racing",
+    "Logo": "F2/Campos_Racing.svg"
+  },
+  "491": {
+    "ShortName": "Rodin Motorsport ‘26",
+    "FullName": "Rodin Motorsport",
+    "Logo": "F2/Rodin_Motorsport.svg"
+  },
+  "492": {
+    "ShortName": "AIX Racing ‘26",
+    "FullName": "AIX Racing",
+    "Logo": "F2/AIX_Racing.svg"
+  },
+  "493": {
+    "ShortName": "DAMS ‘26",
+    "FullName": "DAMS Lucas Oil",
+    "Logo": "F2/DAMS.svg"
+  },
+  "494": {
+    "ShortName": "Hitech ‘26",
+    "FullName": "Hitech TGR",
+    "Logo": "F2/Hitech.svg"
+  },
+  "495": {
+    "ShortName": "MP Motorsport ‘26",
+    "FullName": "MP Motorsport",
+    "Logo": "F2/MP_Motorsport.svg"
+  },
+  "496": {
+    "ShortName": "Prema ‘26",
+    "FullName": "Prema Racing",
+    "Logo": "F2/PREMA_Racing.svg"
+  },
+  "497": {
+    "ShortName": "Trident ‘26",
+    "FullName": "Trident",
+    "Logo": "F2/Trident_Motorsport.svg"
+  },
+  "498": {
+    "ShortName": "Van Amersfoort Racing ‘26",
+    "FullName": "Van Amersfoort Racing",
+    "Logo": "F2/Van_Amersfoort_Racing.svg"
+  },
+  "499": {
+    "ShortName": "Invicta ‘26",
+    "FullName": "Invicta Racing",
+    "Logo": "F2/Invicta_Racing.svg"
   },
   "65535": {
     "ShortName": "F1 Custom Team ‘26",
