@@ -353,8 +353,26 @@ body {
         gap: 16px;
         text-align: center;
     }
-    
+
     .overlay-grid {
         grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Wide windows (e.g. the 16:9 Extended Controller) reflow the section stack
+   into two balanced columns instead of one long vertical scroll. */
+@media (min-width: 900px) {
+    .controller-container {
+        max-width: 1150px;
+    }
+
+    .controller-sections {
+        column-count: 2;
+        column-gap: 20px;
+    }
+
+    .controller-sections > .overlay-section {
+        break-inside: avoid;
+        -webkit-column-break-inside: avoid;
     }
 }

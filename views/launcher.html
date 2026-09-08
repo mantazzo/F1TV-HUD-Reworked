@@ -15,6 +15,28 @@
             </div>
         </div>
 
+        <div class="layout-panel">
+            <div class="layout-panel-top">
+                <span class="layout-panel-label">Layout</span>
+                <span class="layout-status" id="layout-status">Default Settings loaded</span>
+            </div>
+            <div class="layout-panel-actions">
+                <button class="layout-button" id="load-layout-btn">Load Saved Layout</button>
+                <button class="layout-button" id="save-layout-btn">Save Layout</button>
+            </div>
+        </div>
+
+        <div class="controller-launch">
+            <div class="controller-launch-top">
+                <span class="controller-launch-label">Extended Controller</span>
+                <div class="orientation-group" id="orientation-group">
+                    <button class="orientation-btn active" data-orientation="landscape">Landscape</button>
+                    <button class="orientation-btn" data-orientation="portrait">Portrait</button>
+                </div>
+            </div>
+            <button class="open-controller-button" id="open-controller-btn">Open Extended Controller</button>
+        </div>
+
         <div class="overlay-list" id="overlay-list"></div>
 
         <button class="quit-button" id="quit-button">Shutdown &amp; Quit</button>
@@ -47,7 +69,7 @@
         OVERLAYS.forEach(cfg => { scales[cfg.id] = 1; repositionActive[cfg.id] = false; });
 
         const { WebviewWindow, getCurrentWebviewWindow } = window.__TAURI__.webviewWindow;
-        const { LogicalSize } = window.__TAURI__.dpi;
+        const { LogicalSize, LogicalPosition } = window.__TAURI__.dpi;
 
         const list = document.getElementById('overlay-list');
         OVERLAYS.forEach(cfg => {
@@ -85,10 +107,21 @@
             btn.setAttribute('aria-pressed', String(active));
         }
 
-        function openOverlay(cfg) {
+        function syncScaleUI(id) {
+            const percent = Math.round((scales[id] || 1) * 100);
+            const slider = document.getElementById(`scale-${id}`);
+            if (slider) slider.value = percent;
+            const label = document.getElementById(`scale-label-${id}`);
+            if (label) label.textContent = `${percent}%`;
+        }
+
+        // layoutPos, if given ({x, y, scale} in logical pixels), opens the window
+        // pre-positioned/scaled to match a loaded layout instead of the defaults.
+        function openOverlay(cfg, layoutPos) {
+            if (layoutPos) scales[cfg.id] = layoutPos.scale;
             const scale = scales[cfg.id];
             const reposition = repositionActive[cfg.id] ? 1 : 0;
-            const win = new WebviewWindow(cfg.id, {
+            const winOptions = {
                 url: `http://localhost:3000${cfg.path}?scale=${scale}&width=${cfg.width}&height=${cfg.height}`
                     + `&title=${encodeURIComponent(cfg.title)}&reposition=${reposition}`,
                 title: `F1TV HUD — ${cfg.title}`,
@@ -100,7 +133,12 @@
                 decorations: false,
                 alwaysOnTop: true,
                 shadow: false
-            });
+            };
+            if (layoutPos) {
+                winOptions.x = layoutPos.x;
+                winOptions.y = layoutPos.y;
+            }
+            const win = new WebviewWindow(cfg.id, winOptions);
 
             win.once('tauri://error', (e) => {
                 console.error(`Failed to open overlay "${cfg.id}":`, e);
@@ -115,11 +153,43 @@
 
             openWindows[cfg.id] = win;
             setToggleState(cfg.id, true);
+            syncScaleUI(cfg.id);
         }
 
         function closeOverlay(id) {
             const win = openWindows[id];
             if (win) win.close();
+        }
+
+        // Moves/rescales an already-open overlay window to match a loaded layout,
+        // instead of destroying and recreating it (avoids a visible flash).
+        async function applyLayoutToOpenWindow(cfg, layoutPos) {
+            const win = openWindows[cfg.id];
+            if (!win) return;
+            scales[cfg.id] = layoutPos.scale;
+            socket.emit('set_scale', { overlay: cfg.id, scale: layoutPos.scale });
+            try {
+                await win.setSize(new LogicalSize(Math.round(cfg.width * layoutPos.scale), Math.round(cfg.height * layoutPos.scale)));
+                await win.setPosition(new LogicalPosition(layoutPos.x, layoutPos.y));
+            } catch (e) {
+                console.error(`Failed to reposition "${cfg.id}":`, e);
+            }
+            syncScaleUI(cfg.id);
+        }
+
+        // Reads an open overlay window's actual current position/size back out,
+        // so Save Layout captures ground truth rather than trusting in-memory state.
+        async function captureOverlayState(id) {
+            const win = openWindows[id];
+            if (!win) return null;
+            try {
+                const scaleFactor = await win.scaleFactor();
+                const logicalPos = (await win.outerPosition()).toLogical(scaleFactor);
+                return { x: Math.round(logicalPos.x), y: Math.round(logicalPos.y), scale: scales[id] || 1 };
+            } catch (e) {
+                console.error(`Failed to capture state for "${id}":`, e);
+                return { x: 0, y: 0, scale: scales[id] || 1 };
+            }
         }
 
         list.addEventListener('click', (e) => {
@@ -169,7 +239,183 @@
             for (const id of Object.keys(openWindows)) {
                 try { await openWindows[id].close(); } catch (e) { /* already closing */ }
             }
+            if (controllerWindow) {
+                try { await controllerWindow.close(); } catch (e) { /* already closing */ }
+            }
         }
+
+        // Extended Controller — opened at a fixed size chosen via the orientation
+        // picker above; the controller page's own CSS reflows into columns once
+        // it's wide enough, so no further sizing logic is needed here.
+        const CONTROLLER_SIZES = {
+            landscape: { width: 1280, height: 720 },
+            portrait: { width: 500, height: 900 }
+        };
+        let controllerOrientation = 'landscape';
+        let controllerWindow = null;
+
+        function setOpenControllerButtonState(isOpen) {
+            const btn = document.getElementById('open-controller-btn');
+            btn.classList.toggle('on', isOpen);
+            btn.textContent = isOpen ? 'Close Extended Controller' : 'Open Extended Controller';
+        }
+
+        function openController() {
+            const size = CONTROLLER_SIZES[controllerOrientation];
+            controllerWindow = new WebviewWindow('controller-extended', {
+                url: 'http://localhost:3000/controller/controller-extended',
+                title: 'F1 HUD Controller',
+                width: size.width,
+                height: size.height,
+                resizable: true,
+                fullscreen: false,
+                transparent: false,
+                decorations: true,
+                alwaysOnTop: false
+            });
+
+            controllerWindow.once('tauri://error', (e) => {
+                console.error('Failed to open Extended Controller:', e);
+                controllerWindow = null;
+                setOpenControllerButtonState(false);
+            });
+
+            controllerWindow.once('tauri://destroyed', () => {
+                controllerWindow = null;
+                setOpenControllerButtonState(false);
+            });
+
+            setOpenControllerButtonState(true);
+        }
+
+        document.getElementById('open-controller-btn').addEventListener('click', () => {
+            if (controllerWindow) {
+                controllerWindow.close();
+            } else {
+                openController();
+            }
+        });
+
+        document.getElementById('orientation-group').addEventListener('click', (e) => {
+            const btn = e.target.closest('.orientation-btn');
+            if (!btn) return;
+            controllerOrientation = btn.dataset.orientation;
+            document.querySelectorAll('.orientation-btn').forEach(b => {
+                b.classList.toggle('active', b === btn);
+            });
+        });
+
+        // ── Layouts (save/load overlay position+scale as a group) ──────────────
+        // Single slot for now; the API and file format are already slot-keyed
+        // ({"layouts": {"1": {...}}}) so slots 2-5 later are just more keys.
+        const ACTIVE_LAYOUT_SLOT = '1';
+        const layoutLabel = (slot) => `Layout ${slot}`;
+
+        function setLayoutStatus(text) {
+            document.getElementById('layout-status').textContent = text;
+        }
+
+        async function fetchLayout(slot) {
+            try {
+                const res = await fetch(`/api/desktop-layouts/${slot}`);
+                if (!res.ok) return null;
+                return await res.json();
+            } catch (e) {
+                console.error('Failed to fetch layout:', e);
+                return null;
+            }
+        }
+
+        async function postLayout(slot, data) {
+            try {
+                await fetch(`/api/desktop-layouts/${slot}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                return true;
+            } catch (e) {
+                console.error('Failed to save layout:', e);
+                alert('Failed to save the layout — check the server console for details.');
+                return false;
+            }
+        }
+
+        async function loadLayout(slot) {
+            const layout = await fetchLayout(slot);
+            if (!layout || !layout.overlays || Object.keys(layout.overlays).length === 0) {
+                alert(`No saved data found for ${layoutLabel(slot)} yet — save one first.`);
+                return;
+            }
+
+            if (!confirm(`Are you sure you want to load your saved layout (${layoutLabel(slot)})? `
+                + `Overlays not included in it will be closed, and the ones that are will be moved/resized to match.`)) {
+                return;
+            }
+
+            const targetIds = new Set(Object.keys(layout.overlays));
+
+            for (const id of Object.keys(openWindows)) {
+                if (!targetIds.has(id)) closeOverlay(id);
+            }
+
+            for (const [id, layoutPos] of Object.entries(layout.overlays)) {
+                const cfg = OVERLAYS.find(o => o.id === id);
+                if (!cfg) continue; // saved layout references an overlay that no longer exists
+                if (openWindows[id]) {
+                    await applyLayoutToOpenWindow(cfg, layoutPos);
+                } else {
+                    openOverlay(cfg, layoutPos);
+                }
+            }
+
+            setLayoutStatus(`${layoutLabel(slot)} loaded`);
+        }
+
+        async function saveLayout(slot) {
+            const activeIds = Object.keys(openWindows);
+            if (activeIds.length === 0) {
+                alert('No overlays are currently open — open at least one before saving a layout.');
+                return;
+            }
+
+            if (!confirm(`Are you sure you want to save this layout (${layoutLabel(slot)})? `
+                + `Only currently active overlays' position and scale will be saved.`)) {
+                return;
+            }
+
+            const activeData = {};
+            for (const id of activeIds) {
+                activeData[id] = await captureOverlayState(id);
+            }
+
+            const existing = await fetchLayout(slot);
+            const existingOverlays = (existing && existing.overlays) || {};
+            const staleIds = Object.keys(existingOverlays).filter(id => !activeData[id]);
+
+            let finalOverlays = activeData;
+            if (staleIds.length > 0) {
+                const staleNames = staleIds
+                    .map(id => (OVERLAYS.find(o => o.id === id) || {}).title || id)
+                    .join(', ');
+                const keepOld = confirm(
+                    `${layoutLabel(slot)} already has saved data for overlays that aren't currently active (${staleNames}).\n\n`
+                    + `Press OK to keep that saved data and only update the currently active overlays.\n`
+                    + `Press Cancel to do a fresh save with only what's active now (this discards their saved data).`
+                );
+                if (keepOld) finalOverlays = { ...existingOverlays, ...activeData };
+            }
+
+            const saved = await postLayout(slot, {
+                name: layoutLabel(slot),
+                savedAt: new Date().toISOString(),
+                overlays: finalOverlays
+            });
+            if (saved) setLayoutStatus(`${layoutLabel(slot)} saved`);
+        }
+
+        document.getElementById('load-layout-btn').addEventListener('click', () => loadLayout(ACTIVE_LAYOUT_SLOT));
+        document.getElementById('save-layout-btn').addEventListener('click', () => saveLayout(ACTIVE_LAYOUT_SLOT));
 
         // Runs whenever the launcher is about to close, whether via the native
         // title bar close button or the Quit button below — keeps overlay

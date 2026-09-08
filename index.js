@@ -46,6 +46,31 @@ function saveOverlayConfig(config) {
 
 let overlayConfig = loadOverlayConfig();
 
+// Desktop Mode layout management (Tauri launcher — saved window position/scale per overlay)
+const DESKTOP_LAYOUTS_PATH = path.join(__dirname, 'public', 'data', 'DesktopModeSettings.json');
+
+function loadDesktopLayouts() {
+    try {
+        if (fs.existsSync(DESKTOP_LAYOUTS_PATH)) {
+            const data = fs.readFileSync(DESKTOP_LAYOUTS_PATH, 'utf8');
+            return JSON.parse(data);
+        }
+    } catch (err) {
+        console.error('Error loading desktop layouts:', err);
+    }
+    return { layouts: {} };
+}
+
+function saveDesktopLayouts(data) {
+    try {
+        fs.writeFileSync(DESKTOP_LAYOUTS_PATH, JSON.stringify(data, null, 2));
+    } catch (err) {
+        console.error('Error saving desktop layouts:', err);
+    }
+}
+
+let desktopLayouts = loadDesktopLayouts();
+
 // Prompt for port
 // Recursively prompts for IP + port for each requested redirect
 function collectForwardAddresses(total, collected, callback) {
@@ -273,6 +298,21 @@ function startServer(portNumber, forwardAddresses) {
     // Serve static files (images, CSS, fonts...)
     app.use(express.static(path.join(__dirname, 'public')));
     app.use('/images', express.static(path.join(__dirname, 'images')));
+    app.use(express.json());
+
+    // Desktop Mode layouts (Tauri launcher only — saved window position/scale per overlay).
+    // Keyed by slot number so multiple saved layouts (up to 5, planned) are just more keys later.
+    app.get('/api/desktop-layouts/:slot', (req, res) => {
+        const layout = desktopLayouts.layouts[req.params.slot];
+        if (!layout) return res.status(404).json(null);
+        res.json(layout);
+    });
+
+    app.post('/api/desktop-layouts/:slot', (req, res) => {
+        desktopLayouts.layouts[req.params.slot] = req.body;
+        saveDesktopLayouts(desktopLayouts);
+        res.json({ success: true });
+    });
 
     // Overlays
     app.get('/car-damage', (req, res) => res.sendFile(path.join(__dirname, 'views', 'car-damage.html')));                       // Car Damage overlay
