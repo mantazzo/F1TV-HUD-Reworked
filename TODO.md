@@ -7,7 +7,7 @@
     - Includes an automatic MPH units toggle
         - Can override it in Extended Controller to use the units you want instead
     - Includes F1TV style and Multiviewer style
-    - NEW: Added Overtake Mode display for F1 2026 cars (replaces DRS for these cars): blinking Blue Outline when Active, Filled with Blue Tint when OT is Active and using Boost
+    - NEW: Added Overtake Mode (OT) display for F1 2026 cars (replaces DRS for these cars): blinking Blue Outline when Active, Filled with Blue Tint when OT is Active and using Boost
     - Likely the first fully finished overlay
 - Lap Timer
     - Remade with some personal adjustments
@@ -19,11 +19,11 @@
     - Sector bar works and shows yellow, green and purple sectors
     - May come back to it later to expand functionality even more
 - Pit Timer
-    - Remade in full, uses Primary Color from the game, can be overwritten in JSON
+    - Remade in full, uses Primary Color from the game, color can be overwritten in Teams JSON
     - Only shows up when in race and only when in pitlane
     - Holds the pit stop values for 6 seconds when exiting pits, then hides
     - Can toggle between using Team Color for the Pit Stop Timer in Extended Controller
-    - Currently does not show if a penalty is being served (might change that in the future)
+    - Currently does not show if a penalty is being served (might change that in the future, if I find an idea how to display that)
 - Live Speed
     - Remade in full, uses Primary Color from the game or the overwrite from JSON
     - Dynamic units change depending on whether you use KPH or MPH as primary units in the game
@@ -39,15 +39,15 @@
 - Weather
     - Fully remade
     - An overlay showing current weather and weather forecast for the next 5, 10, 15 and 30 minutes
-    - Forecast can be toggled using the Extended Controller
+    - Forecast display can be toggled using the Extended Controller
     - Primary units change depending on the default temperature units set by the player
         - Units can be overwritten in Extended Controller or use Automatic from the game
     - Also includes night icons for potential use at night tracks (needs some more testing)
 - Turn Indicator
     - A very basic overlay that shows current Turn
-    - Needs data set up by the user (examples provided)
+    - Turn data is set up by the user and uses a somewhat simple JSON system (with some examples provided)
     - Can use different data depending on game year (potential older game support in the future - low priority to add support for now)
-    - Data for all F1 25 tracks have been included (incl. Madrid, added via 2026 Season Pack DLC)
+    - Default Data for all F1 25 tracks have been included (incl. Madrid, added via 2026 Season Pack DLC)
 - Fastest Sectors
     - Fully remade
     - Shows the current fastest sector times and driver names
@@ -60,12 +60,13 @@
     - Uses a "FIFO" (First In, First Out) queue system so all events will be shown properly
     - FORMATION LAP box also works as intended and uses the in-game event trigger instead
     - Potential improvement in the future with more supported events (if there's interest) and possibly "custom" message setup
+        - Overtake Enabled/Disabled and Partial Active Aero Mode Enabled/Disabled messages will be added soon
 - Mini Leaderboard
     - Remade with some adjustments
     - Shows the Current Driver Last Name in the middle, with Driver Ahead at the top and Driver Behind at the bottom
         - If there is no driver ahead or behind, the row will be empty instead
-        - Might change it in the future to show two places ahead (if you're last) or two places behind (if you're first)
-    - Decorations on the sides are now infinitely animated
+        - Might change it in the future to show two places ahead (if you're last) or two places behind (if you're first), but that's some extra work
+    - Decorations on the sides are infinitely animated
     - Also supports the Knockout Zone indicator for Qualifying (supports 2026 24 drivers grid size for Q1/SQ1)
 - Session Info
     - Fully remade, with some improvements
@@ -74,6 +75,7 @@
         - F2 can use a different Event Name, falls back to F1 Event Name if not found
             - Can also show different eventName per car year, so that you can have different event names for 2026 cars and 2025 cars, for example
         - Year can be set by JSON file or it will use game's year by default
+            - Most of the non-default Teams have been set up to show the correct year (like F1 2026 or F2 2026 cars - these will trigger showing year "2026" instead)
     - Can be set to just be a toggle, or have automatic hiding (after 10 seconds)
         - Can be changed to show up for 10 seconds after every session start as well
     - Includes "alt" background flags for certain tracks
@@ -88,7 +90,7 @@
 - Car Damage
     - Fully Remade and Upgraded
     - Shows either current tyre wear or remaining tyre life (controlled through the Extended Controller)
-    - Shows damage to Wings, Sidepods, Floor, Diffuser, Rear Wing, Engine (overall) and Brakes (will likely be 0% all the time, but may be useful with some game mods...)
+    - Shows damage to Wings, Sidepods, Floor, Diffuser, Rear Wing, Engine (overall) and Brakes (note: brakes will likely be 0% all the time, but may be useful with some game mods...)
     - Can hide automatically after showing up (extra option toggle, controlled through Extended Controller)
     - Can show up automatically on any car part damage received (any Wings (Front + Rear) or Diffuser damage, 25%+ damage on Sidepods and Floor)
         - Or it can show up on any damage - that will include tyre wear! (Will show up every 5% of highest worn tyre, additionally)
@@ -122,7 +124,17 @@
     - Uses the same controls in the Controller as the "Initials" version of the Leaderboard (Controller feature parity)
     - Might have some bugs remaining, I haven't fully tested out every single situation yet
 - Driver Name
-    - Info Soon™
+    - Fully Remade, with some personal fixes and improvements
+    - Shows Driver's Name, Team Logo, Team Name and the current position for the driver
+    - Offers 5 "variants" so far (same as original)
+        - Number (default, shows Driver Number, in text form or in image form (can be selected through Extended Controller))
+        - Race Leader (shows the "RACE LEADER" text for the driver if he is leading the race)
+        - Race Story (shows data for Starting Position and Current Position during a race)
+        - Personal Best Time (shows the best lap time for the driver and tyre compound used for that lap during non-race sessions; does not work in race sessions)
+        - Chasing Driver Ahead (shows the driver who is ahead and which position we are going for in the race; if the driver is leading, Race Leader is triggered instead)
+        - More variants may be added in the future, I'm open to ideas what could be shown here...
+    - Somewhat unified, compared to the original version (original had 5 separate overlay versions, this is one base with 5 different information variants displayed)
+    - Also has "automatic hiding" option (hides the overlay after 15 seconds, shows up again once another variant is toggled in the Extended Controller; feature can be enabled in Extended Controller as well)
 
 ## Overlay Controllers
 
@@ -144,11 +156,11 @@
 
 ## Currently Working On
 
-Driver Name (with extensions, and maybe something extra if possible)
+Bugfixes and improvements after latest version release
 
 ## Next Planned Overlay
 
-Driver Name (and the extensions)
+Driver Ahead and Behind (the three versions of the overlay) (one of the last overlays that I consider to be "priority" overlay)
 
 ## Not started
 
@@ -156,13 +168,14 @@ In no particular order:
 - Battery Level (from older version, so might need some extra work)
 - Driver Ahead and Behind (the three versions of the overlay)
 - Control Dashboard (original version, likely saved for last)
+- Race Classification (probably could use data sent from the game)
 
 ## Debatable
 
 - Data Channel (haven't looked much into it so far)
-- Race Classification (could use data sent from the game, perhaps?)
 - Halo HUD (likely possible, but would probably require too much time)
 
 ## Future / Low Priority Ideas
 
 - **MCP Server** - A locally running Model Context Protocol server that exposes live telemetry state (session, drivers, lap data, etc.) as queryable tools for AI-assisted debugging. Would allow direct inspection of live data during a session without having to manually relay debug page output. Suggested approach: add lightweight HTTP endpoints to `index.js` exposing in-memory state, then build a thin `mcp-server.js` wrapping those as MCP tools, registered via `.vscode/mcp.json`. (AI-written note - *editing note*)
+- Low priority: Once completed to a satisfactory level, try to backport the overlays to older games (F1 22-F1 23-F1-24)
