@@ -362,7 +362,7 @@ function startServer(portNumber, forwardAddresses) {
     // Default to speedometer overlay (for now)
     app.get('/', (req, res) => res.redirect('/speedometer'));
     
-    server.listen(3000, () => console.log('Overlays at http://localhost:3000/ (For example, http://localhost:3000/speedometer) \nController (for various overlays) available at http://localhost:3000/controller/controller-extended \nReminder - you can press Ctrl+C to stop the system manually.'));
+    server.listen(3000, () => console.log('Overlays running at http://localhost:3000/ (For example, http://localhost:3000/speedometer) \nController (for various overlays) available at [http://localhost:3000/controller/controller-extended] \n\n**Reminder** - you can press Ctrl+C to stop the system manually.'));
 }
 
 // ── Startup prompt chain ──────────────────────────────────────────────────────
