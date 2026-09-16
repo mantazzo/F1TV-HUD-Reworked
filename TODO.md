@@ -59,8 +59,9 @@
     - A popup which shows various events - Retirements, DRS switches (enabled/disabled), Penalties/Warnings, Red Flag, SC/VSC, Served Penalties
     - Uses a "FIFO" (First In, First Out) queue system so all events will be shown properly
     - FORMATION LAP box also works as intended and uses the in-game event trigger instead
+    - NEW: Added Overtake Mode Enabled/Disabled and Partial Active Aero Mode Enabled/Disabled messages (2026 regs events)
+    - NEW: Fast Mode toggle in the Extended Controller, reduces display times for the popup in half (useful for busy sessions, especially useful in Multiplayer)
     - Potential improvement in the future with more supported events (if there's interest) and possibly "custom" message setup
-        - Overtake Enabled/Disabled and Partial Active Aero Mode Enabled/Disabled messages will be added soon
 - Mini Leaderboard
     - Remade with some adjustments
     - Shows the Current Driver Last Name in the middle, with Driver Ahead at the top and Driver Behind at the bottom

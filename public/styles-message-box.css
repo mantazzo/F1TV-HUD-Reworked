@@ -49,7 +49,7 @@ body {
     opacity: 0.05;
 }
 
-/* Diagonal stripes layer container */
+/* Diagonal stripes layer - CSS repeating-linear-gradient (replaces the old JS-generated 153-element stripe pattern) */
 .diagonal-stripes-layer {
     position: absolute;
     top: 0;
@@ -57,25 +57,13 @@ body {
     width: 1250px;
     height: 15px;
     opacity: 0.1;
-}
-
-/* layer-repetition wrappers for stripes */
-.layer-repetition {
-    position: absolute;
-    top: 0;
-    width: 100px;
-    height: 15px;
-}
-
-/* Individual diagonal stripes */
-.diagonal-stripe {
-    position: absolute;
-    left: -40px;
-    top: -5px;
-    width: 100px;
-    height: 2px;
-    background-color: rgb(255, 255, 255);
-    transform: rotate(-45deg);
+    background: repeating-linear-gradient(
+        135deg,
+        rgb(255, 255, 255) 0px,
+        rgb(255, 255, 255) 2px,
+        transparent 2px,
+        transparent 6.364px
+    );
 }
 
 /* Blur effect rectangle */
@@ -151,7 +139,7 @@ body {
     background-color: rgb(255, 255, 255);
 }
 
-/* Nameplate diagonal stripes layer */
+/* Nameplate diagonal stripes layer - CSS repeating-linear-gradient (replaces the old JS-generated 15-element stripe pattern) */
 .nameplate-stripes-layer {
     position: absolute;
     left: 0;
@@ -159,25 +147,13 @@ body {
     width: 800px;
     height: 100px;
     opacity: 0.05;
-}
-
-/* nameplate-layer-repetition wrappers for stripes */
-.nameplate-layer-repetition {
-    position: absolute;
-    top: 0;
-    width: 355px;
-    height: 100px;
-}
-
-/* Individual diagonal stripes */
-.nameplate-diagonal-stripe {
-    position: absolute;
-    left: -225.917px;
-    top: 35.5825px;
-    width: 355px;
-    height: 20px;
-    background-color: rgb(0, 0, 0);
-    transform: rotate(-45deg);
+    background: repeating-linear-gradient(
+        135deg,
+        rgb(0, 0, 0) 0px,
+        rgb(0, 0, 0) 20px,
+        transparent 20px,
+        transparent 39.6px
+    );
 }
 
 /* FIA logo section */
@@ -508,7 +484,7 @@ body {
     opacity: 0.05;
 }
 
-/* Stroke Diagonal Layer */
+/* Stroke Diagonal Layer - CSS repeating-linear-gradient (replaces the old JS-generated 153-element stripe pattern) */
 .formation-stroke-diagonal-layer {
     position: absolute;
     top: 0;
@@ -516,23 +492,13 @@ body {
     width: 1250px;
     height: 15px;
     opacity: 0.1;
-}
-
-/* Formation Lap stroke diagonal stripe wrappers */
-.formation-stroke-layer-repetition {
-    position: absolute;
-    top: 0;
-}
-
-/* Formation Lap stroke diagonal stripe element */
-.formation-stroke-diagonal-stripe {
-    position: absolute;
-    top: -5px;
-    left: -40px;
-    width: 100px;
-    height: 2px;
-    background-color: rgb(255, 255, 255);
-    transform: rotate(-45deg);
+    background: repeating-linear-gradient(
+        135deg,
+        rgb(255, 255, 255) 0px,
+        rgb(255, 255, 255) 2px,
+        transparent 2px,
+        transparent 6.364px
+    );
 }
 
 /* Stroke Blur Effect */

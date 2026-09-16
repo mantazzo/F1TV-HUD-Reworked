@@ -89,6 +89,11 @@
       "standingsFormationLap": false,
       "standingsDriverCount": 20,
       "standingsTeamCount": 10
+    },
+    "message-box": {
+      "visible": true,
+      "name": "Message Box",
+      "fastMode": false
     }
   }
 }

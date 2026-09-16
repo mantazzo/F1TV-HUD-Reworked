@@ -373,6 +373,17 @@
             </div>
         </section>
 
+        <section class="overlay-section" id="message-box-options-section">
+            <h2>Message Box Options</h2>
+            <div class="option-row">
+                <label class="toggle-label">
+                    <input type="checkbox" id="message-box-fast-mode-toggle" class="toggle-checkbox">
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-text">Fast Mode (Halves All Display Durations)</span>
+                </label>
+            </div>
+        </section>
+
         <section class="overlay-section server-control-section">
             <h2>Server Control</h2>
             <button class="stop-server-button" id="stop-server-btn">
@@ -425,7 +436,7 @@
             
             for (const [overlayId, overlay] of Object.entries(currentConfig.overlays)) {
                 // Skip overlays that don't have manual visibility control
-                if (overlayId === 'lap-timer' || overlayId === 'pit-timer') continue;
+                if (overlayId === 'lap-timer' || overlayId === 'pit-timer' || overlayId === 'message-box') continue;
                 
                 const button = document.createElement('button');
                 button.className = `overlay-button ${overlay.visible ? 'active' : ''}`;
@@ -700,6 +711,17 @@
             });
         });
 
+        // Message Box fast mode handling
+        const messageBoxFastModeToggle = document.getElementById('message-box-fast-mode-toggle');
+
+        messageBoxFastModeToggle.addEventListener('change', () => {
+            socket.emit('config_update', {
+                overlay: 'message-box',
+                property: 'fastMode',
+                value: messageBoxFastModeToggle.checked
+            });
+        });
+
         // Update lap timer options when config changes
         function updateLapTimerOptions() {
             if (!currentConfig || !currentConfig.overlays || !currentConfig.overlays['lap-timer']) return;
@@ -726,6 +748,14 @@
             
             const sessionInfoConfig = currentConfig.overlays['session-info'];
             sessionInfoVisibilityMode.value = sessionInfoConfig.visibilityMode || 'toggle';
+        }
+
+        // Update Message Box options when config changes
+        function updateMessageBoxOptions() {
+            if (!currentConfig || !currentConfig.overlays || !currentConfig.overlays['message-box']) return;
+
+            const messageBoxConfig = currentConfig.overlays['message-box'];
+            messageBoxFastModeToggle.checked = messageBoxConfig.fastMode === true;
         }
 
         // Driver Name variant button handling
@@ -987,6 +1017,7 @@
             updateCarDamageOptions();
             updateLeaderboardOptions();
             updateDriverNameOptions();
+            updateMessageBoxOptions();
         };
 
         // Stop server button
