@@ -301,17 +301,59 @@ function startServer(portNumber, forwardAddresses) {
     app.use(express.json());
 
     // Desktop Mode layouts (Tauri launcher only — saved window position/scale per overlay).
-    // Keyed by slot number so multiple saved layouts (up to 5, planned) are just more keys later.
+    // Five slots ("1"-"5"), each { name, savedAt, overlays }. A slot can exist with only a
+    // custom name (renamed before anything was saved into it) — overlays is then empty.
+    const LAYOUT_SLOTS = ['1', '2', '3', '4', '5'];
+    const LAYOUT_NAME_MAX = 24;
+    const isValidSlot = (slot) => LAYOUT_SLOTS.includes(slot);
+
+    // Summary of every slot for the Launcher's picker (no overlay positions)
+    app.get('/api/desktop-layouts', (req, res) => {
+        const summary = {};
+        for (const slot of LAYOUT_SLOTS) {
+            const layout = desktopLayouts.layouts[slot];
+            summary[slot] = {
+                name: layout?.name || null,
+                savedAt: layout?.savedAt || null,
+                hasData: !!layout?.overlays && Object.keys(layout.overlays).length > 0
+            };
+        }
+        res.json(summary);
+    });
+
     app.get('/api/desktop-layouts/:slot', (req, res) => {
+        if (!isValidSlot(req.params.slot)) return res.status(400).json(null);
         const layout = desktopLayouts.layouts[req.params.slot];
         if (!layout) return res.status(404).json(null);
         res.json(layout);
     });
 
     app.post('/api/desktop-layouts/:slot', (req, res) => {
+        if (!isValidSlot(req.params.slot)) return res.status(400).json({ success: false });
         desktopLayouts.layouts[req.params.slot] = req.body;
         saveDesktopLayouts(desktopLayouts);
         res.json({ success: true });
+    });
+
+    // Clear a slot completely (saved positions + custom name) — back to an empty "Layout N"
+    app.delete('/api/desktop-layouts/:slot', (req, res) => {
+        if (!isValidSlot(req.params.slot)) return res.status(400).json({ success: false });
+        delete desktopLayouts.layouts[req.params.slot];
+        saveDesktopLayouts(desktopLayouts);
+        res.json({ success: true });
+    });
+
+    // Rename a slot. An empty name resets it to the default "Layout N" (name removed).
+    app.post('/api/desktop-layouts/:slot/name', (req, res) => {
+        const { slot } = req.params;
+        if (!isValidSlot(slot)) return res.status(400).json({ success: false });
+        const name = String(req.body?.name ?? '').trim().slice(0, LAYOUT_NAME_MAX);
+        const layout = desktopLayouts.layouts[slot] || { overlays: {} };
+        if (name) layout.name = name;
+        else delete layout.name;
+        desktopLayouts.layouts[slot] = layout;
+        saveDesktopLayouts(desktopLayouts);
+        res.json({ success: true, name: layout.name || null });
     });
 
     // Overlays

@@ -20,9 +20,29 @@
                 <span class="layout-panel-label">Layout</span>
                 <span class="layout-status" id="layout-status">Default Settings loaded</span>
             </div>
+            <div class="layout-slot-row">
+                <div class="layout-slot-group" id="layout-slot-group">
+                    <button class="layout-slot-btn" data-slot="1">1</button>
+                    <button class="layout-slot-btn" data-slot="2">2</button>
+                    <button class="layout-slot-btn" data-slot="3">3</button>
+                    <button class="layout-slot-btn" data-slot="4">4</button>
+                    <button class="layout-slot-btn" data-slot="5">5</button>
+                </div>
+                <button class="layout-rename-btn" id="rename-layout-btn">Rename</button>
+            </div>
+            <div class="layout-slot-info" id="layout-slot-info">
+                <span class="layout-slot-name" id="layout-slot-name">Layout 1</span>
+                <span class="layout-slot-saved" id="layout-slot-saved">Empty</span>
+            </div>
+            <div class="layout-rename-row" id="layout-rename-row" hidden>
+                <input type="text" class="layout-rename-input" id="layout-rename-input" maxlength="24" placeholder="Layout name (empty = default)">
+                <button class="layout-rename-btn" id="rename-confirm-btn">OK</button>
+                <button class="layout-rename-btn" id="rename-cancel-btn">Cancel</button>
+            </div>
             <div class="layout-panel-actions">
                 <button class="layout-button" id="load-layout-btn">Load Saved Layout</button>
                 <button class="layout-button" id="save-layout-btn">Save Layout</button>
+                <button class="layout-button layout-button--danger" id="clear-layout-btn">Clear</button>
             </div>
         </div>
 
@@ -306,13 +326,46 @@
         });
 
         // ── Layouts (save/load overlay position+scale as a group) ──────────────
-        // Single slot for now; the API and file format are already slot-keyed
-        // ({"layouts": {"1": {...}}}) so slots 2-5 later are just more keys.
-        const ACTIVE_LAYOUT_SLOT = '1';
-        const layoutLabel = (slot) => `Layout ${slot}`;
+        // Five slots ({"layouts": {"1": {...}, ..., "5": {...}}}), picked with the numbered
+        // button row; Load/Save/Rename act on the selected slot. Slot 1 is selected on every
+        // launch and nothing auto-loads (neutral default each launch, by design).
+        let activeLayoutSlot = '1';
+        let layoutSummary = {};  // slot → { name, savedAt, hasData } from GET /api/desktop-layouts
+        const layoutLabel = (slot) => layoutSummary[slot]?.name || `Layout ${slot}`;
 
         function setLayoutStatus(text) {
             document.getElementById('layout-status').textContent = text;
+        }
+
+        function formatSavedAt(iso) {
+            if (!iso) return 'Empty';
+            const d = new Date(iso);
+            return `Saved ${d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}, `
+                + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function renderLayoutSlots() {
+            document.querySelectorAll('.layout-slot-btn').forEach(btn => {
+                const info = layoutSummary[btn.dataset.slot];
+                btn.classList.toggle('active', btn.dataset.slot === activeLayoutSlot);
+                btn.classList.toggle('empty', !info?.hasData);
+                btn.title = layoutLabel(btn.dataset.slot);
+            });
+            const info = layoutSummary[activeLayoutSlot];
+            // Nothing to clear on a slot with neither saved data nor a custom name
+            document.getElementById('clear-layout-btn').disabled = !info?.hasData && !info?.name;
+            document.getElementById('layout-slot-name').textContent = layoutLabel(activeLayoutSlot);
+            document.getElementById('layout-slot-saved').textContent = info?.hasData ? formatSavedAt(info.savedAt) : 'Empty';
+        }
+
+        async function refreshLayoutSlots() {
+            try {
+                const res = await fetch('/api/desktop-layouts');
+                if (res.ok) layoutSummary = await res.json();
+            } catch (e) {
+                console.error('Failed to fetch layout slots:', e);
+            }
+            renderLayoutSlots();
         }
 
         async function fetchLayout(slot) {
@@ -406,16 +459,88 @@
                 if (keepOld) finalOverlays = { ...existingOverlays, ...activeData };
             }
 
-            const saved = await postLayout(slot, {
-                name: layoutLabel(slot),
-                savedAt: new Date().toISOString(),
-                overlays: finalOverlays
-            });
-            if (saved) setLayoutStatus(`${layoutLabel(slot)} saved`);
+            const layoutData = { savedAt: new Date().toISOString(), overlays: finalOverlays };
+            if (existing?.name) layoutData.name = existing.name;  // keep a custom name across saves
+            const saved = await postLayout(slot, layoutData);
+            if (saved) {
+                setLayoutStatus(`${layoutLabel(slot)} saved`);
+                await refreshLayoutSlots();
+            }
         }
 
-        document.getElementById('load-layout-btn').addEventListener('click', () => loadLayout(ACTIVE_LAYOUT_SLOT));
-        document.getElementById('save-layout-btn').addEventListener('click', () => saveLayout(ACTIVE_LAYOUT_SLOT));
+        // Clear: removes the slot's saved positions AND its custom name. Open overlay windows
+        // are left as they are — only the saved data goes.
+        async function clearLayout(slot) {
+            const label = layoutLabel(slot);
+            if (!confirm(`Are you sure you want to clear ${label}? `
+                + `All of its saved overlay positions/scales${layoutSummary[slot]?.name ? ' and its custom name' : ''} will be deleted. `
+                + `Currently open overlays are not affected.\n\nThis cannot be undone.`)) {
+                return;
+            }
+            try {
+                const res = await fetch(`/api/desktop-layouts/${slot}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            } catch (e) {
+                console.error('Failed to clear layout:', e);
+                alert('Failed to clear the layout — check the server console for details.');
+                return;
+            }
+            showRename(false);
+            await refreshLayoutSlots();
+            setLayoutStatus(`${label} cleared`);
+        }
+
+        // Rename (inline field — no prompt() dialog). Empty name resets to "Layout N".
+        const renameRow   = document.getElementById('layout-rename-row');
+        const renameInput = document.getElementById('layout-rename-input');
+
+        function showRename(show) {
+            renameRow.hidden = !show;
+            if (show) {
+                renameInput.value = layoutSummary[activeLayoutSlot]?.name || '';
+                renameInput.focus();
+                renameInput.select();
+            }
+        }
+
+        async function confirmRename() {
+            const slot = activeLayoutSlot;
+            try {
+                const res = await fetch(`/api/desktop-layouts/${slot}/name`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: renameInput.value })
+                });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            } catch (e) {
+                console.error('Failed to rename layout:', e);
+                alert('Failed to rename the layout — check the server console for details.');
+                return;
+            }
+            showRename(false);
+            await refreshLayoutSlots();
+            setLayoutStatus(`Slot ${slot} renamed to ${layoutLabel(slot)}`);
+        }
+
+        document.getElementById('layout-slot-group').addEventListener('click', (e) => {
+            const btn = e.target.closest('.layout-slot-btn');
+            if (!btn) return;
+            activeLayoutSlot = btn.dataset.slot;
+            showRename(false);
+            renderLayoutSlots();
+        });
+        document.getElementById('rename-layout-btn').addEventListener('click', () => showRename(renameRow.hidden));
+        document.getElementById('rename-confirm-btn').addEventListener('click', confirmRename);
+        document.getElementById('rename-cancel-btn').addEventListener('click', () => showRename(false));
+        renameInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') confirmRename();
+            else if (e.key === 'Escape') showRename(false);
+        });
+
+        document.getElementById('load-layout-btn').addEventListener('click', () => loadLayout(activeLayoutSlot));
+        document.getElementById('save-layout-btn').addEventListener('click', () => saveLayout(activeLayoutSlot));
+        document.getElementById('clear-layout-btn').addEventListener('click', () => clearLayout(activeLayoutSlot));
+        refreshLayoutSlots();
 
         // Runs whenever the launcher is about to close, whether via the native
         // title bar close button or the Quit button below — keeps overlay

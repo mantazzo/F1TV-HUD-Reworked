@@ -86,6 +86,104 @@ body {
     text-align: right;
 }
 
+/* Slot picker: numbered buttons (same look as .orientation-btn) + Rename */
+.layout-slot-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.layout-slot-group {
+    display: flex;
+    gap: 4px;
+}
+
+.layout-slot-btn,
+.layout-rename-btn {
+    padding: 5px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+
+.layout-slot-btn {
+    min-width: 32px;
+}
+
+/* Slots with no saved layout yet are dimmed (still selectable, to save into them) */
+.layout-slot-btn.empty {
+    color: rgba(255, 255, 255, 0.35);
+    border-style: dashed;
+}
+
+.layout-slot-btn:hover,
+.layout-rename-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.layout-slot-btn.active {
+    background: rgba(233, 69, 96, 0.2);
+    border-color: #e94560;
+    border-style: solid;
+    color: #ff6b6b;
+}
+
+.layout-slot-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+    min-width: 0;
+}
+
+.layout-slot-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.layout-slot-saved {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    white-space: nowrap;
+}
+
+.layout-rename-row {
+    display: flex;
+    gap: 6px;
+}
+
+.layout-rename-row[hidden] {
+    display: none;
+}
+
+.layout-rename-input {
+    flex: 1;
+    min-width: 0;
+    padding: 5px 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.25);
+    color: #ffffff;
+    font-size: 12px;
+    font-family: inherit;
+}
+
+.layout-rename-input:focus {
+    outline: none;
+    border-color: #e94560;
+}
+
 .layout-panel-actions {
     display: flex;
     gap: 8px;
@@ -107,6 +205,26 @@ body {
 .layout-button:hover {
     background: rgba(255, 255, 255, 0.15);
     border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Clear: narrower than Load/Save, reddish so it doesn't read as a routine action */
+.layout-button--danger {
+    flex: 0 0 auto;
+    color: #ff6b6b;
+    border-color: rgba(233, 69, 96, 0.4);
+}
+
+.layout-button--danger:hover {
+    background: rgba(233, 69, 96, 0.2);
+    border-color: #e94560;
+}
+
+.layout-button:disabled,
+.layout-button:disabled:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+    opacity: 0.4;
+    cursor: default;
 }
 
 .controller-launch {
