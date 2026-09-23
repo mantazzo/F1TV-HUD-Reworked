@@ -1354,8 +1354,16 @@
         // last time THIS element was fit — safe only for elements whose box width never changes
         // independent of text (driver names, timing deltas — NOT elSessionName, whose width
         // depends on pane/session state too).
+        // textFit wraps the text in a <span class="textFitted"> carrying the reduced font size.
+        // Any later textContent write replaces that span and the text snaps back to its full
+        // CSS size — so per-tick writes on fitted elements go through setText() (writes only
+        // when the text really changed), and textFitIfChanged() re-fits if the span is gone.
+        function setText(el, text) {
+            if (el.textContent !== text) el.textContent = text;
+        }
+
         function textFitIfChanged(el, text, opts) {
-            if (el._lastFitText === text) return;
+            if (el._lastFitText === text && el.firstElementChild?.classList.contains('textFitted')) return;
             try {
                 textFit(el, opts);
                 el._lastFitText = text;
@@ -2021,24 +2029,24 @@
                 } else {
                     timeText = lapMs > 0 ? formatLapTimeMs(lapMs) : 'NO TIME';
                 }
-                row.tText.textContent = timeText;
+                setText(row.tText, timeText);
                 row.tText.style.color = showPersonalBest ? 'lime' : '';
 
                 // Gaps column: P1 shows their own time; others show gap to P1
                 // Priority: Out Lap (after leaving the pit lane) → personal best (lime) → time / gap → NO TIME
                 if (dStatus === 3 && pStatus === 0) {
-                    row.gText.textContent = 'OUT LAP';
+                    setText(row.gText, 'OUT LAP');
                     row.gText.style.color = '';
                 } else if (showPersonalBest) {
-                    row.gText.textContent = formatLapTimeMs(pbMs);
+                    setText(row.gText, formatLapTimeMs(pbMs));
                     row.gText.style.color = 'lime';
                 } else if (pos === 1) {
-                    row.gText.textContent = lapMs > 0 ? formatLapTimeMs(lapMs) : 'NO TIME';
+                    setText(row.gText, lapMs > 0 ? formatLapTimeMs(lapMs) : 'NO TIME');
                     row.gText.style.color = '';
                 } else {
-                    row.gText.textContent = (lapMs > 0 && leaderMs > 0)
+                    setText(row.gText, (lapMs > 0 && leaderMs > 0)
                         ? formatDeltaMs(lapMs - leaderMs)
-                        : 'NO TIME';
+                        : 'NO TIME');
                     row.gText.style.color = '';
                 }
 
@@ -2782,7 +2790,7 @@
                 row.driverNumber.style.display       = 'none';
                 row.driverNumber.style.opacity       = '0';
                 row.abbrev.style.opacity   = '0';
-                row.lastNamePI.textContent = piLastName.toUpperCase();
+                setText(row.lastNamePI, piLastName.toUpperCase());
                 row.lastNamePI.style.opacity = '1';
                 try {
                     textFit(row.lastNamePI, { minFontSize: 12, maxFontSize: 24, multiLine: false, widthOnly: true });
@@ -2824,7 +2832,7 @@
                 row.driverNumber.style.display       = 'none';
                 row.driverNumber.style.opacity       = '0';
                 row.abbrev.style.opacity   = '0';
-                row.lastNamePI.textContent = tmLastName.toUpperCase();
+                setText(row.lastNamePI, tmLastName.toUpperCase());
                 row.lastNamePI.style.opacity = '1';
                 try {
                     textFit(row.lastNamePI, { minFontSize: 12, maxFontSize: 24, multiLine: false, widthOnly: true });
@@ -3463,10 +3471,10 @@
                     const raceNum     = carRaceNumbers[carIdx];
                     // "abbrev" now displays the full last name in the compact/default slot
                     // (kept the property/class name to avoid touching every call site — see memory).
-                    dRow.abbrev.textContent = lastNameStr;
+                    setText(dRow.abbrev, lastNameStr);
                     textFitIfChanged(dRow.abbrev, lastNameStr, { minFontSize: 12, maxFontSize: 23, multiLine: false, widthOnly: true });
-                    dRow.lastNamePI.textContent   = lastNameStr.toUpperCase();
-                    dRow.lastName.textContent     = lastNameStr;
+                    setText(dRow.lastNamePI, lastNameStr.toUpperCase());
+                    setText(dRow.lastName, lastNameStr);
                     const rsA = carResultStatus[carIdx];
                     const dimA = rsA === 5 || rsA === 7;
                     const showLNA = showLastNames && paneMode !== 1;
@@ -3529,10 +3537,10 @@
                     const frontLapNum  = frontCarIdx >= 0 ? (carLapNum[frontCarIdx] ?? 0) : 0;
                     const frontLapDist = frontCarIdx >= 0 ? (carLapDist[frontCarIdx] ?? 0) : 0;
 
-                    tRow.iText.textContent = showFastestLap ? formatLapTimeMs(fastestLapDisplayMs)
-                        : (pos === 1 ? 'Interval' : getLappedText(carDeltaFront[carIdx], frontLapNum, frontLapDist));
-                    tRow.lText.textContent = showFastestLap ? formatLapTimeMs(fastestLapDisplayMs)
-                        : (pos === 1 ? 'Leader'   : getLappedText(carDeltaLeader[carIdx], leaderLapNum, leaderLapDist));
+                    setText(tRow.iText, showFastestLap ? formatLapTimeMs(fastestLapDisplayMs)
+                        : (pos === 1 ? 'Interval' : getLappedText(carDeltaFront[carIdx], frontLapNum, frontLapDist)));
+                    setText(tRow.lText, showFastestLap ? formatLapTimeMs(fastestLapDisplayMs)
+                        : (pos === 1 ? 'Leader'   : getLappedText(carDeltaLeader[carIdx], leaderLapNum, leaderLapDist)));
 
                     // Shrink-to-fit for wide deltas (e.g. "+1:23.456", "+12 LAPS") that would otherwise
                     // overflow the fixed 125px-wide box. Only the currently-visible sub-layer is fit —
@@ -3735,14 +3743,14 @@
                             const row = driverRows[pos - 1];
                             // "abbrev" now displays the full last name in the compact/default slot
                             // (kept the property/class name to avoid touching every call site — see memory).
-                            row.abbrev.textContent = lastNameStr;
+                            setText(row.abbrev, lastNameStr);
                             try {
                                 textFit(row.abbrev, { minFontSize: 12, maxFontSize: 23, multiLine: false, widthOnly: true });
                             } catch (e) {
                                 // Defensive only, see the equivalent try/catch in renderDriverStandings().
                             }
-                            row.lastNamePI.textContent    = lastNameStr.toUpperCase();
-                            row.lastName.textContent  = lastNameStr;
+                            setText(row.lastNamePI, lastNameStr.toUpperCase());
+                            setText(row.lastName, lastNameStr);
                             const rsB = carResultStatus[carIdx];
                             const dimB = rsB > 3; // Any DNF/DSQ/NotClassified/Retired status
                             const showLNB = showLastNames && paneMode !== 1;

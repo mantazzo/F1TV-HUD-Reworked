@@ -1286,8 +1286,16 @@
         // reflow when the text is identical to the last time THIS element was fit — safe only for
         // elements whose box width never changes independent of text (driver names, timing deltas
         // — NOT elSessionName, whose width depends on pane/session state too).
+        // textFit wraps the text in a <span class="textFitted"> carrying the reduced font size.
+        // Any later textContent write replaces that span and the text snaps back to its full
+        // CSS size — so per-tick writes on fitted elements go through setText() (writes only
+        // when the text really changed), and textFitIfChanged() re-fits if the span is gone.
+        function setText(el, text) {
+            if (el.textContent !== text) el.textContent = text;
+        }
+
         function textFitIfChanged(el, text, opts) {
-            if (el._lastFitText === text) return;
+            if (el._lastFitText === text && el.firstElementChild?.classList.contains('textFitted')) return;
             try {
                 textFit(el, opts);
                 el._lastFitText = text;
@@ -1929,33 +1937,33 @@
                     // Out lap, already left the pit lane (In-Pit logo/pulse has cleared). While still
                     // driving through the pit lane on the out lap, falls through to the NO TIME / existing
                     // best-lap branches below instead — matches the In-Pit Logo's own trigger.
-                    timeText = 'OUT LAP';
+                    timeText = 'OUT LAP ';
                 } else if ((pStatus > 0 || dStatus === 0) && lapMs === 0) {
                     // In pit lane / pitting / in garage (incl. Out Lap while still in the pit lane) with no best lap set yet
-                    timeText = 'NO TIME';
+                    timeText = 'NO TIME ';
                 } else if (showPersonalBest) {
                     timeText = formatLapTimeMs(pbMs);
                 } else {
-                    timeText = lapMs > 0 ? formatLapTimeMs(lapMs) : 'NO TIME';
+                    timeText = lapMs > 0 ? formatLapTimeMs(lapMs) : 'NO TIME ';
                 }
-                row.tText.textContent = timeText;
+                setText(row.tText, timeText);
                 row.tText.style.color = showPersonalBest ? 'lime' : '';
 
                 // Gaps column: P1 shows their own time; others show gap to P1
                 // Priority: Out Lap (after leaving the pit lane) → personal best (lime) → time / gap → NO TIME
                 if (dStatus === 3 && pStatus === 0) {
-                    row.gText.textContent = 'OUT LAP';
+                    setText(row.gText, 'OUT LAP ');
                     row.gText.style.color = '';
                 } else if (showPersonalBest) {
-                    row.gText.textContent = formatLapTimeMs(pbMs);
+                    setText(row.gText, formatLapTimeMs(pbMs));
                     row.gText.style.color = 'lime';
                 } else if (pos === 1) {
-                    row.gText.textContent = lapMs > 0 ? formatLapTimeMs(lapMs) : 'NO TIME';
+                    setText(row.gText, lapMs > 0 ? formatLapTimeMs(lapMs) : 'NO TIME ');
                     row.gText.style.color = '';
                 } else {
-                    row.gText.textContent = (lapMs > 0 && leaderMs > 0)
+                    setText(row.gText, (lapMs > 0 && leaderMs > 0)
                         ? formatDeltaMs(lapMs - leaderMs)
-                        : 'NO TIME';
+                        : 'NO TIME ');
                     row.gText.style.color = '';
                 }
 
@@ -2032,7 +2040,7 @@
             timingRows.forEach(row => { row.iText.textContent = ''; row.lText.textContent = ''; });
 
             // Clear quali timing rows
-            qualiTimingRows.forEach(row => { row.gText.textContent = ''; row.tText.textContent = 'NO TIME'; });
+            qualiTimingRows.forEach(row => { row.gText.textContent = ''; row.tText.textContent = 'NO TIME '; });
 
             // Clear driver row display data
             driverRows.forEach(row => {
@@ -2662,7 +2670,7 @@
                 row.driverNumber.style.display       = 'none';
                 row.driverNumber.style.opacity       = '0';
                 row.abbrev.style.opacity   = '0';
-                row.lastNamePI.textContent = piLastName.toUpperCase();
+                setText(row.lastNamePI, piLastName.toUpperCase());
                 textFitIfChanged(row.lastNamePI, piLastName, { minFontSize: 12, maxFontSize: 25, multiLine: false, widthOnly: true });
                 row.lastNamePI.style.opacity = '1';
                 row.lastName.style.opacity   = '0';
@@ -2699,7 +2707,7 @@
                 row.driverNumber.style.display       = 'none';
                 row.driverNumber.style.opacity       = '0';
                 row.abbrev.style.opacity   = '0';
-                row.lastNamePI.textContent = tmLastName.toUpperCase();
+                setText(row.lastNamePI, tmLastName.toUpperCase());
                 textFitIfChanged(row.lastNamePI, tmLastName, { minFontSize: 12, maxFontSize: 25, multiLine: false, widthOnly: true });
                 row.lastNamePI.style.opacity = '1';
                 row.lastName.style.opacity   = '0';
@@ -3136,8 +3144,8 @@
                     // where it's confirmed about to be visible. Fitting it unconditionally for
                     // all 24 rows every tick here would be wasted work for an element that's
                     // essentially always hidden. Same reasoning as leaderboard-lastname.html.
-                    dRow.lastNamePI.textContent   = lastNameStr.toUpperCase();
-                    dRow.lastName.textContent     = lastNameStr;
+                    setText(dRow.lastNamePI, lastNameStr.toUpperCase());
+                    setText(dRow.lastName, lastNameStr);
                     const rsA = carResultStatus[carIdx];
                     const dimA = rsA === 5 || rsA === 7;
                     const showLNA = showLastNames && paneMode !== 1;
@@ -3197,10 +3205,10 @@
                     const frontLapNum  = frontCarIdx >= 0 ? (carLapNum[frontCarIdx] ?? 0) : 0;
                     const frontLapDist = frontCarIdx >= 0 ? (carLapDist[frontCarIdx] ?? 0) : 0;
 
-                    tRow.iText.textContent = showFastestLap ? formatLapTimeMs(fastestLapDisplayMs)
-                        : (pos === 1 ? 'Interval' : getLappedText(carDeltaFront[carIdx], frontLapNum, frontLapDist));
-                    tRow.lText.textContent = showFastestLap ? formatLapTimeMs(fastestLapDisplayMs)
-                        : (pos === 1 ? 'Leader'   : getLappedText(carDeltaLeader[carIdx], leaderLapNum, leaderLapDist));
+                    setText(tRow.iText, showFastestLap ? formatLapTimeMs(fastestLapDisplayMs)
+                        : (pos === 1 ? 'Interval' : getLappedText(carDeltaFront[carIdx], frontLapNum, frontLapDist)));
+                    setText(tRow.lText, showFastestLap ? formatLapTimeMs(fastestLapDisplayMs)
+                        : (pos === 1 ? 'Leader'   : getLappedText(carDeltaLeader[carIdx], leaderLapNum, leaderLapDist)));
 
                     // Shrink-to-fit for wide deltas (e.g. "+1:23.456", "+12 LAPS") that would otherwise
                     // overflow the fixed 125px-wide box — same fix leaderboard-lastname.html already
@@ -3400,8 +3408,8 @@
                             row.abbrev.textContent        = abbrev;
                             // lastNamePI not fit here — see the equivalent comment in the pid 2
                             // per-tick loop above; only fit in applyIndicators() where visible.
-                            row.lastNamePI.textContent    = lastNameStr.toUpperCase();
-                            row.lastName.textContent  = lastNameStr;
+                            setText(row.lastNamePI, lastNameStr.toUpperCase());
+                            setText(row.lastName, lastNameStr);
                             const rsB = carResultStatus[carIdx];
                             const dimB = rsB > 3; // Any DNF/DSQ/NotClassified/Retired status
                             const showLNB = showLastNames && paneMode !== 1;
