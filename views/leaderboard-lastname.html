@@ -1953,6 +1953,17 @@
         }
 
         // ── Timing formatters ─────────────────────────────────────────────────────
+        // Combines a Lap Data delta's minutes (uint8) + ms (uint16) parts. Right after an
+        // overtake the game briefly computes a small NEGATIVE gap for the overtaken car, which
+        // wraps in the unsigned ms field (e.g. -17 → 65519) and would show as "+1:05.519".
+        // A real ms part never reaches 60000 (whole minutes live in the minutes part), so
+        // anything ≥ 60000 is decoded back to its signed value — formatDeltaMs() shows it as +0.000.
+        function decodeDeltaMs(minutesPart, msPart) {
+            const ms = msPart ?? 0;
+            if (ms >= 60000) return ms - 65536;
+            return (minutesPart ?? 0) * 60000 + ms;
+        }
+
         function formatDeltaMs(totalMs) {
             if (totalMs <= 0) return '+0.000';
             const minutes  = Math.floor(totalMs / 60000);
@@ -3236,8 +3247,8 @@
                         : (car.m_carPosition ?? 0);
 
                     carPositions[idx]   = pos;
-                    carDeltaFront[idx]  = (car.m_deltaToCarInFrontMinutesPart  ?? 0) * 60000 + (car.m_deltaToCarInFrontMSPart  ?? 0);
-                    carDeltaLeader[idx] = (car.m_deltaToRaceLeaderMinutesPart  ?? 0) * 60000 + (car.m_deltaToRaceLeaderMSPart  ?? 0);
+                    carDeltaFront[idx]  = decodeDeltaMs(car.m_deltaToCarInFrontMinutesPart, car.m_deltaToCarInFrontMSPart);
+                    carDeltaLeader[idx] = decodeDeltaMs(car.m_deltaToRaceLeaderMinutesPart, car.m_deltaToRaceLeaderMSPart);
                     carLapNum[idx]      = car.m_currentLapNum ?? 0;
                     carLapDist[idx]     = car.m_lapDistance ?? 0;
                     carDriverStatus[idx] = car.m_driverStatus ?? -1;
