@@ -33,6 +33,32 @@ const DriverUtils = {
     },
 
     /**
+     * Short session name for tight UI spots (e.g. the Weather forecast header).
+     * Races depend on the weekend: Race (15) is the Sprint Race when the weekend also has
+     * a Race 2 (16) — F1 Sprint weekends and F2 — and Race 2 is F2's Feature Race.
+     * @param {number} sessionType - m_sessionType
+     * @param {number[]} weekendStructure - m_weekendStructure (session types, 0-padded)
+     * @param {number} formulaType - m_formula
+     * @returns {string}
+     */
+    getSessionShortName(sessionType, weekendStructure = [], formulaType = 0) {
+        const T = this.SESSION_TYPE;
+        switch (sessionType) {
+            case T.RACE:   return weekendStructure.includes(T.RACE_2) ? 'SR' : 'RACE';
+            case T.RACE_2: return formulaType === this.FORMULA_TYPE.F2 ? 'FR' : 'RACE';
+            case T.RACE_3: return 'RACE';
+        }
+        const SHORT_NAMES = {
+            // Short-format sessions drop the "SHORT" prefix to fit (P / Q / SQ)
+            1: 'FP1', 2: 'FP2', 3: 'FP3', 4: 'P',
+            5: 'Q1', 6: 'Q2', 7: 'Q3', 8: 'Q', 9: 'OSQ',
+            10: 'SQ1', 11: 'SQ2', 12: 'SQ3', 13: 'SQ', 14: 'OSSQ',
+            18: 'TT'
+        };
+        return SHORT_NAMES[sessionType] ?? '';
+    },
+
+    /**
      * Knockout Zone Position Thresholds
      */
     KNOCKOUT_ZONE_POSITIONS: {

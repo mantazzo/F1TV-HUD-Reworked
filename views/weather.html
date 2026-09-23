@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/styles-weather.css">
     <script src="/socket.io/socket.io.js"></script>
     <script src="/utils/overlay-scale.js"></script>
+    <script src="/utils/driver-utils.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/textfit@2.4.0/textFit.min.js"></script>
 </head>
 <body data-tauri-drag-region>
@@ -84,6 +85,7 @@
                 <!-- Forecast Header -->
                 <div class="forecast-header-row">
                     <div class="forecast-label">FORECAST</div>
+                    <div class="forecast-session" id="forecast-session"></div>
                     <div class="forecast-line"></div>
                 </div>
                 
@@ -201,6 +203,23 @@
                 if (!autoFormationLap) cancelFormationAuto();
                 applyVisibility();
                 
+                // Forecast rotation + which session's forecast to show
+                const newRotate = weatherConfig.rotateForecast === true;
+                const newSession = Number(weatherConfig.forecastSession) || 0;
+                if (newSession !== selectedForecastSession) {
+                    swapForecast(() => {
+                        selectedForecastSession = newSession;
+                        forecastPage = 0;
+                    });
+                    restartForecastRotation();
+                }
+                if (newRotate !== rotateForecast) {
+                    rotateForecast = newRotate;
+                    forecastPage = 0;
+                    renderForecast();
+                    restartForecastRotation();
+                }
+
                 // Forecast visibility (only matters if weather is visible)
                 if (weatherConfig.showForecast !== false) {
                     forecastSection.classList.remove('hidden');
@@ -280,7 +299,8 @@
             row: document.getElementById(`forecast-row-${i}`),
             icon: document.getElementById(`forecast-icon-${i}`),
             condition: document.getElementById(`forecast-condition-${i}`),
-            chance: document.getElementById(`forecast-chance-${i}`)
+            chance: document.getElementById(`forecast-chance-${i}`),
+            time: document.querySelector(`#forecast-row-${i} .forecast-time`)
         }));
         
         // Convert Celsius to Fahrenheit
@@ -378,6 +398,98 @@
             }
         }
         
+        // ── Forecast: session selection + rotation ──────────────────────────────
+        // The sample buffer holds the current session plus every remaining session of the
+        // weekend (m_weekendStructure order — finished sessions drop out), and offsets differ
+        // per session type (Practice 5-60, Qualifying only 5-20, Race 5-120).
+        const FORECAST_ROTATE_MS = 10000;
+        const FORECAST_FADE_MS = 250;
+        const forecastSessionEl = document.getElementById('forecast-session');
+        let forecastData = null;           // last Session packet's forecast (see pid 1 handler)
+        let rotateForecast = false;        // controller: rotate through more than 4 offsets
+        let selectedForecastSession = 0;   // controller: 0 = current session, else a session type
+        let forecastPage = 0;
+        let forecastSwapping = false;
+        let forecastRotateTimer = null;
+
+        // Session whose forecast is shown: the controller's pick, unless that's the current
+        // session or it's no longer in the buffer (already finished) — then the current one.
+        function getForecastSessionType() {
+            if (!forecastData) return null;
+            const { samples, sessionType } = forecastData;
+            if (selectedForecastSession && selectedForecastSession !== sessionType &&
+                samples.some(s => s.m_sessionType === selectedForecastSession)) {
+                return selectedForecastSession;
+            }
+            return sessionType;
+        }
+
+        // Future offsets of the shown session, split into pages of 4 rows. A short last page is
+        // back-filled from the one before (Practice: +5..+30, then +15..+60) so no row is blank.
+        function getForecastPages() {
+            const target = getForecastSessionType();
+            if (target === null) return [];
+            const entries = forecastData.samples
+                .filter(s => s.m_sessionType === target && s.m_timeOffset > 0)
+                .sort((a, b) => a.m_timeOffset - b.m_timeOffset);
+            if (entries.length <= 4) return [entries];
+            const pages = [];
+            for (let i = 0; i < entries.length; i += 4) {
+                pages.push(i + 4 <= entries.length ? entries.slice(i, i + 4) : entries.slice(-4));
+            }
+            return pages;
+        }
+
+        function renderForecast() {
+            if (!forecastData || forecastSwapping) return;
+            const pages = getForecastPages();
+            if (!rotateForecast || forecastPage >= pages.length) forecastPage = 0;
+            const page = pages[forecastPage] ?? [];
+
+            // Header only names the session when it isn't the current one
+            const target = getForecastSessionType();
+            forecastSessionEl.textContent = target !== forecastData.sessionType
+                ? DriverUtils.getSessionShortName(target, forecastData.weekendStructure, forecastData.formulaType)
+                : '';
+
+            forecastRows.forEach((row, index) => {
+                const sample = page[index];
+                if (sample) {
+                    row.time.textContent = `+${sample.m_timeOffset}m`;
+                    updateForecastRow(index, sample.m_weather, sample.m_rainPercentage);
+                } else {
+                    // No sample for this row — don't leave another session's forecast showing
+                    row.time.textContent = '--';
+                    row.condition.textContent = '--';
+                    row.chance.textContent = '--%';
+                }
+            });
+        }
+
+        // Fade the rows out, apply the change, re-render, fade back in
+        function swapForecast(change) {
+            if (forecastSwapping) { change(); return; }  // pending swap will render it
+            forecastSwapping = true;
+            forecastSection.classList.add('swapping');
+            setTimeout(() => {
+                change();
+                forecastSwapping = false;
+                renderForecast();
+                forecastSection.classList.remove('swapping');
+            }, FORECAST_FADE_MS);
+        }
+
+        // (Re)start the 10s page cycle — restarted on session/rotation changes so a fresh
+        // selection always gets its full 10 seconds on the first page
+        function restartForecastRotation() {
+            clearInterval(forecastRotateTimer);
+            forecastRotateTimer = setInterval(() => {
+                if (!rotateForecast || forecastSwapping) return;
+                if (getForecastPages().length > 1) swapForecast(() => forecastPage++);
+            }, FORECAST_ROTATE_MS);
+        }
+        restartForecastRotation();
+
         // Refresh all weather icons (used when day/night changes)
         function refreshAllWeatherIcons() {
             setWeatherIcon(currentWeatherIcon, currentWeatherId);
@@ -450,17 +562,17 @@
                         }
                     }
                     
-                    // Forecast data (if available)
-                    if (data.m_weatherForecastSamples && Array.isArray(data.m_weatherForecastSamples)) {
-                        // Map forecast times to row indices: +5m=0, +10m=1, +15m=2, +30m=3
-                        const forecastTimes = [5, 10, 15, 30];
-                        
-                        forecastTimes.forEach((time, index) => {
-                            const sample = data.m_weatherForecastSamples.find(s => s.m_timeOffset === time);
-                            if (sample) {
-                                updateForecastRow(index, sample.m_weather, sample.m_rainPercentage);
-                            }
-                        });
+                    // Forecast data (if available) — cached so config changes (rotation,
+                    // selected session) can re-render without waiting for the next packet
+                    if (Array.isArray(data.m_weatherForecastSamples)) {
+                        const numSamples = data.m_numWeatherForecastSamples ?? data.m_weatherForecastSamples.length;
+                        forecastData = {
+                            samples: data.m_weatherForecastSamples.slice(0, numSamples),
+                            sessionType: data.m_sessionType,
+                            weekendStructure: data.m_weekendStructure ?? [],
+                            formulaType: data.m_formula ?? 0
+                        };
+                        renderForecast();
                     }
                 } else if (packetId === 2) {
                     // Lap Data - only used for the Formation Lap auto-display trigger

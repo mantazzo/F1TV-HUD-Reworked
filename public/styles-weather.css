@@ -354,12 +354,46 @@ body {
     white-space: nowrap;
 }
 
+/* Short name of the session being forecast (e.g. "SR") — only shown when it isn't the
+   current session. The line after it shrinks to make room (header capped to the panel width). */
+.forecast-session {
+    font-family: 'F1TV-2022', sans-serif;
+    font-weight: 700;
+    font-size: 24px;
+    color: rgb(255, 255, 255);
+    white-space: nowrap;
+    margin-left: 8px;
+    transition: opacity 250ms ease-out;
+}
+
+.forecast-session:empty {
+    display: none;
+}
+
+.forecast-header-row {
+    max-width: 260px;
+}
+
+/* width (not flex-basis) so the absolutely-positioned header's natural width still counts
+   the full 80px line; flex-shrink lets it give way to a session name */
 .forecast-line {
     width: 80px;
+    flex-shrink: 1;
+    min-width: 16px;
     height: 1.5px;
     background-color: rgb(255, 255, 255);
     opacity: 0.9;
     margin-left: 10px;
+}
+
+/* Page/session swap: rows fade out, content changes, rows fade back in */
+.forecast-row {
+    transition: opacity 250ms ease-out;
+}
+
+.forecast-section.swapping .forecast-row,
+.forecast-section.swapping .forecast-session {
+    opacity: 0;
 }
 
 /* Forecast Rows */

@@ -338,6 +338,15 @@ body {
     background: rgba(233, 69, 96, 0.3);
 }
 
+.mfd-button:disabled,
+.mfd-button:disabled:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.15);
+    color: #cccccc;
+    opacity: 0.4;
+    cursor: default;
+}
+
 /* Footer */
 .controller-footer {
     text-align: center;

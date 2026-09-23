@@ -7,6 +7,7 @@
     <title>F1 HUD Controller</title>
     <link rel="stylesheet" href="/styles-controller.css">
     <script src="/socket.io/socket.io.js"></script>
+    <script src="/utils/driver-utils.js"></script>
 </head>
 <body>
     <div class="controller-container">
@@ -51,6 +52,21 @@
                     <span class="toggle-slider"></span>
                     <span class="toggle-text">Show on Formation Lap</span>
                 </label>
+            </div>
+            <div class="option-row">
+                <label class="toggle-label">
+                    <input type="checkbox" id="weather-rotate-forecast-toggle" class="toggle-checkbox">
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-text">Rotate Forecast</span>
+                </label>
+            </div>
+            <div class="option-row">
+                <span class="select-text">Forecast Session: <span id="weather-forecast-session-status">--</span></span>
+                <div class="mfd-button-group" id="weather-forecast-session-group">
+                    <button class="mfd-button" data-forecast-nav="prev">&lt; Previous Session</button>
+                    <button class="mfd-button" data-forecast-nav="current">Current Session</button>
+                    <button class="mfd-button" data-forecast-nav="next">Next Session &gt;</button>
+                </div>
             </div>
         </section>
 
@@ -527,6 +543,78 @@
             });
         });
 
+        // Rotate forecast pages (every 10s) when a session has more than 4 forecast offsets
+        const weatherRotateForecastToggle = document.getElementById('weather-rotate-forecast-toggle');
+
+        weatherRotateForecastToggle.addEventListener('change', () => {
+            socket.emit('config_update', {
+                overlay: 'weather',
+                property: 'rotateForecast',
+                value: weatherRotateForecastToggle.checked
+            });
+        });
+
+        // Forecast session selector. The Session packet's forecast buffer holds the current
+        // session plus every remaining one (finished sessions drop out), in weekend order —
+        // Previous/Next step through that list. Config stores a session type (0 = current).
+        const forecastSessionGroup = document.getElementById('weather-forecast-session-group');
+        const forecastSessionStatus = document.getElementById('weather-forecast-session-status');
+        let forecastSessionInfo = null;  // { sessions: [types], weekendStructure, formulaType }
+
+        function getSelectedForecastIndex() {
+            if (!forecastSessionInfo) return 0;
+            const selected = Number(currentConfig?.overlays?.weather?.forecastSession) || 0;
+            const idx = forecastSessionInfo.sessions.indexOf(selected);
+            return idx > 0 ? idx : 0;  // not found / already current → current
+        }
+
+        function updateForecastSessionControls() {
+            const buttons = forecastSessionGroup.querySelectorAll('.mfd-button');
+            if (!forecastSessionInfo) {
+                forecastSessionStatus.textContent = '--';
+                buttons.forEach(btn => { btn.disabled = true; btn.classList.remove('active'); });
+                return;
+            }
+            const { sessions, weekendStructure, formulaType } = forecastSessionInfo;
+            const idx = getSelectedForecastIndex();
+            const name = DriverUtils.getSessionShortName(sessions[idx], weekendStructure, formulaType) || '--';
+            forecastSessionStatus.textContent = idx === 0 ? `${name} (current)` : name;
+            buttons.forEach(btn => {
+                const nav = btn.dataset.forecastNav;
+                btn.disabled = (nav === 'prev' && idx === 0) || (nav === 'next' && idx >= sessions.length - 1);
+                btn.classList.toggle('active', nav === 'current' && idx === 0);
+            });
+        }
+
+        forecastSessionGroup.addEventListener('click', (e) => {
+            const btn = e.target.closest('.mfd-button');
+            if (!btn || btn.disabled || !forecastSessionInfo) return;
+            const { sessions } = forecastSessionInfo;
+            let idx = getSelectedForecastIndex();
+            if (btn.dataset.forecastNav === 'prev') idx = Math.max(0, idx - 1);
+            else if (btn.dataset.forecastNav === 'next') idx = Math.min(sessions.length - 1, idx + 1);
+            else idx = 0;
+            socket.emit('config_update', {
+                overlay: 'weather',
+                property: 'forecastSession',
+                value: idx === 0 ? 0 : sessions[idx]
+            });
+        });
+
+        // Only the Session packet is needed here, for the list of forecast sessions
+        socket.on('f1_data', (data) => {
+            if (data?.m_header?.m_packetId !== 1 || !Array.isArray(data.m_weatherForecastSamples)) return;
+            const numSamples = data.m_numWeatherForecastSamples ?? data.m_weatherForecastSamples.length;
+            const sessions = [data.m_sessionType];
+            for (const s of data.m_weatherForecastSamples.slice(0, numSamples)) {
+                if (!sessions.includes(s.m_sessionType)) sessions.push(s.m_sessionType);
+            }
+            const changed = !forecastSessionInfo || sessions.join() !== forecastSessionInfo.sessions.join();
+            forecastSessionInfo = { sessions, weekendStructure: data.m_weekendStructure ?? [], formulaType: data.m_formula ?? 0 };
+            if (changed) updateForecastSessionControls();
+        });
+        updateForecastSessionControls();
+
         // Update forecast toggle state when config changes
         function updateWeatherOptions() {
             if (!currentConfig || !currentConfig.overlays || !currentConfig.overlays['weather']) return;
@@ -535,6 +623,8 @@
             forecastToggle.checked = weatherConfig.showForecast !== false;
             weatherTemperatureUnits.value = weatherConfig.temperatureUnitsMode || 'automatic';
             weatherAutoFormationLapToggle.checked = weatherConfig.autoFormationLap === true;
+            weatherRotateForecastToggle.checked = weatherConfig.rotateForecast === true;
+            updateForecastSessionControls();
         }
 
         // Live speed team color toggle handling

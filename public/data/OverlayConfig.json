@@ -5,7 +5,9 @@
       "name": "Weather",
       "temperatureUnitsMode": "automatic",
       "showForecast": true,
-      "autoFormationLap": true
+      "autoFormationLap": true,
+      "forecastSession": 0,
+      "rotateForecast": false
     },
     "speedometer": {
       "visible": true,
