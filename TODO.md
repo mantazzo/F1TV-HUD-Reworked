@@ -39,7 +39,9 @@
 - Weather
     - Fully remade
     - An overlay showing current weather and weather forecast for the next 5, 10, 15 and 30 minutes
-    - Forecast display can be toggled using the Extended Controller
+        - NEW: Forecast Display can rotate the data for suitable sessions (usually Practice and Race sessions, can be toggled on/off in the Extended Controller)
+        - NEW: Forecast Display can display data for other sessions in the Weekend Structure (can be controlled through Extended Controller)
+    - Forecast can be toggled using the Extended Controller
     - Primary units change depending on the default temperature units set by the player
         - Units can be overwritten in Extended Controller or use Automatic from the game
     - Also includes night icons for potential use at night tracks (needs some more testing)
@@ -115,6 +117,7 @@
         - Can be shown automatically during Formation Lap
         - Name displays use textFit library to fit names better for display
     - DRS Indicator was updated to also show "Overtake Active" Mode for 2026 F1 cars when enabled
+    - textFit library implemented across multiple areas to fit the data better
     - Likely feature complete, may get a few improvements over time (and bugfixes)
 - Leaderboard ("Last Name" version)
     - A fully remade version of the old "Last Name" version Leaderboard, with some upgrades
