@@ -45,6 +45,13 @@
                     <span class="toggle-text">Show Forecast</span>
                 </label>
             </div>
+            <div class="option-row">
+                <label class="toggle-label">
+                    <input type="checkbox" id="weather-auto-formation-lap-toggle" class="toggle-checkbox">
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-text">Show on Formation Lap</span>
+                </label>
+            </div>
         </section>
 
         <section class="overlay-section" id="live-speed-options-section">
@@ -509,6 +516,17 @@
             });
         });
 
+        // Show for 12s once the leader passes 10% of the Formation Lap
+        const weatherAutoFormationLapToggle = document.getElementById('weather-auto-formation-lap-toggle');
+
+        weatherAutoFormationLapToggle.addEventListener('change', () => {
+            socket.emit('config_update', {
+                overlay: 'weather',
+                property: 'autoFormationLap',
+                value: weatherAutoFormationLapToggle.checked
+            });
+        });
+
         // Update forecast toggle state when config changes
         function updateWeatherOptions() {
             if (!currentConfig || !currentConfig.overlays || !currentConfig.overlays['weather']) return;
@@ -516,6 +534,7 @@
             const weatherConfig = currentConfig.overlays['weather'];
             forecastToggle.checked = weatherConfig.showForecast !== false;
             weatherTemperatureUnits.value = weatherConfig.temperatureUnitsMode || 'automatic';
+            weatherAutoFormationLapToggle.checked = weatherConfig.autoFormationLap === true;
         }
 
         // Live speed team color toggle handling

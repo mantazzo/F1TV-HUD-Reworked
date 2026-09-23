@@ -144,18 +144,62 @@
         // Tracks whether a real Session packet has arrived yet — the "NO DATA"
         // cover stays up over the placeholder values until it does.
         let hasReceivedWeatherData = false;
-        
+
+        // ── Formation Lap auto-display ──────────────────────────────────────────
+        // Original SimHub formula: show for WeatherAutoDurationTime (12s) once the car has
+        // covered more than 10% of the lap during Formation Lap (m_safetyCarStatus === 3).
+        // Uses the race leader's lap distance (same reference the Leaderboard's
+        // Standings-on-Formation-Lap uses). Auto can only force the overlay visible — the
+        // manual toggle still decides visibility the rest of the time.
+        const FORMATION_AUTO_THRESHOLD = 0.10;
+        const FORMATION_AUTO_DURATION_MS = 12000;
+        let manualVisible = false;
+        let autoFormationLap = false;
+        let formationLap = false;
+        let sessionTrackLength = 0;
+        let formationAutoFired = false;   // latch: fire only once per Formation Lap
+        let formationAutoActive = false;
+        let formationAutoTimer = null;
+
+        function applyVisibility() {
+            weatherContainer.classList.toggle('visible', manualVisible || formationAutoActive);
+        }
+
+        function cancelFormationAuto() {
+            if (formationAutoTimer) {
+                clearTimeout(formationAutoTimer);
+                formationAutoTimer = null;
+            }
+            formationAutoActive = false;
+        }
+
+        function checkFormationAuto(lapData) {
+            if (!autoFormationLap || !formationLap || formationAutoFired || sessionTrackLength <= 0) return;
+            const leader = lapData.find(car => car.m_carPosition === 1);
+            if (!leader) return;
+            const pct = (leader.m_lapDistance ?? 0) / sessionTrackLength;
+            if (pct <= FORMATION_AUTO_THRESHOLD) return;
+
+            formationAutoFired = true;
+            formationAutoActive = true;
+            applyVisibility();
+            formationAutoTimer = setTimeout(() => {
+                formationAutoTimer = null;
+                formationAutoActive = false;
+                applyVisibility();
+            }, FORMATION_AUTO_DURATION_MS);
+        }
+
         // Handle overlay visibility from controller with animation
         socket.on('overlay_config', (config) => {
             if (config.overlays && config.overlays['weather']) {
                 const weatherConfig = config.overlays['weather'];
-                
+
                 // Main weather visibility - use .visible class (starts hidden by default)
-                if (weatherConfig.visible) {
-                    weatherContainer.classList.add('visible');
-                } else {
-                    weatherContainer.classList.remove('visible');
-                }
+                manualVisible = weatherConfig.visible === true;
+                autoFormationLap = weatherConfig.autoFormationLap === true;
+                if (!autoFormationLap) cancelFormationAuto();
+                applyVisibility();
                 
                 // Forecast visibility (only matters if weather is visible)
                 if (weatherConfig.showForecast !== false) {
@@ -356,7 +400,21 @@
                 
                 if (packetId === 1) {
                     // Session packet - contains weather data
-                    
+
+                    // Formation Lap state for auto-display. Leaving Formation Lap ends any
+                    // active auto-display (formula also requires m_safetyCarStatus === 3)
+                    // and re-arms the latch for the next one.
+                    if (typeof data.m_trackLength === 'number') sessionTrackLength = data.m_trackLength;
+                    const isFormationLap = data.m_safetyCarStatus === 3;
+                    if (formationLap && !isFormationLap) {
+                        formationAutoFired = false;
+                        if (formationAutoActive) {
+                            cancelFormationAuto();
+                            applyVisibility();
+                        }
+                    }
+                    formationLap = isFormationLap;
+
                     // Check for time of day change (for night icons)
                     if (typeof data.m_timeOfDay === 'number') {
                         const wasNight = isNightTime;
@@ -404,6 +462,9 @@
                             }
                         });
                     }
+                } else if (packetId === 2) {
+                    // Lap Data - only used for the Formation Lap auto-display trigger
+                    if (Array.isArray(data.m_lapData)) checkFormationAuto(data.m_lapData);
                 }
             } catch (error) {
                 console.error('[Weather] Error processing data:', error);
