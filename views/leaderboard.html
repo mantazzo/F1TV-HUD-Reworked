@@ -1349,16 +1349,25 @@
             
             // Session label inside header bar (item_1_8r0r0r0_7)
             // Shown for SQ sessions (all session types) and for F2 non-race sessions (Short P / Short Q / OSQ)
+            // Labels that would run into the timer use short forms (same P / Q / SQ short names as the
+            // Weather forecast header): SHORT SQ always, F2 PRACTICE/QUALI in narrow panes (the timer
+            // sits 60px further left there); OSSQ is already short, so it just gets a smaller font.
+            const narrow = paneMode === 1 || paneMode === 3;
             let sessionLabelText = '';
             if (isSQ) {
-                sessionLabelText = SESSION_LABELS[sessionType] ?? '';
+                sessionLabelText = sessionType === 13 ? 'SQ' : (SESSION_LABELS[sessionType] ?? '');
             } else if (formulaType === 2 && isTimed) {
-                if      (sessionType === 4)                      sessionLabelText = 'PRACTICE'; // Short Practice
-                else if (sessionType === 8 || sessionType === 9) sessionLabelText = 'QUALI';    // Short Q / OSQ
+                if      (sessionType === 4)                      sessionLabelText = narrow ? 'P' : 'PRACTICE'; // Short Practice
+                else if (sessionType === 8 || sessionType === 9) sessionLabelText = narrow ? 'Q' : 'QUALI';    // Short Q / OSQ
             }
             elSessionLabel.textContent = sessionLabelText;
             elSessionLabel.style.display = sessionLabelText ? 'flex' : 'none';
-            if (isSQ) {
+            elSessionLabel.style.fontSize = sessionType === 14 ? '22px' : '';  // OSSQ
+            if (narrow) {
+                // The original formula never handled narrow panes — the timer wrapper shifts 60px
+                // left there (84→24px, see updateMainPanels), so the label moves to the far left too
+                elSessionLabel.style.left = '10px';
+            } else if (isSQ) {
                 elSessionLabel.style.left = '70px';
             } else if (sessionType === 8 || sessionType === 9) {
                 elSessionLabel.style.left = '35px'; // F2 Short Q / OSQ — sits left of the timer
@@ -1368,7 +1377,6 @@
 
             // Sprint logo (item_1_10r0r0r0): visible in any sprint session; opacity 0 in narrow pane
             // Hidden during Formation Lap (m_safetyCarStatus === 3)
-            const narrow = paneMode === 1 || paneMode === 3;
             elSprintLogo.style.display = (!formationLap && (isSQ || isSprintSession)) ? 'block' : 'none';
             elSprintLogo.style.opacity  = narrow ? '0' : '1';
 
@@ -2644,6 +2652,8 @@
                 timingRows[i].lText.parentElement.style.display      = '';
                 qualiTimingRows[i].gText.parentElement.style.display = '';
                 qualiTimingRows[i].tText.parentElement.style.display = '';
+                pitStatusRows[i].text.style.visibility               = '';
+                outRows[i].row.style.visibility                      = '';
                 // DRS is driven live by pid 6 — don't force-show here, pid 6 will restore it
             });
 
@@ -2688,6 +2698,10 @@
                 row.position.style.fontSize  = '25px';
                 tyreRows[p].text.parentElement.style.display        = 'none';
                 drsRows[p].row.style.display                        = 'none';
+                // Pit status text and OUT would sit on top of the PI last name — hide them visually only; the rows'
+                // opacity/display stay as the "in pits" / "OUT showing" signals the tyre/MFD/timing logic reads
+                pitStatusRows[p].text.style.visibility              = 'hidden';
+                outRows[p].row.style.visibility                     = 'hidden';  // same for OUT (retired PI/teammate car)
                 timingRows[p].iText.parentElement.style.display      = 'none';
                 timingRows[p].lText.parentElement.style.display      = 'none';
                 qualiTimingRows[p].gText.parentElement.style.display = 'none';
@@ -2725,6 +2739,10 @@
                 row.position.style.fontSize  = '25px';
                 tyreRows[p].text.parentElement.style.display        = 'none';
                 drsRows[p].row.style.display                        = 'none';
+                // Pit status text and OUT would sit on top of the PI last name — hide them visually only; the rows'
+                // opacity/display stay as the "in pits" / "OUT showing" signals the tyre/MFD/timing logic reads
+                pitStatusRows[p].text.style.visibility              = 'hidden';
+                outRows[p].row.style.visibility                     = 'hidden';  // same for OUT (retired PI/teammate car)
                 timingRows[p].iText.parentElement.style.display      = 'none';
                 timingRows[p].lText.parentElement.style.display      = 'none';
                 qualiTimingRows[p].gText.parentElement.style.display = 'none';
@@ -3083,7 +3101,7 @@
 
                         // OUT text — show for DNF (4), DSQ (5), or retired (7) drivers; hidden when MFD4 is active or narrow pane
                         const isOut = carResultStatus[idx] === 4 || carResultStatus[idx] === 5 || carResultStatus[idx] === 7;
-                        outRows[pos - 1].row.style.display = (isOut && !isMfd4 && !formationLap && paneMode !== 1 && paneMode !== 3) ? 'block' : 'none';
+                        outRows[pos - 1].row.style.display = (isOut && isRace && !showLastNames && !isMfd4 && !formationLap && paneMode !== 1 && paneMode !== 3) ? 'block' : 'none';
                     }
                 });
 
@@ -3645,13 +3663,17 @@
                 elMfd1.style.opacity       = '1';
             }
 
-            // OUT rows: hide when MFD4 is active or narrow pane (position-change column / no space)
+            // OUT rows: race sessions only (elsewhere the timing column already shows the driver's
+            // time / NO TIME, and OUT overlapped it); hide when MFD4 is active or narrow pane
+            // (position-change column / no space), or while Show Last Names is on (the wide name
+            // column covers that spot). Same rule as leaderboard-lastname.html. Reads cfg directly:
+            // showLastNames itself is only updated further down this handler.
             outRows.forEach(({ row }, p) => {
                 const carIdx = carPositions.indexOf(p + 1);
                 if (carIdx < 0) return;
                 const rs = carResultStatus[carIdx] ?? 0;
                 const isOut = rs === 4 || rs === 5 || rs === 7;
-                row.style.display = (isOut && !isMfd4 && !formationLap && paneMode !== 1 && paneMode !== 3) ? 'block' : 'none';
+                row.style.display = (isOut && isRace && !cfg.showLastNames && !isMfd4 && !formationLap && paneMode !== 1 && paneMode !== 3) ? 'block' : 'none';
             });
 
             // Reposition all rows: MFD stride when active, banner shift when flag is set, else normal
@@ -3664,6 +3686,10 @@
 
             // Last Names toggle — swap abbreviation vs last name per driver row
             showLastNames = !!cfg.showLastNames;
+            // Pit status text (IN PIT / PIT EXIT) sits where the wide last-name column goes, same as
+            // OUT — hide the whole container rather than the rows: row opacity doubles as the
+            // "car is in the pits" signal other code reads (tyre column, MFD rows), which must keep working.
+            elPitStatus.style.visibility = showLastNames ? 'hidden' : '';
             driverRows.forEach((row, p) => {
                 const carIdx = carPositions.indexOf(p + 1);
                 const rs = carIdx >= 0 ? carResultStatus[carIdx] : 0;

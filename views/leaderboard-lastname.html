@@ -2753,6 +2753,8 @@
                 timingRows[i].lText.parentElement.style.display      = '';
                 qualiTimingRows[i].gText.parentElement.style.display = '';
                 qualiTimingRows[i].tText.parentElement.style.display = '';
+                pitStatusRows[i].text.style.visibility               = '';
+                outRows[i].row.style.visibility                      = '';
                 // DRS is driven live by pid 6 — don't force-show here, pid 6 will restore it
             });
 
@@ -2802,6 +2804,10 @@
                 row.position.style.fontSize  = '25px';
                 tyreRows[p].text.parentElement.style.display        = 'none';
                 drsRows[p].row.style.display                        = 'none';
+                // Pit status text and OUT would sit on top of the PI last name — hide them visually only; the rows'
+                // opacity/display stay as the "in pits" / "OUT showing" signals the tyre/MFD/timing logic reads
+                pitStatusRows[p].text.style.visibility              = 'hidden';
+                outRows[p].row.style.visibility                     = 'hidden';  // same for OUT (retired PI/teammate car)
                 timingRows[p].iText.parentElement.style.display      = 'none';
                 timingRows[p].lText.parentElement.style.display      = 'none';
                 qualiTimingRows[p].gText.parentElement.style.display = 'none';
@@ -2844,6 +2850,10 @@
                 row.position.style.fontSize  = '25px';
                 tyreRows[p].text.parentElement.style.display        = 'none';
                 drsRows[p].row.style.display                        = 'none';
+                // Pit status text and OUT would sit on top of the PI last name — hide them visually only; the rows'
+                // opacity/display stay as the "in pits" / "OUT showing" signals the tyre/MFD/timing logic reads
+                pitStatusRows[p].text.style.visibility              = 'hidden';
+                outRows[p].row.style.visibility                     = 'hidden';  // same for OUT (retired PI/teammate car)
                 timingRows[p].iText.parentElement.style.display      = 'none';
                 timingRows[p].lText.parentElement.style.display      = 'none';
                 qualiTimingRows[p].gText.parentElement.style.display = 'none';
@@ -3404,7 +3414,7 @@
                         // fake DSQ/retired while a car parks on the grid) and in narrow panes, where the
                         // whole data column is hidden anyway.
                         const isOut = carResultStatus[idx] === 4 || carResultStatus[idx] === 5 || carResultStatus[idx] === 7;
-                        outRows[pos - 1].row.style.display = (isOut && isRace && !isMfd4 && !formationLap && paneMode !== 1 && paneMode !== 3) ? 'block' : 'none';
+                        outRows[pos - 1].row.style.display = (isOut && isRace && !showLastNames && !isMfd4 && !formationLap && paneMode !== 1 && paneMode !== 3) ? 'block' : 'none';
                     }
                 });
 
@@ -3962,14 +3972,16 @@
             updateMfd4DataVisibility();
 
             // OUT rows: race-only, hidden on MFD4 (which shows gained/lost-vs-grid for OUT drivers
-            // instead), during Formation Lap, or in narrow panes — see the packet handler above for
+            // instead), during Formation Lap, in narrow panes, or while Show Last Names is on (the
+            // wide name column covers that spot; reads cfg directly since showLastNames is only
+            // updated further down this handler) — see the packet handler above for
             // the full reasoning
             outRows.forEach(({ row }, p) => {
                 const carIdx = carPositions.indexOf(p + 1);
                 if (carIdx < 0) return;
                 const rs = carResultStatus[carIdx] ?? 0;
                 const isOut = rs === 4 || rs === 5 || rs === 7;
-                row.style.display = (isOut && isRace && !isMfd4 && !formationLap && paneMode !== 1 && paneMode !== 3) ? 'block' : 'none';
+                row.style.display = (isOut && isRace && !cfg.showLastNames && !isMfd4 && !formationLap && paneMode !== 1 && paneMode !== 3) ? 'block' : 'none';
             });
 
             // Reposition all rows: MFD stride when active, banner shift when flag is set, else normal
@@ -3982,6 +3994,10 @@
 
             // Last Names toggle — swap abbreviation vs last name per driver row
             showLastNames = !!cfg.showLastNames;
+            // Pit status text (IN PIT / PIT EXIT) sits where the wide last-name column goes, same as
+            // OUT — hide the whole container rather than the rows: row opacity doubles as the
+            // "car is in the pits" signal other code reads (tyre column, MFD rows), which must keep working.
+            elPitStatus.style.visibility = showLastNames ? 'hidden' : '';
             driverRows.forEach((row, p) => {
                 const carIdx = carPositions.indexOf(p + 1);
                 const rs = carIdx >= 0 ? carResultStatus[carIdx] : 0;
