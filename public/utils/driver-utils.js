@@ -5,6 +5,8 @@
 
 // Driver IDs that indicate a human/custom driver (255 = pre-2026, 65535 = 2026+ extended DB)
 const CUSTOM_DRIVER_IDS = new Set([255, 65535]);
+// m_name sent for online players who have "Show Online Names" off
+const HIDDEN_PLAYER_NAME = 'Player';
 
 const DriverUtils = {
     /**
@@ -164,6 +166,7 @@ const DriverUtils = {
 
             const customDrivers = await customDriversResponse.json();
             const teamNames = await teamsResponse.json();
+            this._warnUnmatchableDrivers(customDrivers);
 
             return { customDrivers, teamNames };
         } catch (error) {
@@ -173,11 +176,14 @@ const DriverUtils = {
     },
 
     /**
-     * Match a custom driver using priority system:
-     * Priority 1: Exact name match (MatchName) - only if m_showOnlineNames is enabled
-     * Priority 2: Race number + team match
-     * Priority 3: Race number only
-     * 
+     * Match a custom driver. Each entry is matched in exactly one way:
+     * - Entry with MatchName: matched ONLY by exact name (never a hidden name, i.e.
+     *   "Player" with m_showOnlineNames 0). RaceNumber/Team on such an entry are
+     *   ignored, so other cars using the same number never inherit it.
+     * - Entry without MatchName: matched by RaceNumber. If Team is set, the car's
+     *   team must match too; a number + team entry wins over a number-only one.
+     * Entries with neither MatchName nor RaceNumber are skipped.
+     *
      * @param {Object} participant - Participant data from telemetry
      * @param {Array} customDrivers - Array of custom driver objects
      * @param {Object} teamNames - Team names lookup object
@@ -189,37 +195,111 @@ const DriverUtils = {
         }
 
         const raceNumber = participant.m_raceNumber;
-        const teamId = participant.m_teamId;
         const name = participant.m_name;
-        const showOnlineNames = participant.m_showOnlineNames;
-        
-        // Priority 1: Exact name match (only if online names are enabled for privacy)
-        if (showOnlineNames === 1) {
-            let match = customDrivers.find(d => d.MatchName && d.MatchName === name);
+
+        // Name-locked entries. m_showOnlineNames alone can't gate this: the local player
+        // always gets their real name even with the flag at 0. Hidden online players
+        // arrive as "Player" with the flag at 0, so only that combination is skipped;
+        // someone actually named "Player" with online names on can still match.
+        const nameHidden = name === HIDDEN_PLAYER_NAME && participant.m_showOnlineNames !== 1;
+        if (name && !nameHidden) {
+            const match = customDrivers.find(d => d.MatchName && d.MatchName === name);
             if (match) return match;
         }
-        
-        // Priority 2: Race number + team match
+
+        // Number-based entries (no MatchName)
+        const numberEntries = customDrivers.filter(d => !d.MatchName && d.RaceNumber === raceNumber);
+        if (numberEntries.length === 0) return null;
+
+        const teamMatch = numberEntries.find(d => d.Team != null && d.Team !== ''
+            && this._teamMatches(d.Team, participant.m_teamId, teamNames));
+        if (teamMatch) return teamMatch;
+
+        return numberEntries.find(d => d.Team == null || d.Team === '') || null;
+    },
+
+    /**
+     * Normalize a team name for comparison: lowercase, curly/straight apostrophes
+     * unified. With stripEra, a trailing era suffix ("Haas ‘26" -> "haas") is removed.
+     *
+     * @param {string} name - Team name
+     * @param {boolean} stripEra - Remove a trailing 'YY suffix
+     * @returns {string}
+     */
+    _normalizeTeamName(name, stripEra) {
+        let n = String(name).toLowerCase().replace(/[‘’`´]/g, "'").trim();
+        if (stripEra) n = n.replace(/\s*'\d{2}$/, '');
+        return n;
+    },
+
+    /**
+     * Whether a custom driver's Team value matches the car's team ID.
+     * Team can be a team ID (number), a name (ShortName or FullName from
+     * DefaultTeams.json), or an array mixing both (any element may match).
+     * Names are case/apostrophe-insensitive; a name without an era suffix
+     * ("Haas") matches every era, one with a suffix ("Haas '26") only that era.
+     *
+     * @param {number|string|Array} team - Team value from the custom driver entry
+     * @param {number} teamId - Car's m_teamId
+     * @param {Object} teamNames - Team names lookup object
+     * @returns {boolean}
+     */
+    _teamMatches(team, teamId, teamNames) {
+        if (Array.isArray(team)) return team.some(t => this._teamMatches(t, teamId, teamNames));
+        if (typeof team === 'number') return team === teamId;
+        if (typeof team !== 'string' || !team) return false;
+
         const teamData = teamNames?.[teamId];
-        const teamName = teamData?.Name || '';
-        if (teamName) {
-            const match = customDrivers.find(d => 
-                d.RaceNumber === raceNumber && 
-                d.Team && d.Team.toLowerCase() === teamName.toLowerCase()
-            );
-            if (match) return match;
-        }
-        
-        // Priority 3: Race number only
-        const match = customDrivers.find(d => d.RaceNumber === raceNumber);
-        if (match) return match;
-        
-        return null;
+        const carNames = [teamData?.ShortName, teamData?.FullName].filter(Boolean);
+        if (carNames.length === 0) return false;
+
+        const wanted = this._normalizeTeamName(team, false);
+        const wantedHasEra = wanted !== this._normalizeTeamName(team, true);
+        return carNames.some(n => this._normalizeTeamName(n, !wantedHasEra) === wanted);
+    },
+
+    /**
+     * Log custom driver entries that can never match (runs on each load):
+     * no MatchName and no RaceNumber.
+     *
+     * @param {Array} customDrivers - Array of custom driver objects
+     */
+    _warnUnmatchableDrivers(customDrivers) {
+        if (!Array.isArray(customDrivers)) return;
+        customDrivers.forEach((d, i) => {
+            if (!d.MatchName && d.RaceNumber == null) {
+                console.warn(`[DriverUtils] Custom driver entry #${i} ("${d.DisplayName || '?'}") has neither MatchName nor RaceNumber and will never match.`);
+            }
+        });
+    },
+
+    /**
+     * Whether a custom driver entry prefers its DisplayName over FirstName/LastName
+     * (DisplayNamePriority: true). Only an explicit boolean true counts.
+     *
+     * @param {Object} customDriver - Matched custom driver object
+     * @returns {boolean}
+     */
+    _prefersDisplayName(customDriver) {
+        return customDriver.DisplayNamePriority === true && !!customDriver.DisplayName;
+    },
+
+    /**
+     * Name a custom driver entry shows in the "last name" slot:
+     * DisplayName if DisplayNamePriority is on, else LastName, then DisplayName.
+     *
+     * @param {Object} customDriver - Matched custom driver object
+     * @returns {string}
+     */
+    _customLastName(customDriver) {
+        if (this._prefersDisplayName(customDriver)) return customDriver.DisplayName;
+        return customDriver.LastName || customDriver.DisplayName || 'PLAYER';
     },
 
     /**
      * Get driver first name for display
-     * Handles AI drivers (via driverId), custom drivers (driverId 255), and fallback
+     * Handles AI drivers (via driverId), custom drivers (driverId 255), and fallback.
+     * Empty for custom drivers with DisplayNamePriority on (DisplayName stands alone).
      * 
      * @param {Object} participant - Participant data from telemetry
      * @param {Object} aiDrivers - AI drivers lookup object (key: driverId)
@@ -236,6 +316,7 @@ const DriverUtils = {
         if (CUSTOM_DRIVER_IDS.has(participant.m_driverId)) {
             const customMatch = this.matchCustomDriver(participant, customDrivers, teamNames);
             if (customMatch) {
+                if (this._prefersDisplayName(customMatch)) return '';
                 return customMatch.FirstName || '';
             }
             // Fallback: try to extract first name from participant name
@@ -272,8 +353,8 @@ const DriverUtils = {
         if (CUSTOM_DRIVER_IDS.has(participant.m_driverId)) {
             const customMatch = this.matchCustomDriver(participant, customDrivers, teamNames);
             if (customMatch) {
-                const first = customMatch.FirstName || '';
-                const last = customMatch.LastName || customMatch.DisplayName || 'PLAYER';
+                const first = this._prefersDisplayName(customMatch) ? '' : (customMatch.FirstName || '');
+                const last = this._customLastName(customMatch);
                 return first ? `${first} ${last}` : last;
             }
             return participant.m_name || 'PLAYER';
@@ -308,7 +389,7 @@ const DriverUtils = {
         if (CUSTOM_DRIVER_IDS.has(participant.m_driverId)) {
             const customMatch = this.matchCustomDriver(participant, customDrivers, teamNames);
             if (customMatch) {
-                return customMatch.LastName || customMatch.DisplayName || 'PLAYER';
+                return this._customLastName(customMatch);
             }
             return (participant.m_name ?? '').split(' ').pop() || 'PLAYER';
         }
@@ -346,9 +427,8 @@ const DriverUtils = {
                 if (customMatch.Abbreviation) {
                     return customMatch.Abbreviation.toUpperCase();
                 }
-                // Generate from last name
-                const lastName = customMatch.LastName || customMatch.DisplayName || 'PLAYER';
-                return this._generateAbbreviation(lastName);
+                // Generate from last name (or DisplayName, if prioritized)
+                return this._generateAbbreviation(this._customLastName(customMatch));
             }
             // Generate from participant name
             return this._generateAbbreviation(participant.m_name || 'PLAYER');

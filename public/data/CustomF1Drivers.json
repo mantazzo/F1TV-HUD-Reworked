@@ -1,13 +1,11 @@
 [
   {
-    "Name": "Platform_Name",
-    "Name_Note": "This will be deprecated in future versions. Use 'MatchName' instead.",
     "MatchName": "Platform_Name",
-    "MatchName_Note": "Generally used for matching against Player name in UDP data. Case sensitive.",
+    "MatchName_Note": "Matched against the Player name in UDP data (exact, case sensitive). Online, other players only show their name if they have Show Online Names enabled (otherwise they appear as 'Player' and are never matched by name); your own name is always available locally. If set, the entry is matched ONLY by name - RaceNumber and Team are ignored, so other cars using the same number never get this entry.",
     "RaceNumber": 1,
-    "RaceNumber_Note": "Mandatory field, used for matching drivers.",
+    "RaceNumber_Note": "Used for matching when MatchName is not set (then it is mandatory). Ignored if MatchName is set.",
     "Team": "Team_Name",
-    "Team_Note": "Can be used to specify team for the driver. Mainly used when matching along with RaceNumber.",
+    "Team_Note": "Optional, only used together with RaceNumber (ignored if MatchName is set). If set, the car must also be in this team. Accepts a team name (ShortName or FullName from DefaultTeams.json; case and apostrophe style don't matter), a team ID number, or a list mixing both, e.g. [227, 483]. A name without a year ('Haas') matches every era of that team; with a year (\"Haas '26\") only that era. A RaceNumber + Team entry wins over a RaceNumber-only entry.",
     "DisplayName": "Display Name",
     "DisplayName_Note": "Name to be displayed in HUD. Mandatory field. Used as a fallback field if LastName is not provided.",
     "FirstName": "Display",
@@ -16,14 +14,24 @@
     "LastName_Note": "Optional field for Last Name of the driver. If provided, this will be used in HUD instead of DisplayName.",
     "Abbreviation": "DNA",
     "Abbreviation_Note": "3-letter abbreviation for the driver.",
+    "DisplayNamePriority": false,
+    "DisplayNamePriority_Note": "Optional. If true, DisplayName is shown instead of LastName everywhere (and FirstName is left empty, so overlays showing a first name show only DisplayName). Also used to generate the abbreviation if Abbreviation is not set. If false or missing, the usual priority applies: LastName, then DisplayName.",
     "Notes": "Additional notes about the driver entry. Feel free to use them to your liking.",
-    "Other_Notes": "Consider this as a template entry. You can use it as a reference when adding new entries. Variable position doesn't matter. Only 'RaceNumber' and 'DisplayName' fields are mandatory. Note that 'notes' fields are just for your reference and do not affect functionality."
+    "Other_Notes": "Consider this as a template entry. You can use it as a reference when adding new entries. Variable position doesn't matter. Mandatory: 'DisplayName', plus either 'MatchName' or 'RaceNumber'. Note that 'notes' fields are just for your reference and do not affect functionality."
   },
   {
-    "MatchName": "MSchumacher",
     "RaceNumber": 47,
     "Team": "Haas",
     "DisplayName": "Mick Schumacher",
     "Abbreviation": "MSC"
+  },
+  {
+    "MatchName": "Mantazzo",
+    "DisplayName": "Tazzoman",
+    "FirstName": "Safe",
+    "LastName": "Driver",
+    "Abbreviation": "TAZ",
+    "DisplayNamePriority": true,
+    "Notes": "Creator's profile."
   }
 ]
