@@ -106,6 +106,13 @@
     font-display: swap;
 }
 
+/* Bold Oblique includes the former "-Pos" and "-Int" variants as stylistic sets:
+   - SimHub font "F1TV-2022-ObliqueBold-Pos" -> font-feature-settings: "ss06";
+     Pos digits (slashed 0), + and -
+   - SimHub font "F1TV-2022-ObliqueBold-Int" -> font-feature-settings: "ss07";
+     Int digits, S/s (small s), + and -
+   Use with font-family 'F1TV-2022', font-weight 700, font-style oblique.
+   ss06/ss07 don't combine with "tnum" (tabular digits would stay base digits). */
 @font-face {
     font-family: 'F1TV-2022'; /* Bold Oblique */
     src: url('/fonts/woff2/F1TV-2022-ObliqueBold.woff2') format('woff2'),
