@@ -6,6 +6,8 @@
     <link rel="stylesheet" href="/fonts.css">
     <link rel="stylesheet" href="/styles-tauri-overlay.css">
     <link rel="stylesheet" href="/styles-car-damage.css">
+    <script src="/utils/preload.js"></script>
+    <script>AssetPreloader.preloadAll();</script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="/utils/overlay-scale.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/textfit@2.4.0/textFit.min.js"></script>
@@ -264,6 +266,12 @@
             if (pct < 90)  return 'Orange';
             return 'Red';
         }
+
+        // Preload every colour variant of each part (only Green is in the HTML), so a part
+        // doesn't flash blank the first time its damage colour changes
+        AssetPreloader.preloadImages([...document.querySelectorAll('.cd-car-part')].flatMap(img =>
+            (img.id === 'cd-engine' ? ['Yellow', 'Orange', 'Red'] : ['Yellow', 'Red'])
+                .map(colour => img.getAttribute('src').replace('Green', colour))));
 
         /** Base pair-colour applier — takes a pre-computed "r, g, b" string. */
         function applyPairColor(id, rgb) {

@@ -5,6 +5,8 @@
     <link rel="stylesheet" href="/fonts.css">
     <link rel="stylesheet" href="/styles-tauri-overlay.css">
     <link rel="stylesheet" href="/styles-weather.css">
+    <script src="/utils/preload.js"></script>
+    <script>AssetPreloader.preloadAll();</script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="/utils/overlay-scale.js"></script>
     <script src="/utils/driver-utils.js"></script>
@@ -266,7 +268,11 @@
             1: 'light_cloud_night.png',
             3: 'light_rain_night.png'
         };
-        
+
+        // Preload every icon, so a forecast slot doesn't pop in empty the first time its weather changes
+        AssetPreloader.preloadImages([...Object.values(WEATHER_ICONS), ...Object.values(WEATHER_ICONS_NIGHT)]
+            .map(icon => `/images/weather/${icon}`));
+
         // Night time detection (true if between 20:00 and 06:00)
         let isNightTime = false;
         
