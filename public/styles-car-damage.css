@@ -454,6 +454,7 @@
     font-family: 'F1TV-2022', 'Formula1 Display', sans-serif;
     font-weight: 700;
     font-style: oblique;
+    font-feature-settings: "ss07" 1; /* SimHub source font: F1TV-2022-ObliqueBold-Int */
     font-size: 20px;
     color: rgb(255, 255, 255);
     white-space: pre;
@@ -511,6 +512,7 @@
     font-family: 'F1TV-2022', 'Formula1 Display', sans-serif;
     font-weight: 700;
     font-style: oblique;
+    font-feature-settings: "ss07" 1; /* SimHub source font: F1TV-2022-ObliqueBold-Int */
     font-size: 25px;
     color: rgb(255, 255, 255);
 }

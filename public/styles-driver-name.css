@@ -211,6 +211,7 @@
     font-family: "F1TV-2022";
     font-weight: 700;
     font-style: oblique;
+    font-feature-settings: "ss06" 1; /* SimHub source font: F1TV-2022-ObliqueBold-Pos */
     font-size: 35px;
     color: rgb(192, 192, 192);
     white-space: pre;
@@ -484,6 +485,7 @@
     font-family: "F1TV-2022";
     font-weight: 700;
     font-style: oblique;
+    font-feature-settings: "ss06" 1; /* SimHub source font: F1TV-2022-ObliqueBold-Pos */
     font-size: 40px; /* JS shrinks to 35px for double-digit positions */
     color: rgb(192, 192, 192);
     white-space: pre;

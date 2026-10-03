@@ -218,6 +218,7 @@ body { background: transparent; overflow: hidden; }
     font-family: 'F1TV-2022';
     font-weight: 700;
     font-style: oblique;
+    font-feature-settings: "ss07" 1; /* SimHub source font: F1TV-2022-ObliqueBold-Int */
     color: rgb(255, 255, 255);
     font-size: 32px;
     display: none;
@@ -267,6 +268,7 @@ body { background: transparent; overflow: hidden; }
     font-family: 'F1TV-2022';
     font-weight: 700;
     font-style: oblique;
+    font-feature-settings: "ss07" 1; /* SimHub source font: F1TV-2022-ObliqueBold-Int */
     color: rgb(255, 255, 255);
     font-size: 33px;
     display: flex;
@@ -898,6 +900,7 @@ body { background: transparent; overflow: hidden; }
     font-family: 'F1TV-2022';
     font-weight: 700;
     font-style: oblique;
+    font-feature-settings: "ss07" 1; /* SimHub source font: F1TV-2022-ObliqueBold-Int */
     font-size: 80px;
     color: rgb(255, 0, 0);
     display: flex;
