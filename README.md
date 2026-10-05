@@ -13,8 +13,8 @@ This project is worked on with Windows systems in mind - it may work on other sy
 ## Installation
 
 1. **Install Node.js on Windows.**  
-   I would recommend using tools like [Nodist](https://github.com/nodists/nodist) or [NVM for Windows](https://github.com/coreybutler/nvm-windows) or [Volta](https://volta.sh/) (currently used personally) for easier installation and version management. Any option works, as long as you can run commands like `node` or `npm`.  
-   I used the latest LTS version (v24.19.0 at the time of writing) when setting up, but most recent versions should work.
+   I would recommend using tools like [Nodist](https://github.com/nodists/nodist) or [NVM for Windows](https://github.com/coreybutler/nvm-windows) or [Volta](https://volta.sh/) (currently used personally) for easier installation and version management, however, you can choose to proceed any way you want. Any option works, as long as you can run commands like `node` or `npm`.  
+   I used the latest LTS version (v24.21.0 at the time of writing) when setting up, but most recent versions should work.
 
 2. **Clone the repository or download the latest version.**  
    You can clone with `git clone https://github.com/mantazzo/F1TV-HUD-Reworked.git` or download the ZIP file [by clicking on the text here](https://github.com/mantazzo/F1TV-HUD-Reworked/archive/refs/heads/main.zip). 
@@ -36,7 +36,7 @@ This project is worked on with Windows systems in mind - it may work on other sy
 7. **Access the overlays.**  
    You can access the overlays in multiple ways.
    - Open a browser and go to `http://localhost:3000` to see the default page (Speedometer overlay). Check the [Available Overlays](https://github.com/mantazzo/F1TV-HUD-Reworked/blob/main/AVAILABLE_OVERLAYS.md) page for all currently available overlays that can be used, with size references. You can use these in tools like OBS to enhance your streams or recordings. 
-   - If you would prefer to see the overlays on your screen instead, I have compiled an executable to run the overlays in what I call "Desktop Mode". You can find it in the Releases, alongside the latest version. After running the server, launch the executable that you can find along the Releases, then in the opened "Launcher" window, select which overlays you want to see and scale them to fit your screen. Then go play the game and enjoy seeing all the overlay data on the screen instead. Keep in mind that this will use extra resources from your computer.
+   - If you would prefer to see the overlays on your screen instead, I have compiled an executable to run the overlays in what I call "Desktop Mode". You can find it in the Releases, alongside the latest version. After running the server (important, but you will be reminded in case it's not running), launch the executable that you can find along the Releases, then in the opened "Launcher" window, select which overlays you want to see and scale/move them to fit your screen. Then go play the game and enjoy seeing all the overlay data on the screen instead.
       - (Note 1: Keep in mind that "Desktop Mode" usage will require extra resources from your computer.)
       - (Note 2: While you can see overlays in Desktop Mode, you can still access them using links as well.)
       - (Note 3: WebView2 Runtime **MUST** be installed on your PC if you want to run the "Desktop Mode". It usually comes in by default with Windows 11 systems, and on Windows 10 it comes by default if you have Microsoft Edge installed.)
@@ -47,7 +47,7 @@ This project is worked on with Windows systems in mind - it may work on other sy
 If you're not feeling comfortable with all the extensive setup, I have now provided an alternative quicker approach:
 
 1. **Run the "install.bat" script.** 
-This will execute the *"install.ps1"* Powershell script, which will download the standalone binary of Node.js (latest LTS version, currently it's v24.19.0) and set it up in a "runtime/" folder, and also will set up the project's dependencies. 
+This will execute the *"install.ps1"* Powershell script, which will download the standalone binary of Node.js (latest LTS version, currently it's v24.21.0) and set it up in a "runtime/" folder, and also will set up the project's dependencies. 
 If you ever need to do a module update, just rerun the script - it will update the modules as well, and install required patches (if any are required). 
 
 2. **Run the "run.bat" script.** 
