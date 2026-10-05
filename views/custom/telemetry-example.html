@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Overlay Example - Telemetry</title>
+
+    <!-- Manifest: name and native size (set the OBS browser source to this), plus the controls the
+         Controller shows for this overlay. Control types: toggle, select (dropdown), buttons.
+         A Visible toggle is always added. Values arrive through CustomOverlay.init() below. -->
+    <script type="application/json" id="overlay-manifest">
+    {
+        "name": "Telemetry Example",
+        "width": 420,
+        "height": 230,
+        "controls": [
+            { "id": "showTyreTemps", "type": "toggle", "label": "Show Tyre Temperatures", "default": true },
+            { "id": "speedUnits", "type": "select", "label": "Speed Units", "default": "automatic",
+              "options": [
+                  { "value": "automatic", "label": "Automatic (Game Setting)" },
+                  { "value": "kph", "label": "KM/H" },
+                  { "value": "mph", "label": "MPH" }
+              ] },
+            { "id": "ersDisplay", "type": "buttons", "label": "ERS Display", "default": "percent",
+              "options": [
+                  { "value": "percent", "label": "Percent" },
+                  { "value": "mj", "label": "Megajoules" }
+              ] }
+        ]
+    }
+    </script>
+
+    <!-- Shared project assets - all served from the main server, so they work from /custom/ too -->
+    <link rel="stylesheet" href="/fonts.css">
+    <link rel="stylesheet" href="/styles-tauri-overlay.css">
+
+    <style>
+        /* Everything for this example lives in one file, so it can be copied as a starting point. */
+        .panel {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 420px;
+            height: 230px;
+            box-sizing: border-box;
+            padding: 12px 14px;
+            background: rgba(15, 15, 20, 0.88);
+            border-left: 6px solid var(--team-color, #ffffff);
+            color: #ffffff;
+            font-family: 'Formula1 Display', sans-serif;
+            font-variant-numeric: tabular-nums;
+            transition: opacity 0.3s ease;
+        }
+        .panel.hidden { opacity: 0; }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            font-size: 18px;
+            font-weight: 700;
+        }
+        .header .name { text-transform: uppercase; }
+        .header .meta { font-size: 14px; font-weight: 400; opacity: 0.75; }
+
+        .main {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-top: 8px;
+        }
+        .gear {
+            width: 56px;
+            font-size: 52px;
+            font-weight: 900;
+            text-align: center;
+            line-height: 1;
+        }
+        .speed { font-size: 34px; font-weight: 700; line-height: 1; }
+        .speed .unit { font-size: 13px; font-weight: 400; opacity: 0.7; }
+        .stack { flex: 1; display: flex; flex-direction: column; gap: 5px; }
+
+        /* Generic horizontal bar: set --value (0..1) on the .bar element */
+        .bar { height: 8px; background: rgba(255, 255, 255, 0.12); }
+        .bar > div { height: 100%; width: calc(var(--value, 0) * 100%); background: var(--bar-color, #ffffff); }
+        .bar.rpm      { --bar-color: #00c8ff; }
+        .bar.throttle { --bar-color: #39d353; }
+        .bar.brake    { --bar-color: #ff3b3b; }
+        .bar.ers      { --bar-color: #ffb000; }
+        .bar.rpm.limiter { --bar-color: #ff3b3b; }
+
+        .row {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 12px;
+            font-size: 13px;
+        }
+        .cell .label { display: block; font-size: 10px; opacity: 0.6; letter-spacing: 0.5px; }
+        .cell .value { font-size: 16px; font-weight: 700; }
+
+        .tyre-dot {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 3px solid var(--tyre-color, #888888);
+            box-sizing: border-box;
+            vertical-align: -1px;
+            margin-right: 4px;
+        }
+
+        /* 2x2 tyre temperature grid in car layout: FL FR / RL RR */
+        .temps { display: grid; grid-template-columns: repeat(2, 34px); gap: 2px; text-align: center; }
+        .temps span { font-size: 12px; font-weight: 700; padding: 1px 0; background: rgba(255, 255, 255, 0.08); }
+
+        .badge { font-size: 11px; font-weight: 700; padding: 1px 6px; opacity: 0.25; }
+        .badge.on { opacity: 1; background: #00e5c8; color: #000000; }
+    </style>
+
+    <script src="/utils/preload.js"></script>
+    <script>AssetPreloader.preloadAll();</script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/utils/overlay-scale.js"></script>
+    <script src="/utils/driver-utils.js"></script>
+    <script src="/utils/custom-overlay.js"></script>
+</head>
+<body data-tauri-drag-region>
+    <div class="panel">
+        <div class="header">
+            <span class="name" id="driver-name">WAITING FOR DATA</span>
+            <span class="meta"><span id="position">P-</span> &middot; LAP <span id="lap">-</span></span>
+        </div>
+
+        <div class="main">
+            <div class="gear" id="gear">N</div>
+            <div class="speed"><span id="speed">0</span> <span class="unit" id="speed-unit">KM/H</span></div>
+            <div class="stack">
+                <div class="bar rpm" id="rpm-bar"><div></div></div>
+                <div class="bar throttle" id="throttle-bar"><div></div></div>
+                <div class="bar brake" id="brake-bar"><div></div></div>
+                <div class="bar ers" id="ers-bar"><div></div></div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="cell">
+                <span class="label">TYRE</span>
+                <span class="value"><span class="tyre-dot" id="tyre-dot"></span><span id="tyre-age">-</span> L</span>
+            </div>
+            <div class="cell" id="temps-cell">
+                <span class="label">TYRE TEMP &deg;C</span>
+                <div class="temps">
+                    <span id="temp-fl">-</span><span id="temp-fr">-</span>
+                    <span id="temp-rl">-</span><span id="temp-rr">-</span>
+                </div>
+            </div>
+            <div class="cell">
+                <span class="label">ERS</span>
+                <span class="value" id="ers">-</span>
+            </div>
+            <div class="cell">
+                <span class="label">FUEL (LAPS)</span>
+                <span class="value" id="fuel">-</span>
+            </div>
+            <div class="cell">
+                <span class="label">2026</span>
+                <span class="badge" id="overtake-badge">OVERTAKE</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /*
+         * Custom overlay example.
+         *
+         * Every UDP packet arrives on the 'f1_data' socket event as a plain JS object, with the same
+         * field names as the official spec (documentation/UDP_Output/*.txt). Check
+         * data.m_header.m_packetId to tell packets apart, and index per-car arrays with the
+         * "active driver" index (the player, or the spectated car while spectating).
+         */
+        const socket = io();
+        socket.emit('identify', 'Custom: Telemetry Example');
+
+        const $ = (id) => document.getElementById(id);
+        const panel = document.querySelector('.panel');
+
+        // Visual tyre compounds -> colour (F1: 16 soft, 17 medium, 18 hard, 7 inter, 8 wet;
+        // F2 classic: 19 super soft, 20 soft, 21 medium, 22 hard, 15 wet)
+        const TYRE_COLORS = {
+            16: '#ff2a2a', 17: '#ffd400', 18: '#ffffff', 7: '#39d353', 8: '#2a7bff',
+            19: '#c000ff', 20: '#ff2a2a', 21: '#ffd400', 22: '#ffffff', 15: '#2a7bff'
+        };
+        const ERS_MAX_JOULES = 4000000; // 4 MJ, same as the built-in leaderboards
+
+        // Active driver tracking (see DriverUtils.getActiveDriverIndex)
+        let rawPlayerIndex = -1;
+        let isSpectating = 0;
+        let spectatorCarIndex = 255;
+        let activeIndex = -1;
+        let gameSpeedUnits = 1; // 0 = MPH, 1 = KPH (Session packet m_speedUnitsLeadPlayer)
+        let lastSpeedKmh = 0;
+        let lastErsJoules = null;
+
+        // Settings from the Controller (manifest defaults until the server's config arrives)
+        let settings = {};
+
+        // Driver name resolution data
+        let aiDrivers = {};
+        let customDrivers = [];
+        let teamNames = {};
+        let formulaType = DriverUtils.FORMULA_TYPE.F1_MODERN;
+
+        async function loadDriverData() {
+            try {
+                const result = await DriverUtils.loadDriverData(formulaType);
+                customDrivers = result.customDrivers;
+                teamNames = result.teamNames;
+            } catch (error) {
+                console.error('[CustomExample] Error loading driver data:', error);
+            }
+        }
+
+        socket.on('drivers_data', (drivers) => { aiDrivers = drivers; });
+
+        function setBar(id, value) {
+            $(id).style.setProperty('--value', Math.min(1, Math.max(0, value)));
+        }
+
+        // Re-rendered on telemetry and on unit-setting changes
+        function renderSpeed() {
+            const useMph = settings.speedUnits === 'mph' || (settings.speedUnits === 'automatic' && gameSpeedUnits === 0);
+            $('speed').textContent = useMph ? Math.round(lastSpeedKmh * 0.621371) : lastSpeedKmh;
+            $('speed-unit').textContent = useMph ? 'MPH' : 'KM/H';
+        }
+
+        function renderErs() {
+            if (lastErsJoules === null) return;
+            setBar('ers-bar', lastErsJoules / ERS_MAX_JOULES);
+            $('ers').textContent = settings.ersDisplay === 'mj'
+                ? `${(lastErsJoules / 1000000).toFixed(2)} MJ`
+                : `${Math.round(Math.min(1, lastErsJoules / ERS_MAX_JOULES) * 100)}%`;
+        }
+
+        CustomOverlay.init(socket, {
+            onSettings: (newSettings) => {
+                settings = newSettings;
+                $('temps-cell').style.display = settings.showTyreTemps ? '' : 'none';
+                renderSpeed();
+                renderErs();
+            },
+            onVisibility: (visible) => panel.classList.toggle('hidden', !visible)
+        });
+
+        socket.on('f1_data', (data) => {
+            const header = data?.m_header;
+            if (!header) return;
+
+            rawPlayerIndex = header.m_playerCarIndex ?? rawPlayerIndex;
+            activeIndex = DriverUtils.getActiveDriverIndex(rawPlayerIndex, isSpectating, spectatorCarIndex);
+
+            switch (header.m_packetId) {
+                case 1: { // Session
+                    isSpectating = data.m_isSpectating ?? isSpectating;
+                    spectatorCarIndex = data.m_spectatorCarIndex ?? spectatorCarIndex;
+                    if (typeof data.m_speedUnitsLeadPlayer === 'number' && data.m_speedUnitsLeadPlayer !== gameSpeedUnits) {
+                        gameSpeedUnits = data.m_speedUnitsLeadPlayer;
+                        renderSpeed();
+                    }
+                    if (typeof data.m_formula === 'number' && data.m_formula !== formulaType) {
+                        formulaType = data.m_formula;
+                        loadDriverData();
+                    }
+                    break;
+                }
+                case 2: { // Lap Data
+                    const lap = data.m_lapData?.[activeIndex];
+                    if (!lap) break;
+                    $('position').textContent = `P${lap.m_carPosition}`;
+                    $('lap').textContent = lap.m_currentLapNum;
+                    break;
+                }
+                case 4: { // Participants
+                    const participant = data.m_participants?.[activeIndex];
+                    if (!participant) break;
+                    $('driver-name').textContent = DriverUtils.getDriverLastName(participant, aiDrivers, customDrivers, teamNames) || 'DRIVER';
+                    const color = participant.m_liveryColour?.[0];
+                    const override = teamNames[participant.m_teamId]?.OverridePrimaryColor;
+                    if (override) panel.style.setProperty('--team-color', override);
+                    else if (color) panel.style.setProperty('--team-color', `rgb(${color.red}, ${color.green}, ${color.blue})`);
+                    break;
+                }
+                case 6: { // Car Telemetry
+                    const car = data.m_carTelemetryData?.[activeIndex];
+                    if (!car) break;
+                    $('gear').textContent = car.m_gear === -1 ? 'R' : car.m_gear === 0 ? 'N' : car.m_gear;
+                    lastSpeedKmh = car.m_speed;
+                    renderSpeed();
+                    setBar('rpm-bar', car.m_revLightsPercent / 100);
+                    $('rpm-bar').classList.toggle('limiter', car.m_revLightsPercent >= 100);
+                    setBar('throttle-bar', car.m_throttle);
+                    setBar('brake-bar', car.m_brake);
+                    // Wheel arrays are ordered RL, RR, FL, FR
+                    const [rl, rr, fl, fr] = car.m_tyresSurfaceTemperature ?? [];
+                    $('temp-rl').textContent = rl ?? '-';
+                    $('temp-rr').textContent = rr ?? '-';
+                    $('temp-fl').textContent = fl ?? '-';
+                    $('temp-fr').textContent = fr ?? '-';
+                    break;
+                }
+                case 7: { // Car Status
+                    const status = data.m_carStatusData?.[activeIndex];
+                    if (!status) break;
+                    lastErsJoules = status.m_ersStoreEnergy;
+                    renderErs();
+                    const fuel = status.m_fuelRemainingLaps;
+                    $('fuel').textContent = `${fuel >= 0 ? '+' : ''}${fuel.toFixed(1)}`;
+                    $('tyre-dot').style.setProperty('--tyre-color', TYRE_COLORS[status.m_visualTyreCompound] ?? '#888888');
+                    $('tyre-age').textContent = status.m_tyresAgeLaps;
+                    break;
+                }
+                case 16: { // Car Telemetry 2 (2026 Season Pack only)
+                    const car2 = data.m_carTelemetry2Data?.[activeIndex];
+                    if (!car2) break;
+                    $('overtake-badge').classList.toggle('on', car2.m_overtakeActive === 1);
+                    break;
+                }
+            }
+        });
+
+        loadDriverData();
+    </script>
+</body>
+</html>

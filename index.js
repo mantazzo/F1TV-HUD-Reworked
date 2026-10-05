@@ -46,6 +46,118 @@ function saveOverlayConfig(config) {
 
 let overlayConfig = loadOverlayConfig();
 
+// Custom (user-made) overlays — see views/custom/README.md.
+// Each overlay declares its name, size and Controller controls in a JSON manifest
+// (<script type="application/json" id="overlay-manifest">) inside its own HTML.
+// Settings live in their own git-ignored file, keyed by overlay id, holding only the
+// values changed from the manifest defaults: { "telemetry-example": { "visible": false } }
+const CUSTOM_DIR = path.join(__dirname, 'views', 'custom');
+const CUSTOM_CONFIG_PATH = path.join(__dirname, 'public', 'data', 'CustomOverlayConfig.json');
+const CUSTOM_CONTROL_TYPES = ['toggle', 'select', 'buttons'];
+const MANIFEST_REGEX = /<script[^>]*\bid\s*=\s*["']overlay-manifest["'][^>]*>([\s\S]*?)<\/script>/i;
+
+function loadCustomOverlayConfig() {
+    try {
+        if (fs.existsSync(CUSTOM_CONFIG_PATH)) {
+            return JSON.parse(fs.readFileSync(CUSTOM_CONFIG_PATH, 'utf8'));
+        }
+    } catch (err) {
+        console.error('Error loading custom overlay config:', err);
+    }
+    return {};
+}
+
+function saveCustomOverlayConfig(config) {
+    try {
+        fs.writeFileSync(CUSTOM_CONFIG_PATH, JSON.stringify(config, null, 2));
+    } catch (err) {
+        console.error('Error saving custom overlay config:', err);
+    }
+}
+
+let customOverlayConfig = loadCustomOverlayConfig();
+
+// Keep only well-formed controls, so the Controller and the overlays can trust the shape
+function normalizeManifest(id, raw) {
+    const manifest = {
+        name: typeof raw.name === 'string' && raw.name.trim() ? raw.name.trim() : id,
+        width: Number.isFinite(raw.width) && raw.width > 0 ? raw.width : null,
+        height: Number.isFinite(raw.height) && raw.height > 0 ? raw.height : null,
+        controls: []
+    };
+    const seen = new Set(['visible']); // reserved — every custom overlay gets a Visible toggle
+    for (const control of Array.isArray(raw.controls) ? raw.controls : []) {
+        if (!control || typeof control.id !== 'string' || seen.has(control.id)) continue;
+        if (!CUSTOM_CONTROL_TYPES.includes(control.type)) continue;
+        const label = typeof control.label === 'string' ? control.label : control.id;
+        if (control.type === 'toggle') {
+            manifest.controls.push({ id: control.id, type: 'toggle', label, default: control.default === true });
+        } else {
+            const options = (Array.isArray(control.options) ? control.options : [])
+                .filter(o => o && (typeof o.value === 'string' || typeof o.value === 'number'))
+                .map(o => ({ value: o.value, label: typeof o.label === 'string' ? o.label : String(o.value) }));
+            if (options.length === 0) continue;
+            const hasDefault = options.some(o => o.value === control.default);
+            manifest.controls.push({ id: control.id, type: control.type, label, options, default: hasDefault ? control.default : options[0].value });
+        }
+        seen.add(control.id);
+    }
+    return manifest;
+}
+
+// Scan views/custom/ — "name.html" and "name/index.html" both become overlay "name".
+// Read fresh on every call, so added/edited overlays show up without a restart.
+// Only pages with a manifest are listed; a broken manifest is listed with its error.
+function scanCustomOverlays() {
+    const overlays = [];
+    let entries = [];
+    try {
+        entries = fs.readdirSync(CUSTOM_DIR, { withFileTypes: true });
+    } catch (err) {
+        return overlays; // no views/custom/ folder
+    }
+    for (const entry of entries) {
+        let id, file, url;
+        if (entry.isFile() && entry.name.toLowerCase().endsWith('.html')) {
+            id = entry.name.slice(0, -5);
+            file = path.join(CUSTOM_DIR, entry.name);
+            url = `/custom/${encodeURIComponent(id)}`;
+        } else if (entry.isDirectory() && fs.existsSync(path.join(CUSTOM_DIR, entry.name, 'index.html'))) {
+            id = entry.name;
+            file = path.join(CUSTOM_DIR, entry.name, 'index.html');
+            url = `/custom/${encodeURIComponent(id)}/`;
+        } else {
+            continue;
+        }
+        let html;
+        try {
+            html = fs.readFileSync(file, 'utf8');
+        } catch (err) {
+            continue;
+        }
+        const match = html.match(MANIFEST_REGEX);
+        if (!match) continue;
+        try {
+            overlays.push({ id, url, ...normalizeManifest(id, JSON.parse(match[1])) });
+        } catch (err) {
+            overlays.push({ id, url, name: id, width: null, height: null, controls: [], error: `Invalid manifest JSON: ${err.message}` });
+        }
+    }
+    return overlays.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+// Check a Controller update against the overlay's own manifest before saving it
+function isValidCustomUpdate(update) {
+    if (!update || typeof update.overlay !== 'string' || typeof update.property !== 'string') return false;
+    const overlay = scanCustomOverlays().find(o => o.id === update.overlay && !o.error);
+    if (!overlay) return false;
+    if (update.property === 'visible') return typeof update.value === 'boolean';
+    const control = overlay.controls.find(c => c.id === update.property);
+    if (!control) return false;
+    if (control.type === 'toggle') return typeof update.value === 'boolean';
+    return control.options.some(o => o.value === update.value);
+}
+
 // Desktop Mode layout management (Tauri launcher — saved window position/scale per overlay)
 const DESKTOP_LAYOUTS_PATH = path.join(__dirname, 'public', 'data', 'DesktopModeSettings.json');
 
@@ -142,6 +254,18 @@ function startServer(portNumber, forwardAddresses) {
                 io.emit('overlay_config', overlayConfig);
                 console.log(`Config updated: ${update.overlay}.${update.property} = ${update.value}`);
             }
+        });
+
+        // Custom overlay settings — separate event/file from the built-in overlay config
+        socket.emit('custom_overlay_config', customOverlayConfig);
+
+        socket.on('custom_config_update', (update) => {
+            if (!isValidCustomUpdate(update)) return;
+            customOverlayConfig[update.overlay] = customOverlayConfig[update.overlay] || {};
+            customOverlayConfig[update.overlay][update.property] = update.value;
+            saveCustomOverlayConfig(customOverlayConfig);
+            io.emit('custom_overlay_config', customOverlayConfig);
+            console.log(`Custom config updated: ${update.overlay}.${update.property} = ${update.value}`);
         });
 
         // Desktop (Tauri) overlay rescaling — ephemeral, not persisted to OverlayConfig.json
@@ -356,6 +480,9 @@ function startServer(portNumber, forwardAddresses) {
         res.json({ success: true, name: layout.name || null });
     });
 
+    // Custom overlays found in views/custom/ (manifest only — name, size, controls)
+    app.get('/api/custom-overlays', (req, res) => res.json(scanCustomOverlays()));
+
     // Overlays
     app.get('/car-damage', (req, res) => res.sendFile(path.join(__dirname, 'views', 'car-damage.html')));                       // Car Damage overlay
     app.get('/speedometer', (req, res) => res.sendFile(path.join(__dirname, 'views', 'speedometer.html')));                     // Speedometer overlay
@@ -400,6 +527,13 @@ function startServer(portNumber, forwardAddresses) {
 
     // Other Debug pages
     app.get('/debug/fonts-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'fonts-debug.html'))); // A page to test the fonts
+    
+    // Custom (user-made) overlays: any file dropped into views/custom/ is served under /custom.
+    // /custom/my-overlay serves views/custom/my-overlay.html (the .html extension is optional), and
+    // /custom/my-overlay/ serves views/custom/my-overlay/index.html, so an overlay can also be a folder
+    // with its own CSS/images next to it. Served live - new files work without a restart.
+    // See views/custom/README.md for how to write one.
+    app.use('/custom', express.static(path.join(__dirname, 'views', 'custom'), { extensions: ['html'] }));
 
     // Default to speedometer overlay (for now)
     app.get('/', (req, res) => res.redirect('/speedometer'));

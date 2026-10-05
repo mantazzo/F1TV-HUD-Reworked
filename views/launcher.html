@@ -59,6 +59,12 @@
 
         <div class="overlay-list" id="overlay-list"></div>
 
+        <div class="custom-overlays-header">
+            <span class="custom-overlays-label">Custom Overlays</span>
+            <button class="orientation-btn" id="custom-refresh-btn">Refresh</button>
+        </div>
+        <div class="overlay-list" id="custom-overlay-list"></div>
+
         <button class="quit-button" id="quit-button">Shutdown &amp; Quit</button>
     </div>
 
@@ -82,6 +88,12 @@
             { id: 'leaderboard-lastname', title: 'Leaderboard (Last Name)', path: '/leaderboard-lastname', width: 650, height: 1390 }
         ];
 
+        // Custom overlays from views/custom/ (GET /api/custom-overlays), with name and size taken
+        // from each overlay's manifest. Ids are "custom/<name>" — the same id overlay-scale.js
+        // derives from the page URL, so scale/reposition messages reach the right window.
+        let CUSTOM_OVERLAYS = [];
+        const findOverlay = (id) => OVERLAYS.find(o => o.id === id) || CUSTOM_OVERLAYS.find(o => o.id === id);
+
         const openWindows = {};
         // In-memory only — not persisted, resets to defaults on every launch.
         const scales = {};
@@ -91,31 +103,118 @@
         const { WebviewWindow, getCurrentWebviewWindow } = window.__TAURI__.webviewWindow;
         const { LogicalSize, LogicalPosition } = window.__TAURI__.dpi;
 
-        const list = document.getElementById('overlay-list');
-        OVERLAYS.forEach(cfg => {
+        // Names/ids are filled in with DOM calls, not the template — custom overlay names come from user files
+        function createOverlayRow(cfg) {
             const row = document.createElement('div');
             row.className = 'overlay-row';
             row.innerHTML = `
                 <div class="overlay-row-top">
-                    <span class="overlay-name">${cfg.title}</span>
-                    <button class="toggle" id="toggle-${cfg.id}" data-id="${cfg.id}" aria-pressed="false">Off</button>
+                    <span class="overlay-name"></span>
+                    <button class="toggle" aria-pressed="false">Off</button>
                 </div>
                 <div class="overlay-row-scale">
-                    <input type="range" class="scale-slider" id="scale-${cfg.id}" data-id="${cfg.id}"
-                           min="50" max="150" step="5" value="100">
-                    <span class="scale-label" id="scale-label-${cfg.id}">100%</span>
+                    <input type="range" class="scale-slider" min="50" max="150" step="5" value="100">
+                    <span class="scale-label">100%</span>
                 </div>
                 <div class="overlay-row-actions">
-                    <button class="reposition-toggle" id="reposition-${cfg.id}" data-id="${cfg.id}" aria-pressed="false">
-                        Reposition
-                    </button>
+                    <button class="reposition-toggle" aria-pressed="false">Reposition</button>
                 </div>
             `;
-            list.appendChild(row);
-        });
+            const name = row.querySelector('.overlay-name');
+            name.textContent = cfg.title;
+            if (cfg.custom) name.appendChild(createCustomBadge());
+            const toggle = row.querySelector('.toggle');
+            toggle.id = `toggle-${cfg.id}`;
+            toggle.dataset.id = cfg.id;
+            const slider = row.querySelector('.scale-slider');
+            slider.id = `scale-${cfg.id}`;
+            slider.dataset.id = cfg.id;
+            row.querySelector('.scale-label').id = `scale-label-${cfg.id}`;
+            const reposition = row.querySelector('.reposition-toggle');
+            reposition.id = `reposition-${cfg.id}`;
+            reposition.dataset.id = cfg.id;
+            return row;
+        }
+
+        function createCustomBadge() {
+            const badge = document.createElement('span');
+            badge.className = 'custom-badge';
+            badge.textContent = 'CUSTOM';
+            return badge;
+        }
+
+        // A custom overlay that can't be opened (broken manifest / no size) — listed, greyed out
+        function createUnavailableRow(overlay, reason) {
+            const row = document.createElement('div');
+            row.className = 'overlay-row overlay-row--unavailable';
+            const name = document.createElement('span');
+            name.className = 'overlay-name';
+            name.textContent = overlay.name;
+            name.appendChild(createCustomBadge());
+            const note = document.createElement('span');
+            note.className = 'overlay-unavailable-note';
+            note.textContent = reason;
+            row.append(name, note);
+            return row;
+        }
+
+        const list = document.getElementById('overlay-list');
+        OVERLAYS.forEach(cfg => list.appendChild(createOverlayRow(cfg)));
+
+        const customList = document.getElementById('custom-overlay-list');
+
+        async function loadCustomOverlays() {
+            let overlays = [];
+            try {
+                const res = await fetch('/api/custom-overlays');
+                overlays = await res.json();
+            } catch (e) {
+                console.error('Failed to load custom overlays:', e);
+            }
+
+            CUSTOM_OVERLAYS = [];
+            customList.innerHTML = '';
+            for (const overlay of overlays) {
+                if (overlay.error) {
+                    customList.appendChild(createUnavailableRow(overlay, overlay.error));
+                    continue;
+                }
+                if (!overlay.width || !overlay.height) {
+                    customList.appendChild(createUnavailableRow(overlay, 'Add "width" and "height" to its manifest to open it here.'));
+                    continue;
+                }
+                const cfg = {
+                    id: `custom/${overlay.id}`,
+                    title: overlay.name,
+                    path: overlay.url,
+                    width: overlay.width,
+                    height: overlay.height,
+                    custom: true
+                };
+                CUSTOM_OVERLAYS.push(cfg);
+                if (scales[cfg.id] === undefined) scales[cfg.id] = 1;
+                if (repositionActive[cfg.id] === undefined) repositionActive[cfg.id] = false;
+                customList.appendChild(createOverlayRow(cfg));
+                // Rows are rebuilt on Refresh — restore the state of anything already open
+                setToggleState(cfg.id, !!openWindows[cfg.id]);
+                setRepositionButtonState(cfg.id, repositionActive[cfg.id]);
+                syncScaleUI(cfg.id);
+            }
+
+            if (overlays.length === 0) {
+                const empty = document.createElement('div');
+                empty.className = 'custom-overlays-empty';
+                empty.textContent = 'None found. Add overlays to views/custom/, then press Refresh.';
+                customList.appendChild(empty);
+            }
+        }
+
+        // Tauri window labels only allow a-z A-Z 0-9 - / : _
+        const windowLabel = (id) => id.replace(/[^a-zA-Z0-9\-/:_]/g, '_');
 
         function setToggleState(id, isOpen) {
             const btn = document.getElementById(`toggle-${id}`);
+            if (!btn) return; // custom overlay removed from views/custom/ while its window is open
             btn.classList.toggle('on', isOpen);
             btn.setAttribute('aria-pressed', String(isOpen));
             btn.textContent = isOpen ? 'On' : 'Off';
@@ -123,6 +222,7 @@
 
         function setRepositionButtonState(id, active) {
             const btn = document.getElementById(`reposition-${id}`);
+            if (!btn) return;
             btn.classList.toggle('on', active);
             btn.setAttribute('aria-pressed', String(active));
         }
@@ -158,7 +258,7 @@
                 winOptions.x = layoutPos.x;
                 winOptions.y = layoutPos.y;
             }
-            const win = new WebviewWindow(cfg.id, winOptions);
+            const win = new WebviewWindow(windowLabel(cfg.id), winOptions);
 
             win.once('tauri://error', (e) => {
                 console.error(`Failed to open overlay "${cfg.id}":`, e);
@@ -212,10 +312,10 @@
             }
         }
 
-        list.addEventListener('click', (e) => {
+        function onOverlayListClick(e) {
             const toggleBtn = e.target.closest('.toggle');
             if (toggleBtn) {
-                const cfg = OVERLAYS.find(o => o.id === toggleBtn.dataset.id);
+                const cfg = findOverlay(toggleBtn.dataset.id);
                 if (openWindows[cfg.id]) {
                     closeOverlay(cfg.id);
                 } else {
@@ -226,7 +326,7 @@
 
             const repositionBtn = e.target.closest('.reposition-toggle');
             if (repositionBtn) {
-                const cfg = OVERLAYS.find(o => o.id === repositionBtn.dataset.id);
+                const cfg = findOverlay(repositionBtn.dataset.id);
                 const active = !repositionActive[cfg.id];
                 repositionActive[cfg.id] = active;
                 setRepositionButtonState(cfg.id, active);
@@ -237,12 +337,12 @@
                     socket.emit('set_reposition_mode', { overlay: cfg.id, active });
                 }
             }
-        });
+        }
 
-        list.addEventListener('input', (e) => {
+        function onOverlayListInput(e) {
             const slider = e.target.closest('.scale-slider');
             if (!slider) return;
-            const cfg = OVERLAYS.find(o => o.id === slider.dataset.id);
+            const cfg = findOverlay(slider.dataset.id);
             const scale = Number(slider.value) / 100;
             scales[cfg.id] = scale;
             document.getElementById(`scale-label-${cfg.id}`).textContent = `${slider.value}%`;
@@ -253,7 +353,15 @@
                 win.setSize(new LogicalSize(Math.round(cfg.width * scale), Math.round(cfg.height * scale)))
                     .catch(err => console.error(`Failed to resize "${cfg.id}":`, err));
             }
-        });
+        }
+
+        for (const el of [list, customList]) {
+            el.addEventListener('click', onOverlayListClick);
+            el.addEventListener('input', onOverlayListInput);
+        }
+
+        const customOverlaysLoaded = loadCustomOverlays();
+        document.getElementById('custom-refresh-btn').addEventListener('click', loadCustomOverlays);
 
         async function closeAllOverlays() {
             for (const id of Object.keys(openWindows)) {
@@ -406,6 +514,7 @@
                 return;
             }
 
+            await customOverlaysLoaded; // custom overlays in the layout need their size from the manifest
             const targetIds = new Set(Object.keys(layout.overlays));
 
             for (const id of Object.keys(openWindows)) {
@@ -413,7 +522,7 @@
             }
 
             for (const [id, layoutPos] of Object.entries(layout.overlays)) {
-                const cfg = OVERLAYS.find(o => o.id === id);
+                const cfg = findOverlay(id);
                 if (!cfg) continue; // saved layout references an overlay that no longer exists
                 if (openWindows[id]) {
                     await applyLayoutToOpenWindow(cfg, layoutPos);
@@ -449,7 +558,7 @@
             let finalOverlays = activeData;
             if (staleIds.length > 0) {
                 const staleNames = staleIds
-                    .map(id => (OVERLAYS.find(o => o.id === id) || {}).title || id)
+                    .map(id => (findOverlay(id) || {}).title || id)
                     .join(', ');
                 const keepOld = confirm(
                     `${layoutLabel(slot)} already has saved data for overlays that aren't currently active (${staleNames}).\n\n`

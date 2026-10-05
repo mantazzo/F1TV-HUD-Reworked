@@ -347,6 +347,57 @@ body {
     cursor: default;
 }
 
+/* Custom Overlays (blocks generated from each overlay's manifest) */
+.custom-overlays-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.custom-overlay-block {
+    padding: 12px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.custom-overlay-block + .custom-overlay-block {
+    margin-top: 12px;
+}
+
+.custom-overlay-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+.custom-overlay-meta {
+    display: inline-block;
+    margin: 2px 0 6px;
+    font-size: 12px;
+    color: #888888;
+    text-decoration: none;
+}
+
+.custom-overlay-meta:hover {
+    color: #e94560;
+}
+
+.custom-buttons-row {
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.custom-overlay-error {
+    font-size: 13px;
+    color: #ff6b6b;
+}
+
+.custom-overlays-empty {
+    font-size: 13px;
+    color: #888888;
+}
+
 /* Footer */
 .controller-footer {
     text-align: center;

@@ -407,6 +407,16 @@
             </div>
         </section>
 
+        <section class="overlay-section" id="custom-overlays-section">
+            <h2 class="custom-overlays-header">
+                <span>Custom Overlays</span>
+                <button class="mfd-button" id="custom-overlays-refresh-btn">Refresh</button>
+            </h2>
+            <div id="custom-overlays-list">
+                <!-- One block per overlay in views/custom/, generated from its manifest -->
+            </div>
+        </section>
+
         <section class="overlay-section server-control-section">
             <h2>Server Control</h2>
             <button class="stop-server-button" id="stop-server-btn">
@@ -1128,6 +1138,174 @@
             updateDriverNameOptions();
             updateMessageBoxOptions();
         };
+
+        // Custom Overlays — blocks are generated from each overlay's manifest (GET /api/custom-overlays).
+        // Settings travel on their own socket events (custom_overlay_config / custom_config_update),
+        // and the saved config only holds values changed from the manifest defaults.
+        const customOverlaysList = document.getElementById('custom-overlays-list');
+        let customOverlays = [];
+        let customConfig = {};
+
+        function customValue(overlay, controlId, defaultValue) {
+            const value = customConfig[overlay.id]?.[controlId];
+            return value === undefined ? defaultValue : value;
+        }
+
+        function setCustomValue(overlay, controlId, value) {
+            socket.emit('custom_config_update', { overlay: overlay.id, property: controlId, value });
+            customConfig[overlay.id] = { ...(customConfig[overlay.id] || {}), [controlId]: value };
+            updateCustomOverlayControls();
+        }
+
+        function createCustomToggle(overlay, controlId, label) {
+            const row = document.createElement('div');
+            row.className = 'option-row';
+            const labelEl = document.createElement('label');
+            labelEl.className = 'toggle-label';
+            const input = document.createElement('input');
+            input.type = 'checkbox';
+            input.className = 'toggle-checkbox';
+            input.dataset.customControl = controlId;
+            input.addEventListener('change', () => setCustomValue(overlay, controlId, input.checked));
+            const slider = document.createElement('span');
+            slider.className = 'toggle-slider';
+            const text = document.createElement('span');
+            text.className = 'toggle-text';
+            text.textContent = label;
+            labelEl.append(input, slider, text);
+            row.appendChild(labelEl);
+            return row;
+        }
+
+        function createCustomSelect(overlay, control) {
+            const row = document.createElement('div');
+            row.className = 'option-row';
+            const labelEl = document.createElement('label');
+            labelEl.className = 'select-label';
+            const text = document.createElement('span');
+            text.className = 'select-text';
+            text.textContent = `${control.label}:`;
+            const select = document.createElement('select');
+            select.className = 'select-dropdown';
+            select.dataset.customControl = control.id;
+            control.options.forEach((option, index) => {
+                const optionEl = document.createElement('option');
+                optionEl.value = index; // index, so numeric option values stay numbers
+                optionEl.textContent = option.label;
+                select.appendChild(optionEl);
+            });
+            select.addEventListener('change', () => setCustomValue(overlay, control.id, control.options[select.value].value));
+            labelEl.append(text, select);
+            row.appendChild(labelEl);
+            return row;
+        }
+
+        function createCustomButtons(overlay, control) {
+            const row = document.createElement('div');
+            row.className = 'option-row custom-buttons-row';
+            const text = document.createElement('span');
+            text.className = 'select-text';
+            text.textContent = `${control.label}:`;
+            const group = document.createElement('div');
+            group.className = 'mfd-button-group';
+            group.dataset.customControl = control.id;
+            control.options.forEach((option, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'mfd-button';
+                btn.dataset.optionIndex = index;
+                btn.textContent = option.label;
+                btn.addEventListener('click', () => setCustomValue(overlay, control.id, option.value));
+                group.appendChild(btn);
+            });
+            row.append(text, group);
+            return row;
+        }
+
+        function renderCustomOverlays() {
+            customOverlaysList.innerHTML = '';
+            if (customOverlays.length === 0) {
+                const empty = document.createElement('p');
+                empty.className = 'custom-overlays-empty';
+                empty.textContent = 'No custom overlays found. Add one to views/custom/ (see the README there), then press Refresh.';
+                customOverlaysList.appendChild(empty);
+                return;
+            }
+
+            for (const overlay of customOverlays) {
+                const block = document.createElement('div');
+                block.className = 'custom-overlay-block';
+                block.dataset.overlayId = overlay.id;
+
+                const title = document.createElement('h3');
+                title.className = 'custom-overlay-title';
+                title.textContent = overlay.name;
+                const meta = document.createElement('a');
+                meta.className = 'custom-overlay-meta';
+                meta.href = overlay.url;
+                meta.target = '_blank';
+                meta.textContent = overlay.url + (overlay.width && overlay.height ? ` · ${overlay.width}×${overlay.height}` : '');
+                block.append(title, meta);
+
+                if (overlay.error) {
+                    const error = document.createElement('p');
+                    error.className = 'custom-overlay-error';
+                    error.textContent = overlay.error;
+                    block.appendChild(error);
+                } else {
+                    block.appendChild(createCustomToggle(overlay, 'visible', 'Visible'));
+                    for (const control of overlay.controls) {
+                        if (control.type === 'toggle') block.appendChild(createCustomToggle(overlay, control.id, control.label));
+                        else if (control.type === 'select') block.appendChild(createCustomSelect(overlay, control));
+                        else if (control.type === 'buttons') block.appendChild(createCustomButtons(overlay, control));
+                    }
+                }
+                customOverlaysList.appendChild(block);
+            }
+            updateCustomOverlayControls();
+        }
+
+        // Sync control states with the current config (manifest defaults where nothing is saved)
+        function updateCustomOverlayControls() {
+            for (const overlay of customOverlays) {
+                if (overlay.error) continue;
+                const block = customOverlaysList.querySelector(`[data-overlay-id="${CSS.escape(overlay.id)}"]`);
+                if (!block) continue;
+                const controls = [{ id: 'visible', type: 'toggle', default: true }, ...overlay.controls];
+                for (const control of controls) {
+                    const el = block.querySelector(`[data-custom-control="${CSS.escape(control.id)}"]`);
+                    if (!el) continue;
+                    const value = customValue(overlay, control.id, control.default);
+                    if (control.type === 'toggle') {
+                        el.checked = value === true;
+                    } else if (control.type === 'select') {
+                        el.value = Math.max(0, control.options.findIndex(o => o.value === value));
+                    } else if (control.type === 'buttons') {
+                        el.querySelectorAll('.mfd-button').forEach(btn => {
+                            btn.classList.toggle('active', control.options[btn.dataset.optionIndex].value === value);
+                        });
+                    }
+                }
+            }
+        }
+
+        async function loadCustomOverlays() {
+            try {
+                const res = await fetch('/api/custom-overlays');
+                customOverlays = await res.json();
+            } catch (err) {
+                console.error('Error loading custom overlays:', err);
+                customOverlays = [];
+            }
+            renderCustomOverlays();
+        }
+
+        socket.on('custom_overlay_config', (config) => {
+            customConfig = config || {};
+            updateCustomOverlayControls();
+        });
+
+        document.getElementById('custom-overlays-refresh-btn').addEventListener('click', loadCustomOverlays);
+        loadCustomOverlays();
 
         // Stop server button
         const stopServerBtn = document.getElementById('stop-server-btn');

@@ -6,8 +6,9 @@
  * own layout — composes correctly with any transform an overlay already applies
  * internally (e.g. live-speed's own scale()).
  *
- * The overlay's id is derived from the URL path (e.g. /weather -> "weather"),
- * matching the ids used in the launcher's OVERLAYS list — no per-file config needed.
+ * The overlay's id is derived from the URL path (e.g. /weather -> "weather",
+ * /custom/my-overlay -> "custom/my-overlay"), matching the ids used in the launcher's
+ * overlay lists — no per-file config needed.
  *
  * Initial scale comes from a ?scale= URL param (set by the launcher when it opens
  * the window), along with ?width=&height= — the overlay's *native* pixel size.
@@ -26,7 +27,12 @@
  * telemetry socket. Nothing here is persisted to disk.
  */
 (function () {
-    const overlayId = window.location.pathname.replace(/^\//, '');
+    // Custom overlays (views/custom/) become "custom/<name>", whichever URL form opened them:
+    // /custom/name, /custom/name.html, /custom/name/ or /custom/name/index.html
+    const overlayId = decodeURIComponent(window.location.pathname
+        .replace(/\/index\.html$/i, '')
+        .replace(/\.html$/i, '')
+        .replace(/^\/|\/$/g, ''));
 
     function applyScale(scale) {
         if (typeof scale !== 'number' || !(scale > 0)) return;
