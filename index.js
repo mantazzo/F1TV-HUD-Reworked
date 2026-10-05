@@ -6,10 +6,60 @@ const { PACKETS, DRIVERS, EVENT_CODES, WEATHER, INFRINGEMENTS } = constants;
 const path = require('path');
 const fs = require('fs');
 const prompt = require('prompt');
+const net = require('net');
+
+// Network access: only this PC and devices on the local network (e.g. a phone on the same
+// Wi-Fi) may use the overlays, Controller and socket.io. Anything else — a request that
+// reached this PC from the internet via port forwarding/UPnP or a public IPv6 address —
+// is refused. The address checked is the TCP connection's own source, which can't be
+// faked through headers.
+const LOCAL_NETWORKS = new net.BlockList();
+LOCAL_NETWORKS.addSubnet('127.0.0.0', 8, 'ipv4');     // this PC (loopback)
+LOCAL_NETWORKS.addSubnet('10.0.0.0', 8, 'ipv4');      // private ranges (home/office routers)
+LOCAL_NETWORKS.addSubnet('172.16.0.0', 12, 'ipv4');
+LOCAL_NETWORKS.addSubnet('192.168.0.0', 16, 'ipv4');
+LOCAL_NETWORKS.addSubnet('169.254.0.0', 16, 'ipv4');  // link-local (direct cable, no DHCP)
+LOCAL_NETWORKS.addAddress('::1', 'ipv6');             // this PC (loopback)
+LOCAL_NETWORKS.addSubnet('fc00::', 7, 'ipv6');        // unique local addresses
+LOCAL_NETWORKS.addSubnet('fe80::', 10, 'ipv6');       // link-local
+
+function isLocalNetworkAddress(address) {
+    if (typeof address !== 'string') return false;
+    const mapped = address.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/i); // IPv4 seen through an IPv6 socket
+    if (mapped) return LOCAL_NETWORKS.check(mapped[1], 'ipv4');
+    if (net.isIPv4(address)) return LOCAL_NETWORKS.check(address, 'ipv4');
+    if (net.isIPv6(address)) return LOCAL_NETWORKS.check(address.replace(/%.*$/, ''), 'ipv6'); // drop zone id (fe80::1%eth0)
+    return false;
+}
+
+// Logged once per address, not every request — a page load alone is dozens of requests
+const refusedAddresses = new Set();
+function refuseConnection(address, target) {
+    if (refusedAddresses.has(address)) return;
+    refusedAddresses.add(address);
+    const time = new Date().toLocaleTimeString();
+    console.error(`[${time}] Connection refused: ${address} tried to open ${target} — only this PC and the local network are allowed. (Further attempts from this address won't be logged.)`);
+}
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server);
+// socket.io accepts its connections before Express sees them, so it needs its own check
+const io = socketIo(server, {
+    allowRequest: (req, callback) => {
+        const address = req.socket.remoteAddress;
+        if (isLocalNetworkAddress(address)) return callback(null, true);
+        refuseConnection(address, 'the live data connection (socket.io)');
+        callback('Forbidden', false);
+    }
+});
+
+// Registered before every other route/static mount, so nothing is served to other networks
+app.use((req, res, next) => {
+    const address = req.socket.remoteAddress;
+    if (isLocalNetworkAddress(address)) return next();
+    refuseConnection(address, req.originalUrl);
+    res.status(403).send('Forbidden: F1TV HUD only accepts connections from this PC and the local network.');
+});
 
 // Overlay config management
 const CONFIG_PATH = path.join(__dirname, 'public', 'data', 'OverlayConfig.json');
