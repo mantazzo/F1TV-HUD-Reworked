@@ -20,20 +20,28 @@ function getFlag(flag, defaultVal) {
 
 const flagsWithValues = ['--port', '--speed'];
 const recordingArg = args.find((a, i) => !a.startsWith('--') && !flagsWithValues.includes(args[i - 1])) || null;
-const targetPort   = parseInt(getFlag('--port', '20777'));
-const initialSpeed = parseFloat(getFlag('--speed', '1.0'));
-const loop         = args.includes('--loop');
+let targetPort   = parseInt(getFlag('--port', '20777'));
+let initialSpeed = parseFloat(getFlag('--speed', '1.0'));
+let loop         = args.includes('--loop');
 
-if (!recordingArg) { printUsage(); process.exit(1); }
+// Interactive mode: picks the recording from a numbered list (unless one was given,
+// e.g. dropped onto play.bat) and asks for anything not set by a flag. Used by play.bat
+// via --interactive, and also when started with no recording in a terminal.
+const interactive = process.stdin.isTTY && (args.includes('--interactive') || !recordingArg);
 
-const filePath = fs.existsSync(recordingArg)
-    ? recordingArg
-    : path.join(RECORDINGS_DIR, recordingArg);
+if (!recordingArg && !interactive) { printUsage(); process.exit(1); }
 
-if (!fs.existsSync(filePath)) {
-    console.error(`File not found: ${filePath}`);
-    printUsage();
-    process.exit(1);
+let filePath = null;
+if (recordingArg) {
+    filePath = fs.existsSync(recordingArg)
+        ? recordingArg
+        : path.join(RECORDINGS_DIR, recordingArg);
+
+    if (!fs.existsSync(filePath)) {
+        console.error(`File not found: ${filePath}`);
+        printUsage();
+        process.exit(1);
+    }
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -57,14 +65,68 @@ function findIndexAtTime(packets, targetMs) {
 }
 
 function printUsage() {
-    console.log('Usage: node player.js <recording> [--port 20777] [--speed 1.0] [--loop]');
+    console.log('Usage: node player.js <recording> [--port 20777] [--speed 1.0] [--loop] [--interactive]');
     console.log('');
-    console.log('  <recording>   .jsonl file path, or filename only if inside recordings/');
-    console.log('  --port        Port the main server is listening on (default: 20777)');
-    console.log('  --speed       Initial playback speed multiplier, e.g. 2.0 (default: 1.0)');
-    console.log('  --loop        Restart from the beginning when playback finishes');
+    console.log('  <recording>     .jsonl file path, or filename only if inside recordings/');
+    console.log('  --port          Port the main server is listening on (default: 20777)');
+    console.log('  --speed         Initial playback speed multiplier, e.g. 2.0 (default: 1.0)');
+    console.log('  --loop          Restart from the beginning when playback finishes');
+    console.log('  --interactive   Ask for the recording and any option not given above');
+    console.log('                  (also the default when no recording is given in a terminal)');
     console.log('');
     listRecordings();
+}
+
+function formatSize(bytes) {
+    if (bytes >= 1024 ** 3) return `${(bytes / 1024 ** 3).toFixed(2)} GB`;
+    if (bytes >= 1024 ** 2) return `${(bytes / 1024 ** 2).toFixed(0)} MB`;
+    return `${(bytes / 1024).toFixed(0)} KB`;
+}
+
+// Numbered recording picker + playback options, for interactive mode
+async function askInteractiveOptions() {
+    const { askValue, parsePort, parseYesNo } = require('./cli-prompt');
+
+    if (!filePath) {
+        const files = fs.existsSync(RECORDINGS_DIR)
+            ? fs.readdirSync(RECORDINGS_DIR).filter(f => f.endsWith('.jsonl')).sort()
+            : [];
+        if (files.length === 0) {
+            console.log('No recordings found in recordings/ — record one first (record.bat / node recorder.js).');
+            process.exit(1);
+        }
+        console.log('Available recordings:');
+        const width = String(files.length).length;
+        files.forEach((f, i) => {
+            const stat = fs.statSync(path.join(RECORDINGS_DIR, f));
+            const date = stat.mtime.toISOString().slice(0, 10);
+            console.log(`  ${String(i + 1).padStart(width)}) ${f}  (${formatSize(stat.size)}, ${date})`);
+        });
+        console.log('');
+        const pick = await askValue(`Pick a recording (1-${files.length}): `, null, text => {
+            const n = Number(text);
+            return Number.isInteger(n) && n >= 1 && n <= files.length ? n : undefined;
+        });
+        if (pick === null) { console.log('No recording picked.'); process.exit(1); }
+        filePath = path.join(RECORDINGS_DIR, files[pick - 1]);
+    } else {
+        console.log(`Recording: ${path.basename(filePath)}`);
+    }
+
+    console.log('Press Enter to use the default.');
+    if (!args.includes('--port')) {
+        targetPort = await askValue(`Port the overlay server listens on (Enter = ${targetPort}): `, targetPort, parsePort);
+    }
+    if (!args.includes('--speed')) {
+        initialSpeed = await askValue(`Playback speed, 0.25-8 (Enter = ${initialSpeed}x): `, initialSpeed, text => {
+            const v = Number(text);
+            return v >= SPEED_MIN && v <= SPEED_MAX ? v : undefined;
+        });
+    }
+    if (!args.includes('--loop')) {
+        loop = await askValue('Loop when it reaches the end? (y/N): ', false, parseYesNo);
+    }
+    console.log('');
 }
 
 function listRecordings() {
@@ -253,6 +315,8 @@ async function loadPackets(file) {
 // ── Main ───────────────────────────────────────────────────────────────────────
 
 async function main() {
+    if (interactive) await askInteractiveOptions();
+
     console.log(`Loading ${path.basename(filePath)}...`);
     const { packets, capturedAt } = await loadPackets(filePath);
 
