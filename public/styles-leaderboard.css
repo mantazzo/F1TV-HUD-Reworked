@@ -1742,11 +1742,14 @@ body { background: transparent; overflow: hidden; }
     transition: top 333ms ease;
 }
 
-/* Text element inside each row */
+/* Text element inside each row. The right padding keeps the text clear of the
+   tyre compound letter right next to it (#lb-tyre at left:299) — a trailing
+   space can't do that, textFit fits the text to the box regardless. */
 .lb-timing-text {
     box-sizing: border-box;
     width: 125px;
     height: 49px;
+    padding-right: 5px;
     display: flex;
     white-space: pre;
     font-family: 'F1TV-2022-Timing';
