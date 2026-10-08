@@ -19,6 +19,16 @@
             </div>
         </header>
 
+        <!-- Lite version only (GET /api/lite) — points to the full version on GitHub -->
+        <div class="lite-banner" id="lite-banner" hidden>
+            <div class="lite-banner-text">
+                <span class="lite-banner-label" id="lite-banner-name">Lite Version</span>
+                <span>Like what you see? The full version has many more overlays. Get it from GitHub:</span>
+                <a class="lite-banner-url" id="lite-banner-url" target="_blank" rel="noopener noreferrer"></a>
+            </div>
+            <button class="mfd-button" id="lite-copy-btn">Copy Link</button>
+        </div>
+
         <div class="controller-sections">
         <section class="overlay-section">
             <h2>Overlay Visibility</h2>
@@ -440,6 +450,8 @@
         const connectionStatus = document.getElementById('connection-status');
         
         let currentConfig = null;
+        // Overlay ids included in the Lite version, or null in the full version (GET /api/lite)
+        let liteOverlays = null;
 
         // Connection status handling
         socket.on('connect', () => {
@@ -470,7 +482,8 @@
             for (const [overlayId, overlay] of Object.entries(currentConfig.overlays)) {
                 // Skip overlays that don't have manual visibility control
                 if (overlayId === 'lap-timer' || overlayId === 'pit-timer' || overlayId === 'message-box') continue;
-                
+                if (!isOverlayIncluded(overlayId)) continue;
+
                 const button = document.createElement('button');
                 button.className = `overlay-button ${overlay.visible ? 'active' : ''}`;
                 button.dataset.overlayId = overlayId;
@@ -485,6 +498,47 @@
                 overlayGrid.appendChild(button);
             }
         }
+
+        // Lite version: only the included overlays get a visibility button and an options section.
+        // Both leaderboards share the "leaderboard" config, so its section stays if either is included.
+        function isOverlayIncluded(overlayId) {
+            if (!liteOverlays) return true;
+            if (overlayId === 'leaderboard') return liteOverlays.includes('leaderboard') || liteOverlays.includes('leaderboard-lastname');
+            return liteOverlays.includes(overlayId);
+        }
+
+        async function loadLiteInfo() {
+            let info = { lite: false };
+            try {
+                info = await (await fetch('/api/lite')).json();
+            } catch (e) {
+                console.error('Failed to load Lite info:', e);
+            }
+            if (!info.lite) return;
+
+            liteOverlays = info.overlays;
+            document.querySelectorAll('section[id$="-options-section"]').forEach(section => {
+                if (!isOverlayIncluded(section.id.replace(/-options-section$/, ''))) section.classList.add('lite-excluded');
+            });
+            renderOverlayButtons();
+
+            document.getElementById('lite-banner-name').textContent = info.name;
+            const link = document.getElementById('lite-banner-url');
+            link.href = info.fullVersionUrl;
+            link.textContent = info.fullVersionUrl;
+            // Copy as well as link — a Desktop Mode window can't open the system browser
+            document.getElementById('lite-copy-btn').addEventListener('click', async (e) => {
+                try {
+                    await navigator.clipboard.writeText(info.fullVersionUrl);
+                    e.target.textContent = 'Copied!';
+                } catch (err) {
+                    e.target.textContent = 'Copy failed';
+                }
+                setTimeout(() => { e.target.textContent = 'Copy Link'; }, 2000);
+            });
+            document.getElementById('lite-banner').hidden = false;
+        }
+        loadLiteInfo();
 
         // Get icon for each overlay type
         function getOverlayIcon(overlayId) {

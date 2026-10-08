@@ -1,0 +1,5 @@
+{
+  "name": "F1TV HUD Reworked Lite",
+  "overlays": ["leaderboard", "lap-timer", "speedometer"],
+  "fullVersionUrl": "https://github.com/mantazzo/F1TV-HUD-Reworked"
+}

@@ -9,6 +9,7 @@
     "tauri:dev-server": "node tauri-dev-server.js",
     "record": "node recorder.js",
     "play": "node player.js",
+    "build:lite": "node lite/build-lite.js",
     "tauri": "tauri",
     "postinstall": "patch-package"
   },

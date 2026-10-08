@@ -8,3 +8,5 @@ views/custom/*
 !views/custom/README.md
 !views/custom/telemetry-example.html
 public/data/CustomOverlayConfig.json
+# Lite package build output (npm run build:lite)
+dist/

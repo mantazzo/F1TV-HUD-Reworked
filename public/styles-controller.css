@@ -72,6 +72,42 @@ body {
     color: #44ff44;
 }
 
+/* Lite version banner — link to the full version on GitHub */
+.lite-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    background: rgba(233, 69, 96, 0.08);
+    border: 1px solid rgba(233, 69, 96, 0.35);
+    border-radius: 12px;
+}
+
+.lite-banner[hidden] {
+    display: none;
+}
+
+.lite-banner-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 13px;
+    color: #cccccc;
+}
+
+.lite-banner-label {
+    font-size: 15px;
+    font-weight: 600;
+    color: #ff6b6b;
+}
+
+.lite-banner-url {
+    color: #ffffff;
+    word-break: break-all;
+}
+
 /* Sections */
 .overlay-section {
     background: rgba(255, 255, 255, 0.05);
@@ -79,6 +115,11 @@ body {
     padding: 24px;
     margin-bottom: 24px;
     border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Options for overlays that aren't in the Lite version */
+.overlay-section.lite-excluded {
+    display: none;
 }
 
 .overlay-section h2 {

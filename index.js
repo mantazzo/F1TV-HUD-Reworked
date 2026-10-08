@@ -233,6 +233,33 @@ function saveDesktopLayouts(data) {
 
 let desktopLayouts = loadDesktopLayouts();
 
+// Lite mode — a smaller "taster" package with only a few overlays (see lite/lite.json).
+// The Lite build puts lite.json next to index.js, which switches Lite mode on; in the full
+// project the same manifest can be tried out with --lite (or F1TV_LITE=1).
+// Returns null when Lite mode is off.
+const LITE_PATHS = [
+    path.join(__dirname, 'lite.json'),
+    ...(process.argv.includes('--lite') || process.env.F1TV_LITE === '1' ? [path.join(__dirname, 'lite', 'lite.json')] : [])
+];
+
+function loadLiteManifest() {
+    const file = LITE_PATHS.find(p => fs.existsSync(p));
+    if (!file) return null;
+    try {
+        const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
+        return {
+            name: typeof raw.name === 'string' && raw.name.trim() ? raw.name.trim() : 'F1TV HUD Reworked Lite',
+            overlays: Array.isArray(raw.overlays) ? raw.overlays.filter(id => typeof id === 'string') : [],
+            fullVersionUrl: typeof raw.fullVersionUrl === 'string' ? raw.fullVersionUrl : 'https://github.com/mantazzo/F1TV-HUD-Reworked'
+        };
+    } catch (err) {
+        console.error(`Error loading Lite manifest (${file}):`, err);
+        return null;
+    }
+}
+
+const liteManifest = loadLiteManifest();
+
 // Prompt for port
 // Recursively prompts for IP + port for each requested redirect
 function collectForwardAddresses(total, collected, callback) {
@@ -533,29 +560,43 @@ function startServer(portNumber, forwardAddresses) {
     // Custom overlays found in views/custom/ (manifest only — name, size, controls)
     app.get('/api/custom-overlays', (req, res) => res.json(scanCustomOverlays()));
 
-    // Overlays
-    app.get('/car-damage', (req, res) => res.sendFile(path.join(__dirname, 'views', 'car-damage.html')));                       // Car Damage overlay
-    app.get('/speedometer', (req, res) => res.sendFile(path.join(__dirname, 'views', 'speedometer.html')));                     // Speedometer overlay
-    app.get('/lap-timer', (req, res) => res.sendFile(path.join(__dirname, 'views', 'lap-timer.html')));                         // Lap Timer overlay
-    app.get('/pit-timer', (req, res) => res.sendFile(path.join(__dirname, 'views', 'pit-timer.html')));                         // Pit Timer overlay
-    app.get('/pit-window', (req, res) => res.sendFile(path.join(__dirname, 'views', 'pit-window.html')));                       // Pit Window overlay
-    app.get('/live-speed', (req, res) => res.sendFile(path.join(__dirname, 'views', 'live-speed.html')));                       // Live Speed overlay
-    app.get('/fastest-lap', (req, res) => res.sendFile(path.join(__dirname, 'views', 'fastest-lap.html')));                     // Fastest Lap overlay
-    app.get('/weather', (req, res) => res.sendFile(path.join(__dirname, 'views', 'weather.html')));                             // Weather overlay (incl. forecast)
-    app.get('/turn-indicator', (req, res) => res.sendFile(path.join(__dirname, 'views', 'turn-indicator.html')));               // Turn Indicator overlay
-    app.get('/fastest-sectors', (req, res) => res.sendFile(path.join(__dirname, 'views', 'fastest-sectors.html')));             // Fastest Sectors overlay
-    app.get('/message-box', (req, res) => res.sendFile(path.join(__dirname, 'views', 'message-box.html')));                     // Message Box overlay (known as FIA Stewards previously)
-    app.get('/mini-leaderboard', (req, res) => res.sendFile(path.join(__dirname, 'views', 'mini-leaderboard.html')));           // Mini Leaderboard overlay
-    app.get('/session-info', (req, res) => res.sendFile(path.join(__dirname, 'views', 'session-info.html')));                   // Session Info overlay
-    app.get('/driver-name', (req, res) => res.sendFile(path.join(__dirname, 'views', 'driver-name.html')));                     // Driver Name overlay
-    app.get('/leaderboard', (req, res) => res.sendFile(path.join(__dirname, 'views', 'leaderboard.html')));                     // Leaderboard overlay (Initials version)
-    app.get('/leaderboard-lastname', (req, res) => res.sendFile(path.join(__dirname, 'views', 'leaderboard-lastname.html')));   // Leaderboard overlay (Last Name version)
+    // Lite mode status for the Launcher and Controller: { lite: false } in the full version,
+    // otherwise the manifest (name, included overlay ids, link to the full version)
+    app.get('/api/lite', (req, res) => res.json(liteManifest ? { lite: true, ...liteManifest } : { lite: false }));
+
+    // Overlays (route id = file name in views/, without .html)
+    const OVERLAY_ROUTES = [
+        'car-damage',           // Car Damage overlay
+        'speedometer',          // Speedometer overlay
+        'lap-timer',            // Lap Timer overlay
+        'pit-timer',            // Pit Timer overlay
+        'pit-window',           // Pit Window overlay
+        'live-speed',           // Live Speed overlay
+        'fastest-lap',          // Fastest Lap overlay
+        'weather',              // Weather overlay (incl. forecast)
+        'turn-indicator',       // Turn Indicator overlay
+        'fastest-sectors',      // Fastest Sectors overlay
+        'message-box',          // Message Box overlay (known as FIA Stewards previously)
+        'mini-leaderboard',     // Mini Leaderboard overlay
+        'session-info',         // Session Info overlay
+        'driver-name',          // Driver Name overlay
+        'leaderboard',          // Leaderboard overlay (Initials version)
+        'leaderboard-lastname'  // Leaderboard overlay (Last Name version)
+    ];
+    // In Lite mode only the overlays listed in the manifest get a route
+    const servedOverlays = liteManifest ? OVERLAY_ROUTES.filter(id => liteManifest.overlays.includes(id)) : OVERLAY_ROUTES;
+    for (const id of servedOverlays) {
+        app.get(`/${id}`, (req, res) => res.sendFile(path.join(__dirname, 'views', `${id}.html`)));
+    }
 
     // Controllers
     app.get('/controller/controller-extended', (req, res) => res.sendFile(path.join(__dirname, 'views', 'controller', 'controller-extended.html')));
 
     // Desktop (Tauri) launcher — opens/closes individual overlay windows
     app.get('/launcher', (req, res) => res.sendFile(path.join(__dirname, 'views', 'launcher.html')));
+
+    // Debug pages aren't part of the Lite package — answer 404 before any route below is reached
+    if (liteManifest) app.use('/debug', (req, res) => res.status(404).send('Debug pages are only available in the full version.'));
 
     // Debug overlays
     app.get('/debug/position-debug', (req, res) => res.sendFile(path.join(__dirname, 'views', 'debug', 'position-debug.html')));
@@ -585,9 +626,11 @@ function startServer(portNumber, forwardAddresses) {
     // See views/custom/README.md for how to write one.
     app.use('/custom', express.static(path.join(__dirname, 'views', 'custom'), { extensions: ['html'] }));
 
-    // Default to speedometer overlay (for now)
-    app.get('/', (req, res) => res.redirect('/speedometer'));
-    
+    // Default to speedometer overlay (for now) — or the first included overlay in Lite mode
+    const defaultOverlay = servedOverlays.includes('speedometer') ? 'speedometer' : servedOverlays[0];
+    if (defaultOverlay) app.get('/', (req, res) => res.redirect(`/${defaultOverlay}`));
+
+    if (liteManifest) console.log(`${liteManifest.name} — included overlays: ${servedOverlays.join(', ') || 'none'}. Full version: ${liteManifest.fullVersionUrl}`);
     server.listen(3000, () => console.log('Overlays running at http://localhost:3000/ (For example, http://localhost:3000/speedometer) \nController (for various overlays) available at [http://localhost:3000/controller/controller-extended] \n\n**Reminder** - you can press Ctrl+C to stop the system manually.'));
 }
 

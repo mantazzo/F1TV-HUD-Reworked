@@ -15,6 +15,16 @@
             </div>
         </div>
 
+        <!-- Lite version only (GET /api/lite) — points to the full version on GitHub -->
+        <div class="lite-banner" id="lite-banner" hidden>
+            <div class="lite-banner-top">
+                <span class="lite-banner-label" id="lite-banner-name">Lite Version</span>
+                <button class="orientation-btn" id="lite-copy-btn">Copy Link</button>
+            </div>
+            <span class="lite-banner-text">Like what you see? The full version has many more overlays. Get it from GitHub:</span>
+            <span class="lite-banner-url" id="lite-banner-url"></span>
+        </div>
+
         <div class="layout-panel">
             <div class="layout-panel-top">
                 <span class="layout-panel-label">Layout</span>
@@ -69,7 +79,7 @@
     </div>
 
     <script>
-        const OVERLAYS = [
+        const ALL_OVERLAYS = [
             { id: 'speedometer', title: 'Speedometer', path: '/speedometer', width: 520, height: 520 },
             { id: 'lap-timer', title: 'Lap Timer', path: '/lap-timer', width: 480, height: 270 },
             { id: 'pit-timer', title: 'Pit Timer', path: '/pit-timer', width: 340, height: 220 },
@@ -87,6 +97,8 @@
             { id: 'leaderboard', title: 'Leaderboard (Initials)', path: '/leaderboard', width: 482, height: 1390 },
             { id: 'leaderboard-lastname', title: 'Leaderboard (Last Name)', path: '/leaderboard-lastname', width: 650, height: 1390 }
         ];
+        // The overlays this server actually serves — all of them, or only the Lite package's (see liteLoaded)
+        let OVERLAYS = [];
 
         // Custom overlays from views/custom/ (GET /api/custom-overlays), with name and size taken
         // from each overlay's manifest. Ids are "custom/<name>" — the same id overlay-scale.js
@@ -98,7 +110,6 @@
         // In-memory only — not persisted, resets to defaults on every launch.
         const scales = {};
         const repositionActive = {};
-        OVERLAYS.forEach(cfg => { scales[cfg.id] = 1; repositionActive[cfg.id] = false; });
 
         const { WebviewWindow, getCurrentWebviewWindow } = window.__TAURI__.webviewWindow;
         const { LogicalSize, LogicalPosition } = window.__TAURI__.dpi;
@@ -159,7 +170,40 @@
         }
 
         const list = document.getElementById('overlay-list');
-        OVERLAYS.forEach(cfg => list.appendChild(createOverlayRow(cfg)));
+
+        // Lite version: list only the included overlays and show the banner linking to the full version.
+        // The link is copied, not opened — Desktop Mode windows can't open the system browser.
+        async function loadLiteInfo() {
+            let info = { lite: false };
+            try {
+                info = await (await fetch('/api/lite')).json();
+            } catch (e) {
+                console.error('Failed to load Lite info:', e);
+            }
+
+            OVERLAYS = info.lite ? ALL_OVERLAYS.filter(cfg => info.overlays.includes(cfg.id)) : ALL_OVERLAYS;
+            OVERLAYS.forEach(cfg => {
+                scales[cfg.id] = 1;
+                repositionActive[cfg.id] = false;
+                list.appendChild(createOverlayRow(cfg));
+            });
+
+            if (info.lite) {
+                document.getElementById('lite-banner-name').textContent = info.name;
+                document.getElementById('lite-banner-url').textContent = info.fullVersionUrl;
+                document.getElementById('lite-copy-btn').addEventListener('click', async (e) => {
+                    try {
+                        await navigator.clipboard.writeText(info.fullVersionUrl);
+                        e.target.textContent = 'Copied!';
+                    } catch (err) {
+                        e.target.textContent = 'Copy failed';
+                    }
+                    setTimeout(() => { e.target.textContent = 'Copy Link'; }, 2000);
+                });
+                document.getElementById('lite-banner').hidden = false;
+            }
+        }
+        const liteLoaded = loadLiteInfo();
 
         const customList = document.getElementById('custom-overlay-list');
 
@@ -514,6 +558,7 @@
                 return;
             }
 
+            await liteLoaded; // the built-in overlay list is only known once the Lite info is in
             await customOverlaysLoaded; // custom overlays in the layout need their size from the manifest
             const targetIds = new Set(Object.keys(layout.overlays));
 
