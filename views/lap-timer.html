@@ -31,6 +31,16 @@
         <!-- TIMING DISPLAY (main section) -->
         <div class="timing-group">
             <div id="timer-background"></div>
+            <!-- F2 blur (F2 sessions only) — split across both groups, see .lt-f2blur in CSS -->
+            <div class="lt-f2blur lt-f2blur--timing">
+                <div class="lt-f2blur-scale">
+                    <div class="lt-f2blur-clip">
+                        <div class="lt-f2blur-ellipse">
+                            <div class="lt-f2blur-circle"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             
             <!-- Main timing display (slides up during last lap popup) -->
             <div class="main-timing-display">
@@ -54,6 +64,15 @@
         <!-- SECTOR BAR (bottom section) -->
         <div class="sector-bar-group">
             <div id="sectors-background"></div>
+            <div class="lt-f2blur lt-f2blur--sectors">
+                <div class="lt-f2blur-scale">
+                    <div class="lt-f2blur-clip">
+                        <div class="lt-f2blur-ellipse">
+                            <div class="lt-f2blur-circle"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div id="sector-line"></div>
             
             <div class="sector-indicators">
@@ -150,6 +169,7 @@
         const driverNameElement = document.querySelector('.driver-name-layer');
         const tyreCompoundElement = document.querySelector('.tyre-compound-layer');
         const teamLogoElement = document.querySelector('.team-logo-layer');
+        const f2BlurElements = document.querySelectorAll('.lt-f2blur');
         const sector1DeltaElement = document.getElementById('sector1-delta');
         const sector2DeltaElement = document.getElementById('sector2-delta');
         const lastLapDeltaElement = document.getElementById('last-lap-delta');
@@ -642,6 +662,13 @@
                 sessionType = newSessionType;
                 formulaType = newFormulaType;
             }
+            updateF2Blur();
+        }
+
+        // F2 blur — both group-split halves shown only during F2 sessions
+        function updateF2Blur() {
+            const display = formulaType === DriverUtils.FORMULA_TYPE.F2 ? 'block' : 'none';
+            f2BlurElements.forEach(el => { el.style.display = display; });
         }
 
         /**
@@ -1186,16 +1213,6 @@
             textElement.style.color = color || 'gray';
         }
         
-        function createStrokeBar() {
-            const strokeBar = document.getElementById('stroke-bar');
-            const rectCount = Math.ceil(480 / 7); // adjust 7 for density/spacing
-            for (let i = 0; i < rectCount; i++) {
-                const rect = document.createElement('div');
-                rect.className = 'stroke-rect';
-                strokeBar.appendChild(rect);
-            }
-        }   
-
         // Reset all session-specific state when a new session starts
         function resetSessionData() {
             console.log('[LapTimer] New session started (SSTA Event received) - resetting session data');
@@ -1408,7 +1425,6 @@
         overlayContainer.style.width = '0px';
         overlayContainer.style.opacity = '0';
         
-        createStrokeBar();
         updateLapDisplay();
         loadDriverData();
     </script>
