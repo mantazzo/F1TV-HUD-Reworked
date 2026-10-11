@@ -3366,10 +3366,13 @@
                         // P1 skips PIT EXIT entirely since delta-to-leader is always zero for the leader.
                         // Also catches pit entry: driverStatus === 2 (in lap) with deltas already zeroed.
                         // Non-race: one-shot 6s IN PIT pulse, see carNonRacePitPulse trigger above.
+                        // P1 is excluded from the in-lap heuristic: the leader's deltas are always zero, and the game
+                        // flags in-lap as soon as a stop is planned (e.g. pit window opens) — so P1 relies on m_pitStatus.
                         const racePit = isRace &&
                             ((car.m_pitStatus ?? 0) > 0 ||
                             (car.m_driverStatus ?? -1) === 0 ||
                             ((car.m_driverStatus ?? -1) === 2 &&
+                             pos > 1 &&
                              carDeltaFront[idx] === 0 &&
                              carDeltaLeader[idx] === 0)) &&
                             (car.m_resultStatus ?? 0) < 3;  // only show for active cars (not finished/retired)
