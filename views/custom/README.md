@@ -26,7 +26,8 @@ An overlay shows up in the Controller's **Custom Overlays** section when its HTM
     "width": 420,
     "height": 230,
     "controls": [
-        { "id": "showTemps", "type": "toggle", "label": "Show Temperatures", "default": true },
+        { "id": "showTemps", "type": "toggle", "label": "Show Temperatures", "default": true,
+          "help": "Shows the tyre temperatures under the speed." },
         { "id": "units", "type": "select", "label": "Units", "default": "kph",
           "options": [ { "value": "kph", "label": "KM/H" }, { "value": "mph", "label": "MPH" } ] },
         { "id": "mode", "type": "buttons", "label": "Mode", "default": "a",
@@ -39,6 +40,7 @@ An overlay shows up in the Controller's **Custom Overlays** section when its HTM
 - `name`: shown in the Controller. Defaults to the file name.
 - `width` / `height`: the overlay's native pixel size. Set the OBS browser source to this. The Desktop Mode Launcher also uses it for the window size.
 - `controls`: optional. The types are `toggle` (on/off), `select` (dropdown) and `buttons` (a row of buttons, one active). `select` and `buttons` need `options`, whose values can be strings or numbers. If `default` is missing or isn't one of the options, the first option is used.
+- `help`: optional, on the manifest itself and/or on any control. Adds a **?** button in the Controller that shows this text: next to the overlay's name for the manifest's `help`, next to the control for a control's. Plain text only (no HTML); use `\n` for a line break. Up to 1000 characters.
 - A **Visible** toggle is always added. Don't declare a control with the id `visible`.
 
 The overlay's id is its file name (`my-overlay.html`) or folder name (`my-overlay/index.html`). New overlays appear when you press **Refresh** in the Controller, and manifest edits do too.

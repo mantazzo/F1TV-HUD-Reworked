@@ -191,6 +191,11 @@ body {
     color: #ffffff;
 }
 
+/* Custom overlay hints: plain text from the manifest, so keep its line breaks */
+.help-card--plain {
+    white-space: pre-line;
+}
+
 .help-card[hidden] {
     display: none;
 }
@@ -481,6 +486,10 @@ body {
 }
 
 .custom-overlay-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
     font-size: 15px;
     font-weight: 600;
     color: #ffffff;

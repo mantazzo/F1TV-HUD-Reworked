@@ -127,12 +127,19 @@ function saveCustomOverlayConfig(config) {
 
 let customOverlayConfig = loadCustomOverlayConfig();
 
+// Optional Controller hint text ("?" button) — plain text, capped so a manifest can't flood the page
+const MAX_HELP_LENGTH = 1000;
+function normalizeHelp(help) {
+    return typeof help === 'string' && help.trim() ? help.trim().slice(0, MAX_HELP_LENGTH) : null;
+}
+
 // Keep only well-formed controls, so the Controller and the overlays can trust the shape
 function normalizeManifest(id, raw) {
     const manifest = {
         name: typeof raw.name === 'string' && raw.name.trim() ? raw.name.trim() : id,
         width: Number.isFinite(raw.width) && raw.width > 0 ? raw.width : null,
         height: Number.isFinite(raw.height) && raw.height > 0 ? raw.height : null,
+        help: normalizeHelp(raw.help),
         controls: []
     };
     const seen = new Set(['visible']); // reserved — every custom overlay gets a Visible toggle
@@ -140,15 +147,16 @@ function normalizeManifest(id, raw) {
         if (!control || typeof control.id !== 'string' || seen.has(control.id)) continue;
         if (!CUSTOM_CONTROL_TYPES.includes(control.type)) continue;
         const label = typeof control.label === 'string' ? control.label : control.id;
+        const help = normalizeHelp(control.help);
         if (control.type === 'toggle') {
-            manifest.controls.push({ id: control.id, type: 'toggle', label, default: control.default === true });
+            manifest.controls.push({ id: control.id, type: 'toggle', label, help, default: control.default === true });
         } else {
             const options = (Array.isArray(control.options) ? control.options : [])
                 .filter(o => o && (typeof o.value === 'string' || typeof o.value === 'number'))
                 .map(o => ({ value: o.value, label: typeof o.label === 'string' ? o.label : String(o.value) }));
             if (options.length === 0) continue;
             const hasDefault = options.some(o => o.value === control.default);
-            manifest.controls.push({ id: control.id, type: control.type, label, options, default: hasDefault ? control.default : options[0].value });
+            manifest.controls.push({ id: control.id, type: control.type, label, help, options, default: hasDefault ? control.default : options[0].value });
         }
         seen.add(control.id);
     }

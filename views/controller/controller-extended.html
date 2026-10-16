@@ -286,6 +286,8 @@
                         <option value="multiviewer">Multiviewer</option>
                     </select>
                 </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Design (Speedometer)">?</button>
+                <div class="help-card" hidden>Switches the Speedometer between two looks: the F1TV broadcast style, or the MultiViewer style.</div>
             </div>
             <div class="option-row">
                 <label class="select-label">
@@ -296,11 +298,17 @@
                         <option value="mph">Always MPH</option>
                     </select>
                 </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Units (Speedometer)">?</button>
+                <div class="help-card" hidden>Automatic uses the speed unit set in the game. Always KMH or Always MPH use that unit, whatever the game is set to.</div>
             </div>
         </section>
 
         <section class="overlay-section" id="leaderboard-options-section">
-            <h2>Leaderboard Options</h2>
+            <h2>
+                Leaderboard Options
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Leaderboard Options">?</button>
+                <span class="help-card" hidden>These options apply to both Leaderboard versions (Initials and Last Name). Options marked <strong>[Race]</strong> only make a difference during Race sessions, and <strong>[Non-Race]</strong> options only in all other sessions. Options without a mark work in every session.</span>
+            </h2>
             <div class="option-row">
                 <span class="select-text">MFD Page:</span>
                 <div class="mfd-button-group" id="mfd-button-group">
@@ -310,6 +318,13 @@
                     <button class="mfd-button" data-mfd="mfd3">MFD3</button>
                     <button class="mfd-button" data-mfd="mfd4">MFD4</button>
                 </div>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: MFD Page">?</button>
+                <div class="help-card" hidden>Swaps the timing column for other info about each driver.<br>
+                    <strong>Off:</strong> the default timing display.<br>
+                    <strong>MFD1:</strong> current tyre compound.<br>
+                    <strong>MFD2:</strong> current tyre age (in completed laps).<br>
+                    <strong>MFD3:</strong> laps completed (outside of races), or number of pit stops / tyre changes (in races).<br>
+                    <strong>MFD4:</strong> positions gained or lost (races only).</div>
             </div>
             <div class="option-row">
                 <span class="select-text">Pane:</span>
@@ -320,6 +335,13 @@
                     <button class="mfd-button" data-pane="3">Narrow+Short</button>
                     <button class="mfd-button" data-pane="4">Logo</button>
                 </div>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Pane">?</button>
+                <div class="help-card" hidden>Sets how much of the Leaderboard is shown.<br>
+                    <strong>Full:</strong> the default. Full width and height, shows everything.<br>
+                    <strong>Narrow:</strong> full height but narrower, without the timing column.<br>
+                    <strong>Short:</strong> full width, but only the session part at the top (session name, timer and any banners).<br>
+                    <strong>Narrow+Short:</strong> the session part at its smallest (narrow and short).<br>
+                    <strong>Logo:</strong> only the series logo (F1 or F2), everything else hidden.</div>
             </div>
             <div class="option-row">
                 <span class="select-text">Standings:</span>
@@ -328,6 +350,12 @@
                     <button class="mfd-button" data-standings="drivers">Drivers</button>
                     <button class="mfd-button" data-standings="constructors">Constructors</button>
                 </div>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Standings">?</button>
+                <div class="help-card" hidden>Replaces the Leaderboard with championship standings.<br>
+                    <strong>Off:</strong> the normal Leaderboard.<br>
+                    <strong>Drivers:</strong> Drivers' Championship, from <code>public/data/DriverStandings.json</code>.<br>
+                    <strong>Constructors:</strong> Constructors' Championship, from <code>public/data/ConstructorStandings.json</code>.<br>
+                    The game doesn't send standings, so edit those files to fill in your own.</div>
             </div>
             <div class="option-row">
                 <label class="toggle-label">
@@ -335,6 +363,8 @@
                     <span class="toggle-slider"></span>
                     <span class="toggle-text">Show Standings on Formation Lap</span>
                 </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Show Standings on Formation Lap">?</button>
+                <div class="help-card" hidden>Shows the Drivers' and Constructors' standings during the Formation Lap, if Standings isn't already turned on above. Drivers' standings show while the leader is roughly 25–60% into the lap, followed by Constructors' standings until the leader is about 80% through.</div>
             </div>
             <div class="option-row">
                 <span class="select-text">Standings Driver Count:</span>
@@ -343,6 +373,8 @@
                     <button class="mfd-button" data-standings-driver-count="22">22</button>
                     <button class="mfd-button" data-standings-driver-count="24">24</button>
                 </div>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Standings Driver Count">?</button>
+                <div class="help-card" hidden>How many drivers the Drivers' standings show. The panel's height adjusts to match. If the standings file has fewer drivers than this (e.g. 16), the rest is left as empty space at the bottom. If it has more (e.g. 26 with this set to 24), the extra ones aren't shown.</div>
             </div>
             <div class="option-row">
                 <span class="select-text">Standings Team Count:</span>
@@ -351,6 +383,8 @@
                     <button class="mfd-button" data-standings-team-count="11">11</button>
                     <button class="mfd-button" data-standings-team-count="12">12</button>
                 </div>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Standings Team Count">?</button>
+                <div class="help-card" hidden>How many teams the Constructors' standings show. The panel's height adjusts to match. If the standings file has fewer teams than this, the rest is left as empty space at the bottom. If it has more, the extra ones aren't shown.</div>
             </div>
             <div class="option-row">
                 <label class="toggle-label">
@@ -358,6 +392,8 @@
                     <span class="toggle-slider"></span>
                     <span class="toggle-text">[Race] Pane 2 on Lap 1</span>
                 </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Pane 2 on Lap 1">?</button>
+                <div class="help-card" hidden>Shows only the session part (the Short pane) until the leader completes Lap 1 of the race.</div>
             </div>
             <div class="option-row">
                 <label class="toggle-label">
@@ -365,6 +401,8 @@
                     <span class="toggle-slider"></span>
                     <span class="toggle-text">Show Last Names</span>
                 </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Show Last Names">?</button>
+                <div class="help-card" hidden>Shows the drivers' names in full width. The timing column is hidden while this is on.</div>
             </div>
             <div class="option-row">
                 <label class="toggle-label">
@@ -372,6 +410,8 @@
                     <span class="toggle-slider"></span>
                     <span class="toggle-text">Show Driver Numbers</span>
                 </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Show Driver Numbers">?</button>
+                <div class="help-card" hidden>Shows each driver's number instead of their team logo.</div>
             </div>
             <div class="option-row">
                 <label class="toggle-label">
@@ -379,6 +419,8 @@
                     <span class="toggle-slider"></span>
                     <span class="toggle-text">[Race] Show Leader Gaps</span>
                 </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Show Leader Gaps">?</button>
+                <div class="help-card" hidden>Shows each driver's gap to the race leader. When off, it shows the interval (gap to the car ahead).</div>
             </div>
             <div class="option-row">
                 <label class="toggle-label">
@@ -386,6 +428,8 @@
                     <span class="toggle-slider"></span>
                     <span class="toggle-text">[Non-Race] Show Lap Times</span>
                 </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Show Lap Times">?</button>
+                <div class="help-card" hidden>Shows each driver's fastest lap time of the session. When off, only P1 shows a lap time and everyone else shows their gap to it.</div>
             </div>
             <div class="option-row">
                 <label class="toggle-label">
@@ -393,6 +437,8 @@
                     <span class="toggle-slider"></span>
                     <span class="toggle-text">Primary Player Indicator</span>
                 </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Primary Player Indicator">?</button>
+                <div class="help-card" hidden>Highlights the active driver: a white background with their full name.</div>
             </div>
             <div class="option-row">
                 <label class="toggle-label">
@@ -400,6 +446,8 @@
                     <span class="toggle-slider"></span>
                     <span class="toggle-text">Secondary Player Indicator</span>
                 </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Secondary Player Indicator">?</button>
+                <div class="help-card" hidden>A more subtle highlight for the active driver: just a team-colored bar next to their row.</div>
             </div>
             <div class="option-row">
                 <label class="toggle-label">
@@ -407,6 +455,8 @@
                     <span class="toggle-slider"></span>
                     <span class="toggle-text">Teammate Indicator</span>
                 </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Teammate Indicator">?</button>
+                <div class="help-card" hidden>Highlights the active driver's teammate (if they have one), in the same style as the Primary Player Indicator.</div>
             </div>
             <div class="option-row">
                 <label class="toggle-label">
@@ -414,13 +464,17 @@
                     <span class="toggle-slider"></span>
                     <span class="toggle-text">Show DRS/Overtake Mode Indicators</span>
                 </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Show DRS/Overtake Mode Indicators">?</button>
+                <div class="help-card" hidden>Shows an indicator on the left of the Leaderboard when a driver has DRS active (pre-2026 F1 cars and all F2 cars) or Overtake Mode active (2026 F1 cars).</div>
             </div>
             <div class="option-row">
                 <label class="toggle-label">
                     <input type="checkbox" id="show-battery-toggle" class="toggle-checkbox">
                     <span class="toggle-slider"></span>
-                    <span class="toggle-text">Show Battery</span>
+                    <span class="toggle-text">[Race] Show Battery</span>
                 </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Show Battery">?</button>
+                <div class="help-card" hidden>Shows each driver's battery level during a race, when the game provides it.</div>
             </div>
             <div class="option-row">
                 <label class="toggle-label">
@@ -428,6 +482,8 @@
                     <span class="toggle-slider"></span>
                     <span class="toggle-text">[Race] Show Penalties</span>
                 </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Show Penalties">?</button>
+                <div class="help-card" hidden>Shows each driver's total penalty time, when they have any.</div>
             </div>
             <div class="option-row">
                 <label class="toggle-label">
@@ -435,6 +491,8 @@
                     <span class="toggle-slider"></span>
                     <span class="toggle-text">Position Column Background</span>
                 </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Position Column Background">?</button>
+                <div class="help-card" hidden>Adds an extra background behind the position numbers column.</div>
             </div>
         </section>
 
@@ -449,6 +507,13 @@
                     <button class="mfd-button" data-variant="personalBest">Best Lap Time</button>
                     <button class="mfd-button" data-variant="chasingDriverAhead">Chasing Driver Ahead</button>
                 </div>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Display Variant">?</button>
+                <div class="help-card" hidden>Picks which version of the overlay is shown while it's switched on. Some versions only work in certain sessions; if the one you picked can't be shown right now, Player Name is shown instead.<br>
+                    <strong>Player Name:</strong> the driver's number. Works in every session.<br>
+                    <strong>Race Leader:</strong> races only, while the driver is P1.<br>
+                    <strong>Race Story:</strong> races only. Starting position compared to the current one.<br>
+                    <strong>Best Lap Time:</strong> outside of races. The driver's best lap and the tyre it was set on.<br>
+                    <strong>Chasing Driver Ahead:</strong> races only. Shows who the driver is chasing; switches to Race Leader at P1.</div>
             </div>
             <div class="option-row">
                 <label class="toggle-label">
@@ -456,6 +521,8 @@
                     <span class="toggle-slider"></span>
                     <span class="toggle-text">Show Image Version of Driver Number</span>
                 </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Show Image Version of Driver Number">?</button>
+                <div class="help-card" hidden>In the Player Name version, shows the driver's number as an image, if one exists for that driver. When off, or if no image is found, the number is shown as text.</div>
             </div>
             <div class="option-row">
                 <label class="toggle-label">
@@ -463,6 +530,8 @@
                     <span class="toggle-slider"></span>
                     <span class="toggle-text">Hide Automatically</span>
                 </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Hide Automatically">?</button>
+                <div class="help-card" hidden>Hides the overlay automatically after about 15 seconds. It comes back when you pick a different Display Variant, switch the overlay off and on again in Overlay Visibility, or turn this option off.</div>
             </div>
         </section>
 
@@ -477,6 +546,10 @@
                         <option value="controlled">Controlled</option>
                     </select>
                 </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Visibility Mode (Session Info)">?</button>
+                <div class="help-card" hidden><strong>Toggle:</strong> simple on/off. The overlay is shown or hidden only with its Overlay Visibility button, with no automatic hiding.<br>
+                    <strong>Automatic:</strong> when switched on, the overlay shows for 10 seconds, then hides. To show it again, switch it off and on again in Overlay Visibility.<br>
+                    <strong>Controlled:</strong> the overlay shows for 10 seconds at the start of every session, then hides. It has to be switched on in Overlay Visibility for this to work.</div>
             </div>
         </section>
 
@@ -488,12 +561,16 @@
                     <span class="toggle-slider"></span>
                     <span class="toggle-text">Fast Mode (Halves All Display Durations)</span>
                 </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Fast Mode">?</button>
+                <div class="help-card" hidden>Halves how long each message stays on screen. Useful in busy sessions with lots of messages, such as Multiplayer.</div>
             </div>
         </section>
 
         <section class="overlay-section" id="custom-overlays-section">
             <h2 class="custom-overlays-header">
                 <span>Custom Overlays</span>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Custom Overlays">?</button>
+                <span class="help-card" hidden>Your own overlays, made by you or shared by others. Put them in the <code>views/custom/</code> folder (see the README there), then press <strong>Refresh</strong> to list new ones here. Each overlay gets a Visible toggle, plus any settings its creator added. "Telemetry Example" is a sample to copy and start from.</span>
                 <button class="mfd-button" id="custom-overlays-refresh-btn">Refresh</button>
             </h2>
             <div id="custom-overlays-list">
@@ -1308,7 +1385,24 @@
             updateCustomOverlayControls();
         }
 
-        function createCustomToggle(overlay, controlId, label) {
+        // Manifest "help" text → "?" button + card (see utils/help-tips.js). textContent, not
+        // innerHTML: the text comes from user files. Line breaks are kept (.help-card--plain).
+        function appendCustomHelp(parent, label, help, cardTag = 'div') {
+            if (!help) return;
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'help-btn';
+            btn.setAttribute('aria-expanded', 'false');
+            btn.setAttribute('aria-label', `Help: ${label}`);
+            btn.textContent = '?';
+            const card = document.createElement(cardTag);
+            card.className = 'help-card help-card--plain';
+            card.hidden = true;
+            card.textContent = help;
+            parent.append(btn, card);
+        }
+
+        function createCustomToggle(overlay, controlId, label, help) {
             const row = document.createElement('div');
             row.className = 'option-row';
             const labelEl = document.createElement('label');
@@ -1325,6 +1419,7 @@
             text.textContent = label;
             labelEl.append(input, slider, text);
             row.appendChild(labelEl);
+            appendCustomHelp(row, label, help);
             return row;
         }
 
@@ -1348,6 +1443,7 @@
             select.addEventListener('change', () => setCustomValue(overlay, control.id, control.options[select.value].value));
             labelEl.append(text, select);
             row.appendChild(labelEl);
+            appendCustomHelp(row, control.label, control.help);
             return row;
         }
 
@@ -1369,6 +1465,7 @@
                 group.appendChild(btn);
             });
             row.append(text, group);
+            appendCustomHelp(row, control.label, control.help);
             return row;
         }
 
@@ -1390,6 +1487,7 @@
                 const title = document.createElement('h3');
                 title.className = 'custom-overlay-title';
                 title.textContent = overlay.name;
+                appendCustomHelp(title, overlay.name, overlay.help, 'span');
                 const meta = document.createElement('a');
                 meta.className = 'custom-overlay-meta';
                 meta.href = overlay.url;
@@ -1405,7 +1503,7 @@
                 } else {
                     block.appendChild(createCustomToggle(overlay, 'visible', 'Visible'));
                     for (const control of overlay.controls) {
-                        if (control.type === 'toggle') block.appendChild(createCustomToggle(overlay, control.id, control.label));
+                        if (control.type === 'toggle') block.appendChild(createCustomToggle(overlay, control.id, control.label, control.help));
                         else if (control.type === 'select') block.appendChild(createCustomSelect(overlay, control));
                         else if (control.type === 'buttons') block.appendChild(createCustomButtons(overlay, control));
                     }

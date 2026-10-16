@@ -13,8 +13,10 @@
         "name": "Telemetry Example",
         "width": 420,
         "height": 230,
+        "help": "A sample custom overlay: the active driver's speed, gear, inputs, ERS, fuel and tyres. Copy it from views/custom/ to start your own.",
         "controls": [
-            { "id": "showTyreTemps", "type": "toggle", "label": "Show Tyre Temperatures", "default": true },
+            { "id": "showTyreTemps", "type": "toggle", "label": "Show Tyre Temperatures", "default": true,
+              "help": "Shows the surface temperature of all four tyres (in °C)." },
             { "id": "speedUnits", "type": "select", "label": "Speed Units", "default": "automatic",
               "options": [
                   { "value": "automatic", "label": "Automatic (Game Setting)" },
