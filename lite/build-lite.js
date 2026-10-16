@@ -46,7 +46,7 @@ const INCLUDE = [
     'public/styles-launcher.css', 'public/styles-controller.css', 'public/styles-tauri-overlay.css',
     'public/fonts.css', 'public/fonts', 'public/utils',
     'public/data/DefaultTeams.json', 'public/data/CustomF1Drivers.json', 'public/data/CustomF2Drivers.json',
-    'images/favicon.ico',
+    'images/favicon.ico', 'images/help',
     // The included overlays
     ...lite.overlays.flatMap(id => [
         `views/${id}.html`,

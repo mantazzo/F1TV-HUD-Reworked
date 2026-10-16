@@ -191,6 +191,38 @@ body {
     color: #ffffff;
 }
 
+/* Example images inside a hint (images/help/) — side by side, captioned, kept short
+   so the floating card doesn't run far past the section. loading="lazy" + the card's
+   display: none means they're only fetched once the hint is opened. */
+.help-images {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 10px;
+}
+
+.help-images figure {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+}
+
+.help-images img {
+    display: block;
+    max-width: 100%;
+    max-height: 280px;
+    width: auto;
+    height: auto;
+    border-radius: 4px;
+}
+
+.help-images figcaption {
+    font-size: 12px;
+    color: #aaaaaa;
+}
+
 /* Custom overlay hints: plain text from the manifest, so keep its line breaks */
 .help-card--plain {
     white-space: pre-line;
