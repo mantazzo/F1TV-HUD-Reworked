@@ -30,7 +30,7 @@ I am providing some tools to record the UDP data sent by the game, and play the 
 
 **Simple Usage:** Run `play.bat` to select a recording and play back the recorded data (you need to have used `install.bat` to set up the server for this option to work properly).
 
-**Advanced Usage:** `node player.js [<recording>] [--port XXXXX] [--speed 1.0] [--loop]`
+**Advanced Usage:** `node player.js [<recording>] [--port XXXXX] [--speed 1.0] [--start mm:ss] [--loop] [--control XXXXX]`
 
 - Simple Usage case - run the `play.bat` launcher.
     - A picker will pop up, showing you a list of your recordings. Pick one from the list (enter the number).
@@ -41,7 +41,9 @@ I am providing some tools to record the UDP data sent by the game, and play the 
     - `[<recording>]` is the filename for the recording (example: "session_2026-05-24T14-33-19-282Z.jsonl"). If empty, you will be asked to choose the recording from existing ones.
     - `[--port XXXXX]` is the port that will be used to send the recorded data to. This field is optional and will use port 20777 by default if not specified. 
     - `[--speed 1.0]` is an optional field that allows you to control the initial speed of playback for the recording (can be useful for longer recordings). it is a multiplier (for example, 2.0 would be 2x speed). If not specified, it uses a standard 1.0 multiplier (1x speed).
+    - `[--start mm:ss]` is optional and starts the playback partway into the recording instead of from the beginning (for example, `--start 25:00` to jump straight into the middle of a race). You can also write it as `h:mm:ss` or as plain seconds.
     - `[--loop]` is an optional flag that allows you to play the recording in a loop, when the recording automatically reaches the end.
+    - `[--control XXXXX]` is optional and turns on the **Remote Control** (see below) on the given port, for example `--control 20800`.
 
 The player might become very useful if you want to display recorded data in the overlays: as an example, you can record a session and focus on racing (and recording the race video), then you can record overlays separately and toggle them on the fly the way you want, to fit your recorded race better (using the recorded race data).
 
@@ -56,6 +58,32 @@ While playing back a recording, some controls are also available in the Terminal
 [PgUp]/[PgDn] (also known as [Page Up] and [Page Down]) Rewind or Fast Forward the Recording by ~5 minutes
 [Q] Quit the Player
 ```
+
+### Remote Control
+
+With `--control <port>`, the player can also be controlled over HTTP, so scripts (or tools like Claude Code) can drive the playback without a Terminal window. It only listens on your own PC (`127.0.0.1`), and it refuses requests coming from web pages.
+
+```
+GET  /status                                position, length, speed, paused, current recording
+GET  /recordings                            the recordings in the recordings/ folder
+POST /pause    POST /resume
+POST /speed?x=4                             0.25 to 8
+POST /seek?to=12:00                         jump to a time (mm:ss, h:mm:ss or seconds)
+POST /seek?by=-30                           jump forwards/backwards by seconds
+POST /load?file=<name>.jsonl&start=5:00     switch to another recording (start is optional)
+POST /quit
+```
+
+For example, with `node player.js my_race.jsonl --port 20777 --control 20800` running:
+
+```
+curl -X POST "http://127.0.0.1:20800/seek?to=25:00"
+curl http://127.0.0.1:20800/status
+```
+
+- Unlike the keyboard controls, the Remote Control can also rewind while playing. Refresh your overlays after rewinding, same as before.
+- `/load` only accepts recordings from the `recordings/` folder. Loading a big recording takes a while: check `/status` until `loading` is `false`.
+- When the recording reaches the end (without `--loop`), the player pauses and waits instead of closing, so you can seek back or load another recording. Use `/quit` to close it.
 
 ### Notes:
 - The player plays back only recorded live UDP data, it does not provide "bookmarks" or something extra - it's just a simple player.
