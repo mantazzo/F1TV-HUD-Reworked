@@ -170,11 +170,6 @@
                  Each row shows a single-letter compound code in the compound's colour. -->
             <div id="lb-tyre"></div>
 
-            <!-- DRS Indicator (item_1_35r0): 20×1110 at left:22.5, top:162
-                 JS-generated rows, one per car at 50px stride, hidden by default.
-                 Each row is a 5×50px green rectangle shown when DRS is active (m_drs === 1). -->
-            <div id="lb-drs"></div>
-
             <!-- Fastest Lap Animation — Race sessions (item_1_24r0r0_375r0)
                  Slides to full width when any car sets a new fastest lap during a race.
                  Positioned over that car's row via JS (updateFlRaceAnimPosition).
@@ -251,6 +246,13 @@
                 <!-- Green Flag: Border_Green.png, top portion only (item_1_34r0r0r0r0_10r0r0_1) -->
                 <div id="lb-deco-border-green"></div>
             </div>
+
+            <!-- DRS Indicator (item_1_35r0): 20×1110 at left:22.5, top:162
+                 JS-generated rows, one per car at 50px stride, hidden by default.
+                 Each row is a 5×50px green rectangle shown when DRS is active (m_drs === 1).
+                 Placed after #lb-deco-border-widget on purpose: the frame's 4px left border sits at
+                 the same x, and the later element paints on top — before it, the bars were hidden. -->
+            <div id="lb-drs"></div>
 
             <!-- VSC Flags banner (item_1_33r0r0r0r0): 306×105 at left:27.5, top:145 -->
             <div id="lb-vsc-banner">

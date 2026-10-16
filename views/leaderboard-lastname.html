@@ -168,11 +168,6 @@
                  independent packet streams can't disagree and flicker the letter. -->
             <div id="lb-tyre"></div>
 
-            <!-- DRS Indicator (item_1_35r0): 20×1110 at left:22.5, top:162
-                 JS-generated rows, one per car at 50px stride, hidden by default.
-                 Each row is a 5×50px green rectangle shown when DRS is active (m_drs === 1). -->
-            <div id="lb-drs"></div>
-
             <!-- Fastest Lap Animation — Race sessions (item_1_33r0r0_322/_323r0)
                  Slides to full width when any car sets a new fastest lap during a race,
                  gated on currentLap >= 2 (see the >= 2 vs > 2 comment at the FTLP handler —
@@ -274,6 +269,13 @@
                      time/laps banner or race-finished state is active, white during Final Lap -->
                 <div id="lb-deco-border-timelaps"></div>
             </div>
+
+            <!-- DRS Indicator (item_1_35r0): 20×1110 at left:22.5, top:162
+                 JS-generated rows, one per car at 50px stride, hidden by default.
+                 Each row is a 5×50px green rectangle shown when DRS is active (m_drs === 1).
+                 Placed after #lb-deco-border-widget on purpose: the frame's 4px left border sits at
+                 the same x, and the later element paints on top — before it, the bars were hidden. -->
+            <div id="lb-drs"></div>
 
             <!-- VSC Flags banner (item_1_40r0r0r0): 485×105 at left:26, top:145 — every flag "widget"
                  (Yellow/Green/SC/VSC/RF) is its own independent element at this exact same spot in the
