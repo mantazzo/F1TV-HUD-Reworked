@@ -11,6 +11,10 @@
  * content below instead of pushing it down — in the 2-column layout, a section growing
  * would make the other sections jump between columns. One card open at a time; an
  * outside click or Escape closes it.
+ *
+ * A card can hold a .help-gallery: one image plus a row of buttons (data-src, data-alt)
+ * that swap it — for options with many values (MFD pages, Panes), where side-by-side
+ * images would be too small to read. Each image is only fetched when its button is picked.
  */
 (function () {
     let openBtn = null;
@@ -29,7 +33,24 @@
         openBtn = btn;
     }
 
+    function showGalleryImage(tab) {
+        const gallery = tab.closest('.help-gallery');
+        const img = gallery.querySelector('img');
+        img.src = tab.dataset.src;
+        img.alt = tab.dataset.alt || '';
+        gallery.querySelectorAll('.help-gallery-tab').forEach(t => {
+            t.classList.toggle('active', t === tab);
+            t.setAttribute('aria-pressed', String(t === tab));
+        });
+    }
+
     document.addEventListener('click', (e) => {
+        const tab = e.target.closest('.help-gallery-tab');
+        if (tab) {
+            showGalleryImage(tab);
+            return;
+        }
+
         const btn = e.target.closest('.help-btn');
         if (btn) {
             if (btn === openBtn) close();

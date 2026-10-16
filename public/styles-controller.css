@@ -223,6 +223,53 @@ body {
     color: #aaaaaa;
 }
 
+/* Gallery inside a hint: one image + buttons to swap it (see utils/help-tips.js) */
+.help-gallery {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.help-gallery-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px;
+}
+
+.help-gallery-tab {
+    padding: 3px 9px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 5px;
+    color: #cccccc;
+    font-family: inherit;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.help-gallery-tab:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+}
+
+.help-gallery-tab.active {
+    background: rgba(233, 69, 96, 0.2);
+    border-color: #e94560;
+    color: #ffffff;
+}
+
+.help-gallery img {
+    display: block;
+    max-width: 100%;
+    max-height: 300px;
+    width: auto;
+    height: auto;
+    border-radius: 4px;
+}
+
 /* Custom overlay hints: plain text from the manifest, so keep its line breaks */
 .help-card--plain {
     white-space: pre-line;

@@ -331,7 +331,7 @@
             <h2>
                 Leaderboard Options
                 <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Leaderboard Options">?</button>
-                <span class="help-card" hidden>These options apply to both Leaderboard versions (Initials and Last Name). Options marked <strong>[Race]</strong> only make a difference during Race sessions, and <strong>[Non-Race]</strong> options only in all other sessions. Options without a mark work in every session.</span>
+                <span class="help-card" hidden>These options apply to both Leaderboard versions (Initials and Last Name). Options marked <strong>[Race]</strong> only make a difference during Race sessions, and <strong>[Non-Race]</strong> options only in all other sessions. Options without a mark work in every session. The example images show the Initials version; the Last Name version behaves the same.</span>
             </h2>
             <div class="option-row">
                 <span class="select-text">MFD Page:</span>
@@ -348,7 +348,18 @@
                     <strong>MFD1:</strong> current tyre compound.<br>
                     <strong>MFD2:</strong> current tyre age (in completed laps).<br>
                     <strong>MFD3:</strong> laps completed (outside of races), or number of pit stops / tyre changes (in races).<br>
-                    <strong>MFD4:</strong> positions gained or lost (races only).</div>
+                    <strong>MFD4:</strong> positions gained or lost (races only).
+                    <div class="help-gallery">
+                        <div class="help-gallery-tabs">
+                            <button type="button" class="help-gallery-tab active" aria-pressed="true" data-src="/images/help/leaderboard-mfd-off.png" data-alt="Leaderboard with the default timing column">Off</button>
+                            <button type="button" class="help-gallery-tab" aria-pressed="false" data-src="/images/help/leaderboard-mfd1.png" data-alt="MFD1: Current Tyres, showing MEDIUM for each driver">MFD1</button>
+                            <button type="button" class="help-gallery-tab" aria-pressed="false" data-src="/images/help/leaderboard-mfd2.png" data-alt="MFD2: Current Tyre Age in laps">MFD2</button>
+                            <button type="button" class="help-gallery-tab" aria-pressed="false" data-src="/images/help/leaderboard-mfd3.png" data-alt="MFD3: Tyre Changes during the race">MFD3</button>
+                            <button type="button" class="help-gallery-tab" aria-pressed="false" data-src="/images/help/leaderboard-mfd4.png" data-alt="MFD4: positions gained or lost, with green and red arrows">MFD4</button>
+                        </div>
+                        <img src="/images/help/leaderboard-mfd-off.png" alt="Leaderboard with the default timing column" width="372" height="510" loading="lazy">
+                    </div>
+                </div>
             </div>
             <div class="option-row">
                 <span class="select-text">Pane:</span>
@@ -365,7 +376,18 @@
                     <strong>Narrow:</strong> full height but narrower, without the timing column.<br>
                     <strong>Short:</strong> full width, but only the session part at the top (session name, timer and any banners).<br>
                     <strong>Narrow+Short:</strong> the session part at its smallest (narrow and short).<br>
-                    <strong>Logo:</strong> only the series logo (F1 or F2), everything else hidden.</div>
+                    <strong>Logo:</strong> only the series logo (F1 or F2), everything else hidden.
+                    <div class="help-gallery">
+                        <div class="help-gallery-tabs">
+                            <button type="button" class="help-gallery-tab active" aria-pressed="true" data-src="/images/help/leaderboard-pane-full.png" data-alt="Full pane: session block and driver rows with timing">Full</button>
+                            <button type="button" class="help-gallery-tab" aria-pressed="false" data-src="/images/help/leaderboard-pane-narrow.png" data-alt="Narrow pane: driver rows without the timing column">Narrow</button>
+                            <button type="button" class="help-gallery-tab" aria-pressed="false" data-src="/images/help/leaderboard-pane-short.png" data-alt="Short pane: only the session block (logo, session name, lap counter)">Short</button>
+                            <button type="button" class="help-gallery-tab" aria-pressed="false" data-src="/images/help/leaderboard-pane-narrow-short.png" data-alt="Narrow+Short pane: the session block at its smallest">Narrow+Short</button>
+                            <button type="button" class="help-gallery-tab" aria-pressed="false" data-src="/images/help/leaderboard-pane-logo.png" data-alt="Logo pane: only the F1 logo">Logo</button>
+                        </div>
+                        <img src="/images/help/leaderboard-pane-full.png" alt="Full pane: session block and driver rows with timing" width="372" height="410" loading="lazy">
+                    </div>
+                </div>
             </div>
             <div class="option-row">
                 <span class="select-text">Standings:</span>
@@ -379,7 +401,12 @@
                     <strong>Off:</strong> the normal Leaderboard.<br>
                     <strong>Drivers:</strong> Drivers' Championship, from <code>public/data/DriverStandings.json</code>.<br>
                     <strong>Constructors:</strong> Constructors' Championship, from <code>public/data/ConstructorStandings.json</code>.<br>
-                    The game doesn't send standings, so edit those files to fill in your own.</div>
+                    The game doesn't send standings, so edit those files to fill in your own.
+                    <div class="help-images">
+                        <figure><img src="/images/help/leaderboard-standings-drivers.png" alt="Drivers' Championship standings" width="485" height="500" loading="lazy"><figcaption>Drivers</figcaption></figure>
+                        <figure><img src="/images/help/leaderboard-standings-constructors.png" alt="Constructors' Championship standings" width="485" height="500" loading="lazy"><figcaption>Constructors</figcaption></figure>
+                    </div>
+                </div>
             </div>
             <div class="option-row">
                 <label class="toggle-label">
@@ -426,7 +453,12 @@
                     <span class="toggle-text">Show Last Names</span>
                 </label>
                 <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Show Last Names">?</button>
-                <div class="help-card" hidden>Shows the drivers' names in full width. The timing column is hidden while this is on.</div>
+                <div class="help-card" hidden>Shows the drivers' names in full width. The timing column is hidden while this is on.
+                    <div class="help-images">
+                        <figure><img src="/images/help/leaderboard-toggles-off.png" alt="Leaderboard with three-letter names and timing" width="372" height="510" loading="lazy"><figcaption>Off</figcaption></figure>
+                        <figure><img src="/images/help/leaderboard-last-names.png" alt="Leaderboard with full last names and no timing column" width="372" height="510" loading="lazy"><figcaption>On</figcaption></figure>
+                    </div>
+                </div>
             </div>
             <div class="option-row">
                 <label class="toggle-label">
@@ -435,7 +467,12 @@
                     <span class="toggle-text">Show Driver Numbers</span>
                 </label>
                 <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Show Driver Numbers">?</button>
-                <div class="help-card" hidden>Shows each driver's number instead of their team logo.</div>
+                <div class="help-card" hidden>Shows each driver's number instead of their team logo.
+                    <div class="help-images">
+                        <figure><img src="/images/help/leaderboard-toggles-off.png" alt="Leaderboard with team logos" width="372" height="510" loading="lazy"><figcaption>Off</figcaption></figure>
+                        <figure><img src="/images/help/leaderboard-driver-numbers.png" alt="Leaderboard with driver numbers in place of team logos" width="372" height="510" loading="lazy"><figcaption>On</figcaption></figure>
+                    </div>
+                </div>
             </div>
             <div class="option-row">
                 <label class="toggle-label">
@@ -444,7 +481,12 @@
                     <span class="toggle-text">[Race] Show Leader Gaps</span>
                 </label>
                 <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Show Leader Gaps">?</button>
-                <div class="help-card" hidden>Shows each driver's gap to the race leader. When off, it shows the interval (gap to the car ahead).</div>
+                <div class="help-card" hidden>Shows each driver's gap to the race leader. When off, it shows the interval (gap to the car ahead).
+                    <div class="help-images">
+                        <figure><img src="/images/help/leaderboard-toggles-off.png" alt="Leaderboard showing intervals to the car ahead" width="372" height="510" loading="lazy"><figcaption>Off (interval)</figcaption></figure>
+                        <figure><img src="/images/help/leaderboard-leader-gaps.png" alt="Leaderboard showing gaps to the leader" width="372" height="510" loading="lazy"><figcaption>On (gap to leader)</figcaption></figure>
+                    </div>
+                </div>
             </div>
             <div class="option-row">
                 <label class="toggle-label">
@@ -453,7 +495,12 @@
                     <span class="toggle-text">[Non-Race] Show Lap Times</span>
                 </label>
                 <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Show Lap Times">?</button>
-                <div class="help-card" hidden>Shows each driver's fastest lap time of the session. When off, only P1 shows a lap time and everyone else shows their gap to it.</div>
+                <div class="help-card" hidden>Shows each driver's fastest lap time of the session. When off, only P1 shows a lap time and everyone else shows their gap to it.
+                    <div class="help-images">
+                        <figure><img src="/images/help/leaderboard-lap-times-off.png" alt="Qualifying: P1 lap time, gaps for everyone else" width="372" height="510" loading="lazy"><figcaption>Off</figcaption></figure>
+                        <figure><img src="/images/help/leaderboard-lap-times-on.png" alt="Qualifying: every driver shows their lap time" width="372" height="510" loading="lazy"><figcaption>On</figcaption></figure>
+                    </div>
+                </div>
             </div>
             <div class="option-row">
                 <label class="toggle-label">
@@ -462,7 +509,12 @@
                     <span class="toggle-text">Primary Player Indicator</span>
                 </label>
                 <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Primary Player Indicator">?</button>
-                <div class="help-card" hidden>Highlights the active driver: a white background with their full name.</div>
+                <div class="help-card" hidden>Highlights the active driver: a white background with their full name.
+                    <div class="help-images">
+                        <figure><img src="/images/help/leaderboard-indicator-none.png" alt="Rows without a player indicator" width="372" height="360" loading="lazy"><figcaption>Off</figcaption></figure>
+                        <figure><img src="/images/help/leaderboard-indicator-primary.png" alt="The player (Bearman) highlighted in white with full name" width="372" height="360" loading="lazy"><figcaption>On</figcaption></figure>
+                    </div>
+                </div>
             </div>
             <div class="option-row">
                 <label class="toggle-label">
@@ -471,7 +523,12 @@
                     <span class="toggle-text">Secondary Player Indicator</span>
                 </label>
                 <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Secondary Player Indicator">?</button>
-                <div class="help-card" hidden>A more subtle highlight for the active driver: just a team-colored bar next to their row.</div>
+                <div class="help-card" hidden>A more subtle highlight for the active driver: just a team-colored bar next to their row.
+                    <div class="help-images">
+                        <figure><img src="/images/help/leaderboard-indicator-none.png" alt="Rows without a player indicator" width="372" height="360" loading="lazy"><figcaption>Off</figcaption></figure>
+                        <figure><img src="/images/help/leaderboard-indicator-secondary.png" alt="A team-colored bar next to the player (Bearman)" width="372" height="360" loading="lazy"><figcaption>On</figcaption></figure>
+                    </div>
+                </div>
             </div>
             <div class="option-row">
                 <label class="toggle-label">
@@ -480,7 +537,12 @@
                     <span class="toggle-text">Teammate Indicator</span>
                 </label>
                 <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Teammate Indicator">?</button>
-                <div class="help-card" hidden>Highlights the active driver's teammate (if they have one), in the same style as the Primary Player Indicator.</div>
+                <div class="help-card" hidden>Highlights the active driver's teammate (if they have one), in the same style as the Primary Player Indicator.
+                    <div class="help-images">
+                        <figure><img src="/images/help/leaderboard-indicator-none.png" alt="Rows without a teammate indicator" width="372" height="360" loading="lazy"><figcaption>Off</figcaption></figure>
+                        <figure><img src="/images/help/leaderboard-indicator-teammate.png" alt="The player's teammate (Ocon) highlighted" width="372" height="360" loading="lazy"><figcaption>On</figcaption></figure>
+                    </div>
+                </div>
             </div>
             <div class="option-row">
                 <label class="toggle-label">
@@ -489,7 +551,12 @@
                     <span class="toggle-text">Show DRS/Overtake Mode Indicators</span>
                 </label>
                 <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Show DRS/Overtake Mode Indicators">?</button>
-                <div class="help-card" hidden>Shows an indicator on the left of the Leaderboard when a driver has DRS active (pre-2026 F1 cars and all F2 cars) or Overtake Mode active (2026 F1 cars).</div>
+                <div class="help-card" hidden>Shows an indicator on the left of the Leaderboard when a driver has DRS active (pre-2026 F1 cars and all F2 cars) or Overtake Mode active (2026 F1 cars).
+                    <div class="help-images">
+                        <figure><img src="/images/help/leaderboard-drs-2025.png" alt="Green DRS bars next to three drivers (2025 cars)" width="372" height="510" loading="lazy"><figcaption>DRS (2025 cars)</figcaption></figure>
+                        <figure><img src="/images/help/leaderboard-drs-2026.png" alt="Turquoise Overtake Mode bars next to five drivers (2026 cars)" width="372" height="510" loading="lazy"><figcaption>Overtake Mode (2026 cars)</figcaption></figure>
+                    </div>
+                </div>
             </div>
             <div class="option-row">
                 <label class="toggle-label">
@@ -498,7 +565,12 @@
                     <span class="toggle-text">[Race] Show Battery</span>
                 </label>
                 <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Show Battery">?</button>
-                <div class="help-card" hidden>Shows each driver's battery level during a race, when the game provides it.</div>
+                <div class="help-card" hidden>Shows each driver's battery level during a race, when the game provides it.
+                    <div class="help-images">
+                        <figure><img src="/images/help/leaderboard-battery-off.png" alt="Leaderboard without battery levels" width="450" height="510" loading="lazy"><figcaption>Off</figcaption></figure>
+                        <figure><img src="/images/help/leaderboard-battery-on.png" alt="Battery levels shown to the right of each row" width="450" height="510" loading="lazy"><figcaption>On</figcaption></figure>
+                    </div>
+                </div>
             </div>
             <div class="option-row">
                 <label class="toggle-label">
@@ -516,7 +588,12 @@
                     <span class="toggle-text">Position Column Background</span>
                 </label>
                 <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Position Column Background">?</button>
-                <div class="help-card" hidden>Adds an extra background behind the position numbers column.</div>
+                <div class="help-card" hidden>Adds an extra background behind the position numbers column.
+                    <div class="help-images">
+                        <figure><img src="/images/help/leaderboard-position-bg-off.png" alt="Position column without a background" width="220" height="510" loading="lazy"><figcaption>Off</figcaption></figure>
+                        <figure><img src="/images/help/leaderboard-position-bg-on.png" alt="Position column with a darker background" width="220" height="510" loading="lazy"><figcaption>On</figcaption></figure>
+                    </div>
+                </div>
             </div>
         </section>
 
