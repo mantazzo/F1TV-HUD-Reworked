@@ -98,6 +98,83 @@ body {
     user-select: text;
 }
 
+/* "How to use Desktop Mode" panel (collapsible <details>) */
+.help-panel {
+    padding: 14px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+}
+
+.help-panel-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.8);
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+}
+
+.help-panel-summary::-webkit-details-marker {
+    display: none;
+}
+
+.help-panel-summary::after {
+    content: 'Show';
+    padding: 3px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.help-panel[open] .help-panel-summary::after {
+    content: 'Hide';
+}
+
+.help-panel-summary:hover::after {
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.help-panel-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+    padding-left: 20px;
+    font-size: 12px;
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.help-panel-list li::marker {
+    color: #ff6b6b;
+    font-weight: 600;
+}
+
+.help-panel strong {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 600;
+}
+
+.help-panel code {
+    font-family: Consolas, monospace;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.help-panel-note {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 12px;
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.7);
+}
+
 .layout-panel {
     display: flex;
     flex-direction: column;

@@ -213,7 +213,8 @@
         let rearWingDmg   = 0;
 
         // ── Auto-display state ────────────────────────────────────────────────
-        let cdConfig = { autoDisplay: false, autoMode: 'never', showRemainingLife: true, useTeamColor: true };
+        const DEFAULT_AUTO_DURATION = 15000; // ms — set from the Controller's "Display Duration" (autoDuration)
+        let cdConfig = { autoDisplay: false, autoMode: 'never', autoDuration: DEFAULT_AUTO_DURATION, showRemainingLife: true, useTeamColor: true };
         let autoHideTimer       = null;
         let dmgStateInitialized = false;
         let prevDmgState        = {};
@@ -349,7 +350,7 @@
             titleSlideIn();
             if (cdConfig.autoDisplay) {
                 clearTimeout(autoHideTimer);
-                autoHideTimer = setTimeout(hideOverlay, 15000);
+                autoHideTimer = setTimeout(hideOverlay, cdConfig.autoDuration);
             }
         }
 
@@ -472,7 +473,7 @@
             if (config.overlays?.['car-damage']) {
                 const cfg = config.overlays['car-damage'];
                 const prevAutoDisplay = cdConfig.autoDisplay;
-                cdConfig = { autoDisplay: !!cfg.autoDisplay, autoMode: cfg.autoMode || 'never', showRemainingLife: cfg.showRemainingLife !== false, useTeamColor: cfg.useTeamColor !== false };
+                cdConfig = { autoDisplay: !!cfg.autoDisplay, autoMode: cfg.autoMode || 'never', autoDuration: cfg.autoDuration || DEFAULT_AUTO_DURATION, showRemainingLife: cfg.showRemainingLife !== false, useTeamColor: cfg.useTeamColor !== false };
                 updateDriverNameColor();
 
                 const newVisibility = !!cfg.visible;
@@ -487,7 +488,7 @@
                 } else if (cdConfig.autoDisplay && !prevAutoDisplay && newVisibility) {
                     // autoDisplay was just switched on while overlay is already showing—start timer
                     clearTimeout(autoHideTimer);
-                    autoHideTimer = setTimeout(hideOverlay, 15000);
+                    autoHideTimer = setTimeout(hideOverlay, cdConfig.autoDuration);
                 } else if (!cdConfig.autoDisplay && prevAutoDisplay) {
                     // autoDisplay switched off — cancel any pending hide timer
                     clearTimeout(autoHideTimer);

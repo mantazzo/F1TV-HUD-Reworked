@@ -25,6 +25,21 @@
             <span class="lite-banner-url" id="lite-banner-url"></span>
         </div>
 
+        <!-- Open on first launch; collapsing it is remembered (localStorage, see below) -->
+        <details class="help-panel" id="help-panel" open>
+            <summary class="help-panel-summary">How to use Desktop Mode</summary>
+            <ol class="help-panel-list">
+                <li><strong>Keep the server running.</strong> The Launcher talks to the server window you started with <code>run.bat</code>. If the top-right says <em>Disconnected</em>, start that first.</li>
+                <li><strong>Every overlay has its own controls.</strong> Each row in the list below has an <strong>On/Off</strong> button, a <strong>Reposition</strong> button and a <strong>Scale</strong> slider, so you can set up each overlay separately. Turning one On opens it in its own transparent window that stays on top of everything.</li>
+                <li><strong>Don't see anything? That's usually normal.</strong> Most overlays only appear when there's something to show (a pit stop, a fastest lap, a race message), and all of them need live data from the game. Switch on <strong>Reposition</strong> to see the overlay's outline even with no data.</li>
+                <li><strong>Move and resize.</strong> With Reposition on, drag the window where you want it and use the slider to set its size. Turn Reposition off when you're done.</li>
+                <li><strong>Save your layout.</strong> Positions and sizes are forgotten when you close the Launcher. Pick a slot (1–5) and press <strong>Save Layout</strong>. Next time, press <strong>Load Saved Layout</strong> and everything comes back in one go.</li>
+                <li><strong>Set the game's Display Mode to Windowed Fullscreen or Windowed.</strong> Overlays can't draw over the game in exclusive Fullscreen.</li>
+                <li><strong>Want to change how things look?</strong> Leaderboard pages, units, team colours and other visual options are all in the <strong>Extended Controller</strong>. If an overlay window is open but stays empty, also check that it isn't switched off under <em>Overlay Visibility</em> there.</li>
+            </ol>
+            <p class="help-panel-note"><strong>No data at all?</strong> In the game's Telemetry settings, make sure UDP Telemetry is On and the port matches the one shown in the server window.</p>
+        </details>
+
         <div class="layout-panel">
             <div class="layout-panel-top">
                 <span class="layout-panel-label">Layout</span>
@@ -79,6 +94,18 @@
     </div>
 
     <script>
+        // "How to use" panel: open until the user collapses it once, then stays collapsed.
+        // Storage can be unavailable (cleared/blocked) — the panel then just starts open.
+        const helpPanel = document.getElementById('help-panel');
+        try {
+            if (localStorage.getItem('launcherHelpCollapsed') === '1') helpPanel.open = false;
+        } catch (e) { /* storage unavailable */ }
+        helpPanel.addEventListener('toggle', () => {
+            try {
+                localStorage.setItem('launcherHelpCollapsed', helpPanel.open ? '0' : '1');
+            } catch (e) { /* storage unavailable */ }
+        });
+
         const ALL_OVERLAYS = [
             { id: 'speedometer', title: 'Speedometer', path: '/speedometer', width: 520, height: 520 },
             { id: 'lap-timer', title: 'Lap Timer', path: '/lap-timer', width: 480, height: 270 },

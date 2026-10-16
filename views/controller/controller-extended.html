@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="/styles-controller.css">
     <script src="/socket.io/socket.io.js"></script>
     <script src="/utils/driver-utils.js"></script>
+    <script src="/utils/help-tips.js"></script>
 </head>
 <body>
     <div class="controller-container">
@@ -31,7 +32,11 @@
 
         <div class="controller-sections">
         <section class="overlay-section">
-            <h2>Overlay Visibility</h2>
+            <h2>
+                Overlay Visibility
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Overlay Visibility">?</button>
+                <span class="help-card" hidden>Shows or hides each overlay everywhere it's in use, both in OBS browser sources and Desktop Mode windows. Hiding an overlay doesn't close its Desktop Mode window; the window just goes empty. This setting is saved, so a hidden overlay stays hidden after a restart. Lap Timer, Pit Timer, Fastest Lap and Message Box aren't listed here: they show up by themselves when there's something to show (Lap Timer's visibility is set in its own section).</span>
+            </h2>
             <div class="overlay-grid" id="overlay-grid">
                 <!-- Overlay buttons will be generated here -->
             </div>
@@ -48,6 +53,8 @@
                         <option value="fahrenheit">Fahrenheit</option>
                     </select>
                 </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Temperature Units">?</button>
+                <div class="help-card" hidden>Automatic uses the temperature unit set in the game. Celsius or Fahrenheit always use that unit, whatever the game is set to.</div>
             </div>
             <div class="option-row">
                 <label class="toggle-label">
@@ -55,6 +62,8 @@
                     <span class="toggle-slider"></span>
                     <span class="toggle-text">Show Forecast</span>
                 </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Show Forecast">?</button>
+                <div class="help-card" hidden>Shows or hides the Weather Forecast rows.</div>
             </div>
             <div class="option-row">
                 <label class="toggle-label">
@@ -62,6 +71,8 @@
                     <span class="toggle-slider"></span>
                     <span class="toggle-text">Show on Formation Lap</span>
                 </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Show on Formation Lap">?</button>
+                <div class="help-card" hidden>During the Formation Lap, shows the Weather overlay for about 12 seconds once the leader has driven around 10% of the lap, even if the overlay is currently hidden.</div>
             </div>
             <div class="option-row">
                 <label class="toggle-label">
@@ -69,6 +80,8 @@
                     <span class="toggle-slider"></span>
                     <span class="toggle-text">Rotate Forecast</span>
                 </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Rotate Forecast">?</button>
+                <div class="help-card" hidden>If the session has more than 4 forecast times, shows all of them by switching to the next set every 10 seconds. When off, only the first 4 are shown.</div>
             </div>
             <div class="option-row">
                 <span class="select-text">Forecast Session: <span id="weather-forecast-session-status">--</span></span>
@@ -77,6 +90,8 @@
                     <button class="mfd-button" data-forecast-nav="current">Current Session</button>
                     <button class="mfd-button" data-forecast-nav="next">Next Session &gt;</button>
                 </div>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Forecast Session">?</button>
+                <div class="help-card" hidden>If more than one session is left in the Race Weekend, you can choose which session's forecast to show. Use Previous/Next Session to move between them, or Current Session to jump back to the session you're in.</div>
             </div>
         </section>
 
@@ -88,6 +103,8 @@
                     <span class="toggle-slider"></span>
                     <span class="toggle-text">Use Team Color</span>
                 </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Use Team Color (Live Speed)">?</button>
+                <div class="help-card" hidden>Shows the driver's name and the team color line in their team's color. The color comes from the game, or from <code>OverridePrimaryColor</code> in <code>public/data/DefaultTeams.json</code> if you've set one there. When off, both are white.</div>
             </div>
         </section>
 
@@ -99,6 +116,8 @@
                     <span class="toggle-slider"></span>
                     <span class="toggle-text">Use Team Color</span>
                 </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Use Team Color (Pit Timer)">?</button>
+                <div class="help-card" hidden>Shows the pit stop timer, and the background behind the team logo, in the team's color. The color comes from the game, or from <code>OverridePrimaryColor</code> in <code>public/data/DefaultTeams.json</code> if you've set one there. When off, the timer is white and the logo background is the original dark blue.</div>
             </div>
         </section>
 
@@ -110,6 +129,16 @@
                     <span class="toggle-slider"></span>
                     <span class="toggle-text">Automatic Display</span>
                 </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Automatic Display">?</button>
+                <div class="help-card" hidden>Automatically hides the Pit Window overlay after a set time (see Display Duration), whether it was shown from Overlay Visibility or popped up by itself. It also has to be on for Automatic Mode to work. When off, the overlay stays visible until you hide it.</div>
+            </div>
+            <div class="option-row">
+                <label class="select-label">
+                    <span class="select-text">Display Duration (seconds):</span>
+                    <input type="number" id="pit-window-auto-duration" class="select-dropdown number-input" min="1" max="300" step="1" value="15">
+                </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Display Duration">?</button>
+                <div class="help-card" hidden>How long the overlay stays on screen before hiding again, while Automatic Display is on. Default is 15 seconds.</div>
             </div>
             <div class="option-row">
                 <label class="select-label">
@@ -121,6 +150,12 @@
                         <option value="both">Both</option>
                     </select>
                 </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Automatic Mode">?</button>
+                <div class="help-card" hidden>When the overlay pops up by itself, based on the game's pit window. Needs Automatic Display to be on.<br>
+                    <strong>None:</strong> never pops up.<br>
+                    <strong>1 Lap Before Window:</strong> on the lap before the pit window opens.<br>
+                    <strong>On Pit Window:</strong> on the lap the pit window opens.<br>
+                    <strong>Both:</strong> on both of those laps.</div>
             </div>
         </section>
 
@@ -132,6 +167,8 @@
                     <span class="toggle-slider"></span>
                     <span class="toggle-text">Use Team Color</span>
                 </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Use Team Color (Car Damage)">?</button>
+                <div class="help-card" hidden>Shows the driver's name in their team's color. The color comes from the game, or from <code>OverridePrimaryColor</code> in <code>public/data/DefaultTeams.json</code> if you've set one there. When off, the name is white.</div>
             </div>
             <div class="option-row">
                 <label class="toggle-label">
@@ -139,6 +176,8 @@
                     <span class="toggle-slider"></span>
                     <span class="toggle-text">Show Remaining Tyre Life Instead</span>
                 </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Show Remaining Tyre Life Instead">?</button>
+                <div class="help-card" hidden>When on, each tyre shows how much life it has left (a new tyre shows 100%). When off, it shows how worn the tyre is (a new tyre shows 0%).</div>
             </div>
             <div class="option-row">
                 <label class="toggle-label">
@@ -146,6 +185,16 @@
                     <span class="toggle-slider"></span>
                     <span class="toggle-text">Automatic Display</span>
                 </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Automatic Display (Car Damage)">?</button>
+                <div class="help-card" hidden>Automatically hides the Car Damage overlay after a set time (see Display Duration), whether it was shown from Overlay Visibility or popped up by itself. It also has to be on for Auto-Popup to work. When off, the overlay stays visible until you hide it.</div>
+            </div>
+            <div class="option-row">
+                <label class="select-label">
+                    <span class="select-text">Display Duration (seconds):</span>
+                    <input type="number" id="car-damage-auto-duration" class="select-dropdown number-input" min="1" max="300" step="1" value="15">
+                </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Display Duration (Car Damage)">?</button>
+                <div class="help-card" hidden>How long the overlay stays on screen before hiding again, while Automatic Display is on. Default is 15 seconds.</div>
             </div>
             <div class="option-row">
                 <label class="select-label">
@@ -156,6 +205,11 @@
                         <option value="on-any-damage">On Any Damage</option>
                     </select>
                 </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Auto-Popup">?</button>
+                <div class="help-card" hidden>When the overlay pops up by itself. Needs Automatic Display to be on.<br>
+                    <strong>Never:</strong> never pops up.<br>
+                    <strong>On Car Damage:</strong> when a car part (wings, floor, sidepods, diffuser, brakes, engine or gearbox) first gets damaged enough to turn yellow. Tyre wear doesn't count.<br>
+                    <strong>On Any Damage:</strong> the same, plus every 5% of wear on your most worn tyre.</div>
             </div>
         </section>
 
@@ -170,6 +224,11 @@
                         <option value="always-on">Always On</option>
                     </select>
                 </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Visibility Mode (Lap Timer)">?</button>
+                <div class="help-card" hidden>The Lap Timer has no Overlay Visibility button, so its visibility is set here.<br>
+                    <strong>Always Off:</strong> never shown.<br>
+                    <strong>Automatic:</strong> shows by itself while you're on track. In Practice and Qualifying it appears for the last 10% of your out lap and stays until you're back in the garage. In a Race it shows all the time, except in the garage and during the Formation Lap. In Time Trial it shows whenever you're out of the garage.<br>
+                    <strong>Always On:</strong> always shown.</div>
             </div>
             <div class="option-row">
                 <label class="select-label">
@@ -180,6 +239,12 @@
                         <option value="rival">Rival</option>
                     </select>
                 </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Time Trial Comparison">?</button>
+                <div class="help-card" hidden>Which lap your times are compared against in Time Trial.<br>
+                    <strong>Player Session Best:</strong> your best lap in this session.<br>
+                    <strong>Personal Best:</strong> your personal best on this track.<br>
+                    <strong>Rival:</strong> your rival's lap.<br>
+                    If there's no time for the chosen option yet, the comparison stays empty.</div>
             </div>
             <div class="option-row">
                 <label class="select-label">
@@ -189,6 +254,10 @@
                         <option value="alwaysLeader">Always Leader</option>
                     </select>
                 </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Knockout Qualifying Comparison">?</button>
+                <div class="help-card" hidden>Who your times are compared against in Q1/Q2 and Sprint Qualifying SQ1/SQ2. Other qualifying sessions always compare to the leader.<br>
+                    <strong>Default:</strong> if you're safe from elimination, you're compared to the leader. If you're in the knockout zone, you're compared to the driver in the last safe position, or to the leader if that driver has no time yet.<br>
+                    <strong>Always Leader:</strong> always compared to the leader.</div>
             </div>
             <div class="option-row">
                 <label class="select-label">
@@ -199,6 +268,11 @@
                         <option value="lastLap">Last Lap</option>
                     </select>
                 </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Race Comparison">?</button>
+                <div class="help-card" hidden>Which lap your times are compared against in a Race.<br>
+                    <strong>Fastest Lap:</strong> the fastest lap of the race so far, by any driver.<br>
+                    <strong>Personal Best:</strong> your own best lap of the race.<br>
+                    <strong>Last Lap:</strong> your previous lap.</div>
             </div>
         </section>
 
@@ -732,7 +806,23 @@
         // Pit window auto display toggle handling
         const pitWindowAutoDisplayToggle = document.getElementById('pit-window-auto-display-toggle');
         const pitWindowAutoModeSelect = document.getElementById('pit-window-auto-mode');
-        
+        const pitWindowAutoDurationInput = document.getElementById('pit-window-auto-duration');
+
+        // Automatic Display duration fields (Pit Window, Car Damage): shown in seconds, stored
+        // in ms as autoDuration. Invalid input snaps back to the saved value via resync().
+        const AUTO_DISPLAY_DEFAULT_DURATION = 15000; // ms — same fallback as the overlays
+        function bindAutoDurationInput(input, overlay, resync) {
+            input.addEventListener('change', () => {
+                const seconds = Math.round(Number(input.value));
+                if (!(seconds >= 1 && seconds <= 300)) {
+                    resync();
+                    return;
+                }
+                input.value = seconds;
+                socket.emit('config_update', { overlay, property: 'autoDuration', value: seconds * 1000 });
+            });
+        }
+
         pitWindowAutoDisplayToggle.addEventListener('change', () => {
             socket.emit('config_update', {
                 overlay: 'pit-window',
@@ -749,6 +839,8 @@
             });
         });
 
+        bindAutoDurationInput(pitWindowAutoDurationInput, 'pit-window', () => updatePitWindowOptions());
+
         // Update pit window options when config changes
         function updatePitWindowOptions() {
             if (!currentConfig || !currentConfig.overlays || !currentConfig.overlays['pit-window']) return;
@@ -756,6 +848,7 @@
             const pitWindowConfig = currentConfig.overlays['pit-window'];
             pitWindowAutoDisplayToggle.checked = pitWindowConfig.autoDisplay !== false;
             pitWindowAutoModeSelect.value = pitWindowConfig.autoMode || 'none';
+            pitWindowAutoDurationInput.value = (pitWindowConfig.autoDuration || AUTO_DISPLAY_DEFAULT_DURATION) / 1000;
         }
 
         // Car damage auto display toggle handling
@@ -763,6 +856,9 @@
         const carDamageAutoModeSelect      = document.getElementById('car-damage-auto-mode');
         const carDamageRemainingLifeToggle  = document.getElementById('car-damage-remaining-life-toggle');
         const carDamageTeamColorToggle      = document.getElementById('car-damage-team-color-toggle');
+        const carDamageAutoDurationInput    = document.getElementById('car-damage-auto-duration');
+
+        bindAutoDurationInput(carDamageAutoDurationInput, 'car-damage', () => updateCarDamageOptions());
 
         carDamageAutoDisplayToggle.addEventListener('change', () => {
             socket.emit('config_update', {
@@ -805,6 +901,7 @@
             carDamageAutoModeSelect.value        = carDamageConfig.autoMode || 'never';
             carDamageRemainingLifeToggle.checked = carDamageConfig.showRemainingLife !== false;
             carDamageTeamColorToggle.checked     = carDamageConfig.useTeamColor !== false;
+            carDamageAutoDurationInput.value     = (carDamageConfig.autoDuration || AUTO_DISPLAY_DEFAULT_DURATION) / 1000;
         }
 
         // Lap timer visibility mode handling

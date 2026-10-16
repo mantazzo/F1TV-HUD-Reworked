@@ -131,6 +131,70 @@ body {
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* Help hints — "?" button + floating card (see utils/help-tips.js) */
+.overlay-section h2 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+}
+
+.help-btn {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    margin-left: auto;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.06);
+    color: #aaaaaa;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+/* A select row's label already fills the row, so auto margin gives no space */
+.select-label + .help-btn {
+    margin-left: 12px;
+}
+
+.help-btn:hover,
+.help-btn[aria-expanded="true"] {
+    background: rgba(233, 69, 96, 0.2);
+    border-color: #e94560;
+    color: #ffffff;
+}
+
+.help-card {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    margin-top: 4px;
+    padding: 10px 14px;
+    background: #1f2440;
+    border: 1px solid rgba(233, 69, 96, 0.5);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    color: #dddddd;
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.5;
+}
+
+.help-card code {
+    font-family: Consolas, monospace;
+    color: #ffffff;
+}
+
+.help-card[hidden] {
+    display: none;
+}
+
 /* Overlay Grid */
 .overlay-grid {
     display: grid;
@@ -199,6 +263,7 @@ body {
     display: flex;
     align-items: center;
     padding: 8px 0;
+    position: relative;
 }
 
 .toggle-label {
@@ -288,6 +353,15 @@ body {
     outline: none;
     border-color: #e94560;
     background: rgba(255, 255, 255, 0.15);
+}
+
+/* Number field styled like the dropdowns (e.g. Pit Window Display Duration) */
+.number-input {
+    min-width: 0;
+    width: 90px;
+    flex-shrink: 0;
+    cursor: text;
+    color-scheme: dark;
 }
 
 .select-dropdown option {
