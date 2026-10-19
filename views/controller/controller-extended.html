@@ -114,7 +114,12 @@
                     <span class="toggle-text">Use Team Color</span>
                 </label>
                 <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Use Team Color (Live Speed)">?</button>
-                <div class="help-card" hidden>Shows the driver's name and the team color line in their team's color. The color comes from the game, or from <code>OverridePrimaryColor</code> in <code>public/data/DefaultTeams.json</code> if you've set one there. When off, both are white.</div>
+                <div class="help-card" hidden>Shows the driver's name and the team color line in their team's color. The color comes from the game, or from <code>OverridePrimaryColor</code> in <code>public/data/DefaultTeams.json</code> if you've set one there. When off, both are white.
+                    <div class="help-images">
+                        <figure><img src="/images/help/live-speed-team-color-on.png" alt="Live Speed with the driver name and line in the team's red" width="332" height="382" loading="lazy"><figcaption>On</figcaption></figure>
+                        <figure><img src="/images/help/live-speed-team-color-off.png" alt="Live Speed with the driver name and line in white" width="332" height="382" loading="lazy"><figcaption>Off</figcaption></figure>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -127,7 +132,12 @@
                     <span class="toggle-text">Use Team Color</span>
                 </label>
                 <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Use Team Color (Pit Timer)">?</button>
-                <div class="help-card" hidden>Shows the pit stop timer, and the background behind the team logo, in the team's color. The color comes from the game, or from <code>OverridePrimaryColor</code> in <code>public/data/DefaultTeams.json</code> if you've set one there. When off, the timer is white and the logo background is the original dark blue.</div>
+                <div class="help-card" hidden>Shows the pit stop timer, and the background behind the team logo, in the team's color. The color comes from the game, or from <code>OverridePrimaryColor</code> in <code>public/data/DefaultTeams.json</code> if you've set one there. When off, the timer is white and the logo background is the original dark blue.
+                    <div class="help-images">
+                        <figure><img src="/images/help/pit-timer-team-color-on.png" alt="Pit Timer with the stop time and logo background in Ferrari red" width="355" height="229" loading="lazy"><figcaption>On</figcaption></figure>
+                        <figure><img src="/images/help/pit-timer-team-color-off.png" alt="Pit Timer with a white stop time and dark blue logo background" width="355" height="229" loading="lazy"><figcaption>Off</figcaption></figure>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -178,7 +188,12 @@
                     <span class="toggle-text">Use Team Color</span>
                 </label>
                 <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Use Team Color (Car Damage)">?</button>
-                <div class="help-card" hidden>Shows the driver's name in their team's color. The color comes from the game, or from <code>OverridePrimaryColor</code> in <code>public/data/DefaultTeams.json</code> if you've set one there. When off, the name is white.</div>
+                <div class="help-card" hidden>Shows the driver's name in their team's color. The color comes from the game, or from <code>OverridePrimaryColor</code> in <code>public/data/DefaultTeams.json</code> if you've set one there. When off, the name is white.
+                    <div class="help-images">
+                        <figure><img src="/images/help/car-damage-team-color-on.png" alt="Car Damage with the driver name in the team's red" width="302" height="522" loading="lazy"><figcaption>On</figcaption></figure>
+                        <figure><img src="/images/help/car-damage-team-color-off.png" alt="Car Damage with the driver name in white" width="302" height="522" loading="lazy"><figcaption>Off</figcaption></figure>
+                    </div>
+                </div>
             </div>
             <div class="option-row">
                 <label class="toggle-label">
@@ -579,7 +594,12 @@
                     <span class="toggle-text">[Race] Show Penalties</span>
                 </label>
                 <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Show Penalties">?</button>
-                <div class="help-card" hidden>Shows each driver's total penalty time, when they have any.</div>
+                <div class="help-card" hidden>Shows each driver's total penalty time, when they have any. Unserved stop-and-go penalties count as 10s each, and an unserved drive-through shows as DT.
+                    <div class="help-images">
+                        <figure><img src="/images/help/leaderboard-penalties-off.png" alt="Bottom of the Leaderboard without penalties shown" width="486" height="310" loading="lazy"><figcaption>Off</figcaption></figure>
+                        <figure><img src="/images/help/leaderboard-penalties-on.png" alt="A 10s penalty shown next to Hamilton in P22" width="486" height="310" loading="lazy"><figcaption>On</figcaption></figure>
+                    </div>
+                </div>
             </div>
             <div class="option-row">
                 <label class="toggle-label">
@@ -614,7 +634,18 @@
                     <strong>Race Leader:</strong> races only, while the driver is P1.<br>
                     <strong>Race Story:</strong> races only. Starting position compared to the current one.<br>
                     <strong>Best Lap Time:</strong> outside of races. The driver's best lap and the tyre it was set on.<br>
-                    <strong>Chasing Driver Ahead:</strong> races only. Shows who the driver is chasing; switches to Race Leader at P1.</div>
+                    <strong>Chasing Driver Ahead:</strong> races only. Shows who the driver is chasing; switches to Race Leader at P1.
+                    <div class="help-gallery">
+                        <div class="help-gallery-tabs">
+                            <button type="button" class="help-gallery-tab active" aria-pressed="true" data-src="/images/help/driver-name-player-name.png" data-alt="Player Name: position, name, team and the driver's number 87">Player Name</button>
+                            <button type="button" class="help-gallery-tab" aria-pressed="false" data-src="/images/help/driver-name-race-leader.png" data-alt="Race Leader: RACE LEADER shown next to the driver in P1">Race Leader</button>
+                            <button type="button" class="help-gallery-tab" aria-pressed="false" data-src="/images/help/driver-name-race-story.png" data-alt="Race Story: started 10th, now 9th">Race Story</button>
+                            <button type="button" class="help-gallery-tab" aria-pressed="false" data-src="/images/help/driver-name-best-lap.png" data-alt="Best Lap Time: 1:12.182, fastest overall, on the Soft tyre">Best Lap Time</button>
+                            <button type="button" class="help-gallery-tab" aria-pressed="false" data-src="/images/help/driver-name-chasing.png" data-alt="Chasing Driver Ahead: chasing Norris for 8th">Chasing Driver Ahead</button>
+                        </div>
+                        <img src="/images/help/driver-name-player-name.png" alt="Player Name: position, name, team and the driver's number 87" width="927" height="132" loading="lazy">
+                    </div>
+                </div>
             </div>
             <div class="option-row">
                 <label class="toggle-label">
@@ -623,7 +654,12 @@
                     <span class="toggle-text">Show Image Version of Driver Number</span>
                 </label>
                 <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Show Image Version of Driver Number">?</button>
-                <div class="help-card" hidden>In the Player Name version, shows the driver's number as an image, if one exists for that driver. When off, or if no image is found, the number is shown as text.</div>
+                <div class="help-card" hidden>In the Player Name version, shows the driver's number as an image, if one exists for that driver. When off, or if no image is found, the number is shown as text.
+                    <div class="help-images help-images--stacked">
+                        <figure><img src="/images/help/driver-name-number-image-off.png" alt="Driver number 87 shown as plain text" width="543" height="132" loading="lazy"><figcaption>Off</figcaption></figure>
+                        <figure><img src="/images/help/driver-name-number-image-on.png" alt="Driver number 87 shown as Haas's red number image" width="543" height="132" loading="lazy"><figcaption>On</figcaption></figure>
+                    </div>
+                </div>
             </div>
             <div class="option-row">
                 <label class="toggle-label">
