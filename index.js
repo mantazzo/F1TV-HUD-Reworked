@@ -506,6 +506,8 @@ function startServer(portNumber, forwardAddresses) {
 
     // Serve static files (images, CSS, fonts...)
     app.use(express.static(path.join(__dirname, 'public')));
+    // Browsers ask for /favicon.ico on every page — serve the project logo icon from images/
+    app.get('/favicon.ico', (req, res) => res.sendFile(path.join(__dirname, 'images', 'favicon.ico')));
     app.use('/images', express.static(path.join(__dirname, 'images')));
     app.use(express.json());
 

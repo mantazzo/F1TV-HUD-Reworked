@@ -16,4 +16,6 @@ This project makes no claim of ownership, endorsement or commercial association 
 
 For non-Formula 1 related assets (for example, generic graphical assets used in the overlays), or if you have any other issues with the project's assets (e.g., copyright requests), please leave a Github Issue with the relevant context, and I'll make sure the solution can be reached peacefully.
 
+The F1TV HUD Reworked logo was made by [Vymax97 on Overtake.gg](https://www.overtake.gg/members/vymax97.1206702/). Supposedly was a "joke" attempt, but I liked it, so now it's the main logo. Thanks!
+
 This license does not apply to the code, which is licensed under the GNU GPLv3 License.
