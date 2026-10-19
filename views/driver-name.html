@@ -449,12 +449,16 @@
         // Finds which tyre stint covers a given lap (stints are contiguous, m_endLap===255
         // means "still fitted"/covers every remaining lap) — used to show the compound the
         // driver was on when they set their best lap, not just whatever's currently fitted.
+        // m_endLap is 0-based, unlike lap numbers (verified 2026-10-20: a race stint pitted at the
+        // end of lap 9 reads m_endLap 8; a qualifying stint whose best lap was lap 2 reads 1).
+        // Stints with visual compound 0 are the game's empty placeholder for the next run (seen
+        // in the garage between qualifying runs) and are skipped.
         function getCompoundAtLap(lapNum) {
             if (!lapNum || !Array.isArray(tyreStintsHistoryData)) return null;
             for (let i = 0; i < numTyreStints; i++) {
                 const stint = tyreStintsHistoryData[i];
-                if (!stint) continue;
-                if (stint.m_endLap === 255 || stint.m_endLap >= lapNum) {
+                if (!stint || !stint.m_tyreVisualCompound) continue;
+                if (stint.m_endLap === 255 || stint.m_endLap >= lapNum - 1) {
                     return stint.m_tyreVisualCompound;
                 }
             }
