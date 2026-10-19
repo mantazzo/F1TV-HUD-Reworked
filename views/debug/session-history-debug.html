@@ -366,7 +366,7 @@
                         <tr><td>Sector 2</td>            <td><code>m_sector2TimeMinutesPart + m_sector2TimeMSPart</code></td> <td>Sector 2 time: whole minutes part (uint8) + milliseconds part (uint16).</td></tr>
                         <tr><td>Sector 3</td>            <td><code>m_sector3TimeMinutesPart + m_sector3TimeMSPart</code></td> <td>Sector 3 time: whole minutes part (uint8) + milliseconds part (uint16).</td></tr>
                         <tr><td>Validity Flags</td>      <td><code>m_lapValidBitFlags</code></td>          <td>Bitmask. Bit 0 (0x01) = lap valid. Bit 1 (0x02) = S1 valid. Bit 2 (0x04) = S2 valid. Bit 3 (0x08) = S3 valid (uint8).</td></tr>
-                        <tr><td>Stint End Lap</td>       <td><code>m_endLap</code></td>                    <td>Lap number the tyre stint ends on. 255 = currently fitted set (uint8).</td></tr>
+                        <tr><td>Stint End Lap</td>       <td><code>m_endLap</code></td>                    <td>Lap the tyre stint ends on, <strong>0-based</strong> (8 = ended on lap 9). 255 = currently fitted set (uint8). An entry with compound 0 is an empty placeholder for the next run.</td></tr>
                         <tr><td>Stint Actual</td>        <td><code>m_tyreActualCompound</code></td>        <td>Physical tyre compound used in this stint. Same ID encoding as CarStatusData (uint8).</td></tr>
                         <tr><td>Stint Visual</td>        <td><code>m_tyreVisualCompound</code></td>        <td>Visual tyre compound shown in this stint (uint8).</td></tr>
                     </tbody>
@@ -525,10 +525,16 @@
                 for (let i = 0; i < numStints; i++) {
                     const s = stints[i];
                     if (!s) continue;
-                    const isCurrent = s.m_endLap === 255;
-                    const endLap    = isCurrent
-                        ? '<span class="badge badge-yellow">Current</span>'
-                        : `Lap ${s.m_endLap}`;
+                    // m_endLap is 0-based (a stint pitted at the end of lap 9 reads 8), so the real
+                    // lap is +1. Visual compound 0 = the game's empty placeholder for the next run
+                    // (e.g. in the garage between qualifying runs) — not a real stint yet.
+                    const isCurrent     = s.m_endLap === 255;
+                    const isPlaceholder = !s.m_tyreVisualCompound;
+                    const endLap    = isPlaceholder
+                        ? '<span class="badge badge-grey">Placeholder (next run)</span>'
+                        : isCurrent
+                            ? '<span class="badge badge-yellow">Current</span>'
+                            : `Lap ${s.m_endLap + 1} <span class="badge badge-grey">raw ${s.m_endLap}</span>`;
                     stintRows += `<tr>
                         <td>Stint ${i + 1}</td>
                         <td>${endLap}</td>
