@@ -1,6 +1,6 @@
 {
   "name": "f1tv-hud-reworked",
-  "version": "0.8.2",
+  "version": "0.8.3",
   "description": "F1TV-style HUD mod for F1 25 Game by Codemasters, reworked and improved",
   "main": "index.js",
   "scripts": {
@@ -10,8 +10,7 @@
     "record": "node recorder.js",
     "play": "node player.js",
     "build:lite": "node lite/build-lite.js",
-    "tauri": "tauri",
-    "postinstall": "patch-package"
+    "tauri": "tauri"
   },
   "keywords": [
     "formula 1",
@@ -25,14 +24,13 @@
   "author": "mantazzo",
   "license": "GPL-3.0-or-later",
   "dependencies": {
-    "@deltazeroproduction/f1-udp-parser": "^1.2.2",
+    "@deltazeroproduction/f1-udp-parser": "file:vendor/f1-udp-parser",
     "express": "^5.2.1",
     "prompt": "^1.3.0",
     "socket.io": "^4.8.3"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.11.4",
-    "patch-package": "^8.0.1",
     "socket.io-client": "^4.8.3"
   }
 }

@@ -29,7 +29,7 @@ This project is worked on with Windows systems in mind - it may work on other sy
    Open Windows Terminal in this folder by right-clicking an empty space and selecting "Open in Terminal" (or hold `Shift` and right-click for this option). If unavailable, open Terminal (e.g., PowerShell or Command Prompt) and navigate manually with `cd path/to/folder`.
 
 5. **Install dependencies.**  
-   Run `npm install` in the Terminal. This will download and set up the required packages, and also apply the required patches.
+   Run `npm install` in the Terminal. This will download and set up the required packages (the updated UDP parser is bundled in the `vendor/` folder).
 
 6. **Start the server.**  
    Run `node index.js` or `npm start`. This will start the Overlay system.
@@ -50,7 +50,7 @@ If you're not feeling comfortable with all the extensive setup, I have now provi
 
 1. **Run the "install.bat" script.** 
 This will execute the *"install.ps1"* Powershell script, which will download the standalone binary of Node.js (latest LTS version, currently it's v24.21.0) and set it up in a "runtime/" folder, and also will set up the project's dependencies. 
-If you ever need to do a module update, just rerun the script - it will update the modules as well, and install required patches (if any are required). 
+If you ever need to do a module update, just rerun the script - it will update the modules as well (including the bundled UDP parser, if it was updated). 
 
 2. **Run the "run.bat" script.** 
 This will execute the *"run.ps1"* Powershell script, which will run the project using the downloaded standalone binary. No other setup is required!  

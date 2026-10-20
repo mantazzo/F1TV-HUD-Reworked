@@ -47,7 +47,7 @@ const INCLUDE = [
     // Server + scripts
     'index.js', 'LICENSE', 'ASSETS_LICENSE.md',
     'install.ps1', 'install.bat', 'run.ps1', 'run.bat',
-    'package-lock.json', 'patches',
+    'package-lock.json', 'vendor/f1-udp-parser',
     // Launcher, Controller, custom overlay support
     'views/launcher.html', 'views/controller', 'views/custom',
     'public/styles-launcher.css', 'public/styles-controller.css', 'public/styles-tauri-overlay.css',
@@ -87,7 +87,7 @@ function writeFile(relPath, contents) {
 }
 
 // Same shape as the full package.json, minus the dev tooling (Tauri, recorder/player).
-// patch-package stays — npm install runs it to apply the 2026 UDP parser patch.
+// The UDP parser is installed from vendor/f1-udp-parser (a file: dependency), so no install scripts are needed.
 function litePackageJson() {
     return {
         name: `${pkg.name}-lite`,
@@ -95,15 +95,13 @@ function litePackageJson() {
         description: `${pkg.description} (Lite version)`,
         main: pkg.main,
         scripts: {
-            start: pkg.scripts.start,
-            postinstall: pkg.scripts.postinstall
+            start: pkg.scripts.start
         },
         keywords: pkg.keywords,
         author: pkg.author,
         license: pkg.license,
         homepage: lite.fullVersionUrl,
-        dependencies: pkg.dependencies,
-        devDependencies: { 'patch-package': pkg.devDependencies['patch-package'] }
+        dependencies: pkg.dependencies
     };
 }
 

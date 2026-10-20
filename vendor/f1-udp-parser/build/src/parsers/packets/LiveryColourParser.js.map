@@ -1,0 +1,1 @@
+{"version":3,"file":"LiveryColourParser.js","sourceRoot":"","sources":["../../../../src/parsers/packets/LiveryColourParser.ts"],"names":[],"mappings":";;;AAAA,0CAAqC;AAErC,MAAa,kBAAmB,SAAQ,mBAAQ;IAC9C;QACE,KAAK,EAAE,CAAC;QACR,IAAI,CAAC,SAAS,CAAC,QAAQ,CAAC,CAAC,KAAK,CAAC,KAAK,CAAC,CAAC,KAAK,CAAC,OAAO,CAAC,CAAC,KAAK,CAAC,MAAM,CAAC,CAAC;IACrE,CAAC;CACF;AALD,gDAKC"}

@@ -1,0 +1,1 @@
+{"version":3,"file":"rulesets.js","sourceRoot":"","sources":["../../../src/constants/rulesets.ts"],"names":[],"mappings":";;;AAAa,QAAA,QAAQ,GAA8B;IACjD,CAAC,EAAE,uBAAuB;IAC1B,CAAC,EAAE,MAAM;IACT,CAAC,EAAE,YAAY;IACf,CAAC,EAAE,aAAa;IAChB,CAAC,EAAE,sBAAsB;IACzB,CAAC,EAAE,WAAW;IACd,CAAC,EAAE,OAAO;IACV,EAAE,EAAE,oBAAoB;IACxB,EAAE,EAAE,YAAY;IAChB,EAAE,EAAE,aAAa;CAClB,CAAC"}

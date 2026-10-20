@@ -1,7 +1,7 @@
 # F1TV-HUD Install Script
 # Downloads a standalone Node.js binary and installs/updates project dependencies.
-# Safe to re-run any time (e.g. after a `git pull`) to pick up new dependencies
-# or patches (via patch-package) without re-downloading Node.js.
+# Safe to re-run any time (e.g. after a `git pull`) to pick up new or updated
+# dependencies without re-downloading Node.js.
 #
 # TIP: To run this without opening a terminal, double-click install.bat instead.
 
@@ -44,15 +44,12 @@ if (-not $RuntimeReady) {
 }
 
 # ── 4. Install/update project dependencies ───────────────────────────────────
-# This also re-applies any patches via the postinstall patch-package hook,
-# so re-running this script is the way for existing users to pick those up.
+# The UDP parser is bundled in vendor\f1-udp-parser and installed from there,
+# so re-running this script is also how existing users pick up parser updates.
 #
-# The postinstall hook (patch-package) runs through npm-generated .cmd shims
-# in node_modules\.bin, which fall back to a bare "node" on PATH when they
-# can't find node.exe alongside themselves. Since node.exe only lives in
-# runtime\ (not on PATH by default), that fallback fails for anyone without
-# a separate system-wide Node.js install. Prepending runtime\ to PATH here
-# makes sure it resolves.
+# Prepending runtime\ to PATH makes a bare "node" resolve to the bundled one,
+# for anyone without a separate system-wide Node.js install (npm runs any
+# install scripts in dependencies through shims that look for it).
 $env:PATH = "$RUNTIME_DIR;$env:PATH"
 
 Write-Host "Installing dependencies..."
