@@ -7,7 +7,7 @@
     - Includes an automatic MPH units toggle
         - Can override it in Extended Controller to use the units you want instead
     - Includes F1TV style and Multiviewer style
-    - NEW: Added Overtake Mode (OT) display for F1 2026 cars (replaces DRS for these cars): blinking Blue Outline when Active, Filled with Blue Tint when OT is Active and using Boost
+    - Added Overtake Mode (OT) display for F1 2026 cars (replaces DRS for these cars): blinking Blue Outline when Active, Filled with Blue Tint when OT is Active and using Boost
     - Likely the first fully finished overlay
 - Lap Timer
     - Remade with some personal adjustments
@@ -17,7 +17,7 @@
         - Select between Session Best, Personal Best or Rival times for Time Trial
         - Select between Fastest Lap, Personal Best or Last Lap times for Race
     - Sector bar works and shows yellow, green and purple sectors
-    - May come back to it later to expand functionality even more
+    - Due for a rewrite, as I'm not fully satisfied with the current version
 - Pit Timer
     - Remade in full, uses Primary Color from the game, color can be overwritten in Teams JSON
     - Only shows up when in race and only when in pitlane
@@ -49,7 +49,7 @@
     - A very basic overlay that shows current Turn
     - Turn data is set up by the user and uses a somewhat simple JSON system (with some examples provided)
     - Can use different data depending on game year (potential older game support in the future - low priority to add support for now)
-    - Default Data for all F1 25 tracks have been included (incl. Madrid, added via 2026 Season Pack DLC)
+    - Default Data for all F1 25 tracks have been included (incl. Madrid, added via 2026 Season Pack DLC), based on official FIA track maps
 - Fastest Sectors
     - Fully remade
     - Shows the current fastest sector times and driver names
@@ -89,12 +89,14 @@
     - Uses current tyre compound colors for various text and decorations
     - Blinking animation is also active for 2 seconds after overlay is shown
     - Has an automatic display option as well (same as in the original SimHub version)
+        - The amount of seconds to be displayed can now be adjusted in the Extended Controller
     - Might need some extra work in the future - F2 SuperSoft was not considered currently and there's no real F2 support anyway
 - Car Damage
     - Fully Remade and Upgraded
     - Shows either current tyre wear or remaining tyre life (controlled through the Extended Controller)
     - Shows damage to Wings, Sidepods, Floor, Diffuser, Rear Wing, Engine (overall) and Brakes (note: brakes will likely be 0% all the time, but may be useful with some game mods...)
     - Can hide automatically after showing up (extra option toggle, controlled through Extended Controller)
+        - Display length can now be controlled through Extended Controller
     - Can show up automatically on any car part damage received (any Wings (Front + Rear) or Diffuser damage, 25%+ damage on Sidepods and Floor)
         - Or it can show up on any damage - that will include tyre wear! (Will show up every 5% of highest worn tyre, additionally)
     - Driver Name uses textFit to fit the field and also uses Primary Color from the game (can be overwritten in JSON) or uses White color as default
@@ -148,6 +150,7 @@
     - Self-made Controller, with the primary aim of introducing more functions or controls while keeping the setup relatively easy
     - Maybe somewhat limited functionality at the moment, but hey, it works, and it's pretty easy to expand!
     - Expanded with various functionality from F1TV plugin settings (and personal ideas)
+    - NEW: Has Help buttons for every option, explaining what each option does (with some visual aids as well)
     - Also offers a simple "Shutdown" button
 
 ## Debug overlays (for non-public use)
@@ -160,7 +163,7 @@
 
 ## Currently Working On
 
-Bugfixes and improvements after latest version release
+Bugfixes and improvements, plus some rewrites of a few overlays to better improve efficiency
 
 ## Next Planned Overlay
 
