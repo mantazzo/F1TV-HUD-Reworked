@@ -35,7 +35,7 @@
             <h2>
                 Overlay Visibility
                 <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Overlay Visibility">?</button>
-                <span class="help-card" hidden>Shows or hides each overlay everywhere it's in use, both in OBS browser sources and Desktop Mode windows. Hiding an overlay doesn't close its Desktop Mode window; the window just goes empty. This setting is saved, so a hidden overlay stays hidden after a restart. Lap Timer, Pit Timer, Fastest Lap and Message Box aren't listed here: they show up by themselves when there's something to show (Lap Timer's visibility is set in its own section).</span>
+                <span class="help-card" hidden>Shows or hides each overlay everywhere it's in use, both in OBS browser sources and Desktop Mode windows. Hiding an overlay doesn't close its Desktop Mode window; the window just goes empty. This setting is saved, so a hidden overlay stays hidden after a restart. <span id="auto-overlays-help">Lap Timer, Pit Timer, Fastest Lap and Message Box aren't listed here: they show up by themselves when there's something to show (Lap Timer's visibility is set in its own section).</span></span>
             </h2>
             <div class="overlay-grid" id="overlay-grid">
                 <!-- Overlay buttons will be generated here -->
@@ -795,6 +795,19 @@
             return liteOverlays.includes(overlayId);
         }
 
+        // Overlay Visibility hint: the overlays without a visibility button, named for what this
+        // version actually includes (the full text in the HTML lists all four)
+        const AUTO_OVERLAYS = [['lap-timer', 'Lap Timer'], ['pit-timer', 'Pit Timer'], ['fastest-lap', 'Fastest Lap'], ['message-box', 'Message Box']];
+        function updateAutoOverlaysHelp() {
+            const names = AUTO_OVERLAYS.filter(([id]) => isOverlayIncluded(id)).map(([, name]) => name);
+            const el = document.getElementById('auto-overlays-help');
+            if (names.length === 0) { el.textContent = ''; return; }
+            const list = names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+            const single = names.length === 1;
+            el.textContent = `${list} ${single ? "isn't" : "aren't"} listed here: ${single ? 'it shows up by itself' : 'they show up by themselves'} when there's something to show`
+                + (names.includes('Lap Timer') ? ` (${single ? 'its' : "Lap Timer's"} visibility is set in its own section).` : '.');
+        }
+
         async function loadLiteInfo() {
             let info = { lite: false };
             try {
@@ -809,6 +822,7 @@
                 if (!isOverlayIncluded(section.id.replace(/-options-section$/, ''))) section.classList.add('lite-excluded');
             });
             renderOverlayButtons();
+            updateAutoOverlaysHelp();
 
             document.getElementById('lite-banner-name').textContent = info.name;
             const link = document.getElementById('lite-banner-url');

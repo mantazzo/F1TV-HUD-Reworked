@@ -1,3 +1,5 @@
+<p align="center"><img src="images/logo.png" alt="F1TV HUD Reworked logo" width="200"></p>
+
 # F1TV HUD Reworked — Lite
 
 A small taster of [F1TV HUD Reworked](https://github.com/mantazzo/F1TV-HUD-Reworked): F1TV-style broadcast overlays for Codemasters F1 25, driven by the game's UDP telemetry.

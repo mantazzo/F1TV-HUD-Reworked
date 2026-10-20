@@ -34,8 +34,15 @@ const OVERLAY_IMAGES = {
 const OVERLAY_DATA = {
     'leaderboard': ['DriverStandings.json', 'ConstructorStandings.json']
 };
+// Controller hint images (images/help/) for each overlay, by file name prefix — images of overlays
+// that aren't included would never be shown. Add an entry here when adding an overlay to lite.json.
+const OVERLAY_HELP_IMAGES = {
+    'leaderboard': ['leaderboard-'],
+    'speedometer': ['speedometer-']
+};
 
-// Everything the Lite package needs: files, or folders (copied with all their tracked files)
+// Everything the Lite package needs: files, folders (copied with all their tracked files),
+// or a "prefix*" entry for every tracked file whose path starts with that prefix
 const INCLUDE = [
     // Server + scripts
     'index.js', 'LICENSE', 'ASSETS_LICENSE.md',
@@ -46,15 +53,19 @@ const INCLUDE = [
     'public/styles-launcher.css', 'public/styles-controller.css', 'public/styles-tauri-overlay.css',
     'public/fonts.css', 'public/fonts', 'public/utils',
     'public/data/DefaultTeams.json', 'public/data/CustomF1Drivers.json', 'public/data/CustomF2Drivers.json',
-    'images/favicon.ico', 'images/help',
+    'images/favicon.ico', 'images/logo.png',
     // The included overlays
     ...lite.overlays.flatMap(id => [
         `views/${id}.html`,
         `public/styles-${id}.css`,
         ...(OVERLAY_IMAGES[id] || []).map(dir => `images/${dir}`),
-        ...(OVERLAY_DATA[id] || []).map(file => `public/data/${file}`)
+        ...(OVERLAY_DATA[id] || []).map(file => `public/data/${file}`),
+        ...(OVERLAY_HELP_IMAGES[id] || []).map(prefix => `images/help/${prefix}*`)
     ])
 ];
+const matchesEntry = (file, entry) => entry.endsWith('*')
+    ? file.startsWith(entry.slice(0, -1))
+    : file === entry || file.startsWith(`${entry}/`);
 // Optional entries — not tracked in every checkout, so a missing one is only a note, not a warning
 const OPTIONAL = new Set(['public/data/CustomF2Drivers.json']);
 
@@ -131,7 +142,7 @@ function build() {
     const matched = new Set();
     let copied = 0;
     for (const file of tracked) {
-        const entry = INCLUDE.find(inc => file === inc || file.startsWith(`${inc}/`));
+        const entry = INCLUDE.find(inc => matchesEntry(file, inc));
         if (!entry || !fs.existsSync(path.join(ROOT, file))) continue; // tracked but deleted locally
         copyFile(file);
         matched.add(entry);
