@@ -172,10 +172,14 @@ function build() {
     }
 
     // 4. Zip it
+    // Drop PSModulePath: when the build runs from PowerShell 7, it points at PowerShell 7's modules,
+    // and Windows PowerShell (powershell.exe) then fails to load its PS7-only Microsoft.PowerShell.Archive.
+    // Without it, Windows PowerShell falls back to its own default module paths.
+    const zipEnv = Object.fromEntries(Object.entries(process.env).filter(([key]) => key.toLowerCase() !== 'psmodulepath'));
     execFileSync('powershell', [
         '-NoProfile', '-Command',
         `Compress-Archive -Path '${OUT_DIR}' -DestinationPath '${ZIP_PATH}' -Force`
-    ], { stdio: 'inherit' });
+    ], { stdio: 'inherit', env: zipEnv });
     const sizeMB = (fs.statSync(ZIP_PATH).size / 1024 / 1024).toFixed(1);
     console.log(`Done: dist/${PACKAGE_NAME}.zip (${sizeMB} MB)`);
 }
