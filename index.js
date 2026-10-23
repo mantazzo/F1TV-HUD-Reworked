@@ -594,7 +594,6 @@ function startServer(portNumber, forwardAddresses) {
         'car-damage',           // Car Damage overlay
         'speedometer',          // Speedometer overlay
         'lap-timer',            // Lap Timer overlay
-        'lap-timer-new',        // Lap Timer rewrite (WIP, replaces lap-timer once done)
         'pit-timer',           // Pit Timer overlay
         'pit-window',           // Pit Window overlay
         'live-speed',           // Live Speed overlay
