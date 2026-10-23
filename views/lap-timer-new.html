@@ -133,7 +133,7 @@
 
         // Reference data: per-car Session History, field-wide bests, latest Time Trial packet
         const historyByCar = {};
-        const fieldBest = { sectors: [-1, -1, -1], lap: null };
+        const fieldBest = { sectors: [-1, -1, -1], lap: null, raceLap: null };
         let timeTrial = null;
         let targetIdx = -1;                       // car whose best lap is the reference (Practice/Qualifying)
 
@@ -317,10 +317,11 @@
         // Fastest completed lap in this session's history by a metric (sector index 0-2, or 3 = lap).
         // m_bestLapTimeLapNum & co. aren't trusted directly: Time Trial reports a sentinel (e.g. 199)
         // pointing at a Personal Best from an earlier session that isn't in this history.
-        function bestEntryBy(laps, numLaps, metric) {
+        // firstLap skips laps from the start (1 = leave out lap 1).
+        function bestEntryBy(laps, numLaps, metric, firstLap = 0) {
             let best = null;
             let bestMS = Infinity;
-            for (const entry of laps.slice(0, numLaps)) {
+            for (const entry of laps.slice(firstLap, numLaps)) {
                 const ms = metric === 3 ? entry.m_lapTimeInMS : lapEntrySectors(entry)[metric];
                 if (ms > 0 && ms < bestMS) {
                     best = entry;
@@ -336,19 +337,29 @@
             historyByCar[data.m_carIdx] = {
                 laps,
                 numLaps,
-                best: [0, 1, 2, 3].map(metric => bestEntryBy(laps, numLaps, metric))
+                best: [0, 1, 2, 3].map(metric => bestEntryBy(laps, numLaps, metric)),
+                // Race references leave out lap 1: a standing start (or rolling start behind the
+                // Safety Car) is no lap to compare against
+                bestRaceLap: bestEntryBy(laps, numLaps, 3, 1)
             };
 
-            // Field-wide bests: purple sectors, and the Race "Fastest Lap" reference
+            // Field-wide bests: purple sectors, any lap time at all (Rolex), Race "Fastest Lap" reference.
+            // Time Trial fills the other car slots with ghosts (Default Ghost, Personal Best, Rival and
+            // empty copies of the player) whose history can hold stale laps - only the driven car counts.
+            // Filtered here rather than on arrival: Session History can arrive before the Session packet.
             fieldBest.sectors = [-1, -1, -1];
             fieldBest.lap = null;
-            for (const history of Object.values(historyByCar)) {
+            fieldBest.raceLap = null;
+            for (const [idx, history] of Object.entries(historyByCar)) {
+                if (session.sessionType === SESSION_TYPE.TIME_TRIAL && Number(idx) !== activeIdx) continue;
                 for (let s = 0; s < 3; s++) {
                     const ms = history.best[s]?.ms;
                     if (ms && (fieldBest.sectors[s] === -1 || ms < fieldBest.sectors[s])) fieldBest.sectors[s] = ms;
                 }
                 const bestLap = history.best[3];
                 if (bestLap && (!fieldBest.lap || bestLap.ms < fieldBest.lap.ms)) fieldBest.lap = bestLap;
+                const raceLap = history.bestRaceLap;
+                if (raceLap && (!fieldBest.raceLap || raceLap.ms < fieldBest.raceLap.ms)) fieldBest.raceLap = raceLap;
             }
         }
 
@@ -358,14 +369,25 @@
 
         // Practice/Qualifying reference car: the leader, or in Q1/Q2 the car on the knockout line
         // while the followed car is below it (unless the Controller says always compare to the leader).
-        // A new candidate's Session History can trail its position change by a second or so - until it
-        // arrives, the previous target is kept instead of blanking the reference.
+        // The previous target is kept while the data is mid-change, instead of flicking to the leader or
+        // blanking the reference: positions can skip the knockout line for a packet while cars reshuffle,
+        // and a new candidate's Session History can trail its position change by a second or so.
         function selectTargetCar(lapData) {
             const carAt = pos => lapData.findIndex(lap => lap?.m_carPosition === pos);
+            const keepPrevious = bestLapSplits(targetIdx) ? targetIdx : -1;
             const threshold = config.knockoutComparisonMode === 'alwaysLeader' ? null : knockoutThreshold();
-            let idx = threshold && live.position > threshold ? carAt(threshold) : -1;
-            if (idx === -1 || !bestLapSplits(idx)) idx = carAt(1);
-            return bestLapSplits(idx) || !bestLapSplits(targetIdx) ? idx : targetIdx;
+            if (threshold && live.position > threshold) {
+                const idx = carAt(threshold);
+                if (idx === -1 || !historyByCar[idx]) {
+                    if (keepPrevious !== -1) return keepPrevious;
+                } else if (bestLapSplits(idx)) {
+                    return idx;
+                }
+                // Knockout-line car without a time yet: compare to the leader instead
+            }
+            const leader = carAt(1);
+            if (bestLapSplits(leader)) return leader;
+            return keepPrevious !== -1 ? keepPrevious : leader;
         }
 
         // What the followed car is currently compared against: { name, s1, s12, lap } or null
@@ -373,7 +395,8 @@
             if (session.sessionType === SESSION_TYPE.TIME_TRIAL) {
                 const dataset = TT_DATASETS[config.ttComparisonMode] || TT_DATASETS.personalBest;
                 const data = timeTrial?.[dataset.key];
-                if (!data?.m_valid || !(data.m_lapTimeInMS > 0)) return null;
+                // m_lapTimeInMS 0 = no time set yet. m_valid is the lap's legality flag, not "dataset exists".
+                if (!(data?.m_lapTimeInMS > 0)) return null;
                 return {
                     name: dataset.label,
                     s1: data.m_sector1TimeInMS,
@@ -389,12 +412,12 @@
                     const splits = splitsFromEntry(history?.laps[history.numLaps - 2]);
                     return splits && { name: 'LAST LAP', ...splits };
                 }
-                if (live.lapNum < 3) return null; // no meaningful best lap during the opening laps
+                // No reference until a lap 2 or later is in, so lap 2 itself finishes with its raw time
                 if (config.raceComparisonMode === 'fastestLap') {
-                    const splits = splitsFromEntry(fieldBest.lap?.entry);
+                    const splits = splitsFromEntry(fieldBest.raceLap?.entry);
                     return splits && { name: 'FASTEST LAP', ...splits };
                 }
-                const splits = bestLapSplits(activeIdx);
+                const splits = splitsFromEntry(historyByCar[activeIdx]?.bestRaceLap?.entry);
                 return splits && { name: 'PERSONAL BEST', ...splits };
             }
 
@@ -713,6 +736,7 @@
             for (const key in historyByCar) delete historyByCar[key];
             fieldBest.sectors = [-1, -1, -1];
             fieldBest.lap = null;
+            fieldBest.raceLap = null;
             timeTrial = null;
             targetIdx = -1;
         }
