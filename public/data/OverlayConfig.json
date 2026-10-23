@@ -98,5 +98,8 @@
       "name": "Message Box",
       "fastMode": false
     }
+  },
+  "global": {
+    "showSponsors": true
   }
 }

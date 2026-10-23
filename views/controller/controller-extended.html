@@ -42,6 +42,20 @@
             </div>
         </section>
 
+        <!-- Not "-options-section": the Lite build hides those per overlay, and this one applies to all -->
+        <section class="overlay-section" id="general-settings-section">
+            <h2>General Options</h2>
+            <div class="option-row">
+                <label class="toggle-label">
+                    <input type="checkbox" id="global-show-sponsors-toggle" class="toggle-checkbox">
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-text">Show Sponsor Logos</span>
+                </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Show Sponsor Logos">?</button>
+                <div class="help-card" hidden>Shows the sponsor logos that some overlays have, like F1 TV's own graphics do. Currently that's the Rolex logo above the Lap Timer when a sector or lap is completed. When off, those logos never show up.</div>
+            </div>
+        </section>
+
         <section class="overlay-section" id="weather-options-section">
             <h2>Weather Options</h2>
             <div class="option-row">
@@ -1005,6 +1019,21 @@
         });
 
         // Update live speed options when config changes
+        // General options — settings shared by every overlay (overlayConfig.global)
+        const globalShowSponsorsToggle = document.getElementById('global-show-sponsors-toggle');
+
+        globalShowSponsorsToggle.addEventListener('change', () => {
+            socket.emit('global_config_update', {
+                property: 'showSponsors',
+                value: globalShowSponsorsToggle.checked
+            });
+        });
+
+        function updateGeneralOptions() {
+            if (!currentConfig) return;
+            globalShowSponsorsToggle.checked = currentConfig.global?.showSponsors !== false;
+        }
+
         function updateLiveSpeedOptions() {
             if (!currentConfig || !currentConfig.overlays || !currentConfig.overlays['live-speed']) return;
             
@@ -1505,6 +1534,7 @@
         const originalRender = renderOverlayButtons;
         renderOverlayButtons = function() {
             originalRender();
+            updateGeneralOptions();
             updateWeatherOptions();
             updateLiveSpeedOptions();
             updatePitTimerOptions();

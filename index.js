@@ -96,6 +96,11 @@ function saveOverlayConfig(config) {
 
 let overlayConfig = loadOverlayConfig();
 
+// Keys allowed in overlayConfig.global (all boolean). Overlays treat a missing key as its default.
+const GLOBAL_CONFIG_KEYS = [
+    'showSponsors'      // sponsor logos (Lap Timer's Rolex), default on
+];
+
 // Custom (user-made) overlays — see views/custom/README.md.
 // Each overlay declares its name, size and Controller controls in a JSON manifest
 // (<script type="application/json" id="overlay-manifest">) inside its own HTML.
@@ -341,6 +346,16 @@ function startServer(portNumber, forwardAddresses) {
             }
         });
 
+        // Settings shared by every overlay (e.g. sponsor logos) — overlayConfig.global, whitelisted keys only
+        socket.on('global_config_update', (update) => {
+            if (!update || !GLOBAL_CONFIG_KEYS.includes(update.property) || typeof update.value !== 'boolean') return;
+            overlayConfig.global = overlayConfig.global || {};
+            overlayConfig.global[update.property] = update.value;
+            saveOverlayConfig(overlayConfig);
+            io.emit('overlay_config', overlayConfig);
+            console.log(`Global config updated: ${update.property} = ${update.value}`);
+        });
+
         // Custom overlay settings — separate event/file from the built-in overlay config
         socket.emit('custom_overlay_config', customOverlayConfig);
 
@@ -579,7 +594,8 @@ function startServer(portNumber, forwardAddresses) {
         'car-damage',           // Car Damage overlay
         'speedometer',          // Speedometer overlay
         'lap-timer',            // Lap Timer overlay
-        'pit-timer',            // Pit Timer overlay
+        'lap-timer-new',        // Lap Timer rewrite (WIP, replaces lap-timer once done)
+        'pit-timer',           // Pit Timer overlay
         'pit-window',           // Pit Window overlay
         'live-speed',           // Live Speed overlay
         'fastest-lap',          // Fastest Lap overlay
