@@ -17,6 +17,7 @@
 
     --lt-delta-faster: lime;
     --lt-delta-slower: #FDD30A;
+    --lt-invalid: #9C0505;
     --lt-sector-overall: magenta;
     --lt-sector-pb: lime;
     --lt-sector-slower: #FDD30A;
@@ -192,6 +193,11 @@
     color: #808080;
 }
 
+/* Controller "Hide Tyre Compound": the player indicator background shows through in its place */
+.lt-driver.is-compound-hidden .lt-driver__tyre {
+    display: none;
+}
+
 .lt-driver__tyre[data-compound="S"]  { color: #EC1C24; }
 .lt-driver__tyre[data-compound="M"]  { color: #FFD604; }
 .lt-driver__tyre[data-compound="H"]  { color: #F0F0EC; }
@@ -307,6 +313,28 @@
     display: inline-block;
     width: 0.74em;
     text-align: center;
+}
+
+/* Invalid lap flag (Penalty.png, 230x168): in the free gap between the live time's right edge
+   (~195px) and the divider (240px), vertically centered on the time */
+.lt-timing__invalid {
+    position: absolute;
+    left: 205px;
+    top: 30px;
+    width: 27px;
+    height: 20px;
+    background: url('/images/lap-timer/Penalty.png') no-repeat center / contain;
+    opacity: 0;
+    transition: opacity 200ms ease;
+}
+
+.lt-timing.is-invalid .lt-timing__invalid {
+    opacity: 1;
+}
+
+/* ...and the live time itself turns red */
+.lt-timing.is-invalid .lt-timing__big {
+    color: var(--lt-invalid);
 }
 
 .lt-timing__big.is-faster { color: var(--lt-delta-faster); }

@@ -21,7 +21,10 @@
       "visibilityMode": "automatic",
       "ttComparisonMode": "personalBest",
       "knockoutComparisonMode": "default",
-      "raceComparisonMode": "personalBest"
+      "raceComparisonMode": "personalBest",
+      "comparisonFullName": false,
+      "hideCompound": false,
+      "showInvalidLap": true
     },
     "live-speed": {
       "visible": true,

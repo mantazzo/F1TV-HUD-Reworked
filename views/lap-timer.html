@@ -32,6 +32,7 @@
             <div class="lt-timing__panel">
                 <div class="lt-timing__divider"></div>
                 <div class="lt-timing__big">0.0</div>
+                <div class="lt-timing__invalid"></div>
                 <div class="lt-timing__ref-time"></div>
                 <div class="lt-timing__ref-name"></div>
             </div>
@@ -114,6 +115,9 @@
             ttComparisonMode: 'personalBest',     // playerSessionBest / personalBest / rival
             knockoutComparisonMode: 'default',    // default / alwaysLeader
             raceComparisonMode: 'personalBest',   // fastestLap / personalBest / lastLap
+            comparisonFullName: false,            // comparison driver as "FIRST LAST" instead of "LAST"
+            hideCompound: false,                  // hide the tyre compound box
+            showInvalidLap: true,                 // red live time + flag while the lap is invalid
             showSponsors: true                    // global (all overlays): Rolex logo
         };
 
@@ -144,6 +148,7 @@
             lapNum: 0,
             sector: 0,
             currentLapTimeMS: 0,
+            lapInvalid: false,                    // m_currentLapInvalid - the lap in progress won't count
             tyre: '?'
         };
 
@@ -297,6 +302,17 @@
             ).toUpperCase();
         }
 
+        // Comparison driver name: "FIRST LAST" with the Controller's Full Name option, falling back
+        // to the last name alone for drivers without a first name (e.g. DisplayName-only custom drivers)
+        function comparisonName(idx) {
+            const lastName = driverLastName(idx);
+            if (!config.comparisonFullName || !lastName) return lastName;
+            const firstName = DriverUtils.getDriverFirstName(
+                participants[idx], driverData.aiDrivers, driverData.customDrivers, driverData.teamNames
+            ).toUpperCase();
+            return firstName ? `${firstName} ${lastName}` : lastName;
+        }
+
         // ── Session History / references ──────────────────────────────────────────
         // Split times of one Session History lap entry: [S1, S2, S3] and the full lap
         function lapEntrySectors(entry) {
@@ -422,7 +438,7 @@
             }
 
             const splits = bestLapSplits(targetIdx);
-            return splits && { name: driverLastName(targetIdx), ...splits };
+            return splits && { name: comparisonName(targetIdx), ...splits };
         }
 
         // The reference time for a sector: S1 split, S1+S2 split, or full lap
@@ -579,6 +595,9 @@
                 setTabularText(el.big, formatSplit(result.timeMS));
             }
             el.big.classList.toggle('is-result', !!result);
+            // Invalid-lap flag sits in the gap right of the live time; results are centered and can be
+            // wide enough to reach it, so it's only shown alongside the live time
+            el.timing.classList.toggle('is-invalid', config.showInvalidLap && !result && live.lapInvalid);
             el.big.classList.toggle('is-faster', tone === 'is-faster');
             el.big.classList.toggle('is-slower', tone === 'is-slower');
         }
@@ -636,6 +655,7 @@
             setText(el.position, live.position > 0 ? String(live.position) : '');
             renderTeamLogo();
             renderDriverName();
+            el.driver.classList.toggle('is-compound-hidden', config.hideCompound);
             setText(el.tyre, live.tyre);
             setData(el.tyre, 'compound', live.tyre);
 
@@ -698,6 +718,7 @@
             live.lapNum = lap.m_currentLapNum;
             live.sector = lap.m_sector;
             live.currentLapTimeMS = lap.m_currentLapTimeInMS;
+            live.lapInvalid = lap.m_currentLapInvalid === 1;
             autoVisible = computeAutoVisible(lap);
             targetIdx = selectTargetCar(data.m_lapData);
             trackProgress(lap, performance.now());
@@ -724,6 +745,7 @@
             live.lapNum = 0;
             live.sector = 0;
             live.currentLapTimeMS = 0;
+            live.lapInvalid = false;
             live.tyre = '?';
             progress.initialized = false;
             clearResults();
@@ -757,6 +779,9 @@
             config.ttComparisonMode = lapTimerConfig.ttComparisonMode || 'personalBest';
             config.knockoutComparisonMode = lapTimerConfig.knockoutComparisonMode || 'default';
             config.raceComparisonMode = lapTimerConfig.raceComparisonMode || 'personalBest';
+            config.comparisonFullName = !!lapTimerConfig.comparisonFullName;
+            config.hideCompound = !!lapTimerConfig.hideCompound;
+            config.showInvalidLap = lapTimerConfig.showInvalidLap !== false;
             render();
 
             // First config is applied without the show/hide transition

@@ -318,6 +318,48 @@
                     <strong>Personal Best:</strong> your own best lap of the race.<br>
                     <strong>Last Lap:</strong> your previous lap.</div>
             </div>
+            <div class="option-row">
+                <label class="toggle-label">
+                    <input type="checkbox" id="lap-timer-comparison-full-name-toggle" class="toggle-checkbox">
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-text">Comparison Full Name</span>
+                </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Comparison Full Name (Lap Timer)">?</button>
+                <div class="help-card" hidden>Shows the full name (first and last name) of the driver you're compared against, instead of only the last name. Drivers without a first name still show their last name. Labels like PERSONAL BEST or FASTEST LAP don't change.
+                    <div class="help-images help-images--stacked">
+                        <figure><img src="/images/help/lap-timer-full-name-off.png" alt="Lap Timer comparing against STROLL" width="480" height="180" loading="lazy"><figcaption>Off</figcaption></figure>
+                        <figure><img src="/images/help/lap-timer-full-name-on.png" alt="Lap Timer comparing against LANCE STROLL" width="480" height="180" loading="lazy"><figcaption>On</figcaption></figure>
+                    </div>
+                </div>
+            </div>
+            <div class="option-row">
+                <label class="toggle-label">
+                    <input type="checkbox" id="lap-timer-hide-compound-toggle" class="toggle-checkbox">
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-text">Hide Tyre Compound</span>
+                </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Hide Tyre Compound (Lap Timer)">?</button>
+                <div class="help-card" hidden>Hides the tyre compound box at the right end of the driver bar.
+                    <div class="help-images help-images--stacked">
+                        <figure><img src="/images/help/lap-timer-hide-compound-off.png" alt="Lap Timer driver bar with the yellow M compound box at the right" width="480" height="180" loading="lazy"><figcaption>Off</figcaption></figure>
+                        <figure><img src="/images/help/lap-timer-hide-compound-on.png" alt="Lap Timer driver bar without the compound box" width="480" height="180" loading="lazy"><figcaption>On</figcaption></figure>
+                    </div>
+                </div>
+            </div>
+            <div class="option-row">
+                <label class="toggle-label">
+                    <input type="checkbox" id="lap-timer-show-invalid-lap-toggle" class="toggle-checkbox">
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-text">Show Invalid Lap</span>
+                </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Show Invalid Lap (Lap Timer)">?</button>
+                <div class="help-card" hidden>While your current lap is invalid (for example after exceeding track limits), the running lap time turns red and a black and white flag appears next to it. Turn off to keep the lap time white.
+                    <div class="help-images help-images--stacked">
+                        <figure><img src="/images/help/lap-timer-invalid-lap-on.png" alt="Invalid lap: the running lap time in red with a black and white flag next to it" width="480" height="180" loading="lazy"><figcaption>On</figcaption></figure>
+                        <figure><img src="/images/help/lap-timer-invalid-lap-off.png" alt="Invalid lap: the running lap time stays white" width="480" height="180" loading="lazy"><figcaption>Off</figcaption></figure>
+                    </div>
+                </div>
+            </div>
         </section>
 
         <section class="overlay-section" id="speedometer-options-section">
@@ -1250,6 +1292,35 @@
         });
 
         // Update lap timer options when config changes
+        const lapTimerComparisonFullNameToggle = document.getElementById('lap-timer-comparison-full-name-toggle');
+        const lapTimerHideCompoundToggle = document.getElementById('lap-timer-hide-compound-toggle');
+
+        lapTimerComparisonFullNameToggle.addEventListener('change', () => {
+            socket.emit('config_update', {
+                overlay: 'lap-timer',
+                property: 'comparisonFullName',
+                value: lapTimerComparisonFullNameToggle.checked
+            });
+        });
+
+        const lapTimerShowInvalidLapToggle = document.getElementById('lap-timer-show-invalid-lap-toggle');
+
+        lapTimerShowInvalidLapToggle.addEventListener('change', () => {
+            socket.emit('config_update', {
+                overlay: 'lap-timer',
+                property: 'showInvalidLap',
+                value: lapTimerShowInvalidLapToggle.checked
+            });
+        });
+
+        lapTimerHideCompoundToggle.addEventListener('change', () => {
+            socket.emit('config_update', {
+                overlay: 'lap-timer',
+                property: 'hideCompound',
+                value: lapTimerHideCompoundToggle.checked
+            });
+        });
+
         function updateLapTimerOptions() {
             if (!currentConfig || !currentConfig.overlays || !currentConfig.overlays['lap-timer']) return;
             
@@ -1258,6 +1329,9 @@
             lapTimerTTComparisonMode.value = lapTimerConfig.ttComparisonMode || 'personalBest';
             lapTimerKnockoutComparisonMode.value = lapTimerConfig.knockoutComparisonMode || 'default';
             lapTimerRaceComparisonMode.value = lapTimerConfig.raceComparisonMode || 'personalBest';
+            lapTimerComparisonFullNameToggle.checked = !!lapTimerConfig.comparisonFullName;
+            lapTimerHideCompoundToggle.checked = !!lapTimerConfig.hideCompound;
+            lapTimerShowInvalidLapToggle.checked = lapTimerConfig.showInvalidLap !== false;
         }
 
         // Update speedometer options when config changes
