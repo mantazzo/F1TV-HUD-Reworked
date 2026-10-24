@@ -38,6 +38,7 @@ const OVERLAY_DATA = {
 // that aren't included would never be shown. Add an entry here when adding an overlay to lite.json.
 const OVERLAY_HELP_IMAGES = {
     'leaderboard': ['leaderboard-'],
+    'lap-timer': ['lap-timer-'],
     'speedometer': ['speedometer-']
 };
 
