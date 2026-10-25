@@ -91,7 +91,15 @@
                     <span class="toggle-text">Show on Formation Lap</span>
                 </label>
                 <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Show on Formation Lap">?</button>
-                <div class="help-card" hidden>During the Formation Lap, shows the Weather overlay for about 12 seconds once the leader has driven around 10% of the lap, even if the overlay is currently hidden.</div>
+                <div class="help-card" hidden>During the Formation Lap, shows the Weather overlay for a while (see Display Duration) once the leader has driven around 10% of the lap, even if the overlay is currently hidden.</div>
+            </div>
+            <div class="option-row">
+                <label class="select-label">
+                    <span class="select-text">Display Duration (seconds):</span>
+                    <input type="number" id="weather-auto-duration" class="select-dropdown number-input" min="1" max="300" step="1" value="12">
+                </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Display Duration">?</button>
+                <div class="help-card" hidden>How long the overlay stays on screen during the Formation Lap, while Show on Formation Lap is on. Default is 12 seconds.</div>
             </div>
             <div class="option-row">
                 <label class="toggle-label">
@@ -954,8 +962,11 @@
             });
         });
 
-        // Show for 12s once the leader passes 10% of the Formation Lap
+        // Show for autoDuration (default 12s) once the leader passes 10% of the Formation Lap
         const weatherAutoFormationLapToggle = document.getElementById('weather-auto-formation-lap-toggle');
+        const weatherAutoDurationInput = document.getElementById('weather-auto-duration');
+        const WEATHER_AUTO_DEFAULT_DURATION = 12000; // ms — same fallback as the overlay (SimHub WeatherAutoDurationTime)
+        bindAutoDurationInput(weatherAutoDurationInput, 'weather', () => updateWeatherOptions());
 
         weatherAutoFormationLapToggle.addEventListener('change', () => {
             socket.emit('config_update', {
@@ -1045,6 +1056,7 @@
             forecastToggle.checked = weatherConfig.showForecast !== false;
             weatherTemperatureUnits.value = weatherConfig.temperatureUnitsMode || 'automatic';
             weatherAutoFormationLapToggle.checked = weatherConfig.autoFormationLap === true;
+            weatherAutoDurationInput.value = (weatherConfig.autoDuration || WEATHER_AUTO_DEFAULT_DURATION) / 1000;
             weatherRotateForecastToggle.checked = weatherConfig.rotateForecast === true;
             updateForecastSessionControls();
         }
@@ -1107,7 +1119,7 @@
         const pitWindowAutoModeSelect = document.getElementById('pit-window-auto-mode');
         const pitWindowAutoDurationInput = document.getElementById('pit-window-auto-duration');
 
-        // Automatic Display duration fields (Pit Window, Car Damage): shown in seconds, stored
+        // Automatic Display duration fields (Pit Window, Car Damage, Weather): shown in seconds, stored
         // in ms as autoDuration. Invalid input snaps back to the saved value via resync().
         const AUTO_DISPLAY_DEFAULT_DURATION = 15000; // ms — same fallback as the overlays
         function bindAutoDurationInput(input, overlay, resync) {

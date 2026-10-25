@@ -7,7 +7,8 @@
       "showForecast": true,
       "autoFormationLap": true,
       "forecastSession": 0,
-      "rotateForecast": false
+      "rotateForecast": false,
+      "autoDuration": 12000
     },
     "speedometer": {
       "visible": true,
@@ -64,7 +65,8 @@
       "visible": true,
       "name": "Pit Window",
       "autoDisplay": true,
-      "autoMode": "idealLap-1"
+      "autoMode": "idealLap-1",
+      "autoDuration": 15000
     },
     "car-damage": {
       "visible": true,
@@ -72,7 +74,8 @@
       "autoDisplay": true,
       "autoMode": "on-car-damage",
       "showRemainingLife": true,
-      "useTeamColor": true
+      "useTeamColor": true,
+      "autoDuration": 15000
     },
     "leaderboard": {
       "visible": true,

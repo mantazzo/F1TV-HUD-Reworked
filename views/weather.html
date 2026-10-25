@@ -150,13 +150,13 @@
         let hasReceivedWeatherData = false;
 
         // ── Formation Lap auto-display ──────────────────────────────────────────
-        // Original SimHub formula: show for WeatherAutoDurationTime (12s) once the car has
+        // Original SimHub formula: show for WeatherAutoDurationTime once the car has
         // covered more than 10% of the lap during Formation Lap (m_safetyCarStatus === 3).
         // Uses the race leader's lap distance (same reference the Leaderboard's
         // Standings-on-Formation-Lap uses). Auto can only force the overlay visible — the
         // manual toggle still decides visibility the rest of the time.
         const FORMATION_AUTO_THRESHOLD = 0.10;
-        const FORMATION_AUTO_DURATION_MS = 12000;
+        let formationAutoDurationMs = 12000; // Controller's "Display Duration" (autoDuration), default 12s
         let manualVisible = false;
         let autoFormationLap = false;
         let formationLap = false;
@@ -191,7 +191,7 @@
                 formationAutoTimer = null;
                 formationAutoActive = false;
                 applyVisibility();
-            }, FORMATION_AUTO_DURATION_MS);
+            }, formationAutoDurationMs);
         }
 
         // Handle overlay visibility from controller with animation
@@ -202,6 +202,7 @@
                 // Main weather visibility - use .visible class (starts hidden by default)
                 manualVisible = weatherConfig.visible === true;
                 autoFormationLap = weatherConfig.autoFormationLap === true;
+                formationAutoDurationMs = weatherConfig.autoDuration || 12000;
                 if (!autoFormationLap) cancelFormationAuto();
                 applyVisibility();
                 
