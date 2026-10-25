@@ -115,8 +115,9 @@
 
                 if (newTrackId !== trackId) {
                     trackId = newTrackId;
+                    trackData = null; // don't keep showing the previous track's corners while loading
                     loadTrackData(trackId, gameYear).then(data => {
-                        trackData = data;
+                        if (newTrackId === trackId) trackData = data; // ignore a stale load after a quick track change
                     });
                 }
             }
@@ -125,8 +126,14 @@
             if (data.m_header && data.m_header.m_packetId === 2) {
                 const playerIndex = DriverUtils.getActiveDriverIndex(data.m_header.m_playerCarIndex, isSpectating, spectatorCarIndex);
                 if (data.m_lapData && data.m_lapData[playerIndex]) {
-                    const lapDistance = data.m_lapData[playerIndex].m_lapDistance;
-                    
+                    const lapData = data.m_lapData[playerIndex];
+                    const lapDistance = lapData.m_lapDistance;
+
+                    // SimHub: 100-inertia(if([IsInPitLane],...))*100 — fade the whole indicator out
+                    // while in the pit lane (m_pitStatus 1/2) or the garage (m_driverStatus 0),
+                    // where lap distance still runs past corner triggers
+                    turnIndicatorContainer.classList.toggle('in-pit', lapData.m_pitStatus > 0 || lapData.m_driverStatus === 0);
+
                     // Only process turn detection if overlay is enabled
                     if (!overlayVisible) return;
                     

@@ -22,6 +22,11 @@ body {
     opacity: 1;
 }
 
+/* Hidden while in the pit lane / garage */
+.turn-indicator-container.in-pit {
+    opacity: 0;
+}
+
 /* Turn label - "TURN" text */
 .turn-label {
     font-family: 'F1TV-2022', sans-serif;
