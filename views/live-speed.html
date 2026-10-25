@@ -16,6 +16,9 @@
 </head>
 <body data-tauri-drag-region>
     <div class="overlay-container">
+        <!-- LIVE SPEED label — first, so it slides down/hides behind the background panel -->
+        <div class="live-speed-label">LIVE SPEED</div>
+
         <!-- Base background -->
         <div class="background-base"></div>
         
@@ -27,9 +30,6 @@
         
         <!-- Bottom gradient with border -->
         <div class="bottom-gradient"></div>
-        
-        <!-- LIVE SPEED label -->
-        <div class="live-speed-label">LIVE SPEED</div>
         
         <!-- Speed display - KM/H (top) -->
         <div class="kmh-value">0 </div>
@@ -66,16 +66,25 @@
         
         // Config state
         let useTeamColor = true;
-        
+        let showSponsors = true;  // global (all overlays): Aramco banner
+        let isOverlayVisible = false;
+
         // Handle overlay visibility from controller with animation
         socket.on('overlay_config', (config) => {
+            const newShowSponsors = config.global?.showSponsors !== false;
+            if (newShowSponsors !== showSponsors) {
+                showSponsors = newShowSponsors;
+                if (!showSponsors) hideAramcoContainer();
+            }
+
             if (config.overlays && config.overlays['live-speed']) {
                 const liveSpeedConfig = config.overlays['live-speed'];
-                
-                if (liveSpeedConfig.visible) {
-                    overlayContainer.classList.add('visible');
-                } else {
-                    overlayContainer.classList.remove('visible');
+
+                const visible = !!liveSpeedConfig.visible;
+                if (visible !== isOverlayVisible) {
+                    isOverlayVisible = visible;
+                    overlayContainer.classList.toggle('visible', visible);
+                    if (visible) onOverlayShown(); else onOverlayHidden();
                 }
                 
                 // Update team color usage preference
@@ -92,7 +101,6 @@
         // State variables
         let currentSpeedKmh = 0;
         let currentSpeedMph = 0;
-        let previousSpeedKmh = 0;
         let currentDriverName = '';
         let currentTeamId = 0;
         let playerIndex = -1;    // "active driver" — m_header.m_playerCarIndex, or m_spectatorCarIndex while spectating
@@ -101,11 +109,18 @@
         let spectatorCarIndex = 255; // from Session packet m_spectatorCarIndex
         let primaryColor = null;
         let speedUnitsLeadPlayer = 1; // 0 = MPH, 1 = KPH (default to KPH)
-        let isSpeedIncreasing = false;
         let aramcoHideTimeout = null;
         let isDrsActive = false;
+        let isOvertakeActive = false; // from Car Telemetry 2 (pid 16) m_overtakeActive — 2026 Season Pack only
+        let uses2026Regs = false;     // from pid 16 m_2026Regulations; older UDP formats never send pid 16
         let liveSpeedLabelHideTimeout = null;
-        let isLiveSpeedLabelVisible = false;
+        let teamLineTimeout = null;
+
+        // Speed text colours (SimHub: if([DRSEnabled],'Lime', if([SpeedKmh]>199,'RED','WHITE')))
+        const COLOR_DRS = 'lime';
+        const COLOR_OVERTAKE = 'rgb(14, 172, 230)'; // same turquoise as the Leaderboard's Overtake Mode indicator
+        const COLOR_FAST = 'rgb(255, 0, 0)';
+        const COLOR_NORMAL = 'rgb(255, 255, 255)';
         
         // Team and driver data
         let teamNames = {};
@@ -125,62 +140,66 @@
             }
         }
         
-        // Show live-speed-label and start 10s timer (only once per increase cycle)
+        // SimHub: isincreasing(10000/6000, [F1TVPlugin.LiveSpeed]) — the label and Aramco banner react to
+        // the overlay being switched ON (not to the car's speed): label slides down for 10s, banner shows for 6s.
+        function onOverlayShown() {
+            showLiveSpeedLabel();
+            showAramcoContainer();
+
+            // SimHub: inertia(inertia(visible,5)*282.5>200,3)*190 — the team line only starts expanding
+            // once the container is mostly open, then grows to full width
+            clearTimeout(teamLineTimeout);
+            teamColorLine.style.width = '0px';
+            teamLineTimeout = setTimeout(() => {
+                teamColorLine.style.width = '190px';
+            }, 200);
+        }
+
+        function onOverlayHidden() {
+            hideLiveSpeedLabel();
+            hideAramcoContainer();
+            clearTimeout(teamLineTimeout);
+            teamLineTimeout = null;
+            teamColorLine.style.width = '0px';
+        }
+
+        // Show live-speed-label for 10 seconds
         function showLiveSpeedLabel() {
-            isLiveSpeedLabelVisible = true;
+            clearTimeout(liveSpeedLabelHideTimeout);
             liveSpeedLabel.style.top = '27px';
             liveSpeedLabel.style.opacity = '1';
-            
-            // Set timeout to hide after 10 seconds (don't reset if already running)
-            if (!liveSpeedLabelHideTimeout) {
-                liveSpeedLabelHideTimeout = setTimeout(() => {
-                    isLiveSpeedLabelVisible = false;
-                    liveSpeedLabel.style.top = '67px';
-                    liveSpeedLabel.style.opacity = '0';
-                    liveSpeedLabelHideTimeout = null;
-                    // When label hides, force aramco to hide too
-                    hideAramcoContainer();
-                }, 10000);
-            }
+            liveSpeedLabelHideTimeout = setTimeout(hideLiveSpeedLabel, 10000);
         }
-        
-        // Hide live-speed-label only if timer is not running
+
         function hideLiveSpeedLabel() {
-            // Only hide if there's no active timer (10s hasn't finished)
-            if (!liveSpeedLabelHideTimeout) {
-                isLiveSpeedLabelVisible = false;
-                liveSpeedLabel.style.top = '67px';
-                liveSpeedLabel.style.opacity = '0';
-                // When label hides, force aramco to hide too
-                hideAramcoContainer();
-            }
-            // If timer is still running, let it finish naturally
+            clearTimeout(liveSpeedLabelHideTimeout);
+            liveSpeedLabelHideTimeout = null;
+            liveSpeedLabel.style.top = '67px';
+            liveSpeedLabel.style.opacity = '0';
         }
-        
-        // Show aramco container and start 6s timer (only once per increase cycle)
+
+        // Show aramco container for 6 seconds (only when sponsor logos are enabled)
         function showAramcoContainer() {
-            // Only show if live-speed-label is visible
-            if (!isLiveSpeedLabelVisible) return;
-            
+            if (!showSponsors) return;
+            clearTimeout(aramcoHideTimeout);
             aramcoContainer.style.opacity = '1';
-            
-            // Set timeout to hide after 6 seconds (don't reset if already running)
-            if (!aramcoHideTimeout) {
-                aramcoHideTimeout = setTimeout(() => {
-                    aramcoContainer.style.opacity = '0';
-                    aramcoHideTimeout = null;
-                }, 6000);
-            }
+            aramcoHideTimeout = setTimeout(hideAramcoContainer, 6000);
         }
-        
-        // Hide aramco container (forced when label hides or independently)
+
         function hideAramcoContainer() {
-            // Clear any active timer
-            if (aramcoHideTimeout) {
-                clearTimeout(aramcoHideTimeout);
-                aramcoHideTimeout = null;
-            }
+            clearTimeout(aramcoHideTimeout);
+            aramcoHideTimeout = null;
             aramcoContainer.style.opacity = '0';
+        }
+
+        // DRS open, or Overtake Mode active for 2026-regs cars
+        function isBoostActive() {
+            return uses2026Regs ? isOvertakeActive : isDrsActive;
+        }
+
+        // SimHub mph-value opacity: if([DRSEnabled],'60','80')
+        function updateBoostOpacity() {
+            mphValue.style.opacity = isBoostActive() ? '0.6' : '0.8';
         }
         
         // Update speed display
@@ -188,40 +207,14 @@
             const newSpeedKmh = Math.round(speedKmh);
             currentSpeedMph = Math.round(speedKmh * 0.621371); // Convert to MPH
             
-            // Track speed increase/decrease
-            if (newSpeedKmh > previousSpeedKmh) {
-                // Speed increased
-                if (!isSpeedIncreasing) {
-                    isSpeedIncreasing = true;
-                    showLiveSpeedLabel(); // Show label and start 10s timer
-                    showAramcoContainer(); // Show and start timer only on first increase (after label is visible)
-                }
-                // If already increasing, do nothing (let the timers run)
-            } else if (newSpeedKmh < previousSpeedKmh) {
-                // Speed decreased
-                if (isSpeedIncreasing) {
-                    isSpeedIncreasing = false;
-                    hideLiveSpeedLabel(); // Hide label only if timer finished
-                }
-            }
-            
-            previousSpeedKmh = newSpeedKmh;
             currentSpeedKmh = newSpeedKmh;
-            
-            // Color both speed values based on speed and DRS status
-            if (isDrsActive) {
-                // DRS active - override to lime for both
-                kmhValue.style.color = 'lime';
-                mphValue.style.color = 'lime';
-            } else if (speedKmh >= 200) {
-                // High speed (200+ km/h) - red for both
-                kmhValue.style.color = 'rgb(255, 0, 0)';
-                mphValue.style.color = 'rgb(255, 0, 0)';
-            } else {
-                // Normal speed - white for both
-                kmhValue.style.color = 'rgb(255, 255, 255)';
-                mphValue.style.color = 'rgb(255, 255, 255)';
-            }
+
+            // Color both speed values based on speed and DRS / Overtake Mode status
+            const color = isBoostActive()
+                ? (uses2026Regs ? COLOR_OVERTAKE : COLOR_DRS)
+                : (newSpeedKmh > 199 ? COLOR_FAST : COLOR_NORMAL);
+            kmhValue.style.color = color;
+            mphValue.style.color = color;
             
             // Swap display based on player's speed unit preference
             if (speedUnitsLeadPlayer === 0) {
@@ -257,6 +250,10 @@
                     driverName.style.color = primaryColor;
                     teamColorLine.style.backgroundColor = primaryColor;
                     console.debug('[LiveSpeed] Using livery color:', primaryColor);
+                } else {
+                    // No team colour known yet — default white
+                    driverName.style.color = '#ffffff';
+                    teamColorLine.style.backgroundColor = '#ffffff';
                 }
             }
         }
@@ -282,6 +279,7 @@
                 minFontSize: 14,
                 maxFontSize: 22,
                 multiLine: false,
+                detectMultiLine: false,
                 alignHoriz: true,
                 alignVert: false,
                 widthOnly: true
@@ -380,10 +378,25 @@
                             const drsActive = carTelemetry.m_drs === 1;
                             if (drsActive !== isDrsActive) {
                                 isDrsActive = drsActive;
-                                mphValue.style.opacity = isDrsActive ? '0.6' : '0.8';
+                                updateBoostOpacity();
                                 // Re-apply speed colors with new DRS state
-                                updateSpeed(carTelemetry.m_speed);
+                                updateSpeed(currentSpeedKmh);
                             }
+                        }
+                    }
+                }
+
+                if (data?.m_header?.m_packetId === 16) { // Car Telemetry 2 (2026 Season Pack only)
+                    const tel2 = Array.isArray(data.m_carTelemetry2Data) ? data.m_carTelemetry2Data[playerIndex] : undefined;
+                    if (tel2) {
+                        const overtake = tel2.m_overtakeActive === 1;
+                        const regs2026 = tel2.m_2026Regulations === 1;
+                        if (overtake !== isOvertakeActive || regs2026 !== uses2026Regs) {
+                            isOvertakeActive = overtake;
+                            uses2026Regs = regs2026;
+                            updateBoostOpacity();
+                            // Re-apply speed colors with new Overtake Mode state
+                            updateSpeed(currentSpeedKmh);
                         }
                     }
                 }
