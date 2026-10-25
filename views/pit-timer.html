@@ -9,7 +9,6 @@
     <script>AssetPreloader.preloadAll();</script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="/utils/overlay-scale.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/textfit@2.4.0/textFit.min.js"></script>
     <script src="/utils/driver-utils.js"></script>
 </head>
@@ -21,31 +20,34 @@
             <div class="header-line"></div>
         </div>
 
-        <!-- Driver Info Section -->
-        <div class="driver-section">
-            <div class="driver-background"></div>
-            <div class="position-layer">1</div>
-            <div class="team-logo-layer"></div>
-            <div class="driver-name-layer">DRIVER</div>
-        </div>
-
-        <!-- Pit Timer Section -->
-        <div class="timer-section">
-            <div class="timer-background"></div>
-            
-            <!-- Stop Time Value -->
-            <div class="stop-time-value">0.0</div>
-            
-            <!-- Stop Time Display -->
-            <div class="stop-time-container">
-                <div class="stop-label">STOP</div>
-                <div class="time-label">TIME</div>
+        <!-- Data Display (driver + timer sections; expands downwards when shown) -->
+        <div class="data-section">
+            <!-- Driver Info Section -->
+            <div class="driver-section">
+                <div class="driver-background"></div>
+                <div class="position-layer">1</div>
+                <div class="team-logo-layer"></div>
+                <div class="driver-name-layer">DRIVER</div>
             </div>
-            
-            <!-- Pit Time Display -->
-            <div class="pit-time-container">
-                <div class="pit-label">PIT</div>
-                <div class="pit-time-value">0.0</div>
+
+            <!-- Pit Timer Section -->
+            <div class="timer-section">
+                <div class="timer-background"></div>
+
+                <!-- Stop Time Value -->
+                <div class="stop-time-value">0.0</div>
+
+                <!-- Stop Time Display -->
+                <div class="stop-time-container">
+                    <div class="stop-label">STOP</div>
+                    <div class="time-label">TIME</div>
+                </div>
+
+                <!-- Pit Time Display -->
+                <div class="pit-time-container">
+                    <div class="pit-label">PIT</div>
+                    <div class="pit-time-value">0.0</div>
+                </div>
             </div>
         </div>
     </div>
@@ -55,39 +57,31 @@
         socket.emit('identify', 'Pit Timer');
 
         // Element references
+        const overlayContainer = document.querySelector('.overlay-container');
         const positionElement = document.querySelector('.position-layer');
         const teamLogoElement = document.querySelector('.team-logo-layer');
         const driverNameElement = document.querySelector('.driver-name-layer');
         const pitTimeValue = document.querySelector('.pit-time-value');
         const stopTimeValue = document.querySelector('.stop-time-value');
         const stopTimeContainer = document.querySelector('.stop-time-container');
-        const pitLaneText = document.querySelector('.pit-lane-text');
-        const headerSection = document.querySelector('.header-section');
-        const driverSection = document.querySelector('.driver-section');
-        const timerSection = document.querySelector('.timer-section');
-        const pitLabel = document.querySelector('.pit-label');
-        const stopLabel = document.querySelector('.stop-label');
-        const timeLabel = document.querySelector('.time-label');
         const pitTimeContainer = document.querySelector('.pit-time-container');
+
+        // Timings from the original SimHub formulas (isdecreasing / changed delays)
+        const EXIT_HOLD_MS = 4000;      // header + data display stay up this long after the pit exit line
+        const EXIT_CENTER_MS = 6000;    // pit-time widget sits centred (showing the final lane time) this long after exit
+        const STOP_HOLD_MS = 4000;      // STOP TIME labels stay up this long after the stop timer stops counting
 
         // State variables
         let position = 0;
         let driverName = '';
         let teamId = 0;
         let primaryColor = null;
-        let pitTime = 0.0;
-        let stopTime = 0.0;
-        let isInPit = false;
-        let pitStopActive = false;
-        let previousPitStatus = 0;
-        let frozenPitTime = 0.0; // Frozen pit time to display during 6s hold after leaving pit lane
-        let frozenStopTime = 0.0; // Frozen stop time to display during 6s hold after leaving pit lane
-        let showStopTimeContainerUntil = 0; // Hold stop-time-container for 4s after pit stop ends
-        let showPitTimeContainerUntil = 0; // Hold pit-time-container for 6s after leaving pit lane
-        let containerAnimating = false; // Track if pit-time-container slide animation is in progress
-        let pitLaneTimerActive = false; // Track if pit lane timer is active (in pit lane during race)
-        let previousPitLaneTimerActive = false; // Track previous state to detect transitions
-        let showOverlayUntil = 0; // Hold overlay visible for 6s after pit lane timer deactivates
+        let inPit = false;           // m_pitLaneTimerActive — pit entry → pit exit line, races only
+        let laneTimeMs = 0;          // m_pitLaneTimeInLaneInMS (live)
+        let stopTimeMs = 0;          // m_pitStopTimerInMS — counts in the box, holds its final value until pit exit
+        let lastLaneTimeMs = 0;      // last non-zero lane time — the game resets it to 0 at the exit line
+        let stopChangedAt = 0;       // when the stop timer last changed (while > 0)
+        let exitedAt = -Infinity;    // when we last crossed the pit exit line
         let isSpectating = 0;     // from Session packet m_isSpectating
         let spectatorCarIndex = 255; // from Session packet m_spectatorCarIndex
 
@@ -113,16 +107,17 @@
         // Update team logo image + background color. Background matches the team color —
         // same OverridePrimaryColor → livery priority (and useTeamColor gate) already
         // established by updateStopTimeColor() below, falling back to the original static
-        // navy plate when Team Color display is off. Logo_Alt takes priority over Logo,
-        // matching the Leaderboard/Fastest Sectors treatment — some logos would otherwise
-        // blend into a same-color background. Reads teamId/primaryColor from module state
-        // rather than taking parameters, same idiom as updateStopTimeColor().
+        // navy plate when Team Color display is off, and to transparent when no colour is
+        // known yet. Logo_Alt takes priority over Logo, matching the Leaderboard/Fastest
+        // Sectors treatment — some logos would otherwise blend into a same-color background.
+        // Reads teamId/primaryColor from module state rather than taking parameters, same
+        // idiom as updateStopTimeColor().
         function updateTeamLogo() {
             const teamData = teamNames[teamId];
             const logoFile = teamData?.Logo_Alt ?? teamData?.Logo ?? null;
             const bgColor = !useTeamColor
                 ? '#081425FF'
-                : (teamData?.OverridePrimaryColor || primaryColor || '#081425FF');
+                : (teamData?.OverridePrimaryColor || primaryColor || 'transparent');
 
             if (logoFile) {
                 const logoPath = `/images/team-logos/${logoFile}`;
@@ -145,16 +140,16 @@
             }
         }
 
-        // Update stop time color
+        // Update stop time color: team colour (override → livery) when enabled, otherwise white
         function updateStopTimeColor() {
             if (!stopTimeValue) return;
-            
+
             // If team color is disabled, use white
             if (!useTeamColor) {
                 stopTimeValue.style.color = '#ffffff';
                 return;
             }
-            
+
             // Check if team has override color
             if (teamId !== null && teamNames && teamNames[teamId] && teamNames[teamId].OverridePrimaryColor) {
                 const overrideColor = teamNames[teamId].OverridePrimaryColor;
@@ -164,140 +159,70 @@
                 // Use livery color from game
                 stopTimeValue.style.color = primaryColor;
                 console.debug('[PitTimer] Using livery color:', primaryColor);
+            } else {
+                // No team colour known yet — default white
+                stopTimeValue.style.color = '#ffffff';
             }
         }
 
-        // Update driver name styling using textFit
-        function updateDriverNameStyling(name) {
-            const nameLength = name.length;
-            
+        // Update driver name + styling using textFit (only called when the name changes)
+        function updateDriverName(name) {
+            driverNameElement.textContent = name;
+
             // Apply font-weight and font-stretch based on name length
-            if (nameLength <= 10) {
+            if (name.length <= 10) {
                 driverNameElement.style.fontWeight = "700";
                 driverNameElement.style.fontStretch = "normal";
             } else {
                 driverNameElement.style.fontWeight = "400";
                 driverNameElement.style.fontStretch = "condensed";
             }
-            
+
             // Use textFit to auto-resize font to fit container
             textFit(driverNameElement, {
                 minFontSize: 20,
                 maxFontSize: 26,
                 multiLine: false,
+                detectMultiLine: false,
                 alignHoriz: true,
                 alignVert: false,
                 widthOnly: true
             });
         }
 
-        // Update display
-        function updateDisplay() {
+        // Apply the current pit state to the display. Called on every Lap Data packet and on a
+        // short interval, so the time-based holds still end if packets stop arriving.
+        function render() {
             const now = Date.now();
-            
-            positionElement.textContent = (position && position > 0) ? position : '-';
-            driverNameElement.textContent = driverName.toUpperCase();
-            updateDriverNameStyling(driverName.toUpperCase());
-            
-            // Use frozen values during 6s hold after leaving pit lane, otherwise use live values
-            const displayPitTime = (!isInPit && now < showPitTimeContainerUntil) ? frozenPitTime : pitTime;
-            const displayStopTime = (!isInPit && now < showPitTimeContainerUntil) ? frozenStopTime : stopTime;
-            
-            pitTimeValue.textContent = displayPitTime.toFixed(1);
-            stopTimeValue.textContent = displayStopTime.toFixed(1) + ' ';
-            
-            // Adjust stop time font size based on displayed duration
-            updateStopTimeFontSize(displayStopTime);
-        }
-        
-        // Update stop time font size: 80px for <= 9.9s, 60px for > 9.9s
-        function updateStopTimeFontSize(time) {
-            if (time > 9.9) {
-                stopTimeValue.style.fontSize = '60px';
-            } else {
-                stopTimeValue.style.fontSize = '80px';
-            }
-        }
+            const sinceExit = now - exitedAt;
 
-        // Update pit-time-container position with slide animation
-        function updatePitTimeContainerPosition() {
-            const now = Date.now();
-            const shouldBeVisible = isInPit || (now < showPitTimeContainerUntil);
-            
-            if (shouldBeVisible && pitTimeContainer.style.left !== '0px') {
-                // Slide in (show) - animate from 95px to 0px
-                if (!containerAnimating) {
-                    containerAnimating = true;
-                    anime({
-                        targets: pitTimeContainer,
-                        left: '0px',
-                        duration: 330, // ~0.33 seconds for smooth transition
-                        easing: 'linear',
-                        complete: () => {
-                            containerAnimating = false;
-                        }
-                    });
-                }
-            } else if (!shouldBeVisible && pitTimeContainer.style.left !== '95px') {
-                // Slide out (hide) - animate from 0px to 95px
-                if (!containerAnimating) {
-                    containerAnimating = true;
-                    anime({
-                        targets: pitTimeContainer,
-                        left: '95px',
-                        duration: 330,
-                        easing: 'linear',
-                        complete: () => {
-                            containerAnimating = false;
-                        }
-                    });
-                }
-            }
-        }
+            // SimHub: isdecreasing(2000, inPit) or inPit — header + data display
+            overlayContainer.classList.toggle('is-active', inPit || sinceExit < EXIT_HOLD_MS);
 
-        // Toggle container visibility based on pit stop state
-        function updateContainerVisibility() {
-            const now = Date.now();
-            
-            // Determine which container should be visible
-            let showStopTimeContainer = false;
-            let showPitTimeContainer = false;
-            
-            if (pitStopActive) {
-                // In pit box (status 2) - show stop-time-container only
-                showStopTimeContainer = true;
-            } else if (now < showStopTimeContainerUntil) {
-                // Within 4s hold after pit stop - keep showing stop-time-container
-                showStopTimeContainer = true;
-            } else if (isInPit || (now < showPitTimeContainerUntil)) {
-                // In pit lane (status 1) OR within 6s hold after leaving - show pit-time-container
-                showPitTimeContainer = true;
-            }
-            // Otherwise both containers hidden (on-track)
-            
-            // Apply visibility
-            stopTimeContainer.style.opacity = showStopTimeContainer ? '1' : '0';
-            pitTimeContainer.style.opacity = showPitTimeContainer ? '1' : '0';
-            
-            // Show stop timer value when there's a value to display (live or frozen)
-            const displayStopTime = (!isInPit && now < showPitTimeContainerUntil) ? frozenStopTime : stopTime;
-            
-            if (displayStopTime > 0) {
-                stopTimeValue.style.opacity = '1';
-            } else {
-                stopTimeValue.style.opacity = '0';
-            }
-        }
+            // SimHub: changed(4000, stopTimer>0, stopTimer) — the stop timer is counting, or stopped
+            // less than 4s ago. While true: STOP TIME labels shown, pit-time widget hidden.
+            // (The stop timer resets to 0 at the exit line, so this always ends there.)
+            const stopPhase = inPit && stopTimeMs > 0 && (now - stopChangedAt) < STOP_HOLD_MS;
+            stopTimeContainer.style.opacity = stopPhase ? '1' : '0';
+            pitTimeContainer.style.opacity = stopPhase ? '0' : '1';
 
-        // Show/hide overlay sections based on pit lane timer status
-        function toggleOverlay() {
-            const now = Date.now();
-            // Show overlay when pit lane timer is active OR within 6s hold after it deactivates
-            const shouldShowOverlay = pitLaneTimerActive || (now < showOverlayUntil);
-            const opacity = shouldShowOverlay ? '1' : '0';
-            headerSection.style.opacity = opacity;
-            driverSection.style.opacity = opacity;
-            timerSection.style.opacity = opacity;
+            // SimHub: isdecreasing(6000, inPit) — after the exit line the widget slides to the centre
+            // and shows the final lane time (LastPitStopDuration); otherwise it's the live lane timer
+            const centered = !inPit && sinceExit < EXIT_CENTER_MS;
+            pitTimeContainer.classList.toggle('is-centered', centered);
+            // (final time gets the full millisecond precision, the live one ticks in tenths;
+            // 100s+ drops to hundredths — "128.078" is ~1.5px wider than the 155px widget)
+            pitTimeValue.textContent = centered
+                ? (lastLaneTimeMs / 1000).toFixed(lastLaneTimeMs >= 100000 ? 2 : 3)
+                : (laneTimeMs / 1000).toFixed(1);
+
+            // Stop time value: visible while the stop timer is > 0, smaller font past 9.9s
+            const stopText = (stopTimeMs / 1000).toFixed(1);
+            stopTimeValue.style.opacity = stopTimeMs > 0 ? '1' : '0';
+            if (stopTimeMs > 0) {
+                stopTimeValue.textContent = stopText + ' ';
+                stopTimeValue.style.fontSize = parseFloat(stopText) > 9.9 ? '60px' : '80px';
+            }
         }
 
         // Socket.IO event handlers
@@ -344,78 +269,30 @@
                     const lapData = Array.isArray(data.m_lapData) ? data.m_lapData[playerIdx] : undefined;
                     if (lapData) {
                         // Update position
-                        if (typeof lapData.m_carPosition === 'number') {
+                        if (typeof lapData.m_carPosition === 'number' && lapData.m_carPosition !== position) {
                             position = lapData.m_carPosition;
+                            positionElement.textContent = position > 0 ? position : '-';
                         }
 
-                        
-                        // Track pit lane timer active status and detect transitions
-                        const newPitLaneTimerActive = (lapData.m_pitLaneTimerActive === 1);
-                        if (newPitLaneTimerActive !== previousPitLaneTimerActive) {
-                            pitLaneTimerActive = newPitLaneTimerActive;
-                            
-                            // When timer deactivates (leaving pit lane during race), hold overlay for 6s
-                            if (previousPitLaneTimerActive && !newPitLaneTimerActive) {
-                                showOverlayUntil = Date.now() + 6000;
-                                console.debug('[PitTimer] Pit lane timer deactivated - holding overlay for 6 seconds');
-                            } else {
-                                console.debug('[PitTimer] Pit lane timer active changed:', pitLaneTimerActive);
-                            }
-                            
-                            previousPitLaneTimerActive = newPitLaneTimerActive;
+                        // In pit lane: m_pitLaneTimerActive is only set during races, which is what this
+                        // overlay is for. It flips together with m_pitStatus at the entry and exit lines.
+                        const newInPit = lapData.m_pitLaneTimerActive === 1;
+                        if (inPit && !newInPit) {
+                            // Crossed the exit line — the game zeroes both timers here, so the final
+                            // lane time is the last non-zero value we saw
+                            exitedAt = Date.now();
+                            console.debug('[PitTimer] Left pit lane - final pit time:', (lastLaneTimeMs / 1000).toFixed(1));
                         }
-                        
-                        // Update pit state variables
-                        // isInPit: true when in pit lane (m_pitStatus > 0 OR m_pitLaneTimerActive = 1)
-                        isInPit = (lapData.m_pitStatus > 0) || (lapData.m_pitLaneTimerActive === 1);
-                        
-                        // pitStopActive: true when actually stopped in pit box (m_pitStatus = 2)
-                        const currentPitStatus = lapData.m_pitStatus;
-                        pitStopActive = (currentPitStatus === 2);
-                        
-                        // Detect pit stop end: transition from status 2 (in pit box) to 1 (leaving pit lane)
-                        if (previousPitStatus === 2 && currentPitStatus === 1) {
-                            // Pit stop just finished - hold stop-time-container for 4 seconds
-                            showStopTimeContainerUntil = Date.now() + 4000;
-                            console.debug('[PitTimer] Pit stop ended - holding stop-time-container for 4 seconds');
-                        }
-                        
-                        // Detect leaving pit lane: transition from 1 or 2 to 0
-                        if ((previousPitStatus === 1 || previousPitStatus === 2) && currentPitStatus === 0) {
-                            // Left pit lane - freeze both times and hold overlay/containers for 6 seconds
-                            frozenPitTime = pitTime;
-                            frozenStopTime = stopTime;
-                            showPitTimeContainerUntil = Date.now() + 6000;
-                            showOverlayUntil = Date.now() + 6000;
-                            console.debug('[PitTimer] Left pit lane - holding overlay and pit-time-container for 6 seconds with frozen times - pit:', frozenPitTime.toFixed(1), 'stop:', frozenStopTime.toFixed(1));
-                        }
-                        
-                        previousPitStatus = currentPitStatus;
-                        
-                        // Update container visibility based on pit stop state
-                        updateContainerVisibility();
-                        
-                        // Update overlay visibility
-                        toggleOverlay();
-                        
-                        // Update pit-time-container position
-                        updatePitTimeContainerPosition();
-                        
-                        // Update pit stop timer
-                        if (typeof lapData.m_pitStopTimerInMS === 'number' && lapData.m_pitStopTimerInMS > 0) {
-                            stopTime = lapData.m_pitStopTimerInMS / 1000.0; // Convert MS to seconds
-                        } else {
-                            stopTime = 0.0;
-                        }
-                        
-                        // Update pit lane timer
-                        if (typeof lapData.m_pitLaneTimeInLaneInMS === 'number' && lapData.m_pitLaneTimeInLaneInMS > 0) {
-                            pitTime = lapData.m_pitLaneTimeInLaneInMS / 1000.0; // Convert MS to seconds
-                        } else {
-                            pitTime = 0.0;
-                        }
-                        
-                        updateDisplay();
+                        inPit = newInPit;
+
+                        laneTimeMs = lapData.m_pitLaneTimeInLaneInMS > 0 ? lapData.m_pitLaneTimeInLaneInMS : 0;
+                        if (inPit && laneTimeMs > 0) lastLaneTimeMs = laneTimeMs;
+
+                        const newStopTimeMs = lapData.m_pitStopTimerInMS > 0 ? lapData.m_pitStopTimerInMS : 0;
+                        if (newStopTimeMs > 0 && newStopTimeMs !== stopTimeMs) stopChangedAt = Date.now();
+                        stopTimeMs = newStopTimeMs;
+
+                        render();
                     }
                 }
 
@@ -454,7 +331,7 @@
                         if (newName && newName !== driverName) {
                             driverName = newName;
                             console.debug('[PitTimer] Driver name updated:', driverName);
-                            updateDisplay();
+                            updateDriverName(driverName.toUpperCase());
                         }
                     }
                 }
@@ -465,7 +342,8 @@
 
         // Initialize
         loadDriverData();
-        toggleOverlay(); // Start hidden (will show when entering pit lane during race)
+        render(); // Start hidden (will show when entering pit lane during race)
+        setInterval(render, 100);
     </script>
 </body>
 </html>
