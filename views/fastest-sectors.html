@@ -112,28 +112,39 @@
         // Rolex widget references
         const rolexWidget = document.getElementById('rolex-widget');
         let rolexTimeout = null;
-        
+        let isOverlayVisible = false;
+        let showSponsors = true; // global (all overlays): Rolex logo
+
         // Handle overlay visibility from controller
         socket.on('overlay_config', (config) => {
+            showSponsors = config.global?.showSponsors !== false;
+            if (!showSponsors) {
+                clearTimeout(rolexTimeout);
+                rolexTimeout = null;
+                rolexWidget.style.opacity = '0';
+            }
+
             if (config.overlays && config.overlays['fastest-sectors']) {
                 const sectorsConfig = config.overlays['fastest-sectors'];
-                
-                // Handle visibility
-                if (sectorsConfig.visible) {
+
+                // Handle visibility. overlay_config is re-broadcast on every config change, so
+                // only react to the overlay actually being switched on/off.
+                const visible = sectorsConfig.visible === true;
+                if (visible === isOverlayVisible) return;
+                isOverlayVisible = visible;
+
+                if (visible) {
                     overlayContainer.classList.add('visible');
-                    
-                    // Show Rolex widget
-                    rolexWidget.style.opacity = '1';
-                    
-                    // Clear any existing timeout
-                    if (rolexTimeout) {
+
+                    // SimHub: isincreasing(4000, [F1TVPlugin.FastestSectors]) — Rolex logo for the
+                    // first 4 seconds after the overlay is switched on (if sponsor logos are on)
+                    if (showSponsors) {
+                        rolexWidget.style.opacity = '1';
                         clearTimeout(rolexTimeout);
+                        rolexTimeout = setTimeout(() => {
+                            rolexWidget.style.opacity = '0';
+                        }, 4000);
                     }
-                    
-                    // Hide Rolex widget after 4 seconds
-                    rolexTimeout = setTimeout(() => {
-                        rolexWidget.style.opacity = '0';
-                    }, 4000);
                 } else {
                     overlayContainer.classList.remove('visible');
                     
@@ -307,6 +318,7 @@
                 minFontSize: 14,
                 maxFontSize: 24,
                 multiLine: false,
+                detectMultiLine: false,
                 alignHoriz: true,
                 alignVert: false,
                 widthOnly: true
