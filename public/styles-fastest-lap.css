@@ -23,6 +23,15 @@ body {
     opacity: 0;
     overflow: hidden;
     z-index: 1000;
+    /* Closing (SimHub inertia ~0.33s) */
+    transition: left 0.333s ease-in, width 0.333s ease-in, opacity 0.2s linear;
+}
+
+.fastest-lap-container.is-shown {
+    left: 0;
+    width: 920px;
+    opacity: 1;
+    transition: left 0.333s ease-out, width 0.333s ease-out, opacity 0.2s linear;
 }
 
 /* Stroke element - animated line above the main container */
@@ -35,6 +44,14 @@ body {
     opacity: 0;
     overflow: hidden;
     z-index: 1001;
+    transition: left 0.333s ease-in, width 0.333s ease-in, opacity 0.2s linear;
+}
+
+.stroke-container.is-shown {
+    left: 0;
+    width: 920px;
+    opacity: 0.5;
+    transition: left 0.333s ease-out, width 0.333s ease-out, opacity 0.2s linear;
 }
 
 .stroke-background {
@@ -47,25 +64,19 @@ body {
     z-index: 1;
 }
 
+/* Diagonal hatching. SimHub drew 153 white 100x2px bars rotated -45deg, every 9px, in a layer
+   at 10% opacity — the same thing as one repeating gradient: 2px stripes, 9px apart horizontally
+   (= 9/sqrt(2) ≈ 6.364px apart measured across the stripes) */
 .stroke-diagonal-bar {
     position: absolute;
     top: 0;
-    left: -30px;
-    width: 950px; /* Adjusted width for slight offset */
+    left: 0;
+    width: 1250px;
     height: 100%;
     z-index: 7;
-    display: flex;
-    align-items: center;
-    overflow: visible;
-}
-
-.stroke-diagonal-rect {
-    width: 100px;
-    height: 2px;
-    margin-right: -40px;
-    background: rgba(255, 255, 255, 1);
-    opacity: 0.1;
-    transform: rotate(-45deg);
+    background-image: repeating-linear-gradient(135deg,
+        rgba(255, 255, 255, 0.1) 0 2px,
+        transparent 2px 6.364px);
 }
 
 .stroke-border-blur {
@@ -87,8 +98,8 @@ body {
     width: 10000px;
     height: 12px;
     background-image: url('../images/common/Gradient.png');
-    background-repeat: repeat-x;
-    background-size: auto 12px;
+    background-repeat: no-repeat;
+    background-size: 10000px 12px; /* stretched, not tiled - the image fades at its left/right edges */
     z-index: 4;
 }
 
@@ -99,8 +110,8 @@ body {
     width: 10000px;
     height: 12px;
     background-image: url('../images/common/Gradient.png');
-    background-repeat: repeat-x;
-    background-size: auto 12px;
+    background-repeat: no-repeat;
+    background-size: 10000px 12px; /* stretched, not tiled - the image fades at its left/right edges */
     z-index: 5;
 }
 
@@ -140,7 +151,7 @@ body {
 .fl-bg-gradient-1 {
     position: absolute;
     top: -50px;
-    left: 190px;
+    left: 0;
     width: 180px;
     height: 210px;
     opacity: 0.35;
@@ -151,7 +162,7 @@ body {
 .fl-bg-gradient-2 {
     position: absolute;
     top: -50px;
-    left: 290px;
+    left: 0;
     width: 180px;
     height: 210px;
     opacity: 0.15;
@@ -168,7 +179,7 @@ body {
     opacity: 0.75;
     background-image: url('/images/fastest-lap/FLBG1.png');
     background-size: 180px 210px;
-    display: none;
+    visibility: hidden;
 }
 
 .fl-bg-gradient-4 {
@@ -180,7 +191,7 @@ body {
     opacity: 0.75;
     background-image: url('/images/fastest-lap/FLBG1.png');
     background-size: 180px 210px;
-    display: none;
+    visibility: hidden;
 }
 
 .fl-bg-gradient-5 {
@@ -192,8 +203,23 @@ body {
     opacity: 0.75;
     background-image: url('/images/fastest-lap/FLBG1.png');
     background-size: 180px 210px;
-    display: none;
+    visibility: hidden;
 }
+
+/* Arrows slide in when a fastest lap is shown (SimHub: inertia(changed(10000, ...))).
+   1 + 2 settle behind the name; 3-5 sweep across the whole bar. Reset (no transition) only
+   after the container has closed, see hideOverlay(). */
+.fl-stripe.is-armed .fl-bg-gradient-1 { left: 190px; transition: left 0.5s ease-out; }
+.fl-stripe.is-armed .fl-bg-gradient-2 { left: 290px; transition: left 0.67s ease-out; }
+.fl-stripe.is-armed .fl-bg-gradient-3,
+.fl-stripe.is-armed .fl-bg-gradient-4,
+.fl-stripe.is-armed .fl-bg-gradient-5 {
+    visibility: visible;
+    transition: left 0.5s ease-out 0.1s;
+}
+.fl-stripe.is-armed .fl-bg-gradient-3 { left: 900px; }
+.fl-stripe.is-armed .fl-bg-gradient-4 { left: 1000px; }
+.fl-stripe.is-armed .fl-bg-gradient-5 { left: 1100px; }
 
 /* Main content container */
 .fl-content {
@@ -280,4 +306,14 @@ body {
     text-align: right;
     padding-right: 30px;
     white-space: pre;
+}
+
+/* Lap time blinks for ~1s on a new fastest lap (SimHub: BlinkEnabled changed(1000, ...), BlinkDelay 80ms) */
+.fl-lap-time.is-blinking {
+    animation: fl-lap-time-blink 160ms steps(1) 6;
+}
+
+@keyframes fl-lap-time-blink {
+    0%  { opacity: 1; }
+    50% { opacity: 0; }
 }
