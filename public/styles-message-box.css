@@ -127,6 +127,15 @@ body {
     height: 100px;
     overflow: hidden;
     z-index: 2;
+    /* Wipes out from 240px to full width when a penalty switches to its message phase
+       (SimHub: 240 + inertia(... isincreasing(7000, NewPenalty) ... = 0, 5) * 335) */
+    transition: width 250ms ease-out;
+}
+
+/* During a penalty popup only the part behind the driver name is white; snaps narrow (no transition) */
+.message-box-container.is-penalty-popup .nameplate-section {
+    width: 240px;
+    transition: none;
 }
 
 /* White background */
@@ -192,14 +201,15 @@ body {
     transition: opacity 200ms ease-out;
 }
 
-/* Blinking animation for penalty text - smooth fade in/out */
+/* Blinking animation for penalty text - hard on/off, 300ms each
+   (SimHub: inertia(if(blink('test', 300, true), 0, 100), 400) - the inertia is near-instant) */
 @keyframes blink {
     0%, 100% { opacity: 1; }
     50% { opacity: 0; }
 }
 
 .penalty-text.blinking {
-    animation: blink 1000ms ease-in-out infinite;
+    animation: blink 600ms steps(1, end) infinite;
 }
 
 /* Blue background for penalty message */

@@ -9,7 +9,6 @@
     <script>AssetPreloader.preloadAll();</script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="/utils/overlay-scale.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/textfit@2.4.0/textFit.min.js"></script>
     <script src="/utils/driver-utils.js"></script>
 </head>
@@ -152,6 +151,22 @@
         
         // Animation state
         let hideTimeout = null;
+        const CLOSE_ANIMATION_MS = 333; // matches .message-box-container transition - next queued item waits for it
+        const formationLapContainer = document.querySelector('.formation-lap-container');
+
+        // Set the message line: bold prefix (e.g. "FIA STEWARDS:") + text. Built from text nodes,
+        // not innerHTML, since the text can contain driver names/abbreviations.
+        function setMessageText(prefix, text) {
+            const line = document.createElement('div');
+            if (prefix) {
+                const prefixEl = document.createElement('span');
+                prefixEl.className = 'message-prefix';
+                prefixEl.textContent = prefix.toUpperCase();
+                line.append(prefixEl, ' ');
+            }
+            line.append(text.toUpperCase());
+            messageText.replaceChildren(line);
+        }
         
         // Queue system
         let messageQueue = [];
@@ -171,6 +186,10 @@
         // Useful for busy multiplayer/dirty lobbies where events queue up faster than the FIFO can show them.
         let fastMode = false;
 
+        // Show "+N SECONDS" in the popup for Stop/Go penalties that come with a time (Controller,
+        // default on). When off, Stop/Go keeps the PENALTY box; the message text still has the time.
+        let showStopGoTime = true;
+
         // Scales a duration (ms) down by half when Fast Mode is on. Applied at display time
         // (inside showMessage/showPenaltyPopup) rather than at every queueMessage() call site,
         // so a single toggle affects every message type without touching each duration literal.
@@ -183,7 +202,8 @@
             const messageBoxConfig = config && config.overlays ? config.overlays['message-box'] : null;
             if (messageBoxConfig) {
                 fastMode = messageBoxConfig.fastMode === true;
-                console.log('[MessageBox] Fast Mode:', fastMode);
+                showStopGoTime = messageBoxConfig.showStopGoTime !== false;
+                console.log('[MessageBox] Fast Mode:', fastMode, '| Stop/Go time popup:', showStopGoTime);
             }
         });
 
@@ -233,6 +253,12 @@
                     formulaType = newFormulaType;
                     console.log('[MessageBox] Formula type:', formulaType);
                     loadDriverData();
+                }
+
+                // Formation Lap box (SimHub: if(m_safetyCarStatus = 3, 1, 0)). The SC event below
+                // also toggles it, but the Session packet state covers a missed event / page reload.
+                if (typeof data.m_safetyCarStatus === 'number' && formationLapContainer) {
+                    formationLapContainer.style.opacity = data.m_safetyCarStatus === 3 ? '1' : '0';
                 }
             }
             
@@ -432,7 +458,6 @@
                     }
                     // Formation Lap
                     else if (safetyCarType === 3) {
-                        const formationLapContainer = document.querySelector('.formation-lap-container');
                         if (eventType === 0) {
                             // Formation lap starting - show container
                             if (formationLapContainer) {
@@ -545,9 +570,10 @@
                             penaltyTextType = 'WARNING';
                         }
                         
-                        // Queue penalty popup (8 seconds popup + 8 seconds message)
+                        // Queue penalty popup (7 seconds popup + 9 seconds message)
                         queueMessage('penalty', {
                             time: time,
+                            penaltyType: penaltyType,
                             fullMessageText: messageText,
                             penaltyTextType: penaltyTextType,
                             firstName: firstName,
@@ -647,6 +673,12 @@
             return infringements[infringementType].toUpperCase();
         }
         
+        // Time shown in the popup (255 = none, keeps the PENALTY box). Checked at display time, so
+        // toggling the Controller setting also applies to penalties already waiting in the queue.
+        function getPopupTime(data) {
+            return (data.penaltyType === 1 && !showStopGoTime) ? 255 : data.time;
+        }
+
         // Queue management functions
         function queueMessage(type, data) {
             const queueItem = { type, data };
@@ -655,7 +687,7 @@
                 // Nothing is displaying, show immediately
                 isDisplaying = true;
                 if (type === 'penalty') {
-                    showPenaltyPopup(data.time, data.fullMessageText, data.penaltyTextType, data.firstName, data.lastName);
+                    showPenaltyPopup(getPopupTime(data), data.fullMessageText, data.penaltyTextType, data.firstName, data.lastName);
                 } else if (type === 'message') {
                     showMessage(data.prefix, data.text, data.duration);
                 }
@@ -676,7 +708,7 @@
             isDisplaying = true;
             
             if (nextItem.type === 'penalty') {
-                showPenaltyPopup(nextItem.data.time, nextItem.data.fullMessageText, nextItem.data.penaltyTextType, nextItem.data.firstName, nextItem.data.lastName);
+                showPenaltyPopup(getPopupTime(nextItem.data), nextItem.data.fullMessageText, nextItem.data.penaltyTextType, nextItem.data.firstName, nextItem.data.lastName);
             } else if (nextItem.type === 'message') {
                 showMessage(nextItem.data.prefix, nextItem.data.text, nextItem.data.duration);
             }
@@ -696,6 +728,7 @@
                     minFontSize: 14,
                     maxFontSize: 27,
                     multiLine: false,
+                    detectMultiLine: false,
                     alignHoriz: true,
                     alignVert: false,
                     widthOnly: true
@@ -707,6 +740,7 @@
                     minFontSize: 14,
                     maxFontSize: 31,
                     multiLine: false,
+                    detectMultiLine: false,
                     alignHoriz: true,
                     alignVert: false,
                     widthOnly: true
@@ -716,16 +750,20 @@
             // Set penalty value if time is available
             if (time !== 255 && penaltyValueElement) {
                 penaltyValueElement.textContent = `+${time}`;
-                // Adjust position for 2-digit numbers
+                // Adjust position for 2-digit numbers (SimHub: 388/505 vs 369/486, popup background at 375)
                 if (time >= 10) {
-                    penaltyValueElement.style.left = '14px';
-                    penaltySecondsElement.style.left = '131px';
+                    penaltyValueElement.style.left = '13px';
+                    penaltySecondsElement.style.left = '130px';
                 } else {
                     penaltyValueElement.style.left = '-6px';
                     penaltySecondsElement.style.left = '111px';
                 }
             }
             
+            // Nameplate stays narrow (behind the driver name) during the popup, then wipes out to
+            // full width when the message phase starts - see .is-penalty-popup in the CSS
+            messageBoxContainer.classList.add('is-penalty-popup');
+
             // First, show the message box container and transition lines
             messageBoxContainer.style.left = '0px';
             messageBoxContainer.style.width = '710px';
@@ -770,7 +808,8 @@
                 }
             }, scaleDuration(4000));
 
-            // After 8 seconds: Hide penalty popup and show message layer
+            // After 7 seconds: Hide penalty popup and show message layer
+            // (SimHub: 16s in total - popup isincreasing(7000), message for the remaining 9s)
             setTimeout(() => {
                 // Hide penalty popup
                 if (penaltyPopupLayer) {
@@ -785,27 +824,22 @@
                 
                 console.log('[MessageBox] Phase 3: Showing message layer');
                 
-                // Show message layer (just the text, container is already visible)
-                if (messageText) {
-                    messageText.innerHTML = `<div><span class="message-prefix">FIA STEWARDS:</span> ${fullMessageText.toUpperCase()}</div>`;
-                }
+                // Show message layer (just the text, container is already visible) and expand the nameplate
+                setMessageText('FIA STEWARDS:', fullMessageText);
+                messageBoxContainer.classList.remove('is-penalty-popup');
                 messageBoxLayer.style.opacity = '1';
                 
-                // Hide everything after 8 more seconds and process queue
+                // Hide everything after 9 more seconds and process queue
                 hideTimeout = setTimeout(() => {
                     hideMessage();
-                }, scaleDuration(8000));
-            }, scaleDuration(8000));
+                }, scaleDuration(9000));
+            }, scaleDuration(7000));
         }
         
         // Function to display a message
         function showMessage(prefix, text, duration = 16000) {
             // Build message with prefix (if provided)
-            if (prefix) {
-                messageText.innerHTML = `<div><span class="message-prefix">${prefix.toUpperCase()}</span> ${text.toUpperCase()}</div>`;
-            } else {
-                messageText.innerHTML = `<div>${text.toUpperCase()}</div>`;
-            }
+            setMessageText(prefix, text);
             
             // Show message box layer
             messageBoxLayer.style.opacity = '1';
@@ -853,10 +887,14 @@
             messageBoxLayer.style.opacity = '0';
             
             console.log('[MessageBox] Message hidden');
-            
-            // Mark as no longer displaying and process next in queue
-            isDisplaying = false;
-            processQueue();
+
+            // Let the close animation finish before the next queued item opens, so back-to-back
+            // messages visibly close and re-open instead of swapping text in place
+            hideTimeout = setTimeout(() => {
+                hideTimeout = null;
+                isDisplaying = false;
+                processQueue();
+            }, CLOSE_ANIMATION_MS);
         }
         
         console.log('[MessageBox] Overlay loaded');

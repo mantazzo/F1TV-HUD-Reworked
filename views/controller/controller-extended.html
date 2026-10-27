@@ -765,6 +765,15 @@
                 <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Fast Mode">?</button>
                 <div class="help-card" hidden>Halves how long each message stays on screen. Useful in busy sessions with lots of messages, such as Multiplayer.</div>
             </div>
+            <div class="option-row">
+                <label class="toggle-label">
+                    <input type="checkbox" id="message-box-stop-go-time-toggle" class="toggle-checkbox" checked>
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-text">Display Penalty Time popup for Stop/Go penalties</span>
+                </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Display Penalty Time popup for Stop/Go penalties">?</button>
+                <div class="help-card" hidden>Controls whether time penalties, received with Stop/Go penalties, will display the penalty time. If disabled, the penalty time display is skipped.</div>
+            </div>
         </section>
 
         <section class="overlay-section" id="custom-overlays-section">
@@ -1303,6 +1312,17 @@
             });
         });
 
+        // Message Box: show "+N SECONDS" in the popup for Stop/Go penalties (default on)
+        const messageBoxStopGoTimeToggle = document.getElementById('message-box-stop-go-time-toggle');
+
+        messageBoxStopGoTimeToggle.addEventListener('change', () => {
+            socket.emit('config_update', {
+                overlay: 'message-box',
+                property: 'showStopGoTime',
+                value: messageBoxStopGoTimeToggle.checked
+            });
+        });
+
         // Update lap timer options when config changes
         const lapTimerComparisonFullNameToggle = document.getElementById('lap-timer-comparison-full-name-toggle');
         const lapTimerHideCompoundToggle = document.getElementById('lap-timer-hide-compound-toggle');
@@ -1369,6 +1389,7 @@
 
             const messageBoxConfig = currentConfig.overlays['message-box'];
             messageBoxFastModeToggle.checked = messageBoxConfig.fastMode === true;
+            messageBoxStopGoTimeToggle.checked = messageBoxConfig.showStopGoTime !== false;
         }
 
         // Driver Name variant button handling
