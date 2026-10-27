@@ -66,12 +66,13 @@ body {
 }
 
 /* Decoration Animation */
+/* Scrolls upward like SimHub's Top: 0-inertia(...)*500, but looped */
 @keyframes decorationScroll {
     from {
-        top: -500px;
+        top: -37px;  /* hand-matched to loop seamlessly */
     }
     to {
-        top: -37px;  /* hand-matched to loop seamlessly */
+        top: -500px;
     }
 }
 
@@ -101,6 +102,13 @@ body {
     top: 0;
     width: 165px;
     height: 80px;
+    opacity: 0;
+    transition: opacity 200ms ease-out;
+}
+
+/* Shown for the first 6s after the overlay is switched on (see startSponsorDisplay) */
+.sponsor.is-shown {
+    opacity: 1;
 }
 
 .sponsor-rectangle {
@@ -143,34 +151,29 @@ body {
     color: rgb(255, 255, 255);
 }
 
-/* Driver Rows */
+/* Driver Rows - three identical slots, positioned (top) from JS. The observed driver's row
+   gets .is-observed: full width, 55px tall, player indicator background */
 .driver-row {
     position: absolute;
-    left: 0;
-    width: 305px;
-    height: 50px;
-    display: flex;
-    align-items: center;
-}
-
-.driver-ahead {
     left: 15px;
     top: 10px;
+    width: 305px;
+    height: 50px;
 }
 
-.driver-current {
-    top: 60px;
+.driver-row.is-observed {
+    left: 0;
     width: 320px;
     height: 55px;
     z-index: 2;
 }
 
-.driver-behind {
-    left: 15px;
-    top: 115px;
+/* No driver for this slot (fewer than 3 cars) - keep the line, hide its contents */
+.driver-row.is-empty > * {
+    visibility: hidden;
 }
 
-/* Player indicator (highlight background) */
+/* Player indicator (highlight background) - observed row only */
 .player-indicator {
     position: absolute;
     left: 0;
@@ -178,67 +181,46 @@ body {
     width: 320px;
     height: 55px;
     z-index: -1;
+    display: none;
+}
+
+.driver-row.is-observed .player-indicator {
+    display: block;
 }
 
 /* Position number */
 .position-number {
-    width: 55px;
-    height: 100%;
+    position: absolute;
+    left: 5px;
+    top: 0;
+    width: 35px;
+    height: 50px;
     display: flex;
     align-items: center;
-    justify-content: center;
-    font-family: 'F1TV-2022', sans-serif;
-    font-size: 35px;
-    font-weight: bold;
-    color: rgb(255, 255, 255);
-    border-right: 2px solid rgb(255, 255, 255);
-}
-
-.driver-ahead .position-number {
-    position: absolute;
-    left: 5px;
-    top: 0;
-    width: 35px;
-    height: 50px;
+    justify-content: flex-end;
     font-family: 'F1TV-2022', sans-serif;
     font-size: 24px;
     font-weight: 400;
     color: rgb(192, 192, 192);
-    justify-content: flex-end;
-    border: none;
     z-index: 2;
 }
 
-.driver-current .position-number {
-    position: absolute;
+.driver-row.is-observed .position-number {
     left: -1px;
-    top: 0;
     width: 55px;
     height: 55px;
-    font-family: 'F1TV-2022', sans-serif;
+    justify-content: center;
     font-size: 27px;
-    font-weight: 400;
     color: rgb(0, 0, 0);
     border-right: 2px solid rgb(0, 0, 0);
-    z-index: 2;
 }
 
-.driver-behind .position-number {
-    position: absolute;
-    left: 5px;
-    top: 0;
-    width: 35px;
-    height: 50px;
-    font-family: 'F1TV-2022', sans-serif;
-    font-size: 24px;
-    font-weight: 400;
-    color: rgb(192, 192, 192);
-    justify-content: flex-end;
-    border: none;
-    z-index: 2;
+/* Observed driver in the knockout zone - white number on the knockout background */
+.driver-row.is-observed.is-knockout .position-number {
+    color: rgb(255, 255, 255);
 }
 
-/* Position stroke (border separator) */
+/* Position stroke (border separator) - non-observed rows only */
 .position-stroke {
     position: absolute;
     left: 0;
@@ -246,6 +228,10 @@ body {
     width: 55px;
     height: 25px;
     border-right: 2px solid rgb(128, 128, 128);
+}
+
+.driver-row.is-observed .position-stroke {
+    display: none;
 }
 
 /* Knockout overlay (for qualifying) */
@@ -259,7 +245,11 @@ body {
     z-index: 1;
 }
 
-.driver-current .knockout-overlay {
+.driver-row.is-knockout .knockout-overlay {
+    display: block;
+}
+
+.driver-row.is-observed .knockout-overlay {
     width: 55px;
     height: 55px;
     top: 0;
@@ -267,61 +257,26 @@ body {
 
 /* Driver name */
 .driver-name {
-    flex: 1;
-    height: 100%;
+    position: absolute;
+    left: 65px;
+    top: 0;
+    width: 225px;
+    height: 50px;
     display: flex;
     align-items: center;
-    padding-left: 15px;
+    justify-content: flex-start;
     font-family: 'F1TV-2022', sans-serif;
-    font-size: 28px;
+    font-size: 24px;
     font-style: oblique;
     font-weight: 700;
-    color: rgb(255, 255, 255);
+    color: rgb(128, 128, 128);
     text-transform: uppercase;
 }
 
-.driver-ahead .driver-name {
-    position: absolute;
-    left: 65px;
-    top: 0;
-    width: 225px;
-    height: 50px;
-    padding-left: 0;
-    font-family: 'F1TV-2022', sans-serif;
-    font-size: 24px;
-    font-weight: 700;
-    font-style: oblique;
-    color: rgb(128, 128, 128);
-    justify-content: flex-start;
-}
-
-.driver-current .driver-name {
-    position: absolute;
+.driver-row.is-observed .driver-name {
     left: 70px;
-    top: 0;
     width: 250px;
     height: 55px;
-    padding-left: 0;
-    font-family: 'F1TV-2022', sans-serif;
     font-size: 27px;
-    font-weight: 700;
-    font-style: oblique;
     color: rgb(0, 0, 0);
-    justify-content: flex-start;
-    text-transform: uppercase;
-}
-
-.driver-behind .driver-name {
-    position: absolute;
-    left: 65px;
-    top: 0;
-    width: 225px;
-    height: 50px;
-    padding-left: 0;
-    font-family: 'F1TV-2022', sans-serif;
-    font-size: 24px;
-    font-weight: 700;
-    font-style: oblique;
-    color: rgb(128, 128, 128);
-    justify-content: flex-start;
 }

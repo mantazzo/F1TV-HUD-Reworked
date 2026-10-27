@@ -11,7 +11,6 @@
     <script>AssetPreloader.preloadAll();</script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="/utils/overlay-scale.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/textfit@2.4.0/textFit.min.js"></script>
     <script src="/utils/driver-utils.js"></script>
 </head>
@@ -37,27 +36,27 @@
                 <img src="/images/mini-leaderboard/DecorationRight.png" class="decoration-right" alt="">
             </div>
 
-            <!-- Driver Ahead -->
-            <div class="driver-row driver-ahead">
-                <div class="driver-name" id="name-ahead">NO DATA</div>
+            <!-- Driver rows - three identical slots; the observed driver's row gets .is-observed
+                 (top row when P1, bottom row when last, middle otherwise) -->
+            <div class="driver-row is-empty">
+                <img src="/images/common/PlayerIndicator.png" class="player-indicator" alt="">
+                <div class="driver-name"></div>
                 <img src="/images/common/Knockout.png" class="knockout-overlay" alt="">
-                <div class="position-number" id="position-ahead">-</div>
+                <div class="position-number"></div>
                 <div class="position-stroke"></div>
             </div>
-
-            <!-- Current Player (Highlighted) -->
-            <div class="driver-row driver-current">
+            <div class="driver-row is-observed">
                 <img src="/images/common/PlayerIndicator.png" class="player-indicator" alt="">
-                <div class="driver-name" id="name-current">WAITING...</div>
+                <div class="driver-name">WAITING...</div>
                 <img src="/images/common/Knockout.png" class="knockout-overlay" alt="">
-                <div class="position-number" id="position-current">-</div>
+                <div class="position-number">-</div>
+                <div class="position-stroke"></div>
             </div>
-
-            <!-- Driver Behind -->
-            <div class="driver-row driver-behind">
-                <div class="driver-name" id="name-behind">NO DATA</div>
+            <div class="driver-row is-empty">
+                <img src="/images/common/PlayerIndicator.png" class="player-indicator" alt="">
+                <div class="driver-name"></div>
                 <img src="/images/common/Knockout.png" class="knockout-overlay" alt="">
-                <div class="position-number" id="position-behind">-</div>
+                <div class="position-number"></div>
                 <div class="position-stroke"></div>
             </div>
         </div>
@@ -70,21 +69,21 @@
         // Element references
         const overlayContainer = document.querySelector('.overlay-container');
         const sponsorElement = document.querySelector('.sponsor');
-        const positionAheadEl = document.getElementById('position-ahead');
-        const nameAheadEl = document.getElementById('name-ahead');
-        const positionCurrentEl = document.getElementById('position-current');
-        const nameCurrentEl = document.getElementById('name-current');
-        const positionBehindEl = document.getElementById('position-behind');
-        const nameBehindEl = document.getElementById('name-behind');
-        const driverAheadRow = document.querySelector('.driver-ahead');
-        const driverBehindRow = document.querySelector('.driver-behind');
-        const knockoutOverlayAhead = driverAheadRow.querySelector('.knockout-overlay');
-        const knockoutOverlayCurrent = document.querySelector('.driver-current .knockout-overlay');
-        const knockoutOverlayBehind = driverBehindRow.querySelector('.knockout-overlay');
+        const rows = Array.from(document.querySelectorAll('.driver-row')).map(el => ({
+            el,
+            positionEl: el.querySelector('.position-number'),
+            nameEl: el.querySelector('.driver-name')
+        }));
+
+        // SimHub row geometry: rows stack from top 10px, observed row 55px tall, others 50px
+        const ROWS_TOP = 10;
+        const ROW_HEIGHT = 50;
+        const OBSERVED_ROW_HEIGHT = 55;
         
-        // Sponsor animation control
-        let sponsorAnimation = null;
+        // Sponsor display control
         let sponsorTimeout = null;
+        let isOverlayVisible = false;
+        let showSponsors = true; // global (all overlays): Qatar Airways logo
         
         // Data storage
         let aiDrivers = {};
@@ -96,53 +95,59 @@
         let rawPlayerIndex = null; // from m_header.m_playerCarIndex, unmodified
         let isSpectating = 0;     // from Session packet m_isSpectating
         let spectatorCarIndex = 255; // from Session packet m_spectatorCarIndex
-        let numActiveCars = 0;
+        let participantsActiveCars = 0; // latest m_numActiveCars (Participants) - drops when a driver retires
         let formulaType = DriverUtils.FORMULA_TYPE.F1_MODERN;
         let sessionType = null;
         
-        // Sponsor animation functions
-        function startSponsorAnimation() {
-            // Cancel any existing animation/timeout
-            if (sponsorAnimation) sponsorAnimation.pause();
-            if (sponsorTimeout) clearTimeout(sponsorTimeout);
-            
-            // Reset sponsor to visible
-            sponsorElement.style.opacity = '1';
-            
-            // Start 6-second countdown to fade out
-            sponsorTimeout = setTimeout(() => {
-                sponsorAnimation = anime({
-                    targets: sponsorElement,
-                    opacity: 0,
-                    duration: 200,
-                    easing: 'easeOutQuad'
-                });
-            }, 6000);
+        // SimHub: isincreasing(6000, [F1TVPlugin.Mini Leaderboard]) - sponsor shows for the first
+        // 6 seconds after the overlay is switched on (if sponsor logos are on), fade via CSS
+        function startSponsorDisplay() {
+            clearTimeout(sponsorTimeout);
+            if (!showSponsors) return;
+            sponsorElement.classList.add('is-shown');
+            sponsorTimeout = setTimeout(hideSponsor, 6000);
         }
-        
-        function stopSponsorAnimation() {
-            // Cancel any ongoing animation/timeout
-            if (sponsorAnimation) sponsorAnimation.pause();
-            if (sponsorTimeout) clearTimeout(sponsorTimeout);
-            
-            // Reset sponsor opacity after overlay transition completes (333ms + buffer)
-            setTimeout(() => {
-                sponsorElement.style.opacity = '1';
-            }, 350);
+
+        function hideSponsor() {
+            clearTimeout(sponsorTimeout);
+            sponsorTimeout = null;
+            sponsorElement.classList.remove('is-shown');
         }
-        
-        // Handle overlay visibility from controller
+
+        // Handle overlay visibility from controller. overlay_config is re-broadcast on every config
+        // change, so only react to the overlay actually being switched on/off.
         socket.on('overlay_config', (config) => {
+            showSponsors = config.global?.showSponsors !== false;
+            if (!showSponsors) hideSponsor();
+
             if (config.overlays && config.overlays['mini-leaderboard']) {
-                if (config.overlays['mini-leaderboard'].visible) {
-                    overlayContainer.classList.add('visible');
-                    startSponsorAnimation();
-                } else {
-                    overlayContainer.classList.remove('visible');
-                    stopSponsorAnimation();
-                }
+                const visible = config.overlays['mini-leaderboard'].visible === true;
+                if (visible === isOverlayVisible) return;
+                isOverlayVisible = visible;
+
+                overlayContainer.classList.toggle('visible', visible);
+                if (visible) startSponsorDisplay(); else hideSponsor();
             }
         });
+
+        // Set a name and refit it only when the text actually changes - Lap Data arrives ~60x/s,
+        // and refitting every tick is expensive (same idea as the leaderboards' textFitIfChanged)
+        function setFittedName(el, text, minFontSize, maxFontSize) {
+            // Key includes the size range - a row switching to/from observed has a different box/font
+            const key = `${text}|${maxFontSize}`;
+            if (el.dataset.fitted === key) return;
+            el.dataset.fitted = key;
+            el.textContent = text;
+            textFit(el, {
+                minFontSize,
+                maxFontSize,
+                multiLine: false,
+                detectMultiLine: false,
+                alignHoriz: true,
+                alignVert: false,
+                widthOnly: true
+            });
+        }
         
         // Load driver data using DriverUtils
         async function loadDriverData() {
@@ -182,8 +187,7 @@
             
             // Participants packet (ID 4) - Get driver names using DriverUtils
             if (packetId === 4) {
-                const activeFromPacket = data.m_numActiveCars || 0;
-                if (activeFromPacket > numActiveCars) numActiveCars = activeFromPacket;
+                participantsActiveCars = data.m_numActiveCars || 0;
                 participants = data.m_participants || [];
                 participantLastNames = {};
                 
@@ -203,88 +207,61 @@
                 const playerLapData = data.m_lapData[playerIndex];
                 if (!playerLapData) return;
 
-                // Fall back to the highest assigned position seen in Lap Data — m_numActiveCars
-                // (from packet 4) can under-report, same fix as leaderboard.html / leaderboard-lastname.html.
+                // m_numActiveCars can under-report (it drops when a driver retires), so merge it with the
+                // highest assigned position seen in Lap Data - same fix as leaderboard.html / leaderboard-lastname.html.
                 let maxPos = 0;
                 for (const lap of data.m_lapData) {
                     if (lap.m_carPosition > maxPos) maxPos = lap.m_carPosition;
                 }
-                if (maxPos > numActiveCars) numActiveCars = maxPos;
+                const numActiveCars = Math.max(participantsActiveCars, maxPos);
 
                 const currentPosition = playerLapData.m_carPosition;
-                
-                // Calculate ahead and behind positions
-                const positionAhead = currentPosition - 1;
-                const positionBehind = currentPosition + 1;
-                
-                // Update current player
-                positionCurrentEl.textContent = currentPosition;
-                nameCurrentEl.textContent = participantLastNames[playerIndex] || '';
-                textFit(nameCurrentEl, {
-                    minFontSize: 17,
-                    maxFontSize: 27,
-                    multiLine: false,
-                    alignHoriz: true,
-                    alignVert: false,
-                    widthOnly: true
+                if (!currentPosition) return;
+
+                // "Last place" (SimHub [OpponentsCount]): in races a retired car is out of the fight, so
+                // the raw m_numActiveCars is the running grid; in timed sessions a retired driver still
+                // holds a lap time and a position, so keep the merged count there.
+                let lastPosition = numActiveCars;
+                if (isRaceSession(sessionType) && participantsActiveCars > 0) {
+                    lastPosition = participantsActiveCars;
+                }
+                lastPosition = Math.max(lastPosition, currentPosition);
+
+                // SimHub Observed Driver Top: if([Position]=1,60,if([Position]==[OpponentsCount],160,110))-50
+                // -> top row when P1, bottom row when last, middle otherwise
+                let observedRow = 1;
+                if (currentPosition === 1) observedRow = 0;
+                else if (currentPosition === lastPosition) observedRow = 2;
+                const firstPosition = currentPosition - observedRow;
+
+                let top = ROWS_TOP;
+                rows.forEach((row, i) => {
+                    const isObserved = i === observedRow;
+                    const position = firstPosition + i;
+                    const driverIdx = isObserved ? playerIndex : findDriverByPosition(data.m_lapData, position);
+
+                    row.el.classList.toggle('is-observed', isObserved);
+                    row.el.style.top = `${top}px`;
+                    top += isObserved ? OBSERVED_ROW_HEIGHT : ROW_HEIGHT;
+
+                    // Fewer than 3 cars (or no driver in that slot) - keep the line, just empty
+                    if (position < 1 || driverIdx === -1) {
+                        row.el.classList.add('is-empty');
+                        return;
+                    }
+                    row.el.classList.remove('is-empty');
+
+                    row.positionEl.textContent = position;
+                    setFittedName(row.nameEl, participantLastNames[driverIdx] || '', isObserved ? 17 : 14, isObserved ? 27 : 24);
+                    row.el.classList.toggle('is-knockout', DriverUtils.isInKnockoutZone(position, sessionType, numActiveCars));
                 });
-                
-                // Update knockout overlay visibility for current player
-                const isCurrentKnockout = DriverUtils.isInKnockoutZone(currentPosition, sessionType, numActiveCars);
-                knockoutOverlayCurrent.style.display = isCurrentKnockout ? 'block' : 'none';
-                positionCurrentEl.style.color = isCurrentKnockout ? 'rgb(255, 255, 255)' : 'rgb(0, 0, 0)';
-                
-                // Update driver ahead
-                if (positionAhead >= 1) {
-                    const aheadIdx = findDriverByPosition(data.m_lapData, positionAhead);
-                    if (aheadIdx !== -1) {
-                        driverAheadRow.style.display = 'flex';
-                        positionAheadEl.textContent = positionAhead;
-                        nameAheadEl.textContent = participantLastNames[aheadIdx] || '';
-                        textFit(nameAheadEl, {
-                            minFontSize: 14,
-                            maxFontSize: 24,
-                            multiLine: false,
-                            alignHoriz: true,
-                            alignVert: false,
-                            widthOnly: true
-                        });
-                        
-                        // Update knockout overlay visibility
-                        knockoutOverlayAhead.style.display = DriverUtils.isInKnockoutZone(positionAhead, sessionType, numActiveCars) ? 'block' : 'none';
-                    } else {
-                        driverAheadRow.style.display = 'none';
-                    }
-                } else {
-                    driverAheadRow.style.display = 'none';
-                }
-                
-                // Update driver behind
-                if (positionBehind <= numActiveCars) {
-                    const behindIdx = findDriverByPosition(data.m_lapData, positionBehind);
-                    if (behindIdx !== -1) {
-                        driverBehindRow.style.display = 'flex';
-                        positionBehindEl.textContent = positionBehind;
-                        nameBehindEl.textContent = participantLastNames[behindIdx] || '';
-                        textFit(nameBehindEl, {
-                            minFontSize: 14,
-                            maxFontSize: 24,
-                            multiLine: false,
-                            alignHoriz: true,
-                            alignVert: false,
-                            widthOnly: true
-                        });
-                        
-                        // Update knockout overlay visibility
-                        knockoutOverlayBehind.style.display = DriverUtils.isInKnockoutZone(positionBehind, sessionType, numActiveCars) ? 'block' : 'none';
-                    } else {
-                        driverBehindRow.style.display = 'none';
-                    }
-                } else {
-                    driverBehindRow.style.display = 'none';
-                }
             }
         });
+
+        function isRaceSession(type) {
+            const T = DriverUtils.SESSION_TYPE;
+            return type === T.RACE || type === T.RACE_2 || type === T.RACE_3;
+        }
         
         // Helper function to find driver index by position
         function findDriverByPosition(lapData, targetPosition) {
