@@ -21,7 +21,7 @@ body {
     width: 810px;
     height: 135px;
     opacity: 0;
-    transition: opacity 0.33s ease-in-out;
+    transition: opacity 333ms ease-out;
     overflow: hidden;
 }
 
@@ -36,9 +36,20 @@ body {
     left: 0;
     width: 810px;
     height: 120px;
-    background: rgba(18, 20, 26, 0.7);
     overflow: hidden;
     z-index: 0;
+}
+
+/* Dark rectangle, drawn on top of the background images */
+.background-pattern::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgb(18, 20, 26);
+    opacity: 0.7;
 }
 
 .bg-image {
@@ -53,7 +64,7 @@ body {
 
 .bg-image-1 {
     left: 197.6px;
-    top: -198px;
+    top: -198.1px;
 }
 
 .bg-image-2 {
@@ -91,26 +102,31 @@ body {
 }
 
 
-/* Bottom stroke decoration */
-.session-info-container::after {
-    content: '';
+/* Bottom stroke decoration: 2px hatching every 9px horizontally (= 6.364px along the gradient) */
+.stroke {
     position: absolute;
     left: 0;
     top: 120px;
     width: 810px;
     height: 15px;
     opacity: 0.5;
-    background: 
-        linear-gradient(to top, transparent 0px, transparent 7px, rgba(0, 0, 0, 0.1) 7px, rgba(0, 0, 0, 0.1) 15px),
-        repeating-linear-gradient(
-            -45deg,
-            transparent,
-            transparent 7px,
-            rgba(0, 0, 0, 0.2) 7px,
-            rgba(0, 0, 0, 0.2) 9px
-        ),
+    overflow: hidden;
+    background:
+        repeating-linear-gradient(135deg, rgba(0, 0, 0, 0.2) 0 2px, transparent 2px 6.364px),
         rgba(255, 255, 255, 0.15);
-    filter: blur(0.5px);
+}
+
+/* Blurred shadow along the top of the stroke - only this part is blurred, not the hatching */
+.stroke::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 8px;
+    background-color: rgb(0, 0, 0);
+    opacity: 0.1;
+    filter: blur(1.5px);
 }
 
 /* Event Name - Top Left */
@@ -118,7 +134,7 @@ body {
     position: absolute;
     left: 15px;
     top: 3px;
-    width: 340px;
+    width: 370px;
     height: 90px;
     font-family: 'F1TV-2022', sans-serif;
     font-size: 25px;
@@ -184,9 +200,9 @@ body {
 /* Location - Bottom Right */
 .location {
     position: absolute;
-    left: 400px;
+    left: 395px;
     top: 65px;
-    width: 410px;
+    width: 415px;
     height: 30px;
     font-family: 'F1TV-2022', sans-serif;
     font-size: 22px;

@@ -14,6 +14,7 @@
 </head>
 <body data-tauri-drag-region>
     <div class="session-info-container">
+        <div class="stroke"></div>
         <div class="background-pattern">
             <div class="bg-image bg-image-1"></div>
             <div class="bg-image bg-image-2"></div>
@@ -21,7 +22,7 @@
         <div class="gradient-overlay"></div>
         <div class="track-flag" id="track-flag"></div>
         <div class="event-name" id="event-name">WAITING FOR TRACK DATA...</div>
-        <div class="session-year" id="session-year">2025</div>
+        <div class="session-year" id="session-year">2026</div>
         <div class="separator"></div>
         <div class="session-type" id="session-type">WAITING...</div>
         <div class="location" id="location">WAITING...</div>
@@ -42,6 +43,8 @@
         // State variables
         let trackId = -1;
         let trackData = null;
+        let trackKey = null;     // track + game year of the loaded/loading track file
+        let isTrackLoading = false;
         let currentFormula = null;
         let currentSessionType = null;
         let currentYear = null;
@@ -50,7 +53,7 @@
         let spectatorCarIndex = 255; // from Session packet m_spectatorCarIndex
         let detectedEraYear = null; // 2024/2025/2026 from player's m_teamId, or null to fall back to gameYear
         let isSprintWeekend = false; // true when m_weekendStructure contains both session type 15 and 16
-        let overlayVisible = true;
+        let overlayVisible = false;
         let visibilityMode = 'toggle'; // 'toggle', 'automatic', 'controlled'
         let hideTimer = null;
         
@@ -90,12 +93,14 @@
             18: 'TIME TRIAL'
         };
         
-        // Handle overlay visibility from controller
+        // Handle overlay visibility from controller. overlay_config is re-broadcast on every config
+        // change, so only react to the switch or the mode actually changing.
         socket.on('overlay_config', (config) => {
             if (config.overlays && config.overlays['session-info']) {
-                const newVisible = config.overlays['session-info'].visible;
+                const newVisible = config.overlays['session-info'].visible === true;
                 const newMode = config.overlays['session-info'].visibilityMode || 'toggle';
-                
+                if (newVisible === overlayVisible && newMode === visibilityMode) return;
+
                 overlayVisible = newVisible;
                 visibilityMode = newMode;
                 
@@ -125,10 +130,7 @@
                 } else if (visibilityMode === 'controlled') {
                     // Controlled by SSTA event - don't show immediately
                     // Will be shown when SSTA event is received
-                    if (!overlayVisible) {
-                        sessionInfoContainer.classList.remove('visible');
-                    }
-                    // If overlay was just enabled, wait for SSTA event
+                    sessionInfoContainer.classList.remove('visible');
                 }
             }
         });
@@ -198,26 +200,14 @@
         }
         
         // Get year to display
-        function getDisplayYear(trackData, gameYear, eraYear) {
-            // Priority: track file year (explicit per-file override) → detected car era → game year
-            if (trackData && trackData.year !== null && trackData.year !== undefined) {
-                return trackData.year;
-            }
-
+        function getDisplayYear(gameYear, eraYear) {
+            // Follows the cars: era-specific teams give their year, the generic team IDs (null here)
+            // are reused across games, so those use the game year
             if (eraYear !== null && eraYear !== undefined) {
                 return eraYear;
             }
 
-            if (gameYear !== null && gameYear !== undefined) {
-                // m_gameYear is 2-digit, convert to 4-digit
-                // Assuming years 00-50 are 2000-2050, 51-99 are 1951-1999
-                if (gameYear < 100) {
-                    return gameYear <= 50 ? 2000 + gameYear : 1900 + gameYear;
-                }
-                return gameYear;
-            }
-            
-            return null;
+            return DriverUtils.getFullGameYear(gameYear);
         }
         
         // Get session type name
@@ -227,45 +217,60 @@
             if (sessionType === 15 && isSprintWeekend) {
                 return 'SPRINT RACE';
             }
+            // F2 weekends: 16 is the Feature Race
+            if (sessionType === 16 && currentFormula === DriverUtils.FORMULA_TYPE.F2) {
+                return 'FEATURE RACE';
+            }
             return SESSION_TYPE_NAMES[sessionType] || 'UNKNOWN';
         }
         
-        // Update display
-        function updateDisplay() {
-            const eventName = getEventName(trackData, currentFormula, detectedEraYear);
-            const location = getLocation(trackData);
-            const year = getDisplayYear(trackData, currentYear, detectedEraYear);
-            const sessionTypeName = getSessionTypeName(currentSessionType);
-            
-            eventNameElement.textContent = eventName;
-            textFit(eventNameElement, {
-                minFontSize: 20,
-                maxFontSize: 25,
-                multiLine: true,
-                alignHoriz: false,
-                alignVert: true,
-                widthOnly: false
-            });
-            locationElement.textContent = location;
-            textFit(locationElement, {
-                minFontSize: 16,
-                maxFontSize: 22,
-                multiLine: false,
-                alignHoriz: true,
-                alignVert: false,
-                widthOnly: true
-            });
-            sessionTypeElement.textContent = sessionTypeName;
-            textFit(sessionTypeElement, {
-                minFontSize: 20,
-                maxFontSize: 30,
+        // Set a text and refit it only when it actually changes
+        function setFittedText(el, text, minFontSize, maxFontSize) {
+            if (el.dataset.fitted === text) return;
+            el.dataset.fitted = text;
+            el.textContent = text;
+            textFit(el, {
+                minFontSize,
+                maxFontSize,
                 multiLine: false,
                 detectMultiLine: false,
                 alignHoriz: true,
                 alignVert: false,
                 widthOnly: true
             });
+        }
+
+        // Event name uses the whole box and may wrap, shrinking only when it doesn't fit. SimHub's
+        // per-track widths/sizes were tuned for older names, and users can set their own names.
+        function setEventName(text) {
+            if (eventNameElement.dataset.fitted === text) return;
+            eventNameElement.dataset.fitted = text;
+            eventNameElement.textContent = text;
+            textFit(eventNameElement, {
+                minFontSize: 16,
+                maxFontSize: 25,
+                multiLine: true,
+                detectMultiLine: false,
+                alignHoriz: false,
+                alignVert: false,
+                widthOnly: false
+            });
+        }
+        
+        // Update display
+        function updateDisplay() {
+            // Nothing to show until the track file has loaded (Session packets keep arriving meanwhile)
+            if (trackKey === null || isTrackLoading) return;
+
+            const eventName = getEventName(trackData, currentFormula, detectedEraYear);
+            const location = getLocation(trackData);
+            const year = getDisplayYear(currentYear, detectedEraYear);
+            const sessionTypeName = getSessionTypeName(currentSessionType);
             
+            setEventName(eventName);
+            setFittedText(locationElement, location, 16, 22);
+            setFittedText(sessionTypeElement, sessionTypeName, 20, 30);
+
             // Load track flag image
             if (trackId !== -1 && TRACKS[trackId]) {
                 const trackName = TRACKS[trackId];
@@ -274,7 +279,7 @@
             
             if (year !== null) {
                 sessionYearElement.textContent = year;
-                sessionYearElement.style.display = 'block';
+                sessionYearElement.style.display = '';
             } else {
                 console.error('Session Info: No year available to display, is the game outputting the m_gameYear field in the header?');
                 sessionYearElement.style.display = 'none';
@@ -308,11 +313,16 @@
                 currentSessionType = sessionType;
                 currentFormula = formula;
                 
-                // Load track data if track changed
-                if (newTrackId !== trackId) {
+                // Load track data if the track (or game, for year-specific files) changed
+                const newTrackKey = `${newTrackId}-${gameYear}`;
+                if (newTrackKey !== trackKey) {
+                    trackKey = newTrackKey;
                     trackId = newTrackId;
-                    loadTrackData(trackId, gameYear).then(data => {
+                    isTrackLoading = true;
+                    loadTrackData(trackId, DriverUtils.getFullGameYear(gameYear)).then(data => {
+                        if (newTrackKey !== trackKey) return; // ignore a stale load after a quick track change
                         trackData = data;
+                        isTrackLoading = false;
                         updateDisplay();
                     });
                 } else {
@@ -361,6 +371,12 @@
                     }
                 }
             }
+        });
+
+        // The event name fit measures text, so redo it if a web font arrives after the first fit
+        document.fonts.ready.then(() => {
+            delete eventNameElement.dataset.fitted;
+            updateDisplay();
         });
     </script>
 </body>

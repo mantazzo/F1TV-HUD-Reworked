@@ -106,6 +106,17 @@ const DriverUtils = {
     },
 
     /**
+     * Convert the header's 2-digit m_gameYear (25 for F1 25) to a full year.
+     *
+     * @param {number} gameYear - m_header.m_gameYear
+     * @returns {number|null} e.g. 2025, or null if the game didn't send a year
+     */
+    getFullGameYear(gameYear) {
+        if (gameYear === undefined || gameYear === null) return null;
+        return gameYear < 100 ? 2000 + gameYear : gameYear;
+    },
+
+    /**
      * Determine the "content era" year a car's livery belongs to, based on its team ID.
      * F1 25 keeps reporting m_gameYear = 25 even with the 2026 Season Pack active (it's
      * still the same game/title), so gameYear alone can't tell 2024/2025/2026-liveried
