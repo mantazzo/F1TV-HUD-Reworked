@@ -13,7 +13,7 @@ body {
     width: 310px;
     height: 340px;
     opacity: 0;
-    transition: opacity 0.2s ease;
+    transition: opacity 0.2s ease-out;
     overflow: hidden;
 }
 
@@ -38,6 +38,7 @@ body {
     top: 15px;
     width: 272px;
     height: 67px;
+    border-radius: 31px;
     overflow: hidden;
 }
 
@@ -50,6 +51,12 @@ body {
     background-size: 272px 67px;
     background-repeat: no-repeat;
     background-position: center;
+}
+
+/* No oval image exists for Super Soft (F2), same dark gradient style as the other images */
+.compound-oval.is-supersoft {
+    border-radius: 31px;
+    background-image: linear-gradient(90deg, #6e3b68, #452541);
 }
 
 .compound-name {
@@ -69,7 +76,14 @@ body {
     justify-content: center;
     padding-top: 7px;
     box-sizing: border-box;
-    transition: top 0.5s ease;
+    transition: top 0.5s ease-out;
+}
+
+/* Too wide for the oval at the normal size */
+.compound-name.is-supersoft {
+    font-size: 33px;
+    padding-top: 12px;
+    white-space: nowrap;
 }
 
 .compound-decoration {
@@ -202,21 +216,14 @@ body {
     height: 65px;
 }
 
-/* Blinking animation triggered by JavaScript */
+/* Blinks for 800ms when the overlay appears (SimHub: BlinkEnabled isincreasing(800, ...), BlinkDelay 150ms) */
 .pit-window-content.blink-active {
-    animation: blink 400ms steps(1, start) 5;
+    animation: blink 300ms steps(1) 2.67;
 }
 
 @keyframes blink {
-    0% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0;
-    }
-    100% {
-        opacity: 1;
-    }
+    0%  { opacity: 1; }
+    50% { opacity: 0; }
 }
 
 .lap-label {
@@ -234,6 +241,10 @@ body {
     justify-content: flex-end;
     text-align: right;
     align-items: center;
+}
+
+.lap-label.is-single-digit {
+    left: 15px;
 }
 
 .lap-values {
@@ -272,24 +283,15 @@ body {
 .aws-banner {
     position: absolute;
     left: 0;
-    top: 285px;
+    top: 230px;
     width: 460px;
     height: 55px;
-    z-index: -1;
+    transition: top 200ms ease-out;
 }
 
-/* Animate banner sliding up after 10 seconds */
-.overlay-container.visible .aws-banner {
-    animation: bannerSlideUp 333ms ease-out 10s forwards;
-}
-
-@keyframes bannerSlideUp {
-    0% {
-        top: 285px;
-    }
-    100% {
-        top: 230px;
-    }
+/* Shown for the first 10s after the overlay appears (see startBanner), otherwise behind the background */
+.aws-banner.is-shown {
+    top: 285px;
 }
 
 .aws-background {
@@ -301,20 +303,13 @@ body {
     background-image: url('/images/other-logos/AWSbg.png');
     background-size: 460px 55px;
     background-repeat: no-repeat;
+    transition: left 333ms ease-out;
 }
 
-/* Animate background sliding in */
+/* Slides in once the overlay has faded in */
 .overlay-container.visible .aws-background {
-    animation: backgroundSlideIn 333ms ease-out forwards;
-}
-
-@keyframes backgroundSlideIn {
-    0% {
-        left: -460px;
-    }
-    100% {
-        left: 0;
-    }
+    left: 0;
+    transition-delay: 200ms;
 }
 
 .aws-text {
@@ -327,20 +322,12 @@ body {
     background-image: url('/images/other-logos/pbaws.png');
     background-size: 225px 39px;
     background-repeat: no-repeat;
+    transition: left 333ms ease-out, opacity 333ms ease-out;
 }
 
-/* Animate text sliding in with fade */
+/* Follows the background, ending up to the right of its edge, with a fade */
 .overlay-container.visible .aws-text {
-    animation: textSlideIn 333ms ease-out forwards;
-}
-
-@keyframes textSlideIn {
-    0% {
-        left: -460px;
-        opacity: 0;
-    }
-    100% {
-        left: 43px;
-        opacity: 1;
-    }
+    left: 43px;
+    opacity: 1;
+    transition-delay: 200ms, 250ms;
 }

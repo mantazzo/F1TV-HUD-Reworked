@@ -13,6 +13,12 @@
 </head>
 <body data-tauri-drag-region>
     <div class="overlay-container">
+        <!-- AWS Banner (first, so it hides behind the background when slid up) -->
+        <div class="aws-banner">
+            <div class="aws-background"></div>
+            <div class="aws-text"></div>
+        </div>
+
         <!-- Background -->
         <div class="pw-background"></div>
         
@@ -43,12 +49,6 @@
         
         <!-- Top Gradient -->
         <div class="top-gradient"></div>
-        
-        <!-- AWS Banner -->
-        <div class="aws-banner">
-            <div class="aws-background"></div>
-            <div class="aws-text"></div>
-        </div>
     </div>
     
     <script>
@@ -59,17 +59,20 @@
         const compoundOval = document.querySelector('.compound-oval');
         const compoundName = document.querySelector('.compound-name');
         const compoundDecoration = document.querySelector('.compound-decoration');
+        const lapLabel = document.querySelector('.lap-label');
         const lapValues = document.querySelector('.lap-values');
         const borderTopRight = document.querySelector('.border-top-right');
         const borderBottomLeft = document.querySelector('.border-bottom-left');
         const pitWindowLabel = document.querySelector('.pit-window-label');
         const pitWindowContent = document.querySelector('.pit-window-content');
-        
+        const awsBanner = document.querySelector('.aws-banner');
+
         // State variables
-        let currentCompound = '';
+        let currentCompound = null;
         let pitWindowIdeal = 0;
         let pitWindowLatest = 0;
         let currentLap = 0;
+        let sessionType = null;   // from Session packet m_sessionType
         let playerIndex = null;  // "active driver" — m_header.m_playerCarIndex, or m_spectatorCarIndex while spectating
         let rawPlayerIndex = null; // from m_header.m_playerCarIndex, unmodified
         let isSpectating = 0;     // from Session packet m_isSpectating
@@ -83,51 +86,98 @@
         let lastAutoShowLap = -1; // Track which lap triggered auto-show to avoid repeated triggers
         let previousVisibility = false; // Track previous visibility state
         let previousAutoDisplay = false; // Track previous auto display state
-        
-        // Compound mapping for visual tyres
-        const COMPOUND_VISUAL = {
-            16: 'SOFT',
-            17: 'MEDIUM',
-            18: 'HARD',
-            7: 'INTER',
-            8: 'WET'
+
+        // Sponsor display control
+        const BANNER_DURATION = 10000; // SimHub: isincreasing(10000, ...)
+        let bannerTimer = null;
+        let showSponsors = true; // global (all overlays): AWS banner
+
+        // Visual tyre compounds, same IDs and colors as the Leaderboards. There's no oval image
+        // for Super Soft, that one is drawn in CSS (.is-supersoft)
+        const TYRE_COMPOUND = {
+            7:  { displayText: 'INTER', color: '#31AF49', image: '/images/pit-window/Inter.png' },
+            8:  { displayText: 'WET', color: '#0073AD', image: '/images/pit-window/Wet.png' },
+            15: { displayText: 'WET', color: '#0073AD', image: '/images/pit-window/Wet.png' }, // F2
+            16: { displayText: 'SOFT', color: '#EC1C24', image: '/images/pit-window/Soft.png' },
+            17: { displayText: 'MEDIUM', color: '#FFD604', image: '/images/pit-window/Medium.png' },
+            18: { displayText: 'HARD', color: '#F0F0EC', image: '/images/pit-window/Hard.png' },
+            19: { displayText: 'SUPER SOFT', color: '#97528F', image: null }, // F2
+            20: { displayText: 'SOFT', color: '#EC1C24', image: '/images/pit-window/Soft.png' }, // F2
+            21: { displayText: 'MEDIUM', color: '#FFD604', image: '/images/pit-window/Medium.png' }, // F2
+            22: { displayText: 'HARD', color: '#F0F0EC', image: '/images/pit-window/Hard.png' } // F2
         };
-        
-        // Compound colors for decorations
-        const COMPOUND_COLORS = {
-            'SOFT': '#EC1C24',  // Red
-            'MEDIUM': '#FFD604',  // Yellow/Gold
-            'HARD': '#F0F0EC',  // White
-            'INTER': '#31AF49',  // Green
-            'WET': '#0073AD'  // Blue/Turquoise
-        };
-        
-        // Helper function to show overlay with animation
-        function showOverlay() {
-            overlayContainer.classList.add('visible');
-            
-            // Trigger blinking animation
+        const NO_COMPOUND = { displayText: 'NO DATA', color: '#EBD25F', image: '/images/pit-window/Medium.png' };
+
+        // SimHub: BlinkEnabled isincreasing(800, ...), BlinkDelay 150 (see .blink-active)
+        function blinkPitWindow() {
             pitWindowContent.classList.remove('blink-active');
             void pitWindowContent.offsetWidth; // Force reflow
             pitWindowContent.classList.add('blink-active');
-            setTimeout(() => {
-                pitWindowContent.classList.remove('blink-active');
-            }, 2000);
         }
-        
+
+        // SimHub: the banner slides down from behind the background for the first 10 seconds
+        // after the overlay is shown (if sponsor logos are on), then slides back up
+        function startBanner() {
+            clearTimeout(bannerTimer);
+            if (!showSponsors) return;
+            awsBanner.classList.add('is-shown');
+            bannerTimer = setTimeout(hideBanner, BANNER_DURATION);
+        }
+
+        function hideBanner() {
+            clearTimeout(bannerTimer);
+            bannerTimer = null;
+            awsBanner.classList.remove('is-shown');
+        }
+
+        // Helper function to show overlay with animation
+        function showOverlay() {
+            overlayContainer.classList.add('visible');
+            blinkPitWindow();
+            startBanner();
+        }
+
         // Helper function to hide overlay
         function hideOverlay() {
             overlayContainer.classList.remove('visible');
-            
-            // Clear any pending auto-hide timer
+            hideBanner();
+            clearAutoHideTimer();
+        }
+
+        // Pit stops only happen in races. Before the first Session packet the session isn't known
+        // yet, so the overlay can still be shown then (e.g. to position it without the game running)
+        function isPitWindowSession() {
+            const T = DriverUtils.SESSION_TYPE;
+            return sessionType === null || sessionType === T.RACE || sessionType === T.RACE_2 || sessionType === T.RACE_3;
+        }
+
+        // Show the overlay as switched on in the Controller, if this session allows it
+        function showFromController() {
+            if (!isPitWindowSession()) return;
+            showOverlay();
+
+            // If auto display is enabled, start auto-hide timer. previousVisibility stays
+            // true after it hides, so that changing settings doesn't re-trigger the overlay
+            if (autoDisplayEnabled) startAutoHideTimer();
+        }
+
+        function clearAutoHideTimer() {
             if (autoHideTimer) {
                 clearTimeout(autoHideTimer);
                 autoHideTimer = null;
             }
         }
+
+        function startAutoHideTimer() {
+            clearAutoHideTimer();
+            autoHideTimer = setTimeout(hideOverlay, autoDuration);
+        }
         
         // Handle overlay visibility from controller
         socket.on('overlay_config', (config) => {
+            showSponsors = config.global?.showSponsors !== false;
+            if (!showSponsors) hideBanner();
+
             if (config.overlays && config.overlays['pit-window']) {
                 const pitWindowConfig = config.overlays['pit-window'];
                 
@@ -138,58 +188,45 @@
                 
                 // Handle manual visibility toggle - only trigger show/hide if visibility actually changed
                 const newVisibility = pitWindowConfig.visible === true;
+                autoDisplayEnabled = newAutoDisplay;
                 
                 if (newVisibility !== previousVisibility) {
                     previousVisibility = newVisibility;
                     
                     if (newVisibility) {
-                        showOverlay();
-                        
-                        // If auto display is enabled, start auto-hide timer
-                        if (newAutoDisplay) {
-                            if (autoHideTimer) clearTimeout(autoHideTimer);
-                            autoHideTimer = setTimeout(() => {
-                                hideOverlay();
-                                // Note: Don't update previousVisibility here - keep it true
-                                // so that changing settings doesn't re-trigger the overlay
-                            }, autoDuration);
-                        }
+                        showFromController();
                     } else {
                         hideOverlay();
                     }
-                } 
-                // Handle edge case: auto display was just enabled while overlay is already visible
-                else if (newAutoDisplay !== previousAutoDisplay && newAutoDisplay === true && previousVisibility === true) {
-                    // Start auto-hide timer since overlay is showing but timer wasn't running
-                    if (autoHideTimer) clearTimeout(autoHideTimer);
-                    autoHideTimer = setTimeout(() => {
-                        hideOverlay();
-                    }, autoDuration);
+                }
+                // Handle edge case: auto display was switched while overlay is shown from the Controller
+                else if (newAutoDisplay !== previousAutoDisplay && previousVisibility === true) {
+                    if (newAutoDisplay) startAutoHideTimer(); else clearAutoHideTimer();
                 }
                 
                 // Update auto display state tracking
-                autoDisplayEnabled = newAutoDisplay;
                 previousAutoDisplay = newAutoDisplay;
             }
         });
         
         // Update compound display
         function updateCompound(visualCompound) {
-            const compound = COMPOUND_VISUAL[visualCompound] || 'NO DATA';
-            
+            const compound = TYRE_COMPOUND[visualCompound] || NO_COMPOUND;
+
             if (currentCompound !== compound) {
                 currentCompound = compound;
-                
+
                 // Update text
-                compoundName.textContent = compound;
-                
+                compoundName.textContent = compound.displayText;
+
                 // Update oval background image
-                const imagePath = `/images/pit-window/${compound === 'INTER' ? 'Inter' : compound.charAt(0) + compound.slice(1).toLowerCase()}.png`;
-                compoundOval.style.backgroundImage = `url('${imagePath}')`;
-                
+                compoundOval.style.backgroundImage = compound.image ? `url('${compound.image}')` : '';
+                compoundOval.classList.toggle('is-supersoft', !compound.image);
+                compoundName.classList.toggle('is-supersoft', !compound.image);
+
                 // Get color for this compound
-                const compoundColor = COMPOUND_COLORS[compound] || '#EBD25F';
-                
+                const compoundColor = compound.color;
+
                 // Update decoration border color
                 compoundDecoration.style.borderColor = compoundColor;
                 
@@ -203,31 +240,45 @@
                 // Update lap values color
                 lapValues.style.color = compoundColor;
                 
-                console.log('[PitWindow] Compound updated:', compound, 'Color:', compoundColor);
+                console.log('[PitWindow] Compound updated:', compound.displayText, 'Color:', compoundColor);
             }
         }
         
         // Update pit window display
         function updatePitWindow(idealLap, latestLap) {
+            // SimHub: Left if(ideal>9,30,45) - a shorter lap range leaves more room for the label
+            lapLabel.classList.toggle('is-single-digit', idealLap <= 9);
+
             if (idealLap === 0 && latestLap === 0) {
                 lapValues.textContent = 'N/A';
             } else {
+                const windowJustOpened = lapValues.textContent === 'N/A';
                 lapValues.textContent = `${idealLap}-${latestLap}`;
-                
-                // Trigger blinking animation if overlay is visible
-                if (overlayContainer.classList.contains('visible')) {
-                    // Remove class if already present to restart animation
-                    pitWindowContent.classList.remove('blink-active');
-                    // Force reflow to restart animation
-                    void pitWindowContent.offsetWidth;
-                    // Add class to trigger animation
-                    pitWindowContent.classList.add('blink-active');
-                    
-                    // Remove class after animation completes (5 cycles × 400ms = 2000ms)
-                    setTimeout(() => {
-                        pitWindowContent.classList.remove('blink-active');
-                    }, 2000);
+
+                // SimHub's blink only follows the overlay appearing, which here includes the
+                // window arriving while it's already on screen as "N/A"
+                if (windowJustOpened && overlayContainer.classList.contains('visible')) {
+                    blinkPitWindow();
                 }
+            }
+        }
+
+        // Automatic Mode: pop up on the configured lap(s). Runs on a lap change and on a pit window
+        // change, since the window can move mid-lap (SimHub's changed() reacts to both)
+        function checkAutoShow() {
+            if (!autoDisplayEnabled || !isPitWindowSession() || pitWindowIdeal <= 0 || currentLap <= 0) return;
+            if (lastAutoShowLap === currentLap) return;
+
+            const isLapBefore = currentLap === pitWindowIdeal - 1;
+            const isWindowLap = currentLap === pitWindowIdeal;
+            const shouldShow = (autoMode === 'idealLap-1' && isLapBefore)
+                || (autoMode === 'idealLap' && isWindowLap)
+                || (autoMode === 'both' && (isLapBefore || isWindowLap));
+
+            if (shouldShow) {
+                lastAutoShowLap = currentLap;
+                showOverlay();
+                startAutoHideTimer();
             }
         }
         
@@ -241,6 +292,9 @@
                 spectatorCarIndex = data.m_spectatorCarIndex ?? spectatorCarIndex;
                 playerIndex = DriverUtils.getActiveDriverIndex(rawPlayerIndex, isSpectating, spectatorCarIndex);
 
+                const wasPitWindowSession = isPitWindowSession();
+                sessionType = data.m_sessionType ?? sessionType;
+
                 const idealLap = data.m_pitStopWindowIdealLap || 0;
                 const latestLap = data.m_pitStopWindowLatestLap || 0;
 
@@ -248,9 +302,14 @@
                     pitWindowIdeal = idealLap;
                     pitWindowLatest = latestLap;
                     updatePitWindow(idealLap, latestLap);
+                    checkAutoShow();
                 }
-                // TODO: Session tracking? The pit window values only work in race sessions, so maybe it would be best to make sure we don't show the overlay at all in sessions other than race?
-                // But then again, we already show "N/A" when the lap values are 0, so this could remain as showing the current tyre compound instead in other sessions
+
+                // Entering or leaving a race
+                if (isPitWindowSession() !== wasPitWindowSession) {
+                    if (!isPitWindowSession()) hideOverlay();
+                    else if (previousVisibility) showFromController();
+                }
             } else if (packetId === 2) {
                 // Lap Data packet - track player's current lap
                 rawPlayerIndex = data.m_header.m_playerCarIndex ?? rawPlayerIndex;
@@ -261,36 +320,10 @@
                     
                     // Only process if lap changed
                     if (newLap !== currentLap && newLap > 0) {
+                        // Lap went backwards (new race, flashback) - the same lap can trigger again
+                        if (newLap < currentLap) lastAutoShowLap = -1;
                         currentLap = newLap;
-                        
-                        // Check if we should auto-show the overlay
-                        if (autoDisplayEnabled && autoMode !== 'none' && pitWindowIdeal > 0) {
-                            let shouldShow = false;
-                            
-                            // Determine if current lap matches auto-show criteria
-                            if (autoMode === 'idealLap-1' && currentLap === (pitWindowIdeal - 1)) {
-                                shouldShow = true;
-                            } else if (autoMode === 'idealLap' && currentLap === pitWindowIdeal) {
-                                shouldShow = true;
-                            } else if (autoMode === 'both' && (currentLap === (pitWindowIdeal - 1) || currentLap === pitWindowIdeal)) {
-                                shouldShow = true;
-                            }
-                            
-                            // Show overlay if criteria met and not already shown for this lap
-                            if (shouldShow && lastAutoShowLap !== currentLap) {
-                                lastAutoShowLap = currentLap;
-                                showOverlay();
-                                previousVisibility = true; // Update state for auto-show
-                                
-                                // Start auto-hide timer
-                                if (autoHideTimer) clearTimeout(autoHideTimer);
-                                autoHideTimer = setTimeout(() => {
-                                    hideOverlay();
-                                    // Note: Don't update previousVisibility here - keep it true
-                                    // so that changing settings doesn't re-trigger the overlay
-                                }, autoDuration);
-                            }
-                        }
+                        checkAutoShow();
                     }
                 }
             } else if (packetId === 7) {

@@ -85,9 +85,9 @@
 - Pit Window
     - Fully Remade
     - Shows your current tyre compound and the current scheduled pit window (during races)
-        - When no more pitstops are scheduled, or when not in a race session, Pit Window will be shown as "N/A"
+        - The overlay only shows in race sessions; when no more pitstops are scheduled, Pit Window will be shown as "N/A"
     - Uses current tyre compound colors for various text and decorations
-    - Blinking animation is also active for 2 seconds after overlay is shown
+    - Blinking animation is also active for 0.8 seconds after overlay is shown
     - Has an automatic display option as well (same as in the original SimHub version)
         - The amount of seconds to be displayed can now be adjusted in the Extended Controller
     - Might need some extra work in the future - F2 SuperSoft was not considered currently and there's no real F2 support anyway
