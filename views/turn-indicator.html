@@ -27,6 +27,7 @@
         
         let trackId = -1;
         let trackData = null;
+        let loadedGameYear = null; // year-specific track files differ per game
         let currentTurnNumber = null;
         let isSpectating = 0;     // from Session packet m_isSpectating
         let spectatorCarIndex = 255; // from Session packet m_spectatorCarIndex
@@ -111,10 +112,11 @@
                 spectatorCarIndex = data.m_spectatorCarIndex ?? spectatorCarIndex;
 
                 const newTrackId = data.m_trackId;
-                const gameYear = data.m_gameYear || null;
+                const gameYear = DriverUtils.getFullGameYear(data.m_header.m_gameYear);
 
-                if (newTrackId !== trackId) {
+                if (newTrackId !== trackId || gameYear !== loadedGameYear) {
                     trackId = newTrackId;
+                    loadedGameYear = gameYear;
                     trackData = null; // don't keep showing the previous track's corners while loading
                     loadTrackData(trackId, gameYear).then(data => {
                         if (newTrackId === trackId) trackData = data; // ignore a stale load after a quick track change

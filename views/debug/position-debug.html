@@ -200,7 +200,8 @@
                 // Session packet
                 trackLength = data.m_trackLength || 0;
                 const newTrackId = data.m_trackId;
-                gameYear = data.m_gameYear || null;
+                // m_gameYear is 2-digit, year-specific track files use the full year
+                gameYear = data.m_header.m_gameYear ? 2000 + data.m_header.m_gameYear : null;
                 
                 // Load track data if track changed
                 if (newTrackId !== trackId) {
