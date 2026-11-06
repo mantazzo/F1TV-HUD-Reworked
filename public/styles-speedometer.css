@@ -1,292 +1,201 @@
+/* ════════════════════════════════════════════════════════════════
+   SPEEDOMETER — two designs on one 500x500 layout:
+   .design-f1tv (default) and .design-multiviewer.
+   Positions follow the SimHub dash (F1TV - Speedometer).
+   ════════════════════════════════════════════════════════════════ */
+
 .overlay-container {
+    --spd-boost-color: lime;            /* DRS */
     position: relative;
     width: 500px;
     height: 500px;
     background: transparent;
-    transition: opacity 200ms ease-out;
     opacity: 0;
+    transition: opacity 200ms ease-out; /* SimHub: inertia(...,5) */
 }
 
 .overlay-container.visible {
     opacity: 1;
 }
 
-/* Base layer styling */
-.layer {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 500px;
-    height: 500px;
+/* Overtake Mode (2026-regs cars): turquoise, same as the Leaderboard / Live Speed */
+.overlay-container.is-overtake {
+    --spd-boost-color: rgb(14, 172, 230);
 }
 
-/* Background layer */
-.background-layer {
-    z-index: 1;
+/* ── Image + canvas layers (stacked in DOM order) ─────────────── */
+.spd-layer {
+    position: absolute;
+    display: block;
 }
 
-/* F1TV mode background */
-.f1tv-mode .background-layer img {
-    width: 497px;
-    height: 497px;
-    position: absolute;
+/* Both opacities are Controller settings (set as variables by the script); defaults match SimHub */
+.spd-background {
+    opacity: var(--spd-bg-opacity, 0.7);
+}
+
+.spd-value-background {
+    opacity: var(--spd-value-bg-opacity, 1);
+}
+
+.design-f1tv .spd-background {
     left: 1.5px;
     top: 23px;
-    opacity: 0.7;
-}
-
-/* Multiviewer mode background */
-.multiviewer-mode .background-layer img {
-    width: 500px;
-    height: 500px;
-    position: absolute;
-    left: 0px;
-    top: 0px;
-    opacity: 0.7;
-}
-
-/* Gauge background layer */
-.gauge-layer {
-    z-index: 2;
-}
-
-/* F1TV mode gauge background */
-.f1tv-mode .gauge-layer img {
     width: 497px;
-    height: 498px;
-    position: absolute;
+    height: 497px;
+}
+
+.design-f1tv .spd-value-background {
     left: 1.5px;
     top: -22px;
-    opacity: 1;
-}
-
-/* Multiviewer mode gauge background */
-.multiviewer-mode .gauge-layer img {
-    width: 500px;
-    height: 500px;
-    position: absolute;
-    left: 0px;
-    top: -25.5px;
-    opacity: 1;
-}
-
-/* Gauges layer - canvas rendering */
-.gauges-layer {
-    z-index: 4;
-}
-
-.dial-container {
-    position: absolute;
-    overflow: hidden;
-}
-
-/* F1TV mode gauges */
-.f1tv-mode .speed-dial {
     width: 497px;
-    height: 496px;
+    height: 498px;
+}
+
+.design-f1tv .spd-gauge-speed {
     left: 1px;
     top: 1px;
+    width: 497px;
+    height: 496px;
 }
 
-.f1tv-mode .brake-dial {
-    width: 496.2px;
-    height: 496.2px;
+.design-f1tv .spd-gauge-pedal {
     left: 1.9px;
     top: 1.9px;
-}
-
-.f1tv-mode .throttle-dial {
     width: 496.2px;
     height: 496.2px;
-    left: 1.9px;
-    top: 1.9px;
 }
 
-/* Multiviewer mode gauges */
-.multiviewer-mode .speed-dial {
-    width: 500px;
-    height: 500px;
-    left: 0px;
-    top: 0px;
-}
-
-.multiviewer-mode .brake-dial {
-    width: 500px;
-    height: 500px;
-    left: 0px;
-    top: 0px;
-}
-
-.multiviewer-mode .throttle-dial {
-    width: 500px;
-    height: 500px;
-    left: 0px;
-    top: 0px;
-}
-
-#throttle-gauge,
-#brake-gauge,
-#speed-gauge {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-}
-
-/* Image overlays layer - text overlays on gauges */
-.overlay-images-layer {
-    z-index: 5;
-}
-
-/* Text overlay - Throttle/Brake labels */
-.f1tv-mode .text-overlay {
-    position: absolute;
-    width: 508px;
-    height: 508px;
+.design-f1tv .spd-pedal-labels {
     left: -4px;
     top: -2.5px;
+    width: 508px;
+    height: 508px;
 }
 
-.multiviewer-mode .text-overlay {
-    position: absolute;
-    width: 500px;
-    height: 500px;
-    left: 0px;
-    top: 0px;
-}
-
-/* Units overlay - KMH/MPH label */
-.f1tv-mode .units-overlay {
-    position: absolute;
-    width: 514px;
-    height: 514px;
+.design-f1tv .spd-units-image {
     left: -7px;
     top: -7px;
+    width: 514px;
+    height: 514px;
 }
 
-.multiviewer-mode .units-overlay {
-    position: absolute;
+/* Multiviewer: every layer is a full 500x500 frame */
+.design-multiviewer .spd-layer {
+    left: 0;
+    top: 0;
     width: 500px;
     height: 500px;
-    left: 0px;
-    top: 0px;
 }
 
-/* Text layer - contains all text and DRS elements */
-.text-layer {
-    z-index: 6;
+.design-multiviewer .spd-value-background {
+    top: -25.5px;
 }
 
-/* Speed value */
-.f1tv-mode .speed-value {
+/* ── Text ─────────────────────────────────────────────────────── */
+.spd-text {
     position: absolute;
-    top: 135px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    box-sizing: border-box;
+    white-space: pre;
+    color: rgb(255, 255, 255);
+}
+
+.spd-speed {
     left: 140px;
-    width: 220px;
-    height: 95px;
-    font-family: 'Formula1 Display';
-    font-weight: 400;
-    font-size: 90px;
-    color: white;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    box-sizing: border-box;
-    white-space: pre;
-    padding: 0px 0px 3px;
-}
-
-.multiviewer-mode .speed-value {
-    position: absolute;
     top: 135px;
-    left: 135px;
     width: 220px;
     height: 95px;
-    font-family: 'F1TV-2022';
-    font-weight: 700;
-    font-style: oblique;
-    font-size: 90px;
-    color: white;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    box-sizing: border-box;
-    white-space: pre;
-    padding: 0px 0px 3px;
-}
-
-/* Speed units */
-.speed-units {
-    position: absolute;
-    top: 230px;
-    left: 200px;
-    width: 100px;
-    height: 35px;
-    font-family: 'Formula1 Display';
-    font-size: 25px;
-    font-weight: bold;
-    color: white;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    box-sizing: border-box;
-    white-space: pre;
-}
-
-/* RPM value */
-.f1tv-mode .rpm-value {
+    padding-bottom: 3px;
     font-family: 'Formula1 Display';
     font-weight: 400;
+    font-size: 90px;
 }
 
-.multiviewer-mode .rpm-value {
-    font-family: 'F1TV-2022';
-    font-weight: 700;
-    font-style: oblique;
-}
-
-.rpm-value {
-    position: absolute;
+.spd-rpm {
+    left: 140px;
     top: 275px;
-    left: 140px;
     width: 220px;
     height: 50px;
+    padding-bottom: 3px;
     font-family: 'Formula1 Display';
+    font-weight: 400;
     font-size: 48px;
-    color: white;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    box-sizing: border-box;
-    white-space: pre;
 }
 
-/* RPM label */
-.rpm-label {
-    position: absolute;
-    top: 325px;
+/* KMH/MPH and RPM labels */
+.spd-label {
     left: 200px;
     width: 100px;
     height: 35px;
     font-family: 'Formula1 Display';
+    font-weight: 700;
     font-size: 25px;
-    font-weight: bold;
-    color: white;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    box-sizing: border-box;
-    white-space: pre;
 }
 
-/* DRS container - groups DRS image and label */
-.drs-container {
+.spd-units {
+    top: 230px;
+}
+
+.spd-rpm-label {
+    top: 325px;
+}
+
+.spd-gear-label {
+    left: 185px;
+    top: 443px;
+    width: 80px;
+    height: 35px;
+    justify-content: flex-end;
+    text-align: right;
+    font-family: 'Formula1 TV';
+    font-weight: 400;
+    font-size: 23px;
+}
+
+.spd-gear {
+    left: 265px;
+    top: 420px;
+    width: 55px;
+    height: 75px;
+    padding-bottom: 2px;
+    font-family: 'Formula1 Display';
+    font-weight: 400;
+    font-size: 50px;
+}
+
+/* Multiviewer: oblique values, grey labels, speed turns green/turquoise while boosted */
+.design-multiviewer .spd-speed {
+    left: 135px;
+}
+
+.design-multiviewer :is(.spd-speed, .spd-rpm, .spd-gear) {
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+}
+
+.design-multiviewer :is(.spd-label, .spd-gear-label) {
+    color: rgb(169, 169, 169);
+}
+
+.design-multiviewer .spd-gear-label {
+    font-family: 'Formula1 Display';
+    font-weight: 700;
+}
+
+.design-multiviewer[data-tier="active"] .spd-speed {
+    color: var(--spd-boost-color); /* SimHub: if([DRSEnabled],'Lime','White') */
+}
+
+/* ════════════════════════════════════════════════════════════════
+   DRS / OVERTAKE MODE INDICATOR
+   Tier comes from data-tier on .overlay-container: off | pending | available | active
+   ════════════════════════════════════════════════════════════════ */
+.spd-indicator {
     position: absolute;
     left: 211px;
     top: 376px;
@@ -294,176 +203,93 @@
     height: 45.3px;
 }
 
-/* F1TV mode: adjust container for image-based design */
-.f1tv-mode .drs-container {
-    width: 78px;
-    height: 45.3px;
-}
-
-/* Multiviewer mode: adjust container for rectangle-based design */
-.multiviewer-mode .drs-container {
+.design-multiviewer .spd-indicator {
     left: 205px;
     top: 370px;
     width: 90px;
     height: 50px;
 }
 
-/* DRS rectangle - only visible in Multiviewer mode */
-.drs-rectangle {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    border-radius: 10px;
-    box-sizing: border-box;
-    display: none;
-}
-
-/* F1TV mode: hide rectangle */
-.f1tv-mode .drs-rectangle {
-    display: none;
-}
-
-/* Multiviewer mode: show rectangle based on state */
-.multiviewer-mode .drs-rectangle {
-    display: block;
-}
-
-/* Multiviewer DRS states */
-.multiviewer-mode .drs-rectangle.drs-unavailable {
-    background: transparent;
-    border: none;
-}
-
-.multiviewer-mode .drs-rectangle.drs-available {
-    background: transparent;
-    border: 5px solid rgb(255, 255, 255);
-}
-
-.multiviewer-mode .drs-rectangle.drs-active {
-    background: lime;
-    border: none;
-}
-
-/* Overtake Mode (2026-regs cars): same Active state, turquoise instead of green — matches the
-   Leaderboard's lb-drs-row--overtake color */
-.multiviewer-mode .drs-rectangle.drs-active.drs-overtake {
-    background: #0eace6;
-}
-
-/* DRS image - only visible in F1TV mode */
-.drs-image {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 78px;
-    height: 45.3px;
-    object-fit: contain;
-    image-rendering: -webkit-optimize-contrast;
-    image-rendering: crisp-edges;
-}
-
-/* F1TV mode: show image */
-.f1tv-mode .drs-image {
-    display: block;
-}
-
-/* Multiviewer mode: hide image */
-.multiviewer-mode .drs-image {
-    display: none;
-}
-
-/* DRS label */
-.f1tv-mode .drs-label {
-    position: absolute;
+.spd-indicator-label {
     left: 3px;
     top: 6px;
     width: 72px;
     height: 29px;
     font-family: 'Formula1 Display';
+    font-weight: 700;
     font-size: 25px;
-    font-weight: bold;
     color: gray;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    box-sizing: border-box;
-    white-space: pre;
 }
 
-.multiviewer-mode .drs-label {
-    position: absolute;
+.design-multiviewer .spd-indicator-label {
     left: 5px;
     top: 10px;
     width: 80px;
-    height: 29px;
-    font-family: 'Formula1 Display';
-    font-size: 25px;
-    font-weight: bold;
-    color: gray;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    box-sizing: border-box;
-    white-space: pre;
 }
 
-/* Gear label */
-.f1tv-mode .gear-label {
-    font-family: 'Formula1 TV';
-    font-weight: 400;
+.overlay-container:not([data-tier="off"]) .spd-indicator-label {
+    color: rgb(255, 255, 255);
 }
 
-.multiviewer-mode .gear-label {
-    font-family: 'Formula1 Display';
-    font-weight: 700;
+.overlay-container[data-tier="active"] .spd-indicator-label {
+    text-shadow: -0.17px 0.98px 3px rgb(0, 0, 0); /* SimHub: ShadowBlur 3, ShadowDepth 1 while active */
 }
 
-.gear-label {
+/* SimHub: inertia(if(blink('test',500,true),0,100),350) — a soft ~1s on/off pulse */
+@keyframes spd-blink {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0; }
+}
+
+/* F1TV: base plate (empty / filled) + blinking border image on top */
+.spd-indicator-image {
     position: absolute;
-    top: 443px;
-    left: 185px;
-    width: 80px;
-    height: 35px;
-    font-family: 'Formula1 TV';
-    font-size: 23px;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    text-align: right;
-    box-sizing: border-box;
-    white-space: pre;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
 }
 
-/* Gear value */
-.f1tv-mode .gear-value {
-    font-family: 'Formula1 Display';
-    font-weight: 400;
+.spd-indicator-border {
+    opacity: 0;
 }
 
-.multiviewer-mode .gear-value {
-    font-family: 'F1TV-2022';
-    font-weight: 700;
-    font-style: oblique;
+.overlay-container[data-tier="available"] .spd-indicator-border {
+    opacity: 1;
+    animation: spd-blink 1s ease-in-out infinite;
 }
 
-.gear-value {
+/* Multiviewer: CSS rectangle instead of images */
+.spd-indicator-rect {
+    display: none;
     position: absolute;
-    top: 420px;
-    left: 265px;
-    width: 55px;
-    height: 75px;
-    font-family: 'Formula1 Display';
-    font-size: 50px;
-    color: white;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
     box-sizing: border-box;
-    white-space: pre;
+    border: 5px solid transparent;
+    border-radius: 10px;
+}
+
+.design-multiviewer .spd-indicator-rect {
+    display: block;
+}
+
+.design-multiviewer .spd-indicator-image {
+    display: none;
+}
+
+.overlay-container[data-tier="pending"] .spd-indicator-rect {
+    border-color: rgb(255, 255, 255);
+}
+
+.overlay-container[data-tier="available"] .spd-indicator-rect {
+    border-color: var(--spd-boost-color);
+    animation: spd-blink 1s ease-in-out infinite;
+}
+
+.overlay-container[data-tier="active"] .spd-indicator-rect {
+    border-color: var(--spd-boost-color);
+    background: var(--spd-boost-color);
 }

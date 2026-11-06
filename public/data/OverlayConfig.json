@@ -14,7 +14,10 @@
       "visible": true,
       "name": "Speedometer",
       "designMode": "f1tv",
-      "unitsMode": "automatic"
+      "unitsMode": "automatic",
+      "brakeMode": "linear",
+      "backgroundOpacity": 70,
+      "valueBackgroundOpacity": 100
     },
     "lap-timer": {
       "visible": true,

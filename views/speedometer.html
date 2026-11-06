@@ -10,552 +10,334 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="/utils/overlay-scale.js"></script>
     <script src="/utils/driver-utils.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
 </head>
 <body data-tauri-drag-region>
-    <div class="overlay-container">
-        <!-- Background layer -->
-        <div class="layer background-layer">
-            <img id="background-image" src="/images/speedometer/F1TV/F1TV_BG.png" alt="Background">
+    <div class="overlay-container design-f1tv" data-tier="off">
+        <!-- Back plates (swapped per design) -->
+        <img id="spd-background" class="spd-layer spd-background" src="/images/speedometer/F1TV/F1TV_BG.png" alt="">
+        <img id="spd-value-background" class="spd-layer spd-value-background" src="/images/speedometer/F1TV/F1TV_ValueBG.png" alt="">
+
+        <!-- Sweep gauges: each canvas draws its gauge image, clipped to a pie slice -->
+        <canvas id="spd-gauge-speed" class="spd-layer spd-gauge-speed"></canvas>
+        <canvas id="spd-gauge-brake" class="spd-layer spd-gauge-pedal"></canvas>
+        <canvas id="spd-gauge-throttle" class="spd-layer spd-gauge-pedal"></canvas>
+
+        <!-- THROTTLE / BRAKE lettering, and the KMH / MPH ring lettering -->
+        <img class="spd-layer spd-pedal-labels" src="/images/speedometer/Text.png" alt="">
+        <img id="spd-units-image" class="spd-layer spd-units-image" src="/images/speedometer/KMH.png" alt="">
+
+        <!-- Values -->
+        <div id="spd-speed" class="spd-text spd-speed">0</div>
+        <div id="spd-units" class="spd-text spd-label spd-units">KMH</div>
+        <div id="spd-rpm" class="spd-text spd-rpm">0</div>
+        <div class="spd-text spd-label spd-rpm-label">RPM</div>
+
+        <!-- DRS / Overtake Mode indicator. F1TV uses images, Multiviewer a CSS rectangle. -->
+        <div class="spd-indicator">
+            <div class="spd-indicator-rect"></div>
+            <img id="spd-indicator-base" class="spd-indicator-image" src="/images/speedometer/F1TV/drs.png" alt="">
+            <img id="spd-indicator-border" class="spd-indicator-image spd-indicator-border" src="/images/speedometer/F1TV/drs2.png" alt="">
+            <div id="spd-indicator-label" class="spd-text spd-indicator-label">DRS</div>
         </div>
-        
-        <!-- Value background layer -->
-        <div class="layer gauge-layer">
-            <img id="gauge-background-image" src="/images/speedometer/F1TV/F1TV_ValueBG.png" alt="Gauge Background">
-        </div>
-        
-        <!-- Gauge canvases layer -->
-        <div class="layer gauges-layer">
-            <!-- Speed gauge -->
-            <div class="dial-container speed-dial">
-                <canvas id="speed-gauge" width="497" height="496"></canvas>
-            </div>
-            <!-- Brake gauge -->
-            <div class="dial-container brake-dial">
-                <canvas id="brake-gauge" width="496.2" height="496.2"></canvas>
-            </div>
-            <!-- Throttle gauge -->
-            <div class="dial-container throttle-dial">
-                <canvas id="throttle-gauge" width="496.2" height="496.2"></canvas>
-            </div>
-        </div>
-        
-        <!-- Text image overlays -->
-        <div class="layer overlay-images-layer">
-            <!-- Throttle/Brake text overlay -->
-            <img src="/images/speedometer/Text.png" alt="Text Overlay" class="text-overlay">
-            
-            <!-- Speed units image overlay - switches between KMH/MPH -->
-            <img id="kmh-layer" src="/images/speedometer/KMH.png" alt="Units Overlay" class="units-overlay">
-        </div>
-        
-        <!-- Text and values layer -->
-        <div class="layer text-layer">
-            <!-- Speed value -->
-            <div id="speed-value" class="speed-value">0</div>
-            
-            <!-- Speed units -->
-            <div id="speed-units" class="speed-units">KMH</div>
-            
-            <!-- RPM value -->
-            <div id="rpm-value" class="rpm-value">0</div>
-            
-            <!-- RPM label -->
-            <div class="rpm-label">RPM</div>
-            
-            <!-- DRS container -->
-            <div class="drs-container">
-                <div class="drs-rectangle"></div>
-                <img src="/images/speedometer/F1TV/drs.png" alt="DRS" class="drs-image">
-                <div id="drs-label" class="drs-label">DRS</div>
-            </div>
-            
-            <!-- Gear label -->
-            <div class="gear-label">GEAR</div>
-            
-            <!-- Gear value -->
-            <div id="gear-value" class="gear-value">N</div>
-        </div>
+
+        <div class="spd-text spd-gear-label">GEAR</div>
+        <div id="spd-gear" class="spd-text spd-gear">N</div>
     </div>
     <script>
         const socket = io();
         socket.emit('identify', 'Speedometer');
-        
-        const overlayContainer = document.querySelector('.overlay-container');
-        
-        // Store current config
-        let currentConfig = {
-            designMode: 'f1tv',
-            unitsMode: 'automatic'
+
+        // ── Designs ────────────────────────────────────────────────────────
+        // Gauge angles are canvas angles in degrees (0 = 3 o'clock, clockwise positive),
+        // tuned by eye against the gauge images. A gauge sweeps from `from` towards `to`;
+        // `to` < `from` sweeps anticlockwise (the brake gauge fills from the bottom up).
+        // Paths stay as plain string literals so AssetPreloader finds them.
+        const DESIGNS = {
+            f1tv: {
+                background:      '/images/speedometer/F1TV/F1TV_BG.png',
+                valueBackground: '/images/speedometer/F1TV/F1TV_ValueBG.png',
+                gauges: {
+                    speed:    { image: '/images/speedometer/F1TV/Speed.png',    from: -238, to:  58 },
+                    throttle: { image: '/images/speedometer/F1TV/Throttle.png', from: -238, to: -45 },
+                    brake:    { image: '/images/speedometer/F1TV/Brake.png',    from:   58, to: -44 },
+                },
+            },
+            multiviewer: {
+                background:      '/images/speedometer/Multiviewer/MV BG.png',
+                valueBackground: '/images/speedometer/Multiviewer/MV ValueBG.png',
+                gauges: {
+                    speed:    { image: '/images/speedometer/Multiviewer/Speed.png',    from: -238, to:  58 },
+                    throttle: { image: '/images/speedometer/Multiviewer/Throttle.png', from: -238, to: -50 },
+                    brake:    { image: '/images/speedometer/Multiviewer/Brake.png',    from:   58, to: -46 },
+                },
+            },
         };
-        
-        // Handle overlay visibility and config updates from controller
-        socket.on('overlay_config', (config) => {
-            if (config.overlays && config.overlays['speedometer']) {
-                const speedometerConfig = config.overlays['speedometer'];
-                
-                // Handle visibility
-                if (speedometerConfig.visible) {
-                    overlayContainer.classList.add('visible');
-                } else {
-                    overlayContainer.classList.remove('visible');
-                }
-                
-                // Check if design mode changed
-                const newDesignMode = speedometerConfig.designMode || 'f1tv';
-                if (newDesignMode !== currentConfig.designMode) {
-                    currentConfig.designMode = newDesignMode;
-                    applyDesignMode(newDesignMode);
-                }
-                
-                // Update units mode
-                currentConfig.unitsMode = speedometerConfig.unitsMode || 'automatic';
-            }
+
+        // F1TV indicator images. The base plate always shows (filled when active); the
+        // border image sits on top and blinks while available — the same layering SimHub used.
+        const INDICATOR_IMAGES = {
+            drs:      { base: '/images/speedometer/F1TV/drs.png', active: '/images/speedometer/F1TV/drs1.png', border: '/images/speedometer/F1TV/drs2.png' },
+            overtake: { base: '/images/speedometer/F1TV/OT.png',  active: '/images/speedometer/F1TV/OT2.png',  border: '/images/speedometer/F1TV/OT1.png' },
+        };
+
+        const UNITS_IMAGES = { kmh: '/images/speedometer/KMH.png', mph: '/images/speedometer/MPH.png' };
+        const GAUGE_MAX_SPEED = { kmh: 360, mph: 225 }; // SimHub: if([SpeedLocalUnit]=='KMH',360,225)
+        const KMH_TO_MPH = 0.621371;
+        const ERS_MODE_BOOST = 3;    // m_ersDeployMode: 0 none, 1 medium, 2 hotlap, 3 boost
+        const SMOOTHING_MS = 45;     // gauge easing time constant (exponential approach to the latest value)
+
+        // ── Elements ───────────────────────────────────────────────────────
+        const overlayContainer = document.querySelector('.overlay-container');
+        const backgroundImage = document.getElementById('spd-background');
+        const valueBackgroundImage = document.getElementById('spd-value-background');
+        const unitsImage = document.getElementById('spd-units-image');
+        const speedText = document.getElementById('spd-speed');
+        const unitsText = document.getElementById('spd-units');
+        const rpmText = document.getElementById('spd-rpm');
+        const gearText = document.getElementById('spd-gear');
+        const indicatorBase = document.getElementById('spd-indicator-base');
+        const indicatorBorder = document.getElementById('spd-indicator-border');
+        const indicatorLabel = document.getElementById('spd-indicator-label');
+
+        // ── State ──────────────────────────────────────────────────────────
+        const config = { designMode: null, unitsMode: 'automatic', brakeMode: 'linear' };
+        const DEFAULT_BG_OPACITY = 70;         // % — SimHub "Background opacity"
+        const DEFAULT_VALUE_BG_OPACITY = 100;  // % — SimHub "Background opacity (speed / throttle / brake)"
+        let gameUsesMph = false;      // Session m_speedUnitsLeadPlayer (0 = MPH, 1 = KPH)
+        let isMph = null;
+        let lastSpeedKmh = 0;
+        let isSpectating = 0;
+        let spectatorCarIndex = 255;
+
+        // Active car's DRS / Overtake Mode inputs (pid 6, 7 and 16)
+        const car = {
+            drs: 0, drsAllowed: 0, drsDistance: 0,       // DRS: open / can open now / metres to activation
+            otActive: 0, otAvailable: 0, otDistance: 0,   // Overtake Mode: usable / earned / metres to activation
+            ersMode: 0,
+            regs2026: false,                              // only pid 16 (2026 format) can set this
+        };
+        let renderedIndicator = null;
+
+        // ── Gauges ─────────────────────────────────────────────────────────
+        const gauges = ['speed', 'throttle', 'brake'].map(name => {
+            const canvas = document.getElementById(`spd-gauge-${name}`);
+            const gauge = { name, canvas, ctx: canvas.getContext('2d'), image: new Image(), from: 0, to: 0, current: 0, target: 0, drawn: null };
+            gauge.image.onload = () => drawGauge(gauge);
+            return gauge;
         });
-        
-        const throttleCanvas = document.getElementById('throttle-gauge');
-        const throttleCtx = throttleCanvas.getContext('2d');
-        const brakeCanvas = document.getElementById('brake-gauge');
-        const brakeCtx = brakeCanvas.getContext('2d');
-        const speedCanvas = document.getElementById('speed-gauge');
-        const speedCtx = speedCanvas.getContext('2d');
-        let throttleAngle = 0; // Start at 0 throttle (-237°)
-        let brakeAngle = 0; // Start at 0 brake (57°)
-        let speedAngle = 0; // Start at 0 speed (-237°)
-        
-        // Get references to layer images
-        const backgroundImage = document.getElementById('background-image');
-        const gaugeBackgroundImage = document.getElementById('gauge-background-image');
-        
-        // Load gauge images for canvas drawing
-        const throttleImage = new Image();
-        const brakeImage = new Image();
-        const speedImage = new Image();
-        
-        // Function to apply design mode
-        function applyDesignMode(designMode) {
-            if (designMode === 'multiviewer') {
-                // Multiviewer design
-                backgroundImage.src = '/images/speedometer/Multiviewer/MV BG.png';
-                gaugeBackgroundImage.src = '/images/speedometer/Multiviewer/MV ValueBG.png';
-                throttleImage.src = '/images/speedometer/Multiviewer/Throttle.png';
-                brakeImage.src = '/images/speedometer/Multiviewer/Brake.png';
-                speedImage.src = '/images/speedometer/Multiviewer/Speed.png';
-                
-                // Resize canvases for Multiviewer (500x500)
-                throttleCanvas.width = 500;
-                throttleCanvas.height = 500;
-                brakeCanvas.width = 500;
-                brakeCanvas.height = 500;
-                speedCanvas.width = 500;
-                speedCanvas.height = 500;
-                
-                // Apply Multiviewer CSS class
-                overlayContainer.classList.add('multiviewer-mode');
-                overlayContainer.classList.remove('f1tv-mode');
-            } else {
-                // F1TV design (default)
-                backgroundImage.src = '/images/speedometer/F1TV/F1TV_BG.png';
-                gaugeBackgroundImage.src = '/images/speedometer/F1TV/F1TV_ValueBG.png';
-                throttleImage.src = '/images/speedometer/F1TV/Throttle.png';
-                brakeImage.src = '/images/speedometer/F1TV/Brake.png';
-                speedImage.src = '/images/speedometer/F1TV/Speed.png';
-                
-                // Resize canvases for F1TV
-                throttleCanvas.width = 496.2;
-                throttleCanvas.height = 496.2;
-                brakeCanvas.width = 496.2;
-                brakeCanvas.height = 496.2;
-                speedCanvas.width = 497;
-                speedCanvas.height = 496;
-                
-                // Apply F1TV CSS class
-                overlayContainer.classList.add('f1tv-mode');
-                overlayContainer.classList.remove('multiviewer-mode');
-            }
-            
-            // Redraw gauges with new images once they're loaded
-            Promise.all([
-                new Promise(resolve => throttleImage.onload = resolve),
-                new Promise(resolve => brakeImage.onload = resolve),
-                new Promise(resolve => speedImage.onload = resolve)
-            ]).then(() => {
-                drawThrottleSweep(throttleAngle);
-                drawBrakeSweep(brakeAngle);
-                drawSpeedSweep(speedAngle);
-            }).catch(error => {
-                console.error('Failed to load gauge images:', error);
-            });
-        }
-        
-        // Initialize with default F1TV design
-        applyDesignMode('f1tv');
-        
-        const kmhLayer = document.getElementById('kmh-layer');
-        const drsLabel = document.getElementById('drs-label');
-        const drsImage = document.querySelector('.drs-image');
-        const drsRectangle = document.querySelector('.drs-rectangle');
-        const gearValue = document.getElementById('gear-value');
-        const rpmValue = document.getElementById('rpm-value');
-        const speedValue = document.getElementById('speed-value');
-        const speedUnits = document.getElementById('speed-units');
-        let isMph = false; // Default to false until Session packet is received
-        let currentDrsDisplayState = 0; // Track current DRS display state: 0=unavailable, 1=available, 2=active
-        let isSpectating = 0;     // from Session packet m_isSpectating
-        let spectatorCarIndex = 255; // from Session packet m_spectatorCarIndex
+        const gauge = Object.fromEntries(gauges.map(g => [g.name, g]));
 
-        // Initialize DRS blink animation once
-        const drsBlinkAnimation = anime({
-            targets: [drsImage, drsRectangle],
-            opacity: [1, 0, 1], // From 100% to 0% to 100%
-            duration: 950, // Total cycle time (0.5s per transition approximated)
-            easing: 'easeInOutQuad', // Smooth transition
-            loop: true, // Continuous blink while drs2 is active
-            autoplay: false // Start paused
+        // Canvas backing store at 2x (or the screen's pixel ratio) so the arcs stay sharp
+        // when the overlay is scaled up.
+        function resizeGauge(g) {
+            const res = Math.max(2, window.devicePixelRatio || 1);
+            g.canvas.width = Math.round(g.canvas.offsetWidth * res);
+            g.canvas.height = Math.round(g.canvas.offsetHeight * res);
+        }
+
+        function drawGauge(g) {
+            const { ctx, canvas, image } = g;
+            const w = canvas.width, h = canvas.height;
+            ctx.clearRect(0, 0, w, h);
+            g.drawn = g.current;
+            if (g.current <= 0 || !image.complete || !image.naturalWidth) return;
+
+            const cx = w / 2, cy = h / 2;
+            const start = g.from * Math.PI / 180;
+            const end = (g.from + (g.to - g.from) * g.current) * Math.PI / 180;
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.arc(cx, cy, Math.min(cx, cy), start, end, g.to < g.from);
+            ctx.closePath();
+            ctx.clip();
+            ctx.drawImage(image, 0, 0, w, h);
+            ctx.restore();
+        }
+
+        // One animation loop for all three gauges: each frame moves every gauge part of the
+        // way to its latest target, and the loop stops itself once they've all settled.
+        let frameId = null;
+        let lastFrameTime = 0;
+
+        function setGaugeTarget(g, value) {
+            g.target = Math.min(Math.max(Number(value) || 0, 0), 1);
+            if (g.target !== g.current && frameId === null) frameId = requestAnimationFrame(animateGauges);
+        }
+
+        function animateGauges(now) {
+            const dt = lastFrameTime ? Math.min(now - lastFrameTime, 100) : 16;
+            lastFrameTime = now;
+            const step = 1 - Math.exp(-dt / SMOOTHING_MS);
+            let moving = false;
+
+            for (const g of gauges) {
+                const diff = g.target - g.current;
+                if (Math.abs(diff) < 0.001) {
+                    g.current = g.target;
+                } else {
+                    g.current += diff * step;
+                    moving = true;
+                }
+                if (g.current !== g.drawn) drawGauge(g);
+            }
+
+            if (moving) {
+                frameId = requestAnimationFrame(animateGauges);
+            } else {
+                frameId = null;
+                lastFrameTime = 0;
+            }
+        }
+
+        // ── Design ─────────────────────────────────────────────────────────
+        function applyDesign(mode) {
+            if (!DESIGNS[mode]) mode = 'f1tv';
+            if (mode === config.designMode) return;
+            config.designMode = mode;
+            const design = DESIGNS[mode];
+
+            overlayContainer.classList.toggle('design-f1tv', mode === 'f1tv');
+            overlayContainer.classList.toggle('design-multiviewer', mode === 'multiviewer');
+            backgroundImage.src = design.background;
+            valueBackgroundImage.src = design.valueBackground;
+
+            for (const g of gauges) {
+                const spec = design.gauges[g.name];
+                g.from = spec.from;
+                g.to = spec.to;
+                resizeGauge(g);       // canvas size comes from the design's CSS
+                g.image.src = spec.image;
+                drawGauge(g);         // redrawn again by image.onload if it wasn't cached
+            }
+        }
+
+        // ── Units ──────────────────────────────────────────────────────────
+        function applyUnits() {
+            const mph = config.unitsMode === 'mph' || (config.unitsMode !== 'kmh' && gameUsesMph);
+            if (mph === isMph) return;
+            isMph = mph;
+            unitsText.textContent = mph ? 'MPH' : 'KMH';
+            unitsImage.src = mph ? UNITS_IMAGES.mph : UNITS_IMAGES.kmh;
+            renderSpeed();
+        }
+
+        function renderSpeed() {
+            const speed = isMph ? Math.round(lastSpeedKmh * KMH_TO_MPH) : lastSpeedKmh;
+            setText(speedText, speed);
+            setGaugeTarget(gauge.speed, speed / (isMph ? GAUGE_MAX_SPEED.mph : GAUGE_MAX_SPEED.kmh));
+        }
+
+        function setText(el, value) {
+            const text = String(value);
+            if (el.textContent !== text) el.textContent = text;
+        }
+
+        // ── DRS / Overtake Mode indicator ──────────────────────────────────
+        // Four tiers, the same for both mechanics:
+        //   off       → grey label, no outline
+        //   pending   → white label (+ white outline in Multiviewer): approaching the activation
+        //               point, or Overtake Mode earned but not usable yet
+        //   available → blinking outline: DRS can be opened / Overtake Mode is usable
+        //   active    → filled: DRS open / Overtake Mode used with Boost ERS
+        // From the recordings: m_drsAllowed drops back to 0 once DRS opens, and m_overtakeActive
+        // stays on from the activation line until the next detection point.
+        function indicatorTier() {
+            if (car.regs2026) {
+                if (car.otActive === 1) return car.ersMode === ERS_MODE_BOOST ? 'active' : 'available';
+                if (car.otDistance > 0 || car.otAvailable === 1) return 'pending';
+                return 'off';
+            }
+            if (car.drs === 1) return 'active';
+            if (car.drsAllowed === 1) return 'available';
+            if (car.drsDistance > 0) return 'pending';
+            return 'off';
+        }
+
+        function renderIndicator() {
+            const tier = indicatorTier();
+            const key = `${car.regs2026}|${tier}`;
+            if (key === renderedIndicator) return;
+            renderedIndicator = key;
+
+            const images = car.regs2026 ? INDICATOR_IMAGES.overtake : INDICATOR_IMAGES.drs;
+            overlayContainer.dataset.tier = tier;
+            overlayContainer.classList.toggle('is-overtake', car.regs2026);
+            indicatorLabel.textContent = car.regs2026 ? 'OT' : 'DRS';
+            indicatorBase.src = tier === 'active' ? images.active : images.base;
+            indicatorBorder.src = images.border;
+        }
+
+        // Config percentage (0-100) → CSS opacity (0-1); anything invalid falls back to the default
+        function opacityPercent(value, fallback) {
+            const pct = Number.isFinite(value) && value >= 0 && value <= 100 ? value : fallback;
+            return String(pct / 100);
+        }
+
+        // ── Socket ─────────────────────────────────────────────────────────
+        socket.on('overlay_config', (cfg) => {
+            const speedometerConfig = cfg?.overlays?.['speedometer'];
+            if (!speedometerConfig) return;
+
+            overlayContainer.classList.toggle('visible', !!speedometerConfig.visible);
+            applyDesign(speedometerConfig.designMode || 'f1tv');
+            config.unitsMode = speedometerConfig.unitsMode || 'automatic';
+            applyUnits();
+            config.brakeMode = speedometerConfig.brakeMode === 'onoff' ? 'onoff' : 'linear';
+            overlayContainer.style.setProperty('--spd-bg-opacity', opacityPercent(speedometerConfig.backgroundOpacity, DEFAULT_BG_OPACITY));
+            overlayContainer.style.setProperty('--spd-value-bg-opacity', opacityPercent(speedometerConfig.valueBackgroundOpacity, DEFAULT_VALUE_BG_OPACITY));
         });
-
-        function playDrsBlink() {
-            drsBlinkAnimation.play();
-        }
-
-        function pauseAndResetDrsBlink() {
-            drsBlinkAnimation.pause();
-            anime.set([drsImage, drsRectangle], { opacity: 1 }); // Force opacity to 1 immediately
-        }
-
-        // DRS State Management
-        let drsState = { m_drs: null, m_drsAllowed: null, m_drsActivationDistance: null };
-
-        // Overtake Mode state (2026 Season Pack only) — replaces the DRS display for 2026-regs cars,
-        // since those cars don't have DRS (Active Aero + Overtake Mode replace it). Player-scoped;
-        // mirrors the per-car car2026Regulations/carOvertakeActive pattern already used in the
-        // Leaderboard overlays (see project_2026_drs_rework_idea memory).
-        let overtakeState = { m_overtakeActive: null, m_overtakeAvailable: null, m_overtakeActivationDistance: null };
-        let ersDeployMode = null; // m_ersDeployMode from pid 7 — 3 = Boost
-        let player2026Regulations = -1; // -1 unknown (pre-2026 UDP formats never send pid 16), 0 pre-2026, 1 2026 regs
-
-        function useOvertakeMode() {
-            return player2026Regulations === 1;
-        }
-
-        // Helper function to determine DRS state
-        function determineDrsState() {
-            if (drsState.m_drs === 1) return 2; // Active
-            if (drsState.m_drsAllowed === 1) return 1; // Available
-            return 0; // Unavailable
-        }
-
-        // Helper function to determine Overtake Mode state. Unlike DRS, there's no "available but
-        // not yet triggered" image tier here — both non-zero tiers require Overtake to already be
-        // active; Boost ERS on top of that just escalates which image/blink state is shown.
-        function determineOvertakeState() {
-            if (overtakeState.m_overtakeActive === 1) {
-                return ersDeployMode === 3 ? 2 : 1; // 2 = Active + Boost, 1 = Active only
-            }
-            return 0; // Inactive
-        }
-
-        // Single entry point for "what state should the DRS/Overtake indicator show" — routes to
-        // whichever mechanic applies to the player's current car.
-        function determineDisplayState() {
-            return useOvertakeMode() ? determineOvertakeState() : determineDrsState();
-        }
-
-        // Function to update DRS display based on design mode and state
-        function updateDrsDisplay(state) {
-            const isMultiviewer = currentConfig.designMode === 'multiviewer';
-            const overtake = useOvertakeMode();
-
-            // Clean up all DRS rectangle classes first
-            drsRectangle.classList.remove('drs-unavailable', 'drs-available', 'drs-active');
-            drsRectangle.classList.toggle('drs-overtake', overtake); // Multiviewer-only: recolors the Active state turquoise
-
-            if (isMultiviewer) {
-                // Multiviewer mode: use rectangle with CSS classes
-
-                if (state === 2) {
-                    // Active - green (DRS) / turquoise (Overtake) background, stop blinking
-                    drsRectangle.classList.add('drs-active');
-                    pauseAndResetDrsBlink();
-                    drsLabel.style.textShadow = '3px 1px 0px black';
-                } else if (state === 1) {
-                    // DRS Available / Overtake active (no Boost) - white border, apply blinking
-                    drsRectangle.classList.add('drs-available');
-                    playDrsBlink();
-                    drsLabel.style.textShadow = '0px 0px 0px black';
-                } else {
-                    // Unavailable / Inactive - no styling, stop blinking
-                    drsRectangle.classList.add('drs-unavailable');
-                    pauseAndResetDrsBlink();
-                    drsLabel.style.textShadow = '0px 0px 0px black';
-                }
-            } else {
-                // F1TV mode: use images with blinking
-                const images = overtake
-                    ? { active: '/images/speedometer/F1TV/OT2.png', pending: '/images/speedometer/F1TV/OT1.png', off: '/images/speedometer/F1TV/OT.png' }
-                    : { active: '/images/speedometer/F1TV/drs1.png', pending: '/images/speedometer/F1TV/drs2.png', off: '/images/speedometer/F1TV/drs.png' };
-
-                if (state === 2) {
-                    // Active (DRS) / Active + Boost (Overtake) - stop blinking
-                    drsImage.src = images.active;
-                    pauseAndResetDrsBlink();
-                    drsLabel.style.textShadow = '3px 1px 0px black';
-                } else if (state === 1) {
-                    // Available (DRS) / Active, no Boost (Overtake) - apply blinking
-                    drsImage.src = images.pending;
-                    playDrsBlink();
-                    drsLabel.style.textShadow = '0px 0px 0px black';
-                } else {
-                    // Unavailable (DRS) / Inactive (Overtake) - stop blinking
-                    drsImage.src = images.off;
-                    pauseAndResetDrsBlink();
-                    drsLabel.style.textShadow = '0px 0px 0px black';
-                }
-            }
-        }
-
-        function drawThrottleSweep(angle) {
-            if (!throttleCtx) {
-                console.error('Throttle canvas context not available');
-                return;
-            }
-            const w = throttleCanvas.width;
-            const h = throttleCanvas.height;
-            const centerX = w / 2;
-            const centerY = h / 2;
-            const radius = Math.min(centerX, centerY);
-            
-            throttleCtx.clearRect(0, 0, w, h);
-            throttleCtx.save();
-
-            // Apply the clip to include the full swept area
-            throttleCtx.beginPath();
-            const startAngle = -238 * Math.PI / 180;
-            // Adjust target angle based on design mode: F1TV uses -45°, Multiviewer uses -50°
-            const targetAngle = currentConfig.designMode === 'multiviewer' ? -50 : -45;
-            const endAngle = startAngle + (angle * ((targetAngle - (-238)) * Math.PI / 180));
-            throttleCtx.moveTo(centerX, centerY);
-            throttleCtx.arc(centerX, centerY, radius, startAngle, endAngle, false); // Clockwise sweep
-            throttleCtx.clip();
-            throttleCtx.drawImage(throttleImage, 0, 0, w, h);
-            throttleCtx.restore();
-        }
-
-        function drawBrakeSweep(angle) {
-            if (!brakeCtx) {
-                console.error('Brake canvas context not available');
-                return;
-            }
-            const w = brakeCanvas.width;
-            const h = brakeCanvas.height;
-            const centerX = w / 2;
-            const centerY = h / 2;
-            const radius = Math.min(centerX, centerY);
-            
-            brakeCtx.clearRect(0, 0, w, h);
-            brakeCtx.save();
-
-            // Apply the clip to include the full swept area
-            brakeCtx.beginPath();
-            const startAngle = 58 * Math.PI / 180;
-            // Adjust target angle based on design mode: F1TV uses -44°, Multiviewer uses -46°
-            const targetAngle = currentConfig.designMode === 'multiviewer' ? -46 : -44;
-            const endAngle = startAngle + (angle * ((targetAngle - 58) * Math.PI / 180));
-            brakeCtx.moveTo(centerX, centerY);
-            brakeCtx.arc(centerX, centerY, radius, startAngle, endAngle, true); // Anti-clockwise sweep
-            brakeCtx.clip();
-            brakeCtx.drawImage(brakeImage, 0, 0, w, h);
-            brakeCtx.restore();
-        }
-
-        function drawSpeedSweep(angle) {
-            if (!speedCtx) {
-                console.error('Speed canvas context not available');
-                return;
-            }
-            const w = speedCanvas.width;
-            const h = speedCanvas.height;
-            const centerX = w / 2;
-            const centerY = h / 2;
-            const radius = Math.min(centerX, centerY);
-            
-            speedCtx.clearRect(0, 0, w, h);
-            speedCtx.save();
-
-            // Apply the clip to include the full swept area
-            const startAngle = -238 * Math.PI / 180; // Updated start angle to match throttle start angle
-            const maxAngle = 58 * Math.PI / 180; // Maximum angle
-            const endAngle = startAngle + (Math.min(angle, 1.0) * (maxAngle - startAngle)); // Cap at 1.0 (360 km/h)
-            speedCtx.beginPath();
-            speedCtx.moveTo(centerX, centerY);
-            speedCtx.arc(centerX, centerY, radius, startAngle, endAngle, false); // Clockwise sweep
-            speedCtx.clip();
-            speedCtx.drawImage(speedImage, 0, 0, w, h);
-            speedCtx.restore();
-        }
 
         socket.on('f1_data', (data) => {
-            const rawPlayerIndex = data.m_header?.m_playerCarIndex || 0;
+            const pid = data?.m_header?.m_packetId;
+            const rawPlayerIndex = data?.m_header?.m_playerCarIndex ?? 0;
             const playerIndex = DriverUtils.getActiveDriverIndex(rawPlayerIndex, isSpectating, spectatorCarIndex);
 
-            if (data.m_header.m_packetId === 1) { // Session Packet
-                isSpectating      = data.m_isSpectating      ?? isSpectating;
+            if (pid === 1) { // Session
+                isSpectating = data.m_isSpectating ?? isSpectating;
                 spectatorCarIndex = data.m_spectatorCarIndex ?? spectatorCarIndex;
-
-                const speedUnitsLeadPlayer = data.m_speedUnitsLeadPlayer || 0;
-
-                // Apply units mode override
-                if (currentConfig.unitsMode === 'kmh') {
-                    isMph = false;
-                } else if (currentConfig.unitsMode === 'mph') {
-                    isMph = true;
-                } else {
-                    // Automatic mode - use game data
-                    isMph = speedUnitsLeadPlayer === 0;
+                if (typeof data.m_speedUnitsLeadPlayer === 'number') {
+                    gameUsesMph = data.m_speedUnitsLeadPlayer === 0;
+                    applyUnits();
                 }
-                
-                speedUnits.textContent = isMph ? 'MPH' : 'KMH';
-                kmhLayer.src = isMph ? '/images/speedometer/MPH.png' : '/images/speedometer/KMH.png';
-            } else if (data.m_header.m_packetId === 6) { // Car Telemetry
-                const throttle = data.m_carTelemetryData[playerIndex].m_throttle; // 0.0 to 1.0
-                const brake = data.m_carTelemetryData[playerIndex].m_brake; // 0.0 to 1.0
-                const speed = data.m_carTelemetryData[playerIndex].m_speed; // 0 to 65535 km/h
-                const gear = data.m_carTelemetryData[playerIndex].m_gear; // -1 to 8
-                const rpm = data.m_carTelemetryData[playerIndex].m_engineRPM; // Engine RPM value
+            } else if (pid === 6) { // Car Telemetry
+                const t = data.m_carTelemetryData?.[playerIndex];
+                if (!t) return;
 
-                // Update gear value
-                if (gear === -1) {
-                    gearValue.textContent = 'R';
-                } else if (gear === 0) {
-                    gearValue.textContent = 'N';
-                } else if (gear >= 1 && gear <= 8) {
-                    gearValue.textContent = gear;
-                }
+                lastSpeedKmh = t.m_speed ?? 0;
+                renderSpeed();
+                setText(rpmText, t.m_engineRPM ?? 0);
+                setText(gearText, t.m_gear === -1 ? 'R' : t.m_gear > 0 ? t.m_gear : 'N');
+                setGaugeTarget(gauge.throttle, t.m_throttle);
+                // On/Off hides brake pressure, like the TV graphics: any braking fills the whole arc
+                setGaugeTarget(gauge.brake, config.brakeMode === 'onoff' ? (t.m_brake > 0 ? 1 : 0) : t.m_brake);
 
-                // Update RPM value
-                if (rpm !== undefined) {
-                    rpmValue.textContent = rpm;
-                }
+                car.drs = t.m_drs ?? 0;
+                renderIndicator();
+            } else if (pid === 7) { // Car Status
+                const s = data.m_carStatusData?.[playerIndex];
+                if (!s) return;
 
-                // Update speed value with unit conversion
-                if (speed !== undefined) {
-                    const displaySpeed = isMph ? Math.round(speed * 0.621371) : speed;
-                    speedValue.textContent = displaySpeed;
-                }
+                car.drsAllowed = s.m_drsAllowed ?? 0;
+                car.drsDistance = s.m_drsActivationDistance ?? 0;
+                car.ersMode = s.m_ersDeployMode ?? 0;
+                renderIndicator();
+            } else if (pid === 16) { // Car Telemetry 2 (2026 Season Pack format only)
+                const t2 = data.m_carTelemetry2Data?.[playerIndex];
+                if (!t2) return;
 
-                const targetThrottleAngle = throttle; // 0 to 1 scales the 191° range
-                const targetBrakeAngle = brake; // 0 to 1 scales the 100° range
-                const targetSpeedAngle = Math.min(speed / 360, 1.0); // Cap at 360 km/h for gauge only
-                anime({
-                    targets: { angle: throttleAngle },
-                    angle: targetThrottleAngle,
-                    duration: 100, // ~16ms for 60Hz
-                    easing: 'linear',
-                    update: (anim) => {
-                        throttleAngle = anim.animations[0].currentValue;
-                        drawThrottleSweep(throttleAngle);
-                    }
-                });
-                anime({
-                    targets: { angle: brakeAngle },
-                    angle: targetBrakeAngle,
-                    duration: 100, // ~16ms for 60Hz
-                    easing: 'linear',
-                    update: (anim) => {
-                        brakeAngle = anim.animations[0].currentValue;
-                        drawBrakeSweep(brakeAngle);
-                    }
-                });
-                anime({
-                    targets: { angle: speedAngle },
-                    angle: targetSpeedAngle,
-                    duration: 100, // ~16ms for 60Hz
-                    easing: 'linear',
-                    update: (anim) => {
-                        speedAngle = anim.animations[0].currentValue;
-                        drawSpeedSweep(speedAngle);
-                    }
-                });
-                
-                // Handle DRS / Overtake Mode state from telemetry
-                const telemetryData = data.m_carTelemetryData?.[playerIndex];
-                if (telemetryData && telemetryData.hasOwnProperty('m_drs')) {
-                    drsState.m_drs = telemetryData.m_drs;
-
-                    const newDrsDisplayState = determineDisplayState();
-
-                    // Only update if state has changed
-                    if (newDrsDisplayState !== currentDrsDisplayState) {
-                        currentDrsDisplayState = newDrsDisplayState;
-                        updateDrsDisplay(currentDrsDisplayState);
-                    } else {
-                        // State hasn't changed, just update text shadow for active state (F1TV mode only)
-                        const isActive = useOvertakeMode() ? overtakeState.m_overtakeActive === 1 : drsState.m_drs === 1;
-                        if (isActive && currentConfig.designMode === 'f1tv') {
-                            drsLabel.style.textShadow = '3px 1px 0px black';
-                        }
-                    }
-                }
-            } else if (data.m_header?.m_packetId === 7) { // Car Status
-                const statusData = data.m_carStatusData?.[playerIndex];
-                if (statusData) {
-                    drsState.m_drsAllowed = statusData.m_drsAllowed || null;
-                    drsState.m_drsActivationDistance = statusData.m_drsActivationDistance || null;
-                    ersDeployMode = statusData.m_ersDeployMode ?? ersDeployMode; // needed for Overtake Mode's Boost tier
-
-                    const newDrsDisplayState = determineDisplayState();
-
-                    // DRS: only update if not currently active — "active" only ever comes from pid 6's
-                    // m_drs, so pid 7's drsAllowed/activationDistance are stale/irrelevant once deployed.
-                    // Overtake Mode needs no such guard: m_overtakeActive (the only thing that can move
-                    // the state to/from 0) only ever comes from pid 16, never this handler — this handler's
-                    // own ersDeployMode change can only toggle between the 1/2 (Boost) tiers, which is
-                    // exactly the live update wanted, even while Overtake is already active.
-                    const drsGuardBlocks = !useOvertakeMode() && drsState.m_drs === 1;
-                    if (newDrsDisplayState !== currentDrsDisplayState && !drsGuardBlocks) {
-                        currentDrsDisplayState = newDrsDisplayState;
-                        updateDrsDisplay(currentDrsDisplayState);
-                    }
-                }
-            } else if (data.m_header?.m_packetId === 16) { // Car Telemetry 2 (2026 Season Pack only)
-                const tel2Data = data.m_carTelemetry2Data?.[playerIndex];
-                if (tel2Data) {
-                    player2026Regulations = tel2Data.m_2026Regulations ?? player2026Regulations;
-                    overtakeState.m_overtakeActive = tel2Data.m_overtakeActive;
-                    overtakeState.m_overtakeAvailable = tel2Data.m_overtakeAvailable;
-                    overtakeState.m_overtakeActivationDistance = tel2Data.m_overtakeActivationDistance;
-
-                    drsLabel.textContent = useOvertakeMode() ? 'OT' : 'DRS';
-
-                    const newDrsDisplayState = determineDisplayState();
-                    if (newDrsDisplayState !== currentDrsDisplayState) {
-                        currentDrsDisplayState = newDrsDisplayState;
-                        updateDrsDisplay(currentDrsDisplayState);
-                    }
-                }
-            }
-            
-            // Update DRS/Overtake text color, default to gray unless any value is non-zero
-            if (useOvertakeMode()) {
-                const active = overtakeState.m_overtakeActive === null ? 0 : overtakeState.m_overtakeActive;
-                const available = overtakeState.m_overtakeAvailable === null ? 0 : overtakeState.m_overtakeAvailable;
-                const activationDistance = overtakeState.m_overtakeActivationDistance === null ? 0 : overtakeState.m_overtakeActivationDistance;
-                drsLabel.style.color = (active === 0 && available === 0 && activationDistance === 0) ? 'gray' : 'white';
-            } else {
-                const drs = drsState.m_drs === null ? 0 : drsState.m_drs;
-                const drsAllowed = drsState.m_drsAllowed === null ? 0 : drsState.m_drsAllowed;
-                const drsActivationDistance = drsState.m_drsActivationDistance === null ? 0 : drsState.m_drsActivationDistance;
-                drsLabel.style.color = (drs === 0 && drsAllowed === 0 && drsActivationDistance === 0) ? 'gray' : 'white';
+                car.regs2026 = t2.m_2026Regulations === 1;
+                car.otActive = t2.m_overtakeActive ?? 0;
+                car.otAvailable = t2.m_overtakeAvailable ?? 0;
+                car.otDistance = t2.m_overtakeActivationDistance ?? 0;
+                renderIndicator();
             }
         });
 
-        // Initial draw and DRS default color
-        drawThrottleSweep(throttleAngle);
-        drawBrakeSweep(brakeAngle);
-        drawSpeedSweep(speedAngle);
-        drsLabel.style.color = 'gray'; // Set default DRS text color to gray
-        speedUnits.textContent = 'KMH'; // Default to KMH
-        kmhLayer.src = '/images/speedometer/KMH.png'; // Default to KMH image
+        // ── Init ───────────────────────────────────────────────────────────
+        applyDesign('f1tv');
+        applyUnits();
+        renderIndicator();
     </script>
 </body>
 </html>

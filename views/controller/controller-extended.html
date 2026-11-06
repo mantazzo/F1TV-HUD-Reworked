@@ -405,6 +405,33 @@
                 <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Units (Speedometer)">?</button>
                 <div class="help-card" hidden>Automatic uses the speed unit set in the game. Always KMH or Always MPH use that unit, whatever the game is set to.</div>
             </div>
+            <div class="option-row">
+                <label class="select-label">
+                    <span class="select-text">Brake Display:</span>
+                    <select id="speedometer-brake-mode" class="select-dropdown">
+                        <option value="linear">Linear</option>
+                        <option value="onoff">On/Off</option>
+                    </select>
+                </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Brake Display (Speedometer)">?</button>
+                <div class="help-card" hidden>Linear fills the brake gauge by how hard the brake is pressed, so it shows the full braking trace. On/Off fills the whole gauge whenever the brake is pressed at all, like the real TV graphics, which keep each driver's braking technique private.</div>
+            </div>
+            <div class="option-row">
+                <label class="select-label">
+                    <span class="select-text">Background Opacity (%):</span>
+                    <input type="number" id="speedometer-bg-opacity" class="select-dropdown number-input" min="0" max="100" step="5" value="70">
+                </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Background Opacity (Speedometer)">?</button>
+                <div class="help-card" hidden>How solid the dark background disc is. 0 hides it, 100 is fully solid. Default is 70.</div>
+            </div>
+            <div class="option-row">
+                <label class="select-label">
+                    <span class="select-text">Gauge Background Opacity (%):</span>
+                    <input type="number" id="speedometer-value-bg-opacity" class="select-dropdown number-input" min="0" max="100" step="5" value="100">
+                </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Gauge Background Opacity (Speedometer)">?</button>
+                <div class="help-card" hidden>How solid the empty track behind the speed, throttle and brake gauges is. 0 hides it, 100 is fully solid. Default is 100.</div>
+            </div>
         </section>
 
         <section class="overlay-section" id="leaderboard-options-section">
@@ -1292,6 +1319,38 @@
             });
         });
 
+        // Speedometer brake display (linear pressure or on/off)
+        const speedometerBrakeMode = document.getElementById('speedometer-brake-mode');
+
+        speedometerBrakeMode.addEventListener('change', () => {
+            socket.emit('config_update', {
+                overlay: 'speedometer',
+                property: 'brakeMode',
+                value: speedometerBrakeMode.value
+            });
+        });
+
+        // Speedometer background opacities (0-100 %)
+        const SPEEDOMETER_DEFAULT_BG_OPACITY = 70;
+        const SPEEDOMETER_DEFAULT_VALUE_BG_OPACITY = 100;
+        const speedometerBgOpacityInput = document.getElementById('speedometer-bg-opacity');
+        const speedometerValueBgOpacityInput = document.getElementById('speedometer-value-bg-opacity');
+
+        function bindPercentInput(input, overlay, property, resync) {
+            input.addEventListener('change', () => {
+                const percent = Math.round(Number(input.value));
+                if (input.value === '' || !(percent >= 0 && percent <= 100)) {
+                    resync();
+                    return;
+                }
+                input.value = percent;
+                socket.emit('config_update', { overlay, property, value: percent });
+            });
+        }
+
+        bindPercentInput(speedometerBgOpacityInput, 'speedometer', 'backgroundOpacity', () => updateSpeedometerOptions());
+        bindPercentInput(speedometerValueBgOpacityInput, 'speedometer', 'valueBackgroundOpacity', () => updateSpeedometerOptions());
+
         // Session info visibility mode handling
         const sessionInfoVisibilityMode = document.getElementById('session-info-visibility-mode');
         
@@ -1375,6 +1434,9 @@
             const speedometerConfig = currentConfig.overlays['speedometer'];
             speedometerDesignMode.value = speedometerConfig.designMode || 'f1tv';
             speedometerUnitsMode.value = speedometerConfig.unitsMode || 'automatic';
+            speedometerBrakeMode.value = speedometerConfig.brakeMode === 'onoff' ? 'onoff' : 'linear';
+            speedometerBgOpacityInput.value = speedometerConfig.backgroundOpacity ?? SPEEDOMETER_DEFAULT_BG_OPACITY;
+            speedometerValueBgOpacityInput.value = speedometerConfig.valueBackgroundOpacity ?? SPEEDOMETER_DEFAULT_VALUE_BG_OPACITY;
         }
 
         // Update session info options when config changes
