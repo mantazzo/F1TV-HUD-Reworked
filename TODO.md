@@ -102,6 +102,7 @@
     - Driver Name uses textFit to fit the field and also uses Primary Color from the game (can be overwritten in JSON) or uses White color as default
     - Current Tyre Compound and Tyre Age are shown as well
     - Additionally, the Title automatically hides after 8 seconds of showing up
+    - In online, players with Restricted UDP Telemetry setting will show "NO DATA" grey overlay instead
     - Further improvements may be done in the future (like temperatures)
 - Leaderboard ("Initials" version)
     - Original version, remade to the best of mine and AI abilities and extended to support up to 24 drivers

@@ -142,6 +142,10 @@
 
         </div><!-- #cd-car-container -->
 
+        <!-- ── Restricted telemetry cover: over the car area while spectating a player
+             whose "Your Telemetry" is Restricted (the game sends zeros for that car) ── -->
+        <div id="cd-no-data"><span>NO DATA</span></div>
+
         <!-- ── Compound area gradient: 280×50 at top:485 ── -->
         <div class="cd-gradient" id="cd-gradient-compound"></div>
 
@@ -192,11 +196,12 @@
             16: { code: 'SOFT',  color: '#EC1C24' },
             17: { code: 'MEDIUM',  color: '#FFD604' },
             18: { code: 'HARD',  color: '#F0F0EC' },
-            19: { code: 'SUPERSOFT', color: '#97528F' },
+            19: { code: 'SUPER SOFT', color: '#97528F' },
             20: { code: 'SOFT',  color: '#EC1C24' },
             21: { code: 'MEDIUM',  color: '#FFD604' },
             22: { code: 'HARD',  color: '#F0F0EC' }
         };
+        const NO_COMPOUND = { code: 'NO DATA', color: '#FFFFFF' };
 
         // ── Driver / team state ───────────────────────────────────────────────
         let teamNames     = {};
@@ -208,15 +213,19 @@
         let isSpectating   = 0;   // from Session packet m_isSpectating
         let spectatorCarIndex = 255; // from Session packet m_spectatorCarIndex
         let currentTeamId = null;
+        let telemetryRestricted = []; // carIdx → human player with "Your Telemetry" set to Restricted
+        let isRestricted  = false;
+        let lastParticipants = []; // latest Participants packet, to re-render on a spectated-car change
         let primaryColor  = null;
         let drsFault      = 0;
         let rearWingDmg   = 0;
 
         // ── Auto-display state ────────────────────────────────────────────────
-        const DEFAULT_AUTO_DURATION = 15000; // ms — set from the Controller's "Display Duration" (autoDuration)
+        const DEFAULT_AUTO_DURATION = 6000; // ms (SimHub default) — set from the Controller's "Display Duration" (autoDuration)
         let cdConfig = { autoDisplay: false, autoMode: 'never', autoDuration: DEFAULT_AUTO_DURATION, showRemainingLife: true, useTeamColor: true };
         let autoHideTimer       = null;
         let dmgStateInitialized = false;
+        let dmgStateIndex       = -1;   // car the baseline belongs to (changes while spectating)
         let prevDmgState        = {};
         let previousVisibility  = false;
 
@@ -242,6 +251,8 @@
                 el.style.color = teamNames[currentTeamId].OverridePrimaryColor;
             } else if (primaryColor) {
                 el.style.color = primaryColor;
+            } else {
+                el.style.color = 'rgb(255, 255, 255)';
             }
         }
 
@@ -260,11 +271,11 @@
             return 'Red';
         }
 
-        /** Engine: <50%=Green, 50–70%=Yellow, 70–90%=Orange, ≥90%=Red */
+        /** Engine (overall m_engineDamage): <50%=Green, 50–70%=Yellow, 70–80%=Orange, ≥80%=Red */
         function engineVariant(pct) {
             if (pct < 50)  return 'Green';
             if (pct < 70)  return 'Yellow';
-            if (pct < 90)  return 'Orange';
+            if (pct < 80)  return 'Orange';
             return 'Red';
         }
 
@@ -344,6 +355,44 @@
             el.querySelector('.cd-pair-stk').style.borderColor    = `rgb(${rgb})`;
         }
 
+        // Restricted cars send zeros for every damage/wear value, which would look like an undamaged
+        // car. Your own car always gets real data, and AI cars are never restricted.
+        function updateRestricted() {
+            const restricted = playerIndex !== rawPlayerIndex && telemetryRestricted[playerIndex] === true;
+            if (restricted === isRestricted) return;
+            isRestricted = restricted;
+            overlayContainer.classList.toggle('is-restricted', restricted);
+        }
+
+        // Driver name + team colour for the active car. Also called when the spectated car
+        // changes, so the name follows straight away instead of on the next Participants packet
+        function updateDriver() {
+            const participant = lastParticipants?.[playerIndex];
+            if (participant) {
+                const name = DriverUtils.getDriverLastName(participant, driversData, customDrivers, teamNames);
+                const el = document.getElementById('cd-driver-name');
+                // Participants arrive every few seconds - only refit when the name changes
+                if (name && el.dataset.fitted !== name.toUpperCase()) {
+                    el.dataset.fitted = name.toUpperCase();
+                    el.textContent = el.dataset.fitted;
+                    textFit(el, { minFontSize: 12, maxFontSize: 25, multiLine: false, detectMultiLine: false, widthOnly: true, alignHoriz: true });
+                }
+
+                // Team ID
+                if (typeof participant.m_teamId === 'number' && participant.m_teamId !== currentTeamId) {
+                    currentTeamId = participant.m_teamId;
+                    updateDriverNameColor();
+                }
+
+                // Livery primary colour
+                const livery = participant.m_liveryColour?.[0];
+                primaryColor = (livery && typeof livery.red === 'number')
+                    ? `rgb(${livery.red}, ${livery.green}, ${livery.blue})`
+                    : null;
+                updateDriverNameColor();
+            }
+        }
+
         // ── Show / hide helpers ────────────────────────────────────────────
         function showOverlay() {
             overlayContainer.classList.add('visible');
@@ -364,21 +413,22 @@
         // ── Auto-show (Packet 10 damage threshold detection) ──────────────────
         /**
          * Compares current damage values against previous state.
-         * Calls showOverlay() when a damage threshold is newly crossed.
+         * Shows the overlay when new damage is detected (SimHub: isincreasing(AutoDurationTime, ...)),
+         * or keeps it up for another Display Duration if it's already showing on its timer.
          *
-         * "on-car-damage" — triggers on bodywork entering yellow state:
-         *   Wings / Diffuser / Rear Wing: ≥ 1 %
-         *   Floor / Sidepods / Brakes:    ≥ 25 %
-         *   Engine:                        ≥ 50 %
-         *   Gearbox:                       ≥ 25 %
+         * "on-car-damage" — triggers on:
+         *   Front wings:                 any increase (SimHub watches the raw value, so every new hit)
+         *   Diffuser / Rear Wing:        ≥ 1 % (part turns yellow)
+         *   Floor / Sidepods / Brakes:   ≥ 25 %
+         *   Engine:                      ≥ 50 %
+         *   Gearbox:                     ≥ 25 %
          *
          * "on-any-damage" — same as above, plus:
          *   Tyre wear: every 5 % increment of the highest-wear tyre.
+         *
+         * Never while spectating (SimHub: m_isSpectating=0), so switching between cars doesn't pop it up.
          */
         function checkAutoShow(dmg, wFL, wFR, wRL, wRR, bdFL, bdFR, bdRL, bdRR) {
-            if (!cdConfig.autoDisplay || cdConfig.autoMode === 'never') return;
-            if (overlayContainer.classList.contains('visible')) return;
-
             const cur = {
                 lfWing:   dmg.m_frontLeftWingDamage  ?? 0,
                 rfWing:   dmg.m_frontRightWingDamage ?? 0,
@@ -388,54 +438,68 @@
                 rearWing: dmg.m_rearWingDamage       ?? 0,
                 engine:   dmg.m_engineDamage         ?? 0,
                 gearbox:  dmg.m_gearBoxDamage        ?? 0,
-                brakeFL: bdFL, brakeFR: bdFR, brakeRL: bdRL, brakeRR: bdRR
+                brakeFL: bdFL, brakeFR: bdFR, brakeRL: bdRL, brakeRR: bdRR,
+                wearBucket: Math.floor(Math.max(wFL, wFR, wRL, wRR) / 5)
             };
 
-            // First packet — record baseline without triggering
-            if (!dmgStateInitialized) {
-                prevDmgState = { ...cur };
-                if (cdConfig.autoMode === 'on-any-damage') {
-                    prevDmgState.wearBucket = Math.floor(Math.max(wFL, wFR, wRL, wRR) / 5);
-                }
-                dmgStateInitialized = true;
-                return;
-            }
+            // The baseline is always kept up to date, so switching Auto-Popup on later (or the
+            // overlay already showing) doesn't leave old values to compare against
+            const prev = prevDmgState;
+            const sameCar = dmgStateInitialized && dmgStateIndex === playerIndex;
+            prevDmgState = cur;
+            dmgStateInitialized = true;
+            dmgStateIndex = playerIndex;
+
+            // First packet, or a different car than last time: baseline only
+            if (!sameCar) return;
+            if (!cdConfig.autoDisplay || cdConfig.autoMode === 'never' || isSpectating) return;
 
             let shouldShow = false;
 
-            // Wings / Diffuser / Rear Wing: turn yellow at ≥ 1 %
-            for (const key of ['lfWing', 'rfWing', 'diffuser', 'rearWing']) {
-                if (prevDmgState[key] < 1 && cur[key] >= 1) { shouldShow = true; break; }
+            // Front wings: any new damage
+            if (cur.lfWing > prev.lfWing || cur.rfWing > prev.rfWing) shouldShow = true;
+
+            // Diffuser / Rear Wing: turn yellow at ≥ 1 %
+            if (!shouldShow) {
+                for (const key of ['diffuser', 'rearWing']) {
+                    if (prev[key] < 1 && cur[key] >= 1) { shouldShow = true; break; }
+                }
             }
 
             // Floor / Sidepods / Brakes: turn yellow at ≥ 25 %
             if (!shouldShow) {
                 for (const key of ['floor', 'sidepod', 'brakeFL', 'brakeFR', 'brakeRL', 'brakeRR']) {
-                    if (prevDmgState[key] < 25 && cur[key] >= 25) { shouldShow = true; break; }
+                    if (prev[key] < 25 && cur[key] >= 25) { shouldShow = true; break; }
                 }
             }
 
             // Engine: ≥ 50 %  |  Gearbox: ≥ 25 %
             if (!shouldShow) {
-                if (prevDmgState.engine  < 50 && cur.engine  >= 50) shouldShow = true;
-                if (prevDmgState.gearbox < 25 && cur.gearbox >= 25) shouldShow = true;
+                if (prev.engine  < 50 && cur.engine  >= 50) shouldShow = true;
+                if (prev.gearbox < 25 && cur.gearbox >= 25) shouldShow = true;
             }
 
             // Tyre wear: every 5 % of the highest-wear tyre (on-any-damage only)
             if (!shouldShow && cdConfig.autoMode === 'on-any-damage') {
-                const maxWear   = Math.max(wFL, wFR, wRL, wRR);
-                const newBucket = Math.floor(maxWear / 5);
-                if (newBucket > 0 && newBucket > (prevDmgState.wearBucket ?? 0)) {
-                    shouldShow = true;
-                }
-                prevDmgState.wearBucket = newBucket;
+                if (cur.wearBucket > 0 && cur.wearBucket > prev.wearBucket) shouldShow = true;
             }
 
-            Object.assign(prevDmgState, cur);
-
-            if (shouldShow) {
+            if (!shouldShow) return;
+            if (!overlayContainer.classList.contains('visible')) {
                 showOverlay();
+            } else if (autoHideTimer) {
+                // Already showing on its timer - keep it up for another Display Duration
+                clearTimeout(autoHideTimer);
+                autoHideTimer = setTimeout(hideOverlay, cdConfig.autoDuration);
             }
+        }
+
+        // Tyre life scale under the car: "0 50 100" for wear, flipped to "100 50 0" for
+        // remaining life, so the green end of the bar always reads as a fresh tyre
+        function updateWearScaleLabels() {
+            const [left, right] = cdConfig.showRemainingLife ? [100, 0] : [0, 100];
+            document.getElementById('cd-wbl-0').innerHTML   = `${left}<span class="cd-wb-pct-inline">%</span>`;
+            document.getElementById('cd-wbl-100').innerHTML = `${right}<span class="cd-wb-pct-inline">%</span>`;
         }
 
         // ── Title slide animation ─────────────────────────────────────────────
@@ -475,6 +539,7 @@
                 const prevAutoDisplay = cdConfig.autoDisplay;
                 cdConfig = { autoDisplay: !!cfg.autoDisplay, autoMode: cfg.autoMode || 'never', autoDuration: cfg.autoDuration || DEFAULT_AUTO_DURATION, showRemainingLife: cfg.showRemainingLife !== false, useTeamColor: cfg.useTeamColor !== false };
                 updateDriverNameColor();
+                updateWearScaleLabels();
 
                 const newVisibility = !!cfg.visible;
 
@@ -511,7 +576,10 @@
                 if (pid === 1) {
                     isSpectating      = data.m_isSpectating      ?? isSpectating;
                     spectatorCarIndex = data.m_spectatorCarIndex ?? spectatorCarIndex;
+                    const prevIndex = playerIndex;
                     playerIndex = DriverUtils.getActiveDriverIndex(rawPlayerIndex, isSpectating, spectatorCarIndex);
+                    updateRestricted();
+                    if (playerIndex !== prevIndex) updateDriver();
 
                     if (typeof data.m_formula === 'number' && data.m_formula !== formulaType) {
                         formulaType = data.m_formula;
@@ -521,28 +589,11 @@
 
                 // Packet 4 — Participants (driver name + team colour)
                 if (pid === 4) {
-                    const participant = data.m_participants?.[playerIndex];
-                    if (participant) {
-                        const name = DriverUtils.getDriverLastName(participant, driversData, customDrivers, teamNames);
-                        if (name) {
-                            const el = document.getElementById('cd-driver-name');
-                            el.textContent = name.toUpperCase();
-                            textFit(el, { minFontSize: 12, maxFontSize: 25, multiLine: false, widthOnly: true, alignHoriz: true });
-                        }
+                    telemetryRestricted = (data.m_participants || []).map(p => p.m_yourTelemetry === 0 && p.m_aiControlled === 0);
+                    updateRestricted();
 
-                        // Team ID
-                        if (typeof participant.m_teamId === 'number' && participant.m_teamId !== currentTeamId) {
-                            currentTeamId = participant.m_teamId;
-                            updateDriverNameColor();
-                        }
-
-                        // Livery primary colour
-                        const livery = participant.m_liveryColour?.[0];
-                        if (livery && typeof livery.red === 'number') {
-                            primaryColor = `rgb(${livery.red}, ${livery.green}, ${livery.blue})`;
-                            updateDriverNameColor();
-                        }
-                    }
+                    lastParticipants = data.m_participants || [];
+                    updateDriver();
                 }
 
                 // Packet 7 — Car Status (compound + age)
@@ -550,7 +601,7 @@
                     const cs = data.m_carStatusData?.[playerIndex];
                     if (cs) {
                         if (typeof cs.m_visualTyreCompound === 'number') {
-                            const info = VISUAL_COMPOUND[cs.m_visualTyreCompound] || { code: '?', color: '#808080' };
+                            const info = VISUAL_COMPOUND[cs.m_visualTyreCompound] || NO_COMPOUND;
                             const compEl = document.getElementById('cd-compound');
                             compEl.textContent  = info.code;
                             compEl.style.color  = info.color;

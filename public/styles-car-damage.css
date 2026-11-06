@@ -12,7 +12,7 @@
     top: -300px;
     overflow: hidden;
     opacity: 0;
-    transition: top 200ms ease, height 200ms ease, opacity 200ms ease;
+    transition: top 200ms ease-out, height 200ms ease-out, opacity 200ms ease-out;
 }
 
 .overlay-container.visible {
@@ -275,6 +275,44 @@
     left: 56px;
     top: 255px;
     z-index: 18;
+}
+
+/* Restricted telemetry: grey the car out under the NO DATA cover (see #cd-no-data) */
+#cd-car-container {
+    transition: opacity 250ms ease-out, filter 250ms ease-out;
+}
+
+.overlay-container.is-restricted #cd-car-container {
+    opacity: 0.2;
+    filter: grayscale(1);
+}
+
+#cd-no-data {
+    left: 0;
+    top: 140px;
+    width: 280px;
+    height: 345px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    z-index: 85;
+    pointer-events: none;
+    transition: opacity 250ms ease-out;
+}
+
+/* Same look as Weather's waiting-for-data cover */
+#cd-no-data span {
+    font-family: 'F1TV-2022', sans-serif;
+    font-weight: 400;
+    font-size: 22px;
+    color: rgb(255, 255, 255);
+    opacity: 0.9;
+    letter-spacing: 1px;
+}
+
+.overlay-container.is-restricted #cd-no-data {
+    opacity: 1;
 }
 
 /* ════════════════════════════════════════════════════════════════

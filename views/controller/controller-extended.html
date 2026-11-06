@@ -243,10 +243,10 @@
             <div class="option-row">
                 <label class="select-label">
                     <span class="select-text">Display Duration (seconds):</span>
-                    <input type="number" id="car-damage-auto-duration" class="select-dropdown number-input" min="1" max="300" step="1" value="15">
+                    <input type="number" id="car-damage-auto-duration" class="select-dropdown number-input" min="1" max="300" step="1" value="6">
                 </label>
                 <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Display Duration (Car Damage)">?</button>
-                <div class="help-card" hidden>How long the overlay stays on screen before hiding again, while Automatic Display is on. Default is 15 seconds.</div>
+                <div class="help-card" hidden>How long the overlay stays on screen before hiding again, while Automatic Display is on. Default is 6 seconds.</div>
             </div>
             <div class="option-row">
                 <label class="select-label">
@@ -260,8 +260,9 @@
                 <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Auto-Popup">?</button>
                 <div class="help-card" hidden>When the overlay pops up by itself. Needs Automatic Display to be on.<br>
                     <strong>Never:</strong> never pops up.<br>
-                    <strong>On Car Damage:</strong> when a car part (wings, floor, sidepods, diffuser, brakes, engine or gearbox) first gets damaged enough to turn yellow. Tyre wear doesn't count.<br>
-                    <strong>On Any Damage:</strong> the same, plus every 5% of wear on your most worn tyre.</div>
+                    <strong>On Car Damage:</strong> when a car part (wings, floor, sidepods, diffuser, brakes, engine or gearbox) first gets damaged enough to turn yellow, and on every new hit to a front wing. Tyre wear doesn't count.<br>
+                    <strong>On Any Damage:</strong> the same, plus every 5% of wear on your most worn tyre.<br>
+                    New damage while it's already showing keeps it up for another Display Duration. It never pops up while you're spectating, but you can still show it yourself (a player whose "Your Telemetry" is Restricted shows NO DATA, since the game doesn't send their damage).</div>
             </div>
         </section>
 
@@ -1178,6 +1179,7 @@
         const carDamageTeamColorToggle      = document.getElementById('car-damage-team-color-toggle');
         const carDamageAutoDurationInput    = document.getElementById('car-damage-auto-duration');
 
+        const CAR_DAMAGE_AUTO_DEFAULT_DURATION = 6000; // ms — SimHub default, same as car-damage.html
         bindAutoDurationInput(carDamageAutoDurationInput, 'car-damage', () => updateCarDamageOptions());
 
         carDamageAutoDisplayToggle.addEventListener('change', () => {
@@ -1221,7 +1223,7 @@
             carDamageAutoModeSelect.value        = carDamageConfig.autoMode || 'never';
             carDamageRemainingLifeToggle.checked = carDamageConfig.showRemainingLife !== false;
             carDamageTeamColorToggle.checked     = carDamageConfig.useTeamColor !== false;
-            carDamageAutoDurationInput.value     = (carDamageConfig.autoDuration || AUTO_DISPLAY_DEFAULT_DURATION) / 1000;
+            carDamageAutoDurationInput.value     = (carDamageConfig.autoDuration || CAR_DAMAGE_AUTO_DEFAULT_DURATION) / 1000;
         }
 
         // Lap timer visibility mode handling

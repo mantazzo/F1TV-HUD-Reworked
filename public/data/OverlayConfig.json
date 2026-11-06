@@ -75,7 +75,7 @@
       "autoMode": "on-car-damage",
       "showRemainingLife": true,
       "useTeamColor": true,
-      "autoDuration": 15000
+      "autoDuration": 6000
     },
     "leaderboard": {
       "visible": true,
