@@ -1,6 +1,6 @@
 {
   "name": "@deltazeroproduction/f1-udp-parser",
-  "version": "1.2.2-f1tvhud.1",
+  "version": "1.2.2-f1tvhud.2",
   "description": "Vendored copy of @deltazeroproduction/f1-udp-parser 1.2.2 with F1 25 2026-season UDP changes for F1TV-HUD-Reworked. See VENDORED.md.",
   "main": "build/src/index.js",
   "types": "build/src/index.d.ts",

@@ -2,6 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LobbyInfoDataParser = void 0;
 const F1Parser_1 = require("../F1Parser");
+// f1tvhud: the game does not clear the name buffer, so bytes of an older, longer name can follow
+// the null terminator (e.g. "Dodo\0r"). stripNull only trims trailing nulls; cut at the first one.
+const cutAtNull = (name) => { const end = name.indexOf('\0'); return end === -1 ? name : name.slice(0, end); };
 class LobbyInfoDataParser extends F1Parser_1.F1Parser {
     constructor(packetFormat) {
         super();
@@ -21,12 +24,14 @@ class LobbyInfoDataParser extends F1Parser_1.F1Parser {
             this.string('m_name', {
                 length: 32,
                 stripNull: true,
+                formatter: cutAtNull,
             });
         }
         else {
             this.string('m_name', {
                 length: 48,
                 stripNull: true,
+                formatter: cutAtNull,
             });
         }
         this.uint8('m_carNumber');
