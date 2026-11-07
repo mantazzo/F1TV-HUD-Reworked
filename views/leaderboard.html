@@ -2652,10 +2652,12 @@
                 row.lastName.style.color             = '';
                 row.position.style.color             = '';
                 row.position.style.fontSize          = '';
-                timingRows[i].iText.parentElement.style.display      = '';
-                timingRows[i].lText.parentElement.style.display      = '';
-                qualiTimingRows[i].gText.parentElement.style.display = '';
-                qualiTimingRows[i].tText.parentElement.style.display = '';
+                // Restore to the slot state, not '' - rows past the grid stay hidden (see updateSlotVisibility)
+                const slotDisplay = i < numActiveCars ? '' : 'none';
+                timingRows[i].iText.parentElement.style.display      = slotDisplay;
+                timingRows[i].lText.parentElement.style.display      = slotDisplay;
+                qualiTimingRows[i].gText.parentElement.style.display = slotDisplay;
+                qualiTimingRows[i].tText.parentElement.style.display = slotDisplay;
                 pitStatusRows[i].text.style.visibility               = '';
                 outRows[i].row.style.visibility                      = '';
                 // DRS is driven live by pid 6 — don't force-show here, pid 6 will restore it
@@ -2755,7 +2757,7 @@
         }
 
         // Re-hide timing columns for OUT/DNF/DSQ/retired drivers in race sessions.
-        // Called after applyIndicators() (which resets timing rows to display:'') both from
+        // Called after applyIndicators() (which resets timing rows to their slot display) both from
         // the pid 2 post-processing and from the config handler (when playback is paused).
         // Tyre is NOT handled here — see updateTyreRowVisibility() below.
         function hideOutDriverColumns() {
@@ -2898,7 +2900,9 @@
                 // Time remaining banner — practice + standard qualifying only (types 1–8; not SQ/OSQ)
                 if (sessionType >= 1 && sessionType <= 8) {
                     for (const t of TIME_TRIGGERS_S) {
-                        if (t < sessionDuration && prevTimeLeft > t && timeLeft <= t) {
+                        // isFinite: a real crossing needs a previous value - after a page load or session reset
+                        // prevTimeLeft is Infinity, and joining mid-session would otherwise "cross" a past threshold
+                        if (t < sessionDuration && Number.isFinite(prevTimeLeft) && prevTimeLeft > t && timeLeft <= t) {
                             showTimeLapsBanner('minutes', Math.round(t / 60));
                             break;
                         }
@@ -3030,7 +3034,8 @@
                         const inPit = !isRace &&
                             ((car.m_pitStatus ?? 0) > 0 ||
                             (car.m_driverStatus ?? -1) === 0) &&
-                            (car.m_resultStatus ?? 0) !== 3;  // only show for non-finished cars
+                            (car.m_resultStatus ?? 0) !== 3 &&  // only show for non-finished cars
+                            (car.m_resultStatus ?? 0) !== 1;    // nor for MP placeholder slots (they sit in the garage)
                         inPitRows[pos - 1].row.style.display = inPit ? 'block' : 'none';
 
                         // Penalty row — race-only, shown when toggle on and any penalty exists
@@ -3112,12 +3117,17 @@
                     }
                 });
 
-                // Compute numActiveCars from highest assigned position (includes retired/finished cars)
+                // Compute numActiveCars from highest assigned position (includes retired/finished cars).
+                // Status 1 ("inactive") cars are skipped: multiplayer sessions that allow joining mid-session
+                // (Short Practice, Short Qualifying) fill every free slot with a placeholder car that never
+                // leaves the garage. The game ranks them last and hides them from its own timing tower.
+                // Real cars report 2+ from the start (retired = 7), so the retirement max-merge still holds.
                 let maxPos = 0;
                 for (let i = 0; i < NUM_CARS; i++) {
+                    if (carResultStatus[i] === 1) continue;
                     if (carPositions[i] > maxPos) maxPos = carPositions[i];
                 }
-                numActiveCars = maxPos; // NOTE: Seems to work for now, however, multiplayer check will be required later.
+                numActiveCars = maxPos;
                 updateSlotVisibility();
                 if (formationLap) updateStandingsVisibility(); // before updateOverlayHeight(): height depends on its output
                 updateOverlayHeight();
@@ -3291,7 +3301,7 @@
                 hideOutDriverColumns();
 
                 // Hide timing for any rows currently showing pit status text.
-                // Must run after applyIndicators() since that clears all timing rows to ''.
+                // Must run after applyIndicators() since that resets all timing rows to their slot display.
                 for (let p = 0; p < NUM_CARS; p++) {
                     if (pitStatusRows[p].row.style.opacity === '1') {
                         timingRows[p].iText.parentElement.style.display      = 'none';

@@ -209,8 +209,10 @@
 
                 // m_numActiveCars can under-report (it drops when a driver retires), so merge it with the
                 // highest assigned position seen in Lap Data - same fix as leaderboard.html / leaderboard-lastname.html.
+                // Status 1 ("inactive") = multiplayer placeholder slot kept free for a mid-session join; skipped.
                 let maxPos = 0;
                 for (const lap of data.m_lapData) {
+                    if (lap.m_resultStatus === 1) continue;
                     if (lap.m_carPosition > maxPos) maxPos = lap.m_carPosition;
                 }
                 const numActiveCars = Math.max(participantsActiveCars, maxPos);
