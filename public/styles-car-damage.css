@@ -277,6 +277,25 @@
     z-index: 18;
 }
 
+/* Temperature mode engine: EngineGreen.png is one colour with a 0.3-alpha fill and a solid
+   stroke (same as the pairs), so using it as a mask gives the same look in any colour */
+#cd-engine-temp {
+    position: absolute;
+    width: 52px;
+    height: 61px;
+    left: 56px;
+    top: 255px;
+    z-index: 18;
+    display: none;
+    background-color: rgb(0, 255, 0);
+    -webkit-mask: url('/images/car-damage/EngineGreen.png') center / 100% 100% no-repeat;
+    mask: url('/images/car-damage/EngineGreen.png') center / 100% 100% no-repeat;
+    transition: background-color 0.4s ease;
+}
+
+.overlay-container.temp-mode #cd-engine      { display: none; }
+.overlay-container.temp-mode #cd-engine-temp { display: block; }
+
 /* Restricted telemetry: grey the car out under the NO DATA cover (see #cd-no-data) */
 #cd-car-container {
     transition: opacity 250ms ease-out, filter 250ms ease-out;
@@ -650,6 +669,12 @@
 #cd-wbl-50  { width: 60px; left:  107.5px; top: 575px; }
 /* "100": 60×20 at (207.5, 575) */
 #cd-wbl-100 { width: 60px; left: 207.5px; top: 575px; }
+
+/* Temperature mode: blue / green / red bar, COLD / OPTIMAL / HOT labels */
+.overlay-container.temp-mode #cd-wb-green  { background-color: rgb(30, 90, 255); }
+.overlay-container.temp-mode #cd-wb-orange { background-color: rgb(0, 255, 0); }
+.overlay-container.temp-mode .cd-wb-label  { font-size: 16px; }
+.overlay-container.temp-mode #cd-wbl-50    { width: 90px; left: 92.5px; }
 
 /* Inline "%" suffix inside each label */
 .cd-wb-pct-inline {

@@ -29,7 +29,8 @@
 
         <!-- ── Title: 280×90 at top:0 ── -->
         <!-- Slides in when the overlay shows; slides out after ~8 s or when the overlay hides. -->
-        <div id="cd-title"><span>CAR</span><span>DAMAGE</span></div>
+        <!-- Second word switches to TEMPS in temperature mode -->
+        <div id="cd-title"><span>CAR</span><span id="cd-title-word">DAMAGE</span></div>
 
         <!-- ── Info gradient: 280×50 at top:90 ── -->
         <div class="cd-gradient" id="cd-gradient-info"></div>
@@ -87,6 +88,8 @@
                 <img class="cd-car-part" id="cd-diffuser"  src="/images/car-damage/DiffuserGreen.png" alt="">
                 <img class="cd-car-part" id="cd-rear-wing" src="/images/car-damage/rWingGreen.png"    alt="">
                 <img class="cd-car-part" id="cd-engine"    src="/images/car-damage/EngineGreen.png"   alt="">
+                <!-- Temperature mode: the engine shape (EngineGreen.png as a mask) filled with any colour -->
+                <div id="cd-engine-temp"></div>
 
                 <!-- Gearbox: 15×54 r2 border:3 at (75, 320) -->
                 <div class="cd-dmg-pair" id="cd-gearbox">
@@ -222,7 +225,7 @@
 
         // ── Auto-display state ────────────────────────────────────────────────
         const DEFAULT_AUTO_DURATION = 6000; // ms (SimHub default) — set from the Controller's "Display Duration" (autoDuration)
-        let cdConfig = { autoDisplay: false, autoMode: 'never', autoDuration: DEFAULT_AUTO_DURATION, showRemainingLife: true, useTeamColor: true };
+        let cdConfig = { autoDisplay: false, autoMode: 'never', autoDuration: DEFAULT_AUTO_DURATION, showRemainingLife: true, useTeamColor: true, showTemperatures: false };
         let autoHideTimer       = null;
         let dmgStateInitialized = false;
         let dmgStateIndex       = -1;   // car the baseline belongs to (changes while spectating)
@@ -393,6 +396,113 @@
             }
         }
 
+        // ── Temperature mode ──────────────────────────────────────────────────
+        // Tyres, brakes and engine show temperatures instead of damage. Colours come from the
+        // game's own temperature curves (public/data/TemperatureCurves.json, F1 25 data only):
+        // green only at the curve's peak, fading below it through cyan to blue on the cold side
+        // and through yellow to red on the hot side.
+        const FULL_COLOUR_LEVEL = 0.98; // full blue / red at or below this grip/efficiency
+        const NEUTRAL_RGB = '255, 255, 255'; // no curve for this car/compound (yet)
+
+        let tempCurves     = null;  // TemperatureCurves.json
+        let actualCompound = null;  // Car Status m_actualTyreCompound of the active car
+        let lastTelemetry  = null;  // last Car Telemetry entry of the active car, to re-render on changes
+        let tempRenderKey  = '';    // skips DOM writes when nothing changed (telemetry is up to 60 Hz)
+
+        fetch('/data/TemperatureCurves.json')
+            .then(r => r.json())
+            .then(data => { tempCurves = data; renderTemperatures(); })
+            .catch(e => console.error('[CarDamage] Error loading temperature curves:', e));
+
+        // F1 2025 or 2026 car data, from the team ID (m_gameYear stays 25 with the 2026 pack).
+        // Default teams, F1 Generic and My Team (no era) are the 2025 cars.
+        function carDataSet() {
+            if (formulaType === DriverUtils.FORMULA_TYPE.F2) return 'f2';
+            return DriverUtils.getCarEraYear(currentTeamId) === 2026 ? 'f1_2026' : 'f1_2025';
+        }
+
+        function tyreCurve() {
+            if (!tempCurves || actualCompound === null) return null;
+            if (actualCompound >= 11 && actualCompound <= 15) return tempCurves.tyres.f2[actualCompound] || null;
+            // C0 (21) isn't in the game's compound files - the C1 curve is the closest one
+            const key = actualCompound === 21 ? 20 : actualCompound;
+            return tempCurves.tyres[carDataSet()]?.[key] || null;
+        }
+
+        /** Curve value at temp (linear between points, clamped at both ends). */
+        function curveLevel(curve, temp) {
+            if (temp <= curve[0][0]) return curve[0][1];
+            for (let i = 1; i < curve.length; i++) {
+                const [x1, y1] = curve[i];
+                if (temp <= x1) {
+                    const [x0, y0] = curve[i - 1];
+                    return y0 + (y1 - y0) * (temp - x0) / (x1 - x0);
+                }
+            }
+            return curve[curve.length - 1][1];
+        }
+
+        const lerpRgb = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t)).join(', ');
+        const RGB_GREEN = [0, 255, 0], RGB_CYAN = [0, 220, 255], RGB_BLUE = [30, 90, 255];
+        const RGB_YELLOW = [255, 215, 0], RGB_RED = [255, 0, 0];
+
+        /** Blue (cold) → green (optimal) → red (overheating) as a bare "r, g, b" string. */
+        function tempRgbStr(curve, temp) {
+            if (!curve || typeof temp !== 'number') return NEUTRAL_RGB;
+            const level = curveLevel(curve, temp);
+            const peak = Math.max(...curve.map(p => p[1]));
+            if (level >= peak) return RGB_GREEN.join(', ');
+            // 0 at the peak → 1 at FULL_COLOUR_LEVEL; the side depends on where the peak starts
+            const t = Math.min((peak - level) / (peak - FULL_COLOUR_LEVEL), 1);
+            const peakStart = curve.find(p => p[1] === peak)[0];
+            if (temp < peakStart) {
+                return t <= 0.5 ? lerpRgb(RGB_GREEN, RGB_CYAN, t * 2) : lerpRgb(RGB_CYAN, RGB_BLUE, (t - 0.5) * 2);
+            }
+            return t <= 0.5 ? lerpRgb(RGB_GREEN, RGB_YELLOW, t * 2) : lerpRgb(RGB_YELLOW, RGB_RED, (t - 0.5) * 2);
+        }
+
+        /** Temperature mode: tyres (carcass °C + colour), brakes and engine (colour). */
+        function renderTemperatures() {
+            if (!cdConfig.showTemperatures || !lastTelemetry) return;
+            const tel = lastTelemetry;
+            const set = carDataSet();
+            const tyre = tyreCurve();
+            const key = [set, actualCompound, !!tempCurves, ...tel.m_tyresInnerTemperature, ...tel.m_brakesTemperature, tel.m_engineTemperature].join('|');
+            if (key === tempRenderKey) return;
+            tempRenderKey = key;
+
+            const brakeCurve  = tempCurves?.brakes?.[set] || null;
+            const engineCurve = tempCurves?.engine?.[set] || null;
+
+            // Array order: RL=0, RR=1, FL=2, FR=3
+            [['rl', 0], ['rr', 1], ['fl', 2], ['fr', 3]].forEach(([c, i]) => {
+                const tyreTemp = tel.m_tyresInnerTemperature?.[i];
+                const tyreRgb  = tempRgbStr(tyre, tyreTemp);
+                const el = document.getElementById(`cd-pct-${c}`);
+                if (el) {
+                    el.textContent    = typeof tyreTemp === 'number' ? `${tyreTemp}°` : '-';
+                    el.style.color    = `rgb(${tyreRgb})`;
+                    el.style.fontSize = tyreTemp >= 100 ? '22px' : '25px';
+                }
+                applyPairColor(`cd-tyre-${c}`, tyreRgb);
+                applyPairColor(`cd-brake-${c}`, tempRgbStr(brakeCurve, tel.m_brakesTemperature?.[i]));
+            });
+
+            document.getElementById('cd-engine-temp').style.backgroundColor = `rgb(${tempRgbStr(engineCurve, tel.m_engineTemperature)})`;
+        }
+
+        // Title, scale bar and engine layer for the current mode
+        function applyDisplayMode() {
+            const temps = cdConfig.showTemperatures;
+            if (overlayContainer.classList.contains('temp-mode') === temps) return;
+            overlayContainer.classList.toggle('temp-mode', temps);
+            document.getElementById('cd-title-word').textContent = temps ? 'TEMPS' : 'DAMAGE';
+            updateWearScaleLabels();
+            tempRenderKey = '';
+            renderTemperatures();
+            // Back to damage: the next Car Damage packet (10 per second) repaints tyres + brakes
+        }
+
         // ── Show / hide helpers ────────────────────────────────────────────
         function showOverlay() {
             overlayContainer.classList.add('visible');
@@ -496,10 +606,14 @@
 
         // Tyre life scale under the car: "0 50 100" for wear, flipped to "100 50 0" for
         // remaining life, so the green end of the bar always reads as a fresh tyre
+        // In temperature mode the bar is blue / green / red and reads COLD / OPTIMAL / HOT
         function updateWearScaleLabels() {
+            const pct = n => `${n}<span class="cd-wb-pct-inline">%</span>`;
             const [left, right] = cdConfig.showRemainingLife ? [100, 0] : [0, 100];
-            document.getElementById('cd-wbl-0').innerHTML   = `${left}<span class="cd-wb-pct-inline">%</span>`;
-            document.getElementById('cd-wbl-100').innerHTML = `${right}<span class="cd-wb-pct-inline">%</span>`;
+            const temps = cdConfig.showTemperatures;
+            document.getElementById('cd-wbl-0').innerHTML   = temps ? 'COLD'    : pct(left);
+            document.getElementById('cd-wbl-50').innerHTML  = temps ? 'OPTIMAL' : pct(50);
+            document.getElementById('cd-wbl-100').innerHTML = temps ? 'HOT'     : pct(right);
         }
 
         // ── Title slide animation ─────────────────────────────────────────────
@@ -537,9 +651,10 @@
             if (config.overlays?.['car-damage']) {
                 const cfg = config.overlays['car-damage'];
                 const prevAutoDisplay = cdConfig.autoDisplay;
-                cdConfig = { autoDisplay: !!cfg.autoDisplay, autoMode: cfg.autoMode || 'never', autoDuration: cfg.autoDuration || DEFAULT_AUTO_DURATION, showRemainingLife: cfg.showRemainingLife !== false, useTeamColor: cfg.useTeamColor !== false };
+                cdConfig = { autoDisplay: !!cfg.autoDisplay, autoMode: cfg.autoMode || 'never', autoDuration: cfg.autoDuration || DEFAULT_AUTO_DURATION, showRemainingLife: cfg.showRemainingLife !== false, useTeamColor: cfg.useTeamColor !== false, showTemperatures: !!cfg.showTemperatures };
                 updateDriverNameColor();
                 updateWearScaleLabels();
+                applyDisplayMode();
 
                 const newVisibility = !!cfg.visible;
 
@@ -596,10 +711,24 @@
                     updateDriver();
                 }
 
+                // Packet 6 — Car Telemetry (temperatures, temperature mode only)
+                if (pid === 6) {
+                    const tel = data.m_carTelemetryData?.[playerIndex];
+                    if (tel) {
+                        lastTelemetry = tel;
+                        renderTemperatures();
+                    }
+                }
+
                 // Packet 7 — Car Status (compound + age)
                 if (pid === 7) {
                     const cs = data.m_carStatusData?.[playerIndex];
                     if (cs) {
+                        // Actual compound (C1-C6 / F2) picks the tyre temperature curve
+                        if (typeof cs.m_actualTyreCompound === 'number' && cs.m_actualTyreCompound !== actualCompound) {
+                            actualCompound = cs.m_actualTyreCompound;
+                            renderTemperatures();
+                        }
                         if (typeof cs.m_visualTyreCompound === 'number') {
                             const info = VISUAL_COMPOUND[cs.m_visualTyreCompound] || NO_COMPOUND;
                             const compEl = document.getElementById('cd-compound');
@@ -627,22 +756,25 @@
                     const tdFL = dmg.m_tyresDamage?.[2] ?? 0; const bdFL = dmg.m_brakesDamage?.[2] ?? 0;
                     const tdFR = dmg.m_tyresDamage?.[3] ?? 0; const bdFR = dmg.m_brakesDamage?.[3] ?? 0;
 
-                    // Per-corner wear % text
-                    [['fl', wFL], ['fr', wFR], ['rl', wRL], ['rr', wRR]].forEach(([c, w]) => {
-                        const el = document.getElementById(`cd-pct-${c}`);
-                        if (el) {
-                            const displayed    = Math.round(cdConfig.showRemainingLife ? 100 - w : w);
-                            el.textContent    = `${displayed}%`;
-                            el.style.color    = wearTextColor(w);
-                            el.style.fontSize = displayed === 100 ? '20px' : '25px'; /* At 100, reduce size to fit; otherwise use larger size */
-                        }
-                    });
+                    // Tyres + brakes: in temperature mode these come from Car Telemetry instead
+                    if (!cdConfig.showTemperatures) {
+                        // Per-corner wear % text
+                        [['fl', wFL], ['fr', wFR], ['rl', wRL], ['rr', wRR]].forEach(([c, w]) => {
+                            const el = document.getElementById(`cd-pct-${c}`);
+                            if (el) {
+                                const displayed    = Math.round(cdConfig.showRemainingLife ? 100 - w : w);
+                                el.textContent    = `${displayed}%`;
+                                el.style.color    = wearTextColor(w);
+                                el.style.fontSize = displayed === 100 ? '20px' : '25px'; /* At 100, reduce size to fit; otherwise use larger size */
+                            }
+                        });
 
-                    // Tyre + brake damage colours
-                    setTyrePairColor('cd-tyre-fl', wFL); applyPairColor('cd-brake-fl', heavyDmgRgb(bdFL));
-                    setTyrePairColor('cd-tyre-fr', wFR); applyPairColor('cd-brake-fr', heavyDmgRgb(bdFR));
-                    setTyrePairColor('cd-tyre-rl', wRL); applyPairColor('cd-brake-rl', heavyDmgRgb(bdRL));
-                    setTyrePairColor('cd-tyre-rr', wRR); applyPairColor('cd-brake-rr', heavyDmgRgb(bdRR));
+                        // Tyre + brake damage colours
+                        setTyrePairColor('cd-tyre-fl', wFL); applyPairColor('cd-brake-fl', heavyDmgRgb(bdFL));
+                        setTyrePairColor('cd-tyre-fr', wFR); applyPairColor('cd-brake-fr', heavyDmgRgb(bdFR));
+                        setTyrePairColor('cd-tyre-rl', wRL); applyPairColor('cd-brake-rl', heavyDmgRgb(bdRL));
+                        setTyrePairColor('cd-tyre-rr', wRR); applyPairColor('cd-brake-rr', heavyDmgRgb(bdRR));
+                    }
 
                     // Bodywork images
                     updatePartImage('cd-lf-wing',   'LfWing',   dmg.m_frontLeftWingDamage  ?? 0);

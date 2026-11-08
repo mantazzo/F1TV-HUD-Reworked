@@ -205,6 +205,22 @@
             <h2>Car Damage Options</h2>
             <div class="option-row">
                 <label class="toggle-label">
+                    <input type="checkbox" id="car-damage-temperatures-toggle" class="toggle-checkbox">
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-text">Show Temperatures</span>
+                </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Show Temperatures (Car Damage)">?</button>
+                <div class="help-card" hidden>Switches the overlay to <strong>CAR TEMPS</strong>: the tyres show their carcass (inner) temperature in °C, and the tyres, brakes and engine are coloured from blue (cold) through green (at peak grip or efficiency) to red (overheating). Wings, floor, sidepods, diffuser and gearbox still show damage.<br>
+                    The ranges are the game's own (F1 25 only), for each tyre compound and for the 2025, 2026 and F2 cars. AI cars don't simulate tyre and engine temperatures in detail, so theirs barely change.
+                    <div class="help-images">
+                        <figure><img src="/images/help/car-damage-tyre-life-on.png" alt="Car Damage showing damage and tyre life" width="300" height="523" loading="lazy"><figcaption>Off</figcaption></figure>
+                        <figure><img src="/images/help/car-damage-temps-cold.png" alt="Car Temps on the formation lap: cold blue tyres at 64 to 67 degrees" width="300" height="523" loading="lazy"><figcaption>On (cold)</figcaption></figure>
+                        <figure><img src="/images/help/car-damage-temps-racing.png" alt="Car Temps while racing: green tyres at 82 to 93 degrees, orange front brakes under braking" width="300" height="523" loading="lazy"><figcaption>On (racing)</figcaption></figure>
+                    </div>
+                </div>
+            </div>
+            <div class="option-row">
+                <label class="toggle-label">
                     <input type="checkbox" id="car-damage-team-color-toggle" class="toggle-checkbox">
                     <span class="toggle-slider"></span>
                     <span class="toggle-text">Use Team Color</span>
@@ -1205,6 +1221,15 @@
         const carDamageRemainingLifeToggle  = document.getElementById('car-damage-remaining-life-toggle');
         const carDamageTeamColorToggle      = document.getElementById('car-damage-team-color-toggle');
         const carDamageAutoDurationInput    = document.getElementById('car-damage-auto-duration');
+        const carDamageTemperaturesToggle   = document.getElementById('car-damage-temperatures-toggle');
+
+        carDamageTemperaturesToggle.addEventListener('change', () => {
+            socket.emit('config_update', {
+                overlay: 'car-damage',
+                property: 'showTemperatures',
+                value: carDamageTemperaturesToggle.checked
+            });
+        });
 
         const CAR_DAMAGE_AUTO_DEFAULT_DURATION = 6000; // ms — SimHub default, same as car-damage.html
         bindAutoDurationInput(carDamageAutoDurationInput, 'car-damage', () => updateCarDamageOptions());
@@ -1250,6 +1275,7 @@
             carDamageAutoModeSelect.value        = carDamageConfig.autoMode || 'never';
             carDamageRemainingLifeToggle.checked = carDamageConfig.showRemainingLife !== false;
             carDamageTeamColorToggle.checked     = carDamageConfig.useTeamColor !== false;
+            carDamageTemperaturesToggle.checked  = !!carDamageConfig.showTemperatures;
             carDamageAutoDurationInput.value     = (carDamageConfig.autoDuration || CAR_DAMAGE_AUTO_DEFAULT_DURATION) / 1000;
         }
 
