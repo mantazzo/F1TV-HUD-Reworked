@@ -15,7 +15,7 @@ This project is worked on with Windows systems in mind - it may work on other sy
 ## Installation
 
 1. **Install Node.js on Windows.**  
-   I would recommend using tools like [Nodist](https://github.com/nodists/nodist) or [NVM for Windows](https://github.com/coreybutler/nvm-windows) or [Volta](https://volta.sh/) (currently used personally) for easier installation and version management, however, you can choose to proceed any way you want. Any option works, as long as you can run commands like `node` or `npm`.  
+   I would recommend using tools like [Nodist](https://github.com/nodists/nodist) or [NVM for Windows](https://github.com/coreybutler/nvm-windows) (currently used personally) or [Volta](https://volta.sh/) for easier installation and version management, however, you can choose to proceed any way you want. Any option works, as long as you can run commands like `node` or `npm`.  
    I used the latest LTS version (v24.21.0 at the time of writing) when setting up, but most recent versions should work.
 
 2. **Clone the repository or download the latest version.**  
@@ -49,7 +49,7 @@ This project is worked on with Windows systems in mind - it may work on other sy
 If you're not feeling comfortable with all the extensive setup, I have now provided an alternative quicker approach:
 
 1. **Run the "install.bat" script.** 
-This will execute the *"install.ps1"* Powershell script, which will download the standalone binary of Node.js (latest LTS version, currently it's v24.21.0) and set it up in a "runtime/" folder, and also will set up the project's dependencies. 
+This will execute the *"install.ps1"* Powershell script, which will download the standalone binary of Node.js (latest LTS version, currently it's v24.22.2) and set it up in a "runtime/" folder, and also will set up the project's dependencies. 
 If you ever need to do a module update, just rerun the script - it will update the modules as well (including the bundled UDP parser, if it was updated). 
 
 2. **Run the "run.bat" script.** 
