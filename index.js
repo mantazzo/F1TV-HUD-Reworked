@@ -132,6 +132,93 @@ function saveCustomOverlayConfig(config) {
 
 let customOverlayConfig = loadCustomOverlayConfig();
 
+// AI driver name overrides — see the template entry in public/data/AIDriverOverrides.json.
+// AI cars only carry a driver ID in the UDP data, so the names overlays show come from the
+// parser's DRIVERS table; season mods that rename AI drivers in-game don't change it. Enabled
+// entries replace FirstName/LastName/Abbreviation for their DriverID before DRIVERS is sent to
+// an overlay. The file is re-read on every overlay connection (the merge is cached while the
+// file is unchanged, so warnings print once), so an edit applies after an overlay refresh.
+const AI_OVERRIDES_PATH = path.join(__dirname, 'public', 'data', 'AIDriverOverrides.json');
+const AI_OVERRIDES_TAG = '[AI Driver Overrides]';
+const HUMAN_DRIVER_IDS = new Set([255, 65535]);   // same as CUSTOM_DRIVER_IDS in driver-utils.js
+let aiOverridesCache = { raw: null, drivers: DRIVERS };
+
+function getDriversWithOverrides() {
+    let raw;
+    try {
+        raw = fs.readFileSync(AI_OVERRIDES_PATH, 'utf8');
+    } catch (err) {
+        if (err.code !== 'ENOENT') console.error(`${AI_OVERRIDES_TAG} Could not read the overrides file:`, err.message);
+        return DRIVERS;
+    }
+    if (raw !== aiOverridesCache.raw) {
+        aiOverridesCache = { raw, drivers: applyAIDriverOverrides(raw) };
+    }
+    return aiOverridesCache.drivers;
+}
+
+function applyAIDriverOverrides(raw) {
+    let entries;
+    try {
+        entries = JSON.parse(raw);
+    } catch (err) {
+        console.warn(`${AI_OVERRIDES_TAG} AIDriverOverrides.json is not valid JSON (${err.message}) - no overrides applied.`);
+        return DRIVERS;
+    }
+    if (!Array.isArray(entries)) {
+        console.warn(`${AI_OVERRIDES_TAG} AIDriverOverrides.json must be a list ([ ... ]) of entries - no overrides applied.`);
+        return DRIVERS;
+    }
+
+    const text = v => (typeof v === 'string' && v.trim() !== '' ? v.trim() : null);
+    const drivers = { ...DRIVERS };
+    const applied = new Map();   // DriverID -> entry index
+
+    entries.forEach((entry, i) => {
+        if (!entry || typeof entry !== 'object' || entry.Enabled === false) return;
+        const id = entry.DriverID;
+        if (!Number.isInteger(id) || id < 0) {
+            console.warn(`${AI_OVERRIDES_TAG} Entry #${i} has no valid DriverID (a whole number) - skipped.`);
+            return;
+        }
+        if (HUMAN_DRIVER_IDS.has(id)) {
+            console.warn(`${AI_OVERRIDES_TAG} Entry #${i}: DriverID ${id} is a human driver, not an AI one - use CustomF1Drivers.json / CustomF2Drivers.json for those. Skipped.`);
+            return;
+        }
+        const first = text(entry.FirstName);
+        const last = text(entry.LastName);
+        const abbr = text(entry.Abbreviation);
+        if (!first && !last && !abbr) {
+            console.warn(`${AI_OVERRIDES_TAG} Entry #${i} (DriverID ${id}) sets none of FirstName/LastName/Abbreviation - skipped.`);
+            return;
+        }
+        if (applied.has(id)) {
+            console.warn(`${AI_OVERRIDES_TAG} Entries #${applied.get(id)} and #${i} both override DriverID ${id} - the later one (#${i}) is used.`);
+        }
+
+        // Always start from the game's entry, so a duplicate fully replaces the earlier one
+        const driver = { ...(DRIVERS[id] || {}) };
+        if (first) driver.firstName = first;
+        if (last) {
+            driver.lastName = last;
+            // A new last name makes the game's code stale; with none given, DriverUtils
+            // generates it from the new last name instead
+            if (!abbr) delete driver.abbreviation;
+        }
+        if (abbr) driver.abbreviation = abbr.toUpperCase();
+        drivers[id] = driver;
+        applied.set(id, i);
+    });
+
+    if (applied.size === 0) return DRIVERS;
+    const list = [...applied.keys()].map(id => {
+        const d = drivers[id];
+        return `${id} = ${[d.firstName, d.lastName].filter(Boolean).join(' ')}${d.abbreviation ? ` (${d.abbreviation})` : ''}`;
+    });
+    console.log(`${AI_OVERRIDES_TAG} ${applied.size} active: ${list.join(', ')}`);
+    return drivers;
+}
+
 // Optional Controller hint text ("?" button) — plain text, capped so a manifest can't flood the page
 const MAX_HELP_LENGTH = 1000;
 function normalizeHelp(help) {
@@ -327,7 +414,7 @@ function startServer(portNumber, forwardAddresses) {
         });
         
         // Send constants to client
-        socket.emit('drivers_data', DRIVERS);
+        socket.emit('drivers_data', getDriversWithOverrides());
         socket.emit('event_codes', EVENT_CODES);
         socket.emit('weather_data', WEATHER);
         // socket.emit('penalties_data', PENALTIES); // We don't need it in the end, but keeping this in case it's useful later

@@ -1,0 +1,23 @@
+[
+  {
+    "Enabled": false,
+    "Enabled_Note": "Turns this entry on (true) or off (false). An entry set to false is ignored completely, so you can keep it in the file for later. If the field is missing, the entry is on.",
+    "DriverID": 168,
+    "DriverID_Note": "Mandatory. The game's ID of the AI driver to rename (168 = Zak O'Sullivan). You can find it on the Participants debug page (http://localhost:3000/debug/participants-debug) - it's the number after the abbreviation in the Driver column. Alternatively, you can find the data tables with Driver IDs in the UDP documentation. The override applies to this driver ID in EVERY game mode and season where the game uses it (e.g. if the driver also appears in F2 or in an older season's grid, he is renamed there too). Human drivers (ID 255 / 65535) can't be overridden here - use CustomF1Drivers.json / CustomF2Drivers.json for them.",
+    "FirstName": "Pascal",
+    "FirstName_Note": "Optional. Replaces the driver's first name. Leave it out to keep the original first name.",
+    "LastName": "Wehrlein",
+    "LastName_Note": "Optional. Replaces the driver's last name. Leave it out to keep the original last name.",
+    "Abbreviation": "WEH",
+    "Abbreviation_Note": "Optional. Replaces the driver's 3-letter abbreviation. If left out but LastName above is set, the abbreviation is generated from the new last name (first 3 letters); if both are left out, the game's abbreviation is kept.",
+    "Notes": "Additional notes about the entry. Feel free to use them to your liking.",
+    "Other_Notes": "Consider this as a template entry. You can use it as a reference when adding new entries (or just set it to true). Mandatory: 'DriverID', plus at least one of 'FirstName', 'LastName' or 'Abbreviation'. Changes apply after refreshing the overlay - no restart needed. Note that 'notes' fields are just for your reference and do not affect functionality."
+  },
+  {
+    "Enabled": false,
+    "DriverID": 147,
+    "FirstName": "Mick",
+    "LastName": "Schumacher",
+    "Abbreviation": "SCH"
+  }
+]
