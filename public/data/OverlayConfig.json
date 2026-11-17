@@ -60,11 +60,12 @@
       "hideAutomatically": false
     },
     "driver-comparison": {
-      "visible": true,
+      "visible": false,
       "name": "Driver Comparison",
-      "mode": "gap",
+      "mode": "speed",
       "side": "ahead",
-      "unitsMode": "automatic"
+      "unitsMode": "automatic",
+      "lapsCompare": "last"
     },
     "pit-timer": {
       "visible": true,

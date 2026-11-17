@@ -35,7 +35,7 @@
             <h2>
                 Overlay Visibility
                 <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Overlay Visibility">?</button>
-                <span class="help-card" hidden>Shows or hides each overlay everywhere it's in use, both in OBS browser sources and Desktop Mode windows. Hiding an overlay doesn't close its Desktop Mode window; the window just goes empty. This setting is saved, so a hidden overlay stays hidden after a restart. <span id="auto-overlays-help">Lap Timer, Pit Timer, Fastest Lap and Message Box aren't listed here: they show up by themselves when there's something to show (Lap Timer's visibility is set in its own section).</span></span>
+                <span class="help-card" hidden>Shows or hides each overlay everywhere it's in use, both in OBS browser sources and Desktop Mode windows. Hiding an overlay doesn't close its Desktop Mode window; the window just goes empty. This setting is saved, so a hidden overlay stays hidden after a restart. <span id="auto-overlays-help">Lap Timer, Pit Timer, Fastest Lap and Message Box aren't listed here: they show up by themselves when there's something to show (Lap Timer's visibility is set in its own section). Driver Comparison is turned on and off in its own section.</span></span>
             </h2>
             <div class="overlay-grid" id="overlay-grid">
                 <!-- Overlay buttons will be generated here -->
@@ -782,25 +782,45 @@
 
         <section class="overlay-section" id="driver-comparison-options-section">
             <h2>Driver Comparison Options</h2>
+            <!-- Off + one button per layout (the original SimHub controller's Ahead 1-3 / Behind 1-3).
+                 Replaces the Overlay Visibility button: exactly one of the seven is active. -->
             <div class="option-row">
-                <span class="select-text">Display Mode:</span>
-                <div class="mfd-button-group" id="driver-comparison-mode-button-group">
-                    <button class="mfd-button" data-dc-mode="gap">Interval</button>
-                    <button class="mfd-button" data-dc-mode="speed">Speed</button>
+                <span class="select-text">Display:</span>
+                <div class="mfd-button-group" id="driver-comparison-display-off-group">
+                    <button class="mfd-button" data-dc-display="off">Off</button>
                 </div>
-                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Display Mode (Driver Comparison)">?</button>
-                <div class="help-card" hidden>Races only. Shows the driver next to the car they're compared with; the car ahead on track is always on the left.<br>
-                    <strong>Interval:</strong> the current gap between the two cars.<br>
-                    <strong>Speed:</strong> both cars' speeds, and whether each one has DRS (or Overtake Mode on 2026 cars) available or open.</div>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Display (Driver Comparison)">?</button>
+                <div class="help-card" hidden>Turns the overlay off, or picks which car the driver is compared with (the car ahead or behind) and how. The car ahead on track is always on the left (or the top row). The overlay hides itself while there's no such car: when leading with Driver Ahead, or when last with Driver Behind (in Interval and Speed also when the car behind is out of the race).<br>
+                    <strong>Interval</strong> (races only): the current gap between the two cars.<br>
+                    <strong>Speed</strong> (races only): both cars' speeds, and whether each one has DRS (or Overtake Mode on 2026 cars) available or open.<br>
+                    <strong>Laps</strong> (any session except Time Trial): sector and lap times of both drivers side by side. The faster driver in each column shows how much faster they were.</div>
             </div>
             <div class="option-row">
-                <span class="select-text">Compare With:</span>
-                <div class="mfd-button-group" id="driver-comparison-side-button-group">
-                    <button class="mfd-button" data-dc-side="ahead">Driver Ahead</button>
-                    <button class="mfd-button" data-dc-side="behind">Driver Behind</button>
+                <span class="select-text">Driver Ahead:</span>
+                <div class="mfd-button-group">
+                    <button class="mfd-button" data-dc-display="ahead:gap">Interval</button>
+                    <button class="mfd-button" data-dc-display="ahead:speed">Speed</button>
+                    <button class="mfd-button" data-dc-display="ahead:laps">Laps</button>
                 </div>
-                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Compare With (Driver Comparison)">?</button>
-                <div class="help-card" hidden>Which car the driver is compared with. The overlay hides itself while there's no such car: when leading with Driver Ahead, or when last (or the car behind is out of the race) with Driver Behind.</div>
+            </div>
+            <div class="option-row">
+                <span class="select-text">Driver Behind:</span>
+                <div class="mfd-button-group">
+                    <button class="mfd-button" data-dc-display="behind:gap">Interval</button>
+                    <button class="mfd-button" data-dc-display="behind:speed">Speed</button>
+                    <button class="mfd-button" data-dc-display="behind:laps">Laps</button>
+                </div>
+            </div>
+            <div class="option-row">
+                <span class="select-text">Laps Compare:</span>
+                <div class="mfd-button-group" id="driver-comparison-laps-button-group">
+                    <button class="mfd-button" data-dc-laps="last">Last Lap</button>
+                    <button class="mfd-button" data-dc-laps="best">Best Lap</button>
+                </div>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Laps Compare (Driver Comparison)">?</button>
+                <div class="help-card" hidden>Laps mode only.<br>
+                    <strong>Last Lap:</strong> the last lap both drivers have completed (the same lap number for both).<br>
+                    <strong>Best Lap:</strong> each driver's best lap, whichever lap it was set on.</div>
             </div>
             <div class="option-row">
                 <label class="select-label">
@@ -923,6 +943,8 @@
             for (const [overlayId, overlay] of Object.entries(currentConfig.overlays)) {
                 // Skip overlays that don't have manual visibility control
                 if (overlayId === 'lap-timer' || overlayId === 'pit-timer' || overlayId === 'message-box') continue;
+                // Driver Comparison: Off + layout buttons in its own section
+                if (overlayId === 'driver-comparison') continue;
                 if (!isOverlayIncluded(overlayId)) continue;
 
                 const button = document.createElement('button');
@@ -954,11 +976,13 @@
         function updateAutoOverlaysHelp() {
             const names = AUTO_OVERLAYS.filter(([id]) => isOverlayIncluded(id)).map(([, name]) => name);
             const el = document.getElementById('auto-overlays-help');
-            if (names.length === 0) { el.textContent = ''; return; }
+            const dcText = isOverlayIncluded('driver-comparison') ? 'Driver Comparison is turned on and off in its own section.' : '';
+            if (names.length === 0) { el.textContent = dcText; return; }
             const list = names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
             const single = names.length === 1;
             el.textContent = `${list} ${single ? "isn't" : "aren't"} listed here: ${single ? 'it shows up by itself' : 'they show up by themselves'} when there's something to show`
-                + (names.includes('Lap Timer') ? ` (${single ? 'its' : "Lap Timer's"} visibility is set in its own section).` : '.');
+                + (names.includes('Lap Timer') ? ` (${single ? 'its' : "Lap Timer's"} visibility is set in its own section).` : '.')
+                + (dcText ? ` ${dcText}` : '');
         }
 
         async function loadLiteInfo() {
@@ -1565,14 +1589,25 @@
             updateDriverComparisonOptions();
         }
 
-        document.getElementById('driver-comparison-mode-button-group').addEventListener('click', (e) => {
-            const btn = e.target.closest('.mfd-button');
-            if (btn) setDriverComparisonOption('mode', btn.dataset.dcMode);
+        // Off / "side:mode" buttons. Mode + side are sent before visible, so the overlay never
+        // shows the old layout for a moment when it's turned on.
+        document.getElementById('driver-comparison-options-section').addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-dc-display]');
+            if (!btn) return;
+            const display = btn.dataset.dcDisplay;
+            if (display === 'off') {
+                setDriverComparisonOption('visible', false);
+                return;
+            }
+            const [side, mode] = display.split(':');
+            setDriverComparisonOption('mode', mode);
+            setDriverComparisonOption('side', side);
+            setDriverComparisonOption('visible', true);
         });
 
-        document.getElementById('driver-comparison-side-button-group').addEventListener('click', (e) => {
+        document.getElementById('driver-comparison-laps-button-group').addEventListener('click', (e) => {
             const btn = e.target.closest('.mfd-button');
-            if (btn) setDriverComparisonOption('side', btn.dataset.dcSide);
+            if (btn) setDriverComparisonOption('lapsCompare', btn.dataset.dcLaps);
         });
 
         const driverComparisonUnitsMode = document.getElementById('driver-comparison-units-mode');
@@ -1583,13 +1618,15 @@
         function updateDriverComparisonOptions() {
             const dc = currentConfig?.overlays?.['driver-comparison'];
             if (!dc) return;
-            const mode = dc.mode === 'speed' ? 'speed' : 'gap';
+            const mode = dc.mode === 'speed' || dc.mode === 'laps' ? dc.mode : 'gap';
             const side = dc.side === 'behind' ? 'behind' : 'ahead';
-            document.querySelectorAll('#driver-comparison-mode-button-group .mfd-button').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.dcMode === mode);
+            const lapsCompare = dc.lapsCompare === 'best' ? 'best' : 'last';
+            document.querySelectorAll('#driver-comparison-laps-button-group .mfd-button').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.dcLaps === lapsCompare);
             });
-            document.querySelectorAll('#driver-comparison-side-button-group .mfd-button').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.dcSide === side);
+            const display = dc.visible ? `${side}:${mode}` : 'off';
+            document.querySelectorAll('#driver-comparison-options-section [data-dc-display]').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.dcDisplay === display);
             });
             driverComparisonUnitsMode.value = dc.unitsMode || 'automatic';
         }

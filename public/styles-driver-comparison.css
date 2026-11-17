@@ -26,20 +26,15 @@
     background: transparent;
 }
 
+/* Modes gap + speed share the duel layout ("[✓] 1&2" layer); laps has its own.
+   Both layouts are always rendered and faded in/out by the script (.is-shown), so switching
+   modes crossfades instead of popping. */
 .dc-mode {
     position: absolute;
     left: 0;
     top: 0;
     width: 629px;
     height: 140px;
-    display: none;
-}
-
-/* Modes gap + speed share the duel layout ("[✓] 1&2" layer); laps has its own */
-.overlay-container[data-mode="gap"] .dc-duel,
-.overlay-container[data-mode="speed"] .dc-duel,
-.overlay-container[data-mode="laps"] .dc-laps {
-    display: block;
 }
 
 .dc-abs {
@@ -65,13 +60,13 @@
    =================================================================================== */
 
 .overlay-container {
-    --dc-move: 0.5s ease-in-out;   /* inertia(...,5) */
+    --dc-move: 0.2s ease-in-out;   /* inertia(...,5) = 1/5 s */
 }
 
 /* Whole duel ("1&2" layer opacity): shown by the script when there's someone to compare with */
 .dc-duel {
     opacity: 0;
-    transition: opacity 0.7s ease-in-out;
+    transition: opacity 0.143s ease-in-out; /* inertia(...,7) = 1/7 s; FADE_MS in the script */
 }
 
 .dc-duel.is-shown {
@@ -119,6 +114,7 @@
     height: 54px;
     border-style: solid;
     border-color: rgb(42, 42, 42);
+    overflow: hidden; /* keeps the 200px inner screen off the divider border (left card's right edge) */
     transition: left var(--dc-move);
 }
 
@@ -598,19 +594,58 @@
 }
 
 /* ===================================================================================
-   LAPS LAYOUT (mode laps) - "delta to bestahead" / "Delta To Best" widgets.
-   1135x248 screen scaled 0.5, placed at 60.25, -0.5 (as in SimHub).
-   Rows: top = car ahead, bottom = car behind. The observed driver's row shows deltas
-   (.dc-row--delta), the opponent's row shows plain times (.dc-row--time).
+   LAPS LAYOUT (mode laps) - "DriverAhead3" / "DriverBehind3" widgets (item_37).
+   1135x248 screen. SimHub widget: left 60.25 -> 30.25, width 400 -> 567.5, opacity 0 -> 100,
+   all inertia(...,5). The width change is drawn as a scale change (400/1135 -> 0.5); the
+   collapsed table is centred vertically in the 124px widget box (assumed SimHub widget scaling).
+   Rows: top = car ahead, bottom = car behind. Per column, the faster driver's cell shows the
+   delta (.is-delta), the slower driver's cell shows their time.
    =================================================================================== */
+.dc-laps {
+    pointer-events: none;
+}
+
 .dc-laps__inner {
     position: absolute;
     left: 60.25px;
     top: -0.5px;
     width: 1135px;
     height: 248px;
-    transform: scale(0.5);
+    opacity: 0;
+    transform: translateY(18.3px) scale(0.3524);
     transform-origin: left top;
+    transition: left var(--dc-move), transform var(--dc-move), opacity var(--dc-move);
+}
+
+.dc-laps.is-shown .dc-laps__inner {
+    left: 30.25px;
+    opacity: 1;
+    transform: translateY(0) scale(0.5);
+}
+
+/* "Lap Comparison Data" (item_37_14r0): fades out/in when switching Last Lap <-> Best Lap
+   (inertia(...,6) = 1/6 s) */
+.dc-cell,
+.dc-faster,
+.dc-row__compound,
+.dc-laps__label.dc-col--lap {
+    transition: opacity 0.167s ease-in-out;
+}
+
+.dc-laps.is-data-hidden .dc-cell,
+.dc-laps.is-data-hidden .dc-faster,
+.dc-laps.is-data-hidden .dc-row__compound,
+.dc-laps.is-data-hidden .dc-laps__label.dc-col--lap {
+    opacity: 0;
+}
+
+/* Row of a retired / disqualified driver (SimHub: 65%) */
+.dc-row {
+    transition: opacity var(--dc-move);
+}
+
+.dc-row.is-out {
+    opacity: 0.65;
 }
 
 .dc-laps__bg {
@@ -643,9 +678,10 @@
 .dc-laps__stroke {
     left: 0.5px;
     top: 233px;
-    width: 1500px;
+    width: 1135px; /* the 1500px stroke widget, cut at the table's right edge */
     height: 15px;
     opacity: 0.5;
+    overflow: hidden;
 }
 
 .dc-laps__stroke .dc-stroke {
@@ -783,15 +819,15 @@
 .dc-cell.dc-col--s3  { left: 750px; }
 .dc-cell.dc-col--lap { left: 940px; width: 195px; font-size: 24px; }
 
-/* Time row - SimHub font F1TV-2022-Timing */
-.dc-row--time .dc-cell {
+/* Time cell - SimHub font F1TV-2022-Timing */
+.dc-cell {
     font-family: 'F1TV-2022-Timing';
     font-style: oblique;
     font-weight: 400;
 }
 
-/* Delta row - SimHub font "Formula1 TV-BoldItalic", green (colour logic comes later) */
-.dc-row--delta .dc-cell {
+/* Delta cell (faster driver) - SimHub font "Formula1 TV-BoldItalic", lime */
+.dc-cell.is-delta {
     font-family: 'Formula1 TV';
     font-weight: 700;
     font-style: italic;
@@ -813,6 +849,11 @@
 }
 
 .dc-faster.dc-col--lap { width: 195px; font-size: 24px; }
+
+/* Shown for 900ms when the laps view appears (inertia 5 fade) */
+.dc-laps .dc-faster {
+    transition: opacity var(--dc-move);
+}
 
 .dc-faster.is-shown {
     opacity: 1;
@@ -846,7 +887,7 @@
 .dc-row--bottom .dc-faster        { top: 180px; }
 .dc-row--bottom .dc-row__compound { top: 180px; }
 
-/* Rolex box above the LAP column (opacity 0 by default, shown by logic later) */
+/* Rolex box above the LAP column - shown for 4s when the laps view appears (sponsors on) */
 .dc-rolex {
     left: 985px;
     top: 0;
@@ -855,6 +896,7 @@
     border-radius: 5px;
     background-color: rgb(24, 94, 51);
     opacity: 0;
+    transition: opacity var(--dc-move);
 }
 
 .dc-rolex.is-shown {
