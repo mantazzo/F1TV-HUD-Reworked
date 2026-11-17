@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>F1 Driver Comparison Overlay</title>
+    <link rel="stylesheet" href="/fonts.css">
+    <link rel="stylesheet" href="/styles-tauri-overlay.css">
+    <link rel="stylesheet" href="/styles-driver-comparison.css">
+    <script src="/utils/preload.js"></script>
+    <script>AssetPreloader.preloadAll();</script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/utils/overlay-scale.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/textfit@2.4.0/textFit.min.js"></script>
+    <script src="/utils/driver-utils.js"></script>
+</head>
+<body data-tauri-drag-region>
+    <!--
+        Driver Comparison (SimHub original: "F1TV - Driver Ahead & Behind").
+        Modes (Controller): gap = "V1" interval, speed = "V2" speeds + DRS/OT.
+        Mode laps (last-lap sector table) is designed but has no logic yet.
+    -->
+    <div class="overlay-container" data-mode="gap" data-side="ahead">
+
+        <!-- ===== Modes gap + speed (SimHub layer "[✓] 1&2") ===== -->
+        <div class="dc-mode dc-duel" id="dc-duel">
+            <div class="dc-abs dc-linebg dc-linebg--v1"></div>
+            <div class="dc-abs dc-linebg dc-linebg--v2"></div>
+            <div class="dc-abs dc-middle"></div>
+
+            <!-- Left card = car ahead on track -->
+            <div class="dc-abs dc-card dc-card--left" id="dc-card-left">
+                <div class="dc-card__inner">
+                    <div class="dc-abs dc-card__bg"></div>
+                    <div class="dc-text dc-card__first"></div>
+                    <div class="dc-text dc-card__last"></div>
+                    <div class="dc-abs dc-card__pos-bg"></div>
+                    <div class="dc-abs dc-card__knockout"></div>
+                    <div class="dc-text dc-card__position"></div>
+                    <div class="dc-text dc-card__team"></div>
+                    <img class="dc-card__logo" alt="">
+                </div>
+            </div>
+
+            <!-- Right card = car behind on track -->
+            <div class="dc-abs dc-card dc-card--right" id="dc-card-right">
+                <div class="dc-card__inner">
+                    <div class="dc-abs dc-card__bg"></div>
+                    <div class="dc-text dc-card__first"></div>
+                    <div class="dc-text dc-card__last"></div>
+                    <div class="dc-abs dc-card__pos-bg"></div>
+                    <div class="dc-abs dc-card__knockout"></div>
+                    <div class="dc-text dc-card__position"></div>
+                    <div class="dc-text dc-card__team"></div>
+                    <img class="dc-card__logo" alt="">
+                </div>
+            </div>
+
+            <div class="dc-abs dc-f2blur"><div class="dc-f2blur__ellipse"></div></div>
+
+            <div class="dc-abs dc-team-line dc-team-line--left" id="dc-line-left"></div>
+            <div class="dc-abs dc-team-line dc-team-line--right" id="dc-line-right"></div>
+            <div class="dc-abs dc-fade dc-fade--left"></div>
+            <div class="dc-abs dc-fade dc-fade--right"></div>
+
+            <!-- Mode gap: "(1)" -->
+            <div class="dc-gap">
+                <div class="dc-text dc-gap__value" id="dc-gap-value"></div>
+                <div class="dc-text dc-gap__label">CURRENT GAP</div>
+            </div>
+
+            <!-- Mode speed: "(2)" -->
+            <div class="dc-speed">
+                <div class="dc-text dc-drs dc-drs--left" id="dc-drs-left" data-state="off">DRS</div>
+                <div class="dc-text dc-drs dc-drs--right" id="dc-drs-right" data-state="off">DRS</div>
+                <div class="dc-abs dc-speed__data">
+                    <div class="dc-text dc-speed__unit dc-speed__unit--alt dc-speed__unit--l"></div>
+                    <div class="dc-text dc-speed__unit dc-speed__unit--main dc-speed__unit--l"></div>
+                    <div class="dc-text dc-speed__unit dc-speed__unit--main dc-speed__unit--r"></div>
+                    <div class="dc-text dc-speed__unit dc-speed__unit--alt dc-speed__unit--r"></div>
+                    <div class="dc-text dc-speed__alt dc-speed--l" id="dc-speed-alt-left"></div>
+                    <div class="dc-text dc-speed__main dc-speed--l" id="dc-speed-main-left"></div>
+                    <div class="dc-text dc-speed__main dc-speed--r" id="dc-speed-main-right"></div>
+                    <div class="dc-text dc-speed__alt dc-speed--r" id="dc-speed-alt-right"></div>
+                </div>
+            </div>
+
+            <div class="dc-abs dc-middle-gradient"></div>
+
+            <!-- Rolex widget above the right card (hidden; not used by the gap/speed formulas) -->
+            <div class="dc-abs dc-duel__rolex" id="dc-duel-rolex">
+                <div class="dc-abs dc-rolex">
+                    <img src="/images/other-logos/Rolex.png" alt="Rolex">
+                </div>
+            </div>
+
+            <div class="dc-abs dc-duel__stroke dc-duel__stroke--v1">
+                <div class="dc-stroke">
+                    <div class="dc-stroke__fill"></div>
+                    <div class="dc-stroke__bars"></div>
+                    <div class="dc-stroke__shadow"></div>
+                    <div class="dc-stroke__gradient"></div>
+                    <div class="dc-stroke__gradient"></div>
+                </div>
+            </div>
+            <div class="dc-abs dc-duel__stroke dc-duel__stroke--v2">
+                <div class="dc-stroke">
+                    <div class="dc-stroke__fill"></div>
+                    <div class="dc-stroke__bars"></div>
+                    <div class="dc-stroke__shadow"></div>
+                    <div class="dc-stroke__gradient"></div>
+                    <div class="dc-stroke__gradient"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== Mode laps (SimHub widgets "DriverAhead3" / "DriverBehind3") - no logic yet ===== -->
+        <div class="dc-mode dc-laps">
+            <div class="dc-laps__inner">
+                <div class="dc-abs dc-laps__bg"></div>
+                <div class="dc-abs dc-laps__bg-bottom"></div>
+                <div class="dc-abs dc-laps__line"></div>
+
+                <div class="dc-text dc-laps__label dc-col--s1">SECTOR 1</div>
+                <div class="dc-text dc-laps__label dc-col--s2">SECTOR 2</div>
+                <div class="dc-text dc-laps__label dc-col--s3">SECTOR 3</div>
+                <div class="dc-text dc-laps__label dc-col--lap" id="dc-lap-label">LAP 0</div>
+
+                <!-- Rows: top = car ahead, bottom = car behind. Row type (time/delta) set by side. -->
+                <div class="dc-row dc-row--top" id="dc-row-top">
+                    <div class="dc-abs dc-row__knockout"></div>
+                    <div class="dc-text dc-row__position"></div>
+                    <img class="dc-row__logo" alt="">
+                    <div class="dc-text dc-row__name"></div>
+                    <div class="dc-text dc-cell dc-col--s1"></div>
+                    <div class="dc-text dc-cell dc-col--s2"></div>
+                    <div class="dc-text dc-cell dc-col--s3"></div>
+                    <div class="dc-text dc-cell dc-col--lap"></div>
+                    <div class="dc-text dc-faster dc-col--s1">FASTER</div>
+                    <div class="dc-text dc-faster dc-col--s2">FASTER</div>
+                    <div class="dc-text dc-faster dc-col--s3">FASTER</div>
+                    <div class="dc-text dc-faster dc-col--lap">FASTER</div>
+                    <div class="dc-text dc-row__compound"></div>
+                </div>
+                <div class="dc-row dc-row--bottom" id="dc-row-bottom">
+                    <div class="dc-abs dc-row__knockout"></div>
+                    <div class="dc-text dc-row__position"></div>
+                    <img class="dc-row__logo" alt="">
+                    <div class="dc-text dc-row__name"></div>
+                    <div class="dc-text dc-cell dc-col--s1"></div>
+                    <div class="dc-text dc-cell dc-col--s2"></div>
+                    <div class="dc-text dc-cell dc-col--s3"></div>
+                    <div class="dc-text dc-cell dc-col--lap"></div>
+                    <div class="dc-text dc-faster dc-col--s1">FASTER</div>
+                    <div class="dc-text dc-faster dc-col--s2">FASTER</div>
+                    <div class="dc-text dc-faster dc-col--s3">FASTER</div>
+                    <div class="dc-text dc-faster dc-col--lap">FASTER</div>
+                    <div class="dc-text dc-row__compound"></div>
+                </div>
+
+                <div class="dc-abs dc-laps__sep dc-laps__sep--pos"></div>
+                <div class="dc-abs dc-laps__sep dc-laps__sep--name"></div>
+                <div class="dc-abs dc-laps__sep dc-laps__sep--s1"></div>
+                <div class="dc-abs dc-laps__sep dc-laps__sep--s2"></div>
+                <div class="dc-abs dc-laps__sep dc-laps__sep--s3"></div>
+                <div class="dc-abs dc-laps__sep dc-laps__sep--lap"></div>
+
+                <div class="dc-abs dc-laps__stroke">
+                    <div class="dc-stroke">
+                        <div class="dc-stroke__fill"></div>
+                        <div class="dc-stroke__bars"></div>
+                        <div class="dc-stroke__shadow"></div>
+                        <div class="dc-stroke__gradient"></div>
+                        <div class="dc-stroke__gradient"></div>
+                    </div>
+                </div>
+
+                <div class="dc-abs dc-laps__edges">
+                    <div class="dc-abs dc-laps__edge dc-laps__edge--left"></div>
+                    <div class="dc-abs dc-laps__edge dc-laps__edge--right"></div>
+                </div>
+
+                <div class="dc-abs dc-rolex" id="dc-rolex">
+                    <img src="/images/other-logos/Rolex.png" alt="Rolex">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        socket.emit('identify', 'Driver Comparison');
+
+        const NUM_CARS = 24;                       // UDP capacity (2026 format); older formats send 22
+        const RACE_TYPES = new Set([15, 16, 17]);  // SimHub: m_sessionType > 12 - meant for races only
+        const KMH_TO_MPH = 0.621371;
+        const FADE_MS = 700;                       // .dc-duel opacity transition
+
+        const COLOR_DRS = 'rgb(0, 255, 0)';
+        const COLOR_OVERTAKE = 'rgb(14, 172, 230)'; // same turquoise as Live Speed / Leaderboard
+        const COLOR_FAST = 'rgb(255, 0, 0)';
+        const COLOR_NORMAL = 'rgb(255, 255, 255)';
+
+        const container = document.querySelector('.overlay-container');
+        const duel = document.getElementById('dc-duel');
+        const gapValue = document.getElementById('dc-gap-value');
+
+        function cardElements(id) {
+            const card = document.getElementById(id);
+            return {
+                card,
+                first: card.querySelector('.dc-card__first'),
+                last: card.querySelector('.dc-card__last'),
+                position: card.querySelector('.dc-card__position'),
+                team: card.querySelector('.dc-card__team'),
+                logo: card.querySelector('.dc-card__logo')
+            };
+        }
+
+        // Per screen side: card, team line, DRS label and the side's two speed values
+        const sides = {
+            left: {
+                ...cardElements('dc-card-left'),
+                line: document.getElementById('dc-line-left'),
+                drs: document.getElementById('dc-drs-left'),
+                speedMain: document.getElementById('dc-speed-main-left'),
+                speedAlt: document.getElementById('dc-speed-alt-left')
+            },
+            right: {
+                ...cardElements('dc-card-right'),
+                line: document.getElementById('dc-line-right'),
+                drs: document.getElementById('dc-drs-right'),
+                speedMain: document.getElementById('dc-speed-main-right'),
+                speedAlt: document.getElementById('dc-speed-alt-right')
+            }
+        };
+        const unitLabels = {
+            main: document.querySelectorAll('.dc-speed__unit--main'),
+            alt: document.querySelectorAll('.dc-speed__unit--alt')
+        };
+
+        // ── Config ─────────────────────────────────────────────────────────
+        let configVisible = false;
+        let mode = 'gap';        // 'gap' (V1) | 'speed' (V2)
+        let side = 'ahead';      // compare with the car 'ahead' | 'behind'
+        let unitsMode = 'automatic';
+        let swapping = false;    // fading out before a side change
+        let swapTimer = null;
+
+        // ── Session / driver data ──────────────────────────────────────────
+        let sessionType = 0;
+        let formulaType = DriverUtils.FORMULA_TYPE.F1_MODERN;
+        let gameUsesMph = false; // m_speedUnitsLeadPlayer 0 = MPH
+        let isSpectating = 0;
+        let spectatorCarIndex = 255;
+        let rawPlayerIndex = -1;
+        let participants = [];
+        let driversData = {};
+        let customDrivers = [];
+        let teamNames = {};
+
+        // Per car, by car index
+        const cars = Array.from({ length: NUM_CARS }, () => ({
+            position: 0, resultStatus: 0, deltaFrontMs: 0,
+            speedKmh: 0, drs: 0, drsAllowed: 0,
+            regs2026: false, otActive: 0, otAvailable: 0
+        }));
+
+        // Car indices currently shown on each side (-1 = none)
+        const shown = { left: -1, right: -1 };
+
+        function setText(el, text) {
+            if (el.textContent !== text) el.textContent = text;
+        }
+
+        // textFit wraps the text in a span; only re-fit when the text actually changed
+        // (setting textContent drops the span, which forces the next fit)
+        function setFittedText(el, text, maxFontSize) {
+            if (el._fitText === text) return;
+            el._fitText = text;
+            el.textContent = text;
+            if (!text) return;
+            try {
+                textFit(el, { minFontSize: 14, maxFontSize, multiLine: false, detectMultiLine: false, widthOnly: true });
+            } catch (e) { /* element not laid out yet - text is still shown at full size */ }
+        }
+
+        async function loadDriverData() {
+            const data = await DriverUtils.loadDriverData(formulaType);
+            customDrivers = data.customDrivers;
+            teamNames = data.teamNames;
+            for (const s of ['left', 'right']) sides[s].renderedKey = null;
+            renderCards();
+        }
+
+        // ── Who is compared ────────────────────────────────────────────────
+        function activeIndex() {
+            return DriverUtils.getActiveDriverIndex(rawPlayerIndex, isSpectating, spectatorCarIndex);
+        }
+
+        function carAtPosition(position) {
+            if (position < 1) return -1;
+            for (let i = 0; i < NUM_CARS; i++) {
+                // Status 1 = MP placeholder slot that never leaves the garage
+                if (cars[i].position === position && cars[i].resultStatus !== 1) return i;
+            }
+            return -1;
+        }
+
+        // Observed driver + opponent, mapped to screen sides (car ahead on track is always left).
+        // Null when there's nobody to compare with: leading in "ahead", last in "behind", or the
+        // car behind is out of the race (retired/DSQ cars are ranked at the back).
+        function resolvePair() {
+            const observed = activeIndex();
+            if (observed < 0 || observed >= NUM_CARS) return null;
+            const position = cars[observed].position;
+            if (position < 1) return null;
+
+            const opponent = carAtPosition(side === 'ahead' ? position - 1 : position + 1);
+            if (opponent < 0) return null;
+            const status = cars[opponent].resultStatus;
+            if (status !== 2 && status !== 3) return null; // 2 = active, 3 = finished
+
+            return side === 'ahead'
+                ? { left: opponent, right: observed, gapCar: observed }
+                : { left: observed, right: opponent, gapCar: opponent };
+        }
+
+        let pair = null;
+
+        function update() {
+            pair = resolvePair();
+            updateVisibility();
+            if (!pair) return;
+            renderCards();
+            renderGap();
+            renderSpeeds();
+        }
+
+        function updateVisibility() {
+            const show = configVisible && !swapping && pair !== null
+                && RACE_TYPES.has(sessionType)
+                && (mode === 'gap' || mode === 'speed');
+            duel.classList.toggle('is-shown', show);
+        }
+
+        // ── Cards ──────────────────────────────────────────────────────────
+        function teamColor(carIdx) {
+            const p = participants[carIdx];
+            const override = teamNames?.[p?.m_teamId]?.OverridePrimaryColor;
+            if (override) return override;
+            const livery = p?.m_liveryColour?.[0];
+            if (livery && typeof livery.red === 'number') {
+                return `rgb(${livery.red}, ${livery.green}, ${livery.blue})`;
+            }
+            return COLOR_NORMAL;
+        }
+
+        function renderCards() {
+            if (!pair) return;
+            for (const s of ['left', 'right']) {
+                const carIdx = pair[s];
+                shown[s] = carIdx;
+                renderCard(sides[s], carIdx);
+            }
+        }
+
+        function renderCard(el, carIdx) {
+            const p = participants[carIdx];
+            setText(el.position, String(cars[carIdx].position));
+            if (!p) return;
+
+            // Names/team/logo only change with the car or a Participants update
+            const key = `${carIdx}|${p.m_driverId}|${p.m_teamId}|${p.m_raceNumber}|${p.m_name}`;
+            if (el.renderedKey === key) return;
+            el.renderedKey = key;
+
+            const color = teamColor(carIdx);
+            el.card.style.setProperty('--dc-team-color', color);
+            el.line.style.setProperty('--dc-team-color', color);
+
+            const first = DriverUtils.getDriverFirstName(p, driversData, customDrivers, teamNames);
+            const last = DriverUtils.getDriverLastName(p, driversData, customDrivers, teamNames);
+            setFittedText(el.first, first.toUpperCase(), 27);
+            setFittedText(el.last, last.toUpperCase(), 34);
+
+            const teamData = teamNames?.[p.m_teamId];
+            setText(el.team, (teamData?.ShortName || '').toUpperCase());
+
+            // Knockout image: never in a race, kept for comparisons in timed sessions later
+            el.card.classList.toggle('is-knockout',
+                DriverUtils.isInKnockoutZone(cars[carIdx].position, sessionType, NUM_CARS));
+
+            const logoUrl = teamData?.Logo ? `/images/team-logos/${teamData.Logo}` : '';
+            if (el.logo.dataset.src !== logoUrl) {
+                el.logo.dataset.src = logoUrl;
+                el.logo.classList.remove('is-loaded');
+                if (logoUrl) {
+                    el.logo.onload = () => el.logo.classList.add('is-loaded');
+                    el.logo.src = logoUrl;
+                } else {
+                    el.logo.removeAttribute('src');
+                }
+            }
+        }
+
+        // ── Mode gap (V1) ──────────────────────────────────────────────────
+        // m_deltaToCarInFront MS part is a uint16: a negative delta wraps to ~65535
+        // (the Leaderboard's "+1:05" flash), so anything >= 60000 is read as negative.
+        function decodeDeltaMs(minutesPart, msPart) {
+            const ms = msPart ?? 0;
+            if (ms >= 60000) return ms - 65536;
+            return (minutesPart ?? 0) * 60000 + ms;
+        }
+
+        // Always seconds, never minutes: +100.458S
+        function formatGap(ms) {
+            if (!(ms > 0)) return '+0.000S';
+            return `+${Math.floor(ms / 1000)}.${String(ms % 1000).padStart(3, '0')}S`;
+        }
+
+        function renderGap() {
+            if (!pair) return;
+            setText(gapValue, formatGap(cars[pair.gapCar].deltaFrontMs));
+        }
+
+        // ── Mode speed (V2) ────────────────────────────────────────────────
+        function mainIsMph() {
+            return unitsMode === 'mph' || (unitsMode !== 'kmh' && gameUsesMph);
+        }
+
+        function renderUnits() {
+            const mph = mainIsMph();
+            container.classList.toggle('is-kmh', !mph);
+            unitLabels.main.forEach(el => setText(el, mph ? 'MPH' : 'KM/H'));
+            unitLabels.alt.forEach(el => setText(el, mph ? 'KM/H' : 'MPH'));
+        }
+
+        function boostState(car) {
+            if (car.regs2026) {
+                if (car.otActive === 1) return 'active';
+                if (car.otAvailable === 1) return 'available';
+                return 'off';
+            }
+            if (car.drs === 1) return 'active';
+            if (car.drsAllowed === 1) return 'available';
+            return 'off';
+        }
+
+        function renderSpeeds() {
+            if (!pair) return;
+            const mph = mainIsMph();
+            for (const s of ['left', 'right']) {
+                const el = sides[s];
+                const car = cars[pair[s]];
+                const kmh = Math.round(car.speedKmh);
+                const mphValue = Math.round(car.speedKmh * KMH_TO_MPH);
+                setText(el.speedMain, String(mph ? mphValue : kmh));
+                setText(el.speedAlt, String(mph ? kmh : mphValue));
+
+                const state = boostState(car);
+                const color = state === 'active'
+                    ? (car.regs2026 ? COLOR_OVERTAKE : COLOR_DRS)
+                    : (kmh > 199 ? COLOR_FAST : COLOR_NORMAL);
+                if (el.speedMain.style.color !== color) {
+                    el.speedMain.style.color = color;
+                    el.speedAlt.style.color = color;
+                }
+
+                if (el.drs.dataset.state !== state) el.drs.dataset.state = state;
+                el.drs.classList.toggle('is-overtake', car.regs2026);
+                setText(el.drs, car.regs2026 ? 'OT' : 'DRS');
+            }
+        }
+
+        // ── Config ─────────────────────────────────────────────────────────
+        function applyMode(newMode) {
+            mode = newMode === 'speed' ? 'speed' : 'gap';
+            container.dataset.mode = mode;
+        }
+
+        // Side changes swap which cars the cards show, so fade out first, then swap and fade in
+        function applySide(newSide) {
+            newSide = newSide === 'behind' ? 'behind' : 'ahead';
+            if (newSide === side && !swapping) return;
+            clearTimeout(swapTimer);
+            if (!duel.classList.contains('is-shown')) {
+                side = newSide;
+                container.dataset.side = side;
+                swapping = false;
+                update();
+                return;
+            }
+            swapping = true;
+            updateVisibility();
+            swapTimer = setTimeout(() => {
+                side = newSide;
+                container.dataset.side = side;
+                swapping = false;
+                update();
+            }, FADE_MS);
+        }
+
+        socket.on('overlay_config', (config) => {
+            const cfg = config?.overlays?.['driver-comparison'];
+            if (!cfg) return;
+            configVisible = !!cfg.visible;
+            applyMode(cfg.mode);
+            unitsMode = cfg.unitsMode || 'automatic';
+            renderUnits();
+            applySide(cfg.side);
+            update();
+        });
+
+        socket.on('drivers_data', (drivers) => {
+            driversData = drivers;
+            for (const s of ['left', 'right']) sides[s].renderedKey = null;
+            update();
+        });
+
+        socket.on('f1_data', (data) => {
+            const pid = data?.m_header?.m_packetId;
+            const playerIdx = data?.m_header?.m_playerCarIndex;
+            if (typeof playerIdx === 'number') rawPlayerIndex = playerIdx;
+
+            if (pid === 1) { // Session
+                isSpectating = data.m_isSpectating ?? isSpectating;
+                spectatorCarIndex = data.m_spectatorCarIndex ?? spectatorCarIndex;
+                if (typeof data.m_sessionType === 'number') sessionType = data.m_sessionType;
+                if (typeof data.m_speedUnitsLeadPlayer === 'number') {
+                    const mph = data.m_speedUnitsLeadPlayer === 0;
+                    if (mph !== gameUsesMph) {
+                        gameUsesMph = mph;
+                        renderUnits();
+                        renderSpeeds();
+                    }
+                }
+                if (typeof data.m_formula === 'number' && data.m_formula !== formulaType) {
+                    formulaType = data.m_formula;
+                    // F2 blur + navy fades. 7 = older games' F2 2021, kept for completeness.
+                    container.classList.toggle('is-f2',
+                        formulaType === DriverUtils.FORMULA_TYPE.F2 || formulaType === DriverUtils.FORMULA_TYPE.F2_2021);
+                    loadDriverData();
+                }
+                updateVisibility();
+            } else if (pid === 2) { // Lap Data
+                const lapData = data.m_lapData;
+                if (!Array.isArray(lapData)) return;
+                lapData.forEach((lap, i) => {
+                    if (i >= NUM_CARS) return;
+                    cars[i].position = lap.m_carPosition ?? 0;
+                    cars[i].resultStatus = lap.m_resultStatus ?? 0;
+                    cars[i].deltaFrontMs = decodeDeltaMs(lap.m_deltaToCarInFrontMinutesPart, lap.m_deltaToCarInFrontMSPart);
+                });
+                update();
+            } else if (pid === 4) { // Participants
+                if (!Array.isArray(data.m_participants)) return;
+                participants = data.m_participants;
+                update();
+            } else if (pid === 6) { // Car Telemetry
+                const telemetry = data.m_carTelemetryData;
+                if (!Array.isArray(telemetry)) return;
+                telemetry.forEach((t, i) => {
+                    if (i >= NUM_CARS) return;
+                    cars[i].speedKmh = t.m_speed ?? 0;
+                    cars[i].drs = t.m_drs ?? 0;
+                });
+                if (mode === 'speed') renderSpeeds();
+            } else if (pid === 7) { // Car Status
+                const status = data.m_carStatusData;
+                if (!Array.isArray(status)) return;
+                status.forEach((s, i) => {
+                    if (i >= NUM_CARS) return;
+                    cars[i].drsAllowed = s.m_drsAllowed ?? 0;
+                });
+            } else if (pid === 16) { // Car Telemetry 2 (2026 Season Pack format only)
+                const telemetry2 = data.m_carTelemetry2Data;
+                if (!Array.isArray(telemetry2)) return;
+                telemetry2.forEach((t2, i) => {
+                    if (i >= NUM_CARS) return;
+                    cars[i].regs2026 = t2.m_2026Regulations === 1;
+                    cars[i].otActive = t2.m_overtakeActive ?? 0;
+                    cars[i].otAvailable = t2.m_overtakeAvailable ?? 0;
+                });
+            }
+        });
+
+        renderUnits();
+        loadDriverData();
+    </script>
+</body>
+</html>

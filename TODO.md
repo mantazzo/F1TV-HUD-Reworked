@@ -164,17 +164,16 @@
 
 ## Currently Working On
 
-Bugfixes and improvements, plus some rewrites of a few overlays to better improve efficiency
+Driver Comparison (remade Driver Ahead and Behind (the three versions of the overlay))
 
 ## Next Planned Overlay
 
-Driver Ahead and Behind (the three versions of the overlay) (one of the last overlays that I consider to be "priority" overlay)
+...
 
 ## Not started
 
 In no particular order:
 - Battery Level (from older version, so might need some extra work)
-- Driver Ahead and Behind (the three versions of the overlay)
 - Control Dashboard (original version, likely saved for last)
 - Race Classification (probably could use data sent from the game)
 

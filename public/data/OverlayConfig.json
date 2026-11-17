@@ -59,6 +59,13 @@
       "showDriverNumberImage": false,
       "hideAutomatically": false
     },
+    "driver-comparison": {
+      "visible": true,
+      "name": "Driver Comparison",
+      "mode": "gap",
+      "side": "ahead",
+      "unitsMode": "automatic"
+    },
     "pit-timer": {
       "visible": true,
       "name": "Pit Timer",

@@ -780,6 +780,42 @@
             </div>
         </section>
 
+        <section class="overlay-section" id="driver-comparison-options-section">
+            <h2>Driver Comparison Options</h2>
+            <div class="option-row">
+                <span class="select-text">Display Mode:</span>
+                <div class="mfd-button-group" id="driver-comparison-mode-button-group">
+                    <button class="mfd-button" data-dc-mode="gap">Interval</button>
+                    <button class="mfd-button" data-dc-mode="speed">Speed</button>
+                </div>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Display Mode (Driver Comparison)">?</button>
+                <div class="help-card" hidden>Races only. Shows the driver next to the car they're compared with; the car ahead on track is always on the left.<br>
+                    <strong>Interval:</strong> the current gap between the two cars.<br>
+                    <strong>Speed:</strong> both cars' speeds, and whether each one has DRS (or Overtake Mode on 2026 cars) available or open.</div>
+            </div>
+            <div class="option-row">
+                <span class="select-text">Compare With:</span>
+                <div class="mfd-button-group" id="driver-comparison-side-button-group">
+                    <button class="mfd-button" data-dc-side="ahead">Driver Ahead</button>
+                    <button class="mfd-button" data-dc-side="behind">Driver Behind</button>
+                </div>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Compare With (Driver Comparison)">?</button>
+                <div class="help-card" hidden>Which car the driver is compared with. The overlay hides itself while there's no such car: when leading with Driver Ahead, or when last (or the car behind is out of the race) with Driver Behind.</div>
+            </div>
+            <div class="option-row">
+                <label class="select-label">
+                    <span class="select-text">Speed Units:</span>
+                    <select id="driver-comparison-units-mode" class="select-dropdown">
+                        <option value="automatic">Automatic</option>
+                        <option value="kmh">KMH First</option>
+                        <option value="mph">MPH First</option>
+                    </select>
+                </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Speed Units (Driver Comparison)">?</button>
+                <div class="help-card" hidden>The Speed mode shows both units. This picks which one is the big number next to the middle: Automatic uses the speed unit set in the game.</div>
+            </div>
+        </section>
+
         <section class="overlay-section" id="session-info-options-section">
             <h2>Session Info Options</h2>
             <div class="option-row">
@@ -971,7 +1007,8 @@
                 'pit-window': '🪟',
                 'car-damage': '💣',
                 'leaderboard': '📋',
-                'driver-name': '👤'
+                'driver-name': '👤',
+                'driver-comparison': '⚔️'
             };
             return icons[overlayId] || '📺';
         }
@@ -1521,6 +1558,42 @@
             updateDriverNameOptions();
         });
 
+        // Driver Comparison: display mode, compared car, speed units
+        function setDriverComparisonOption(property, value) {
+            socket.emit('config_update', { overlay: 'driver-comparison', property, value });
+            if (currentConfig?.overlays?.['driver-comparison']) currentConfig.overlays['driver-comparison'][property] = value;
+            updateDriverComparisonOptions();
+        }
+
+        document.getElementById('driver-comparison-mode-button-group').addEventListener('click', (e) => {
+            const btn = e.target.closest('.mfd-button');
+            if (btn) setDriverComparisonOption('mode', btn.dataset.dcMode);
+        });
+
+        document.getElementById('driver-comparison-side-button-group').addEventListener('click', (e) => {
+            const btn = e.target.closest('.mfd-button');
+            if (btn) setDriverComparisonOption('side', btn.dataset.dcSide);
+        });
+
+        const driverComparisonUnitsMode = document.getElementById('driver-comparison-units-mode');
+        driverComparisonUnitsMode.addEventListener('change', () => {
+            setDriverComparisonOption('unitsMode', driverComparisonUnitsMode.value);
+        });
+
+        function updateDriverComparisonOptions() {
+            const dc = currentConfig?.overlays?.['driver-comparison'];
+            if (!dc) return;
+            const mode = dc.mode === 'speed' ? 'speed' : 'gap';
+            const side = dc.side === 'behind' ? 'behind' : 'ahead';
+            document.querySelectorAll('#driver-comparison-mode-button-group .mfd-button').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.dcMode === mode);
+            });
+            document.querySelectorAll('#driver-comparison-side-button-group .mfd-button').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.dcSide === side);
+            });
+            driverComparisonUnitsMode.value = dc.unitsMode || 'automatic';
+        }
+
         // MFD page button handling
         const mfdButtonGroup = document.getElementById('mfd-button-group');
         mfdButtonGroup.addEventListener('click', (e) => {
@@ -1742,6 +1815,7 @@
             updateCarDamageOptions();
             updateLeaderboardOptions();
             updateDriverNameOptions();
+            updateDriverComparisonOptions();
             updateMessageBoxOptions();
         };
 

@@ -692,6 +692,7 @@ function startServer(portNumber, forwardAddresses) {
         'mini-leaderboard',     // Mini Leaderboard overlay
         'session-info',         // Session Info overlay
         'driver-name',          // Driver Name overlay
+        'driver-comparison',    // Driver Comparison overlay (SimHub: Driver Ahead & Behind)
         'leaderboard',          // Leaderboard overlay (Initials version)
         'leaderboard-lastname'  // Leaderboard overlay (Last Name version)
     ];

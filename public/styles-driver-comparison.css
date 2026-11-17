@@ -1,0 +1,871 @@
+/*
+ * Driver Comparison overlay (SimHub original: "F1TV - Driver Ahead & Behind").
+ *
+ * Native size 629x140 (SimHub dash size). Three display modes share one container:
+ *   data-mode="gap"     - SimHub layer "(1)": current interval between the two cars
+ *   data-mode="speed"   - SimHub layer "(2)": both cars' speeds + DRS labels
+ *   data-mode="laps"    - SimHub widgets "DriverAhead3"/"DriverBehind3": last lap sector table
+ * and two comparison directions:
+ *   data-side="ahead"   - observed driver vs the car ahead
+ *   data-side="behind"  - observed driver vs the car behind
+ *
+ * Layout rule taken from the source: the car that is AHEAD on track is always on the LEFT
+ * (modes gap/speed) / TOP row (mode laps). So with side=ahead the opponent is left/top and
+ * the observed driver right/bottom; with side=behind it's the other way around.
+ *
+ * SimHub drew the driver cards, stroke and lap table as widgets at 2x size scaled down
+ * by 0.5. Those widgets are kept here as an inner box with transform: scale(0.5) so every
+ * coordinate below matches the SimHub source 1:1 (item ids noted where useful).
+ */
+
+.overlay-container {
+    position: relative;
+    width: 629px;
+    height: 140px;
+    overflow: hidden;
+    background: transparent;
+}
+
+.dc-mode {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 629px;
+    height: 140px;
+    display: none;
+}
+
+/* Modes gap + speed share the duel layout ("[✓] 1&2" layer); laps has its own */
+.overlay-container[data-mode="gap"] .dc-duel,
+.overlay-container[data-mode="speed"] .dc-duel,
+.overlay-container[data-mode="laps"] .dc-laps {
+    display: block;
+}
+
+.dc-abs {
+    position: absolute;
+    box-sizing: border-box;
+}
+
+/* SimHub TextItem: flex box, centered vertically, no wrapping */
+.dc-text {
+    position: absolute;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    white-space: pre;
+    overflow: visible;
+}
+
+/* ===================================================================================
+   DUEL LAYOUT (modes gap / speed)
+   SimHub fades/moves everything with inertia(...,5) (the whole "1&2" layer with
+   inertia(...,7)); CSS transitions stand in for those. Mode gap ("V1") positions are the
+   defaults below; mode speed ("V2") positions sit under [data-mode="speed"].
+   =================================================================================== */
+
+.overlay-container {
+    --dc-move: 0.5s ease-in-out;   /* inertia(...,5) */
+}
+
+/* Whole duel ("1&2" layer opacity): shown by the script when there's someone to compare with */
+.dc-duel {
+    opacity: 0;
+    transition: opacity 0.7s ease-in-out;
+}
+
+.dc-duel.is-shown {
+    opacity: 1;
+}
+
+/* Dark strip behind the team colour lines - V1 (item_3r0r0) / V2 (item_4r0r0) variants */
+.dc-linebg {
+    background-color: rgb(18, 20, 24);
+    opacity: 0;
+    transition: opacity var(--dc-move);
+}
+
+.dc-linebg--v1 { left: 42.5px; top: 112px; width: 544.5px; height: 4px; }
+.dc-linebg--v2 { left: 0;      top: 111px; width: 630px;   height: 5px; }
+
+.overlay-container[data-mode="gap"]   .dc-linebg--v1,
+.overlay-container[data-mode="speed"] .dc-linebg--v2 {
+    opacity: 1;
+}
+
+/* "Middle" (item_5r0r0) - dark box between the two cards; wider in V2 */
+.dc-middle {
+    left: 240px;
+    top: 62px;
+    width: 150px;
+    height: 54px;
+    background-color: rgb(18, 20, 26);
+    transition: left var(--dc-move), width var(--dc-move);
+}
+
+.overlay-container[data-mode="speed"] .dc-middle {
+    left: 198px;
+    width: 235px;
+}
+
+/* ---- Driver cards -----------------------------------------------------------------
+   Outer box = SimHub WidgetItem (200x54, 1px divider border towards the middle).
+   Inner box = the widget's own 400x110 screen, scaled by 0.5. Left card = "Ahead Opponent"
+   / "Observed Driver Behind" widgets, right card = "Observed Driver Ahead" / "Behind Opponent"
+   (the two widgets per side are identical apart from which car they show). */
+.dc-card {
+    top: 62px;
+    width: 200px;
+    height: 54px;
+    border-style: solid;
+    border-color: rgb(42, 42, 42);
+    transition: left var(--dc-move);
+}
+
+/* Both cards move outwards by 42.5px in V2 to make room for the speed data */
+.dc-card--left {
+    left: 42px;
+    border-width: 0 1px 0 0;
+}
+
+.dc-card--right {
+    left: 387.2px;
+    border-width: 0 0 0 1px;
+}
+
+.overlay-container[data-mode="speed"] .dc-card--left  { left: -0.5px; }
+.overlay-container[data-mode="speed"] .dc-card--right { left: 429.7px; }
+
+.dc-card__inner {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 400px;
+    height: 110px;
+    overflow: hidden;
+    transform: scale(0.5);
+    transform-origin: left top;
+}
+
+/* DriverBG */
+.dc-card__bg {
+    top: 0;
+    width: 315px;
+    height: 120px;
+    background-color: rgb(18, 20, 26);
+}
+
+/* Position#BG */
+.dc-card__pos-bg {
+    top: 0;
+    width: 85px;
+    height: 110px;
+    background-color: rgb(18, 20, 26);
+    border-style: solid;
+    border-color: rgb(42, 42, 42);
+}
+
+/* Knockout Zone (hidden unless the car is in the Q knockout zone) */
+.dc-card__knockout {
+    top: 0;
+    width: 100px;
+    height: 100px;
+    display: none;
+    background: url('/images/driver-comparison/Knockout_Card.png') center / 100% 100% no-repeat;
+}
+
+.dc-card.is-knockout .dc-card__knockout {
+    display: block;
+}
+
+/* Position - SimHub font F1TV-2022-ObliqueBold-Pos */
+.dc-card__position {
+    top: 0;
+    height: 100px;
+    justify-content: center;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+    font-feature-settings: "ss06" 1;
+    font-size: 35px;
+    color: rgb(192, 192, 192);
+}
+
+/* FirstName - SimHub font "F1TV-2022-Regular-Oblique 2022" */
+.dc-card__first {
+    top: 7px;
+    height: 35px;
+    font-family: 'F1TV-2022';
+    font-weight: 400;
+    font-style: oblique;
+    font-size: 27px;
+}
+
+/* LastName - SimHub font F1TV-2022-ObliqueBold, team colour */
+.dc-card__last {
+    top: 36px;
+    height: 35px;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 34px;
+    color: var(--dc-team-color, rgb(255, 255, 255));
+}
+
+/* TeamName */
+.dc-card__team {
+    top: 65px;
+    height: 38px;
+    font-family: 'F1TV-2022';
+    font-weight: 400;
+    font-size: 17px;
+    color: rgb(128, 128, 128);
+}
+
+/* TeamLogo2 > ImageFromFileItem - hidden until a logo has actually loaded */
+.dc-card__logo {
+    position: absolute;
+    top: 65px;
+    width: 45px;
+    height: 40px;
+    object-fit: contain;
+    display: none;
+}
+
+.dc-card__logo.is-loaded {
+    display: block;
+}
+
+/* Left card: position box on the left, text left-aligned.
+   Name boxes are cut to the part of the card that's actually visible (SimHub: 370px boxes
+   overflowing the 400px screen) so textFit shrinks long names to that width. The start
+   (left card) / end (right card) of each box is unchanged, so short names sit where they did. */
+.dc-card--left .dc-card__bg        { left: 85px; }
+.dc-card--left .dc-card__pos-bg    { left: 0; border-width: 0 2px 0 0; }
+.dc-card--left .dc-card__knockout  { left: -15px; }
+.dc-card--left .dc-card__position  { left: 0; width: 85px; }
+.dc-card--left .dc-card__first     { left: 95px; width: 295px; justify-content: flex-start; color: rgb(220, 220, 220); }
+.dc-card--left .dc-card__last      { left: 95px; width: 295px; justify-content: flex-start; }
+.dc-card--left .dc-card__team      { left: 135px; width: 370px; justify-content: flex-start; }
+.dc-card--left .dc-card__logo      { left: 90px; }
+
+/* Right card: mirrored - position box on the right, text right-aligned */
+.dc-card--right .dc-card__bg       { left: 0; }
+.dc-card--right .dc-card__pos-bg   { left: 315px; border-width: 0 0 0 2px; }
+.dc-card--right .dc-card__knockout { left: 315px; }
+.dc-card--right .dc-card__position { left: 319px; width: 80px; }
+.dc-card--right .dc-card__first    { left: 10px; width: 300px; justify-content: flex-end; color: rgb(192, 192, 192); }
+.dc-card--right .dc-card__last     { left: 10px; width: 300px; justify-content: flex-end; }
+.dc-card--right .dc-card__team     { left: -101px; width: 370px; justify-content: flex-end; }
+.dc-card--right .dc-card__logo     { left: 269px; }
+
+/* ---- F2 blur (F2blur widget item_10r0, F2 cars only): blurred navy ellipse behind the middle.
+   Widget @195,62 (200 in V2), opacity 0.75; its 300x89 screen is drawn at scale 1.2. The ellipse
+   (item_10r0_1) narrows to the middle third in V1 and spans the screen's left 2/3 in V2. ---- */
+.dc-f2blur {
+    left: 195px;
+    top: 62px;
+    width: 300px;
+    height: 89px;
+    opacity: 0.75;
+    overflow: hidden;
+    transform: scale(1.2);
+    transform-origin: left top;
+    display: none;
+    transition: left var(--dc-move);
+}
+
+.overlay-container.is-f2 .dc-f2blur {
+    display: block;
+}
+
+.dc-f2blur__ellipse {
+    position: absolute;
+    left: 50px;
+    top: 0;
+    width: 100px;
+    height: 89px;
+    border-radius: 50%;
+    background-color: rgb(14, 38, 52);
+    filter: blur(43px);
+    transition: left var(--dc-move), width var(--dc-move);
+}
+
+.overlay-container[data-mode="speed"] .dc-f2blur { left: 200px; }
+.overlay-container[data-mode="speed"] .dc-f2blur__ellipse { left: 0; width: 200px; }
+
+/* ---- Team colour lines under each card (DriverAheadTeamColor etc.) ---- */
+.dc-team-line {
+    top: 113px;
+    width: 272px;
+    height: 2px;
+    background-color: var(--dc-team-color, rgb(255, 255, 255));
+    transition: left var(--dc-move), width var(--dc-move);
+}
+
+.dc-team-line--left  { left: 42.5px; }
+.dc-team-line--right { left: 315px; }
+
+/* V2: left line runs from the edge to the middle, right line from the middle past the edge */
+.overlay-container[data-mode="speed"] .dc-team-line--left  { left: 0; width: 315px; }
+.overlay-container[data-mode="speed"] .dc-team-line--right { width: 398.5px; }
+
+/* Fade of the team lines into the middle box. SimHub: two 2.3x235 GradientItems rotated 90deg
+   (layer "[m_formula]=0"); here the same thing drawn unrotated. F2 uses a thicker navy
+   variant (hidden "Layer2": 4.3px, rgb(14, 38, 52)) - toggled with .is-f2 on the container. */
+.dc-fade {
+    top: 112.85px;
+    width: 235px;
+    height: 2.3px;
+}
+
+.dc-fade--left {
+    left: 79.65px;
+    background: linear-gradient(to left, var(--dc-fade-color) 0%, rgba(0, 0, 0, 0) 95.94%);
+}
+
+.dc-fade--right {
+    left: 313.65px;
+    background: linear-gradient(to right, var(--dc-fade-color) 0%, rgba(0, 0, 0, 0) 95.94%);
+}
+
+.overlay-container {
+    --dc-fade-color: rgb(18, 20, 26);
+}
+
+.overlay-container.is-f2 {
+    --dc-fade-color: rgb(14, 38, 52);
+}
+
+.overlay-container.is-f2 .dc-fade {
+    top: 111.35px;
+    height: 4.3px;
+}
+
+.overlay-container.is-f2 .dc-fade--left  { left: 80.65px; }
+.overlay-container.is-f2 .dc-fade--right { left: 312.65px; }
+
+/* ---- Mode gap: "(1)" layer (V1 folder item_21r0) ---- */
+.dc-gap {
+    opacity: 0;
+    transition: opacity var(--dc-move);
+}
+
+.overlay-container[data-mode="gap"] .dc-gap {
+    opacity: 1;
+}
+
+/* AheadGap / BehindGap - SimHub font F1TV-2022-ObliqueBold-Int */
+.dc-gap__value {
+    left: 243px;
+    top: 62px;
+    width: 145px;
+    height: 45px;
+    justify-content: center;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+    font-feature-settings: "ss07" 1;
+    font-size: 25px;
+    color: rgb(192, 192, 192);
+}
+
+/* "CURRENT GAP" */
+.dc-gap__label {
+    left: 243px;
+    top: 97px;
+    width: 145px;
+    height: 15px;
+    justify-content: center;
+    font-family: 'F1TV-2022';
+    font-weight: 400;
+    font-size: 8px;
+    color: rgb(192, 192, 192);
+}
+
+/* ---- Mode speed: "(2)" layer (V2 folder item_25r0) ---- */
+.dc-speed {
+    opacity: 0;
+    transition: opacity var(--dc-move);
+}
+
+.overlay-container[data-mode="speed"] .dc-speed {
+    opacity: 1;
+}
+
+/* DRS labels, rotated, at the inner edge of each card (DRSahead TextItem0/TextItem1).
+   SimHub: 50% white, lime + 100% while that car has DRS open. Added here: 100% white while
+   DRS is available (can be opened), and "OT" in turquoise for 2026-regs cars (Overtake Mode). */
+.dc-drs {
+    top: 77px;
+    width: 40px;
+    height: 20px;
+    justify-content: center;
+    transform: rotate(-90deg);
+    font-family: 'Formula1 Display';
+    font-weight: 700;
+    font-size: 10px;
+    color: rgb(255, 255, 255);
+    opacity: 0.5;
+}
+
+.dc-drs--left  { left: 174px; }
+.dc-drs--right { left: 415px; }
+
+.dc-drs[data-state="available"] {
+    opacity: 1;
+}
+
+.dc-drs[data-state="active"] {
+    opacity: 1;
+    color: rgb(0, 255, 0);
+}
+
+.dc-drs.is-overtake[data-state="active"] {
+    color: rgb(14, 172, 230);
+}
+
+/* "(2) SpeedData" widget - 226x46, scale 1 */
+.dc-speed__data {
+    left: 202px;
+    top: 64px;
+    width: 226px;
+    height: 46px;
+}
+
+/* Unit labels (Labels layer) - SimHub font F1TV-2022-Timing */
+.dc-speed__unit {
+    width: 45px;
+    height: 15px;
+    justify-content: center;
+    font-family: 'F1TV-2022-Timing';
+    font-style: oblique;
+    font-size: 9px;
+    color: rgb(255, 255, 255);
+    opacity: 0.5;
+}
+
+.dc-speed__unit--main {
+    top: 28px;
+    width: 50px;
+    align-items: flex-end;
+}
+
+.dc-speed__unit--alt {
+    top: 31px;
+}
+
+.dc-speed__unit--alt.dc-speed__unit--l  { left: 8px; }
+.dc-speed__unit--main.dc-speed__unit--l { left: 58px; }
+.dc-speed__unit--main.dc-speed__unit--r { left: 118px; }
+.dc-speed__unit--alt.dc-speed__unit--r  { left: 173px; }
+
+/* Main speed value (big) - SimHub font F1TV-2022-ObliqueSemiBold */
+.dc-speed__main {
+    top: 0;
+    height: 40px;
+    font-family: 'F1TV-2022';
+    font-weight: 600;
+    font-style: oblique;
+    font-size: 21px;
+    color: rgb(255, 255, 255);
+}
+
+/* Secondary speed value (small, other unit) - SimHub font Formula1 DisplayOblique */
+.dc-speed__alt {
+    top: 3px;
+    width: 45px;
+    height: 40px;
+    font-family: 'Formula1 Display';
+    font-weight: 400;
+    font-style: oblique;
+    font-size: 17px;
+    color: rgb(255, 255, 255);
+}
+
+.dc-speed__alt.dc-speed--l  { left: 10px;  justify-content: flex-end; }
+.dc-speed__main.dc-speed--l { left: 58px;  width: 55px; justify-content: flex-end; }
+.dc-speed__main.dc-speed--r { left: 124px; width: 55px; justify-content: flex-start; }
+.dc-speed__alt.dc-speed--r  { left: 181px; justify-content: flex-start; }
+
+/* "KMHdefault" layer positions (main unit = km/h) - slightly shifted big values */
+.overlay-container.is-kmh .dc-speed__main.dc-speed--l { left: 55px; }
+.overlay-container.is-kmh .dc-speed__main.dc-speed--r { left: 119px; width: 60px; }
+
+/* ---- Rolex widget above the right card (SimHub "Rolex" widget @512,15, 150x85 scaled 0.5).
+   Reuses .dc-rolex (defined in the laps section) inside a scaled box. ---- */
+.dc-duel__rolex {
+    left: 512px;
+    top: 15px;
+    width: 150px;
+    height: 85px;
+    transform: scale(0.5);
+    transform-origin: left top;
+}
+
+.dc-duel__rolex .dc-rolex {
+    left: 0;
+    top: 0;
+}
+
+/* ---- Gradient.png strip along the top of the middle box (ImageItem item_34r0, 50%) ---- */
+.dc-middle-gradient {
+    left: 242px;
+    top: 62px;
+    width: 145px;
+    height: 5px;
+    opacity: 0.5;
+    background: url('/images/common/Gradient.png') no-repeat;
+    background-size: 100% 100%;
+    transition: left var(--dc-move), width var(--dc-move);
+}
+
+.overlay-container[data-mode="speed"] .dc-middle-gradient {
+    left: 199.5px;
+    width: 230px;
+}
+
+/* ---- Stroke under the duel (Stroke widget, 1500x15 scaled 0.5). V1 (item_35r0) ends at the
+   right card's edge; V2 (item_36r0) is the full-width version. Both at 50% when shown. ---- */
+.dc-duel__stroke {
+    top: 116px;
+    height: 7.5px;
+    opacity: 0;
+    overflow: hidden;
+    transition: opacity var(--dc-move);
+}
+
+.dc-duel__stroke--v1 { left: 42.5px; width: 544.5px; }
+.dc-duel__stroke--v2 { left: -4px;   width: 750px; }
+
+.overlay-container[data-mode="gap"]   .dc-duel__stroke--v1,
+.overlay-container[data-mode="speed"] .dc-duel__stroke--v2 {
+    opacity: 0.5;
+}
+
+/* ===================================================================================
+   STROKE WIDGET (shared by both layouts) - 1500x15 native.
+   SimHub: white 5% fill, 170 black 100x2 bars rotated -45deg every 7px in a 10% layer,
+   a blurred 8px dark bottom border, and Gradient.png stretched over 10000px twice.
+   The bars are one repeating gradient here: 7px horizontal pitch = 7/sqrt(2) = 4.95px
+   measured across the stripes.
+   =================================================================================== */
+.dc-stroke {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1500px;
+    height: 15px;
+    overflow: hidden;
+    transform: scale(0.5);
+    transform-origin: left top;
+}
+
+.dc-stroke__fill {
+    position: absolute;
+    inset: 0;
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.dc-stroke__bars {
+    position: absolute;
+    inset: 0;
+    background-image: repeating-linear-gradient(135deg,
+        rgba(0, 0, 0, 0.1) 0 2px,
+        transparent 2px 4.95px);
+}
+
+.dc-stroke__shadow {
+    position: absolute;
+    left: 0;
+    top: 6px;
+    width: 1500px;
+    height: 10px;
+    box-sizing: border-box;
+    border-bottom: 8px solid rgb(0, 0, 0);
+    opacity: 0.3;
+    filter: blur(3px);
+}
+
+.dc-stroke__gradient {
+    position: absolute;
+    left: -1000px;
+    top: 0;
+    width: 10000px;
+    height: 12px;
+    background: url('/images/common/Gradient.png') no-repeat;
+    background-size: 10000px 12px; /* stretched, not tiled */
+}
+
+/* ===================================================================================
+   LAPS LAYOUT (mode laps) - "delta to bestahead" / "Delta To Best" widgets.
+   1135x248 screen scaled 0.5, placed at 60.25, -0.5 (as in SimHub).
+   Rows: top = car ahead, bottom = car behind. The observed driver's row shows deltas
+   (.dc-row--delta), the opponent's row shows plain times (.dc-row--time).
+   =================================================================================== */
+.dc-laps__inner {
+    position: absolute;
+    left: 60.25px;
+    top: -0.5px;
+    width: 1135px;
+    height: 248px;
+    transform: scale(0.5);
+    transform-origin: left top;
+}
+
+.dc-laps__bg {
+    left: 0.5px;
+    top: 93px;
+    width: 1135px;
+    height: 135px;
+    background-color: rgb(18, 20, 26);
+    opacity: 0.98;
+}
+
+.dc-laps__bg-bottom {
+    left: 0.5px;
+    top: 226.5px;
+    width: 1135px;
+    height: 7px;
+    background-color: rgb(18, 20, 26);
+    opacity: 0.98;
+}
+
+.dc-laps__line {
+    left: 0.5px;
+    top: 226.5px;
+    width: 1135px;
+    height: 2.5px;
+    background-color: rgb(128, 128, 128);
+    opacity: 0.6;
+}
+
+.dc-laps__stroke {
+    left: 0.5px;
+    top: 233px;
+    width: 1500px;
+    height: 15px;
+    opacity: 0.5;
+}
+
+.dc-laps__stroke .dc-stroke {
+    transform: none; /* already inside the 0.5-scaled table */
+}
+
+/* Column header labels - SimHub font F1TVnumbers */
+.dc-laps__label {
+    top: 93px;
+    width: 190px;
+    height: 40px;
+    justify-content: center;
+    font-family: 'F1TVnumbers';
+    font-size: 24px;
+    color: rgb(255, 255, 255);
+    opacity: 0.9;
+}
+
+/* "LAP n" header - SimHub font F1TV-2022 Bold, red */
+.dc-laps__label.dc-col--lap {
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    color: rgb(255, 0, 0);
+}
+
+/* Column x positions: S1 / S2 / S3 / LAP */
+.dc-col--s1  { left: 370.5px; }
+.dc-col--s2  { left: 560.5px; }
+.dc-col--s3  { left: 750.5px; }
+.dc-col--lap { left: 940.5px; width: 195px; }
+
+/* Column separators ("Strokes": 1px right border, 25%) */
+.dc-laps__sep {
+    top: 133.5px;
+    height: 93px;
+    border-right: 1px solid rgb(128, 128, 128);
+    opacity: 0.25;
+}
+
+.dc-laps__sep--pos  { left: 0.5px;   width: 45px; }
+.dc-laps__sep--name { left: 0.5px;   width: 370px; }
+.dc-laps__sep--s1   { left: 370.5px; width: 190px; }
+.dc-laps__sep--s2   { left: 560.5px; width: 190px; }
+.dc-laps__sep--s3   { left: 750.5px; width: 190px; }
+.dc-laps__sep--lap  { left: 940.5px; width: 195px; }
+
+/* Edge gradients (Gradients layer, 70%) - Gradient.png 140x65 rotated */
+.dc-laps__edges {
+    left: 0;
+    top: 0;
+    width: 1135px;
+    height: 248px;
+    opacity: 0.7;
+}
+
+.dc-laps__edge {
+    top: 130px;
+    width: 140px;
+    height: 65px;
+    background: url('/images/common/Gradient.png') no-repeat;
+    background-size: 140px 65px;
+}
+
+.dc-laps__edge--left  { left: -37px;    transform: rotate(-90deg); }
+.dc-laps__edge--right { left: 1035.5px; top: 131px; transform: rotate(90deg); }
+
+/* ---- Rows ---- */
+.dc-row {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1135px;
+    height: 248px;
+}
+
+/* Position - F1TV-2022-Position font */
+.dc-row__position {
+    left: 0.5px;
+    width: 40px;
+    justify-content: center;
+    font-family: 'F1TV-2022-Position';
+    font-size: 24px;
+    color: rgb(255, 255, 255);
+}
+
+.dc-row__knockout {
+    left: 0;
+    width: 45px;
+    height: 37px;
+    display: none;
+    background: url('/images/common/Knockout.png') center / 100% 100% no-repeat;
+}
+
+.dc-row.is-knockout .dc-row__knockout {
+    display: block;
+}
+
+.dc-row__logo {
+    position: absolute;
+    left: 45.5px;
+    width: 55px;
+    height: 50px;
+    object-fit: contain;
+    display: none;
+}
+
+.dc-row__logo.is-loaded {
+    display: block;
+}
+
+/* DriverName - SimHub font F1TV-2022-ObliqueBold */
+.dc-row__name {
+    left: 100.5px;
+    width: 270px;
+    justify-content: flex-start;
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    font-style: oblique;
+    font-size: 24px;
+    color: rgb(255, 255, 255);
+}
+
+/* Sector / lap cells */
+.dc-cell {
+    width: 190px;
+    height: 42px;
+    justify-content: center;
+    font-size: 25px;
+    color: rgb(255, 255, 255);
+}
+
+/* Cells sit 0.5px left of their header/separator in SimHub */
+.dc-cell.dc-col--s1  { left: 370px; }
+.dc-cell.dc-col--s2  { left: 560px; }
+.dc-cell.dc-col--s3  { left: 750px; }
+.dc-cell.dc-col--lap { left: 940px; width: 195px; font-size: 24px; }
+
+/* Time row - SimHub font F1TV-2022-Timing */
+.dc-row--time .dc-cell {
+    font-family: 'F1TV-2022-Timing';
+    font-style: oblique;
+    font-weight: 400;
+}
+
+/* Delta row - SimHub font "Formula1 TV-BoldItalic", green (colour logic comes later) */
+.dc-row--delta .dc-cell {
+    font-family: 'Formula1 TV';
+    font-weight: 700;
+    font-style: italic;
+    color: rgb(0, 255, 0);
+}
+
+/* "FASTER" cover over a delta cell (SimHub "Faster" layer, opacity 0 by default) */
+.dc-faster {
+    width: 190px;
+    height: 42px;
+    justify-content: center;
+    background-color: rgb(18, 20, 26);
+    font-family: 'Formula1 TV';
+    font-weight: 700;
+    font-style: italic;
+    font-size: 25px;
+    color: rgb(0, 255, 0);
+    opacity: 0;
+}
+
+.dc-faster.dc-col--lap { width: 195px; font-size: 24px; }
+
+.dc-faster.is-shown {
+    opacity: 1;
+}
+
+/* Tyre compound letter, inside the right end of the LAP column */
+.dc-row__compound {
+    left: 1100px;
+    width: 35px;
+    height: 45px;
+    justify-content: center;
+    font-family: 'Formula1 Display';
+    font-size: 20px;
+    color: rgb(255, 0, 0);
+}
+
+/* Row vertical placement (top = P1 row, bottom = P2 row in the SimHub naming) */
+.dc-row--top .dc-row__position  { top: 133.5px; height: 50px; }
+.dc-row--top .dc-row__knockout  { top: 141px; }
+.dc-row--top .dc-row__logo      { top: 133.5px; }
+.dc-row--top .dc-row__name      { top: 133.5px; height: 50px; }
+.dc-row--top .dc-cell           { top: 135px; }
+.dc-row--top .dc-faster         { top: 135px; }
+.dc-row--top .dc-row__compound  { top: 135px; }
+
+.dc-row--bottom .dc-row__position { top: 178px; height: 45px; }
+.dc-row--bottom .dc-row__knockout { top: 183px; }
+.dc-row--bottom .dc-row__logo     { top: 176.5px; }
+.dc-row--bottom .dc-row__name     { top: 178.5px; height: 45px; }
+.dc-row--bottom .dc-cell          { top: 180px; }
+.dc-row--bottom .dc-faster        { top: 180px; }
+.dc-row--bottom .dc-row__compound { top: 180px; }
+
+/* Rolex box above the LAP column (opacity 0 by default, shown by logic later) */
+.dc-rolex {
+    left: 985px;
+    top: 0;
+    width: 150px;
+    height: 85px;
+    border-radius: 5px;
+    background-color: rgb(24, 94, 51);
+    opacity: 0;
+}
+
+.dc-rolex.is-shown {
+    opacity: 1;
+}
+
+.dc-rolex img {
+    position: absolute;
+    left: 12px;
+    top: 7.5px;
+    width: 126px;
+    height: 70px;
+    object-fit: contain;
+}
