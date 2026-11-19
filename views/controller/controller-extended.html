@@ -788,12 +788,14 @@
                 <span class="select-text">Display:</span>
                 <div class="mfd-button-group" id="driver-comparison-display-off-group">
                     <button class="mfd-button" data-dc-display="off">Off</button>
+                    <button class="mfd-button" data-dc-display="target">Leader/Target Delta</button>
                 </div>
                 <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Display (Driver Comparison)">?</button>
                 <div class="help-card" hidden>Turns the overlay off, or picks which car the driver is compared with (the car ahead or behind) and how. The car ahead on track is always on the left (or the top row). The overlay hides itself while there's no such car: when leading with Driver Ahead, or when last with Driver Behind (in Interval and Speed also when the car behind is out of the race).<br>
                     <strong>Interval</strong> (races only): the current gap between the two cars.<br>
                     <strong>Speed</strong> (races only): both cars' speeds, and whether each one has DRS (or Overtake Mode on 2026 cars) available or open.<br>
-                    <strong>Laps</strong> (any session except Time Trial): sector and lap times of both drivers side by side. The faster driver in each column shows how much faster they were.</div>
+                    <strong>Laps</strong> (any session except Time Trial): sector and lap times of both drivers side by side. The faster driver in each column shows how much faster they were.<br>
+                    <strong>Leader/Target Delta</strong> (practice and qualifying): the target driver's best sectors and best lap on top, and below them how far ahead or behind the driver is in each one (gold when slower). Leading drivers are compared with P2.</div>
             </div>
             <div class="option-row">
                 <span class="select-text">Driver Ahead:</span>
@@ -818,9 +820,22 @@
                     <button class="mfd-button" data-dc-laps="best">Best Lap</button>
                 </div>
                 <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Laps Compare (Driver Comparison)">?</button>
-                <div class="help-card" hidden>Laps mode only.<br>
+                <div class="help-card" hidden>Only for the Driver Ahead / Driver Behind Laps layouts (Leader/Target Delta always uses best laps).<br>
                     <strong>Last Lap:</strong> the last lap both drivers have completed (the same lap number for both).<br>
                     <strong>Best Lap:</strong> each driver's best lap, whichever lap it was set on.</div>
+            </div>
+            <div class="option-row">
+                <label class="select-label">
+                    <span class="select-text">Delta Target:</span>
+                    <select id="driver-comparison-target-mode" class="select-dropdown">
+                        <option value="default">Default</option>
+                        <option value="alwaysLeader">Always Leader</option>
+                    </select>
+                </label>
+                <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Delta Target (Driver Comparison)">?</button>
+                <div class="help-card" hidden>Leader/Target Delta only: who the driver is compared against. Same rule as the Lap Timer's Knockout Qualifying Comparison.<br>
+                    <strong>Default:</strong> the leader. In Q1/Q2 and Sprint Qualifying SQ1/SQ2, a driver in the knockout zone is compared to the driver in the last safe position instead (or to the leader if that driver has no time yet).<br>
+                    <strong>Always Leader:</strong> always the leader.</div>
             </div>
             <div class="option-row">
                 <label class="select-label">
@@ -1599,6 +1614,11 @@
                 setDriverComparisonOption('visible', false);
                 return;
             }
+            if (display === 'target') {
+                setDriverComparisonOption('mode', 'target');
+                setDriverComparisonOption('visible', true);
+                return;
+            }
             const [side, mode] = display.split(':');
             setDriverComparisonOption('mode', mode);
             setDriverComparisonOption('side', side);
@@ -1610,6 +1630,11 @@
             if (btn) setDriverComparisonOption('lapsCompare', btn.dataset.dcLaps);
         });
 
+        const driverComparisonTargetMode = document.getElementById('driver-comparison-target-mode');
+        driverComparisonTargetMode.addEventListener('change', () => {
+            setDriverComparisonOption('targetMode', driverComparisonTargetMode.value);
+        });
+
         const driverComparisonUnitsMode = document.getElementById('driver-comparison-units-mode');
         driverComparisonUnitsMode.addEventListener('change', () => {
             setDriverComparisonOption('unitsMode', driverComparisonUnitsMode.value);
@@ -1618,13 +1643,14 @@
         function updateDriverComparisonOptions() {
             const dc = currentConfig?.overlays?.['driver-comparison'];
             if (!dc) return;
-            const mode = dc.mode === 'speed' || dc.mode === 'laps' ? dc.mode : 'gap';
+            const mode = ['speed', 'laps', 'target'].includes(dc.mode) ? dc.mode : 'gap';
             const side = dc.side === 'behind' ? 'behind' : 'ahead';
+            driverComparisonTargetMode.value = dc.targetMode === 'alwaysLeader' ? 'alwaysLeader' : 'default';
             const lapsCompare = dc.lapsCompare === 'best' ? 'best' : 'last';
             document.querySelectorAll('#driver-comparison-laps-button-group .mfd-button').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.dcLaps === lapsCompare);
             });
-            const display = dc.visible ? `${side}:${mode}` : 'off';
+            const display = !dc.visible ? 'off' : mode === 'target' ? 'target' : `${side}:${mode}`;
             document.querySelectorAll('#driver-comparison-options-section [data-dc-display]').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.dcDisplay === display);
             });

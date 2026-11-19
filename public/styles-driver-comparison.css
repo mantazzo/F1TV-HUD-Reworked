@@ -502,6 +502,12 @@
 .dc-duel__rolex .dc-rolex {
     left: 0;
     top: 0;
+    border-radius: 10px; /* widget's 5px radius, drawn inside the 0.5 scale */
+}
+
+/* item_40 Visible: Interval layout only (gone instantly in Speed; opacity fades per the script) */
+.overlay-container:not([data-mode="gap"]) .dc-duel__rolex {
+    display: none;
 }
 
 /* ---- Gradient.png strip along the top of the middle box (ImageItem item_34r0, 50%) ---- */
@@ -834,6 +840,11 @@
     color: rgb(0, 255, 0);
 }
 
+/* Leader/Target Delta: slower than the target (SimHub '#fbd109') */
+.dc-cell.is-delta.is-slower {
+    color: #fbd109;
+}
+
 /* "FASTER" cover over a delta cell (SimHub "Faster" layer, opacity 0 by default) */
 .dc-faster {
     width: 190px;
@@ -857,6 +868,11 @@
 
 .dc-faster.is-shown {
     opacity: 1;
+}
+
+/* "SLOWER" variant (Leader/Target Delta) */
+.dc-faster.is-slower {
+    color: #fbd109;
 }
 
 /* Tyre compound letter, inside the right end of the LAP column */

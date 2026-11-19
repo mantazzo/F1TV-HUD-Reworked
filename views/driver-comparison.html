@@ -85,7 +85,7 @@
 
             <div class="dc-abs dc-middle-gradient"></div>
 
-            <!-- Rolex widget above the right card (hidden; not used by the gap/speed formulas) -->
+            <!-- Rolex widget above the right card (item_40): Interval layout only, 4s when it appears -->
             <div class="dc-abs dc-duel__rolex" id="dc-duel-rolex">
                 <div class="dc-abs dc-rolex">
                     <img src="/images/other-logos/Rolex.png" alt="Rolex">
@@ -260,6 +260,7 @@
         const laps = document.getElementById('dc-laps');
         const lapLabel = document.getElementById('dc-lap-label');
         const lapsRolex = document.getElementById('dc-rolex');
+        const duelRolex = document.querySelector('#dc-duel-rolex .dc-rolex');
         const LAP_COLUMNS = ['s1', 's2', 's3', 'lap'];
 
         function rowElements(id) {
@@ -282,6 +283,7 @@
         let side = 'ahead';      // compare with the car 'ahead' | 'behind'
         let unitsMode = 'automatic';
         let lapsCompare = 'last'; // laps mode: 'last' lap both completed | each driver's 'best' lap
+        let targetMode = 'default'; // target mode: 'default' (P1 / knockout cut-off) | 'alwaysLeader'
         let showSponsors = true;
         let swapping = false;    // fading out before a side change
         let swapTimer = null;
@@ -290,6 +292,8 @@
         let fasterUntil = 0;     // "FASTER" covers shown until this time (ms)
         let fasterTimer = null;
         let rolexTimer = null;
+        let gapShown = false;
+        let duelRolexTimer = null;
 
         // ── Session / driver data ──────────────────────────────────────────
         let sessionType = 0;
@@ -367,6 +371,7 @@
             if (observed < 0 || observed >= NUM_CARS) return null;
             const position = cars[observed].position;
             if (position < 1) return null;
+            if (mode === 'target') return resolveTargetPair(observed, position);
 
             const opponent = carAtPosition(side === 'ahead' ? position - 1 : position + 1);
             if (opponent < 0) return null;
@@ -383,12 +388,48 @@
                 : { left: observed, right: opponent, gapCar: opponent };
         }
 
+        // Last position that still goes through in Q1/Q2 (same rule as the Lap Timer), else null
+        function knockoutThreshold() {
+            const T = DriverUtils.SESSION_TYPE;
+            const K = DriverUtils.KNOCKOUT_ZONE_POSITIONS;
+            if (sessionType === T.QUALIFYING_1 || sessionType === T.SPRINT_SHOOTOUT_1) {
+                const n = numActiveCars();
+                return n > 22 ? K.Q1_24_CARS : n > 20 ? K.Q1_22_CARS : K.Q1_20_CARS;
+            }
+            if (sessionType === T.QUALIFYING_2 || sessionType === T.SPRINT_SHOOTOUT_2) return K.Q2;
+            return null;
+        }
+
+        // Leader/Target Delta: top row = target (P1, or the knockout cut-off while the observed driver
+        // is in the zone), bottom row = observed driver. Observed driver in P1: top = them, bottom = P2.
+        function resolveTargetPair(observed, position) {
+            let targetPos = 1;
+            const threshold = targetMode === 'alwaysLeader' ? null : knockoutThreshold();
+            if (threshold && position > threshold) {
+                // Lap Timer rule: the cut-off driver only counts once they have a lap time
+                const cutoff = carAtPosition(threshold);
+                if (cutoff >= 0 && bestTimes(cutoff).times[3] > 0) targetPos = threshold;
+            }
+
+            const top = position === targetPos ? observed : carAtPosition(targetPos);
+            const bottom = position === targetPos ? carAtPosition(2) : observed;
+            if (top < 0 || bottom < 0) return null;
+            for (const idx of [top, bottom]) {
+                if (cars[idx].resultStatus < 2) return null;
+            }
+            return { left: top, right: bottom };
+        }
+
         let pair = null;
+
+        function usesLapsLayout(m) {
+            return m === 'laps' || m === 'target';
+        }
 
         function update() {
             pair = resolvePair();
             if (pair) {
-                if (mode === 'laps') {
+                if (usesLapsLayout(mode)) {
                     renderLapsRows();
                     renderLapsData();
                 } else {
@@ -402,12 +443,25 @@
 
         function updateVisibility() {
             const ready = configVisible && !swapping && pair !== null;
-            duel.classList.toggle('is-shown', ready
-                && RACE_TYPES.has(sessionType)
-                && (mode === 'gap' || mode === 'speed'));
+            const showDuel = ready && RACE_TYPES.has(sessionType) && (mode === 'gap' || mode === 'speed');
+            duel.classList.toggle('is-shown', showDuel);
 
-            // Laps: any session (SimHub has no session limit here) except Time Trial
-            const showLaps = ready && mode === 'laps' && sessionType !== TIME_TRIAL;
+            // Rolex above the right card (item_40): Interval layout only, 4s each time it appears
+            const showGap = showDuel && mode === 'gap';
+            if (showGap && !gapShown) {
+                clearTimeout(duelRolexTimer);
+                duelRolex.classList.toggle('is-shown', showSponsors);
+                duelRolexTimer = setTimeout(() => duelRolex.classList.remove('is-shown'), ROLEX_MS);
+            } else if (!showGap && gapShown) {
+                clearTimeout(duelRolexTimer);
+                duelRolex.classList.remove('is-shown');
+            }
+            gapShown = showGap;
+
+            // Laps: any session (SimHub has no session limit here) except Time Trial.
+            // Leader/Target Delta: non-race sessions only (SimHub "FastestLapSectorDelta").
+            const showLaps = ready && sessionType !== TIME_TRIAL && (mode === 'laps'
+                || (mode === 'target' && sessionType > 0 && !RACE_TYPES.has(sessionType)));
             laps.classList.toggle('is-shown', showLaps);
             if (showLaps && !lapsShown) onLapsShown();
             if (!showLaps && lapsShown) onLapsHidden();
@@ -652,20 +706,73 @@
         function compoundOnLap(carIdx, lapNum) {
             const h = history[carIdx];
             if (!h || lapNum < 1) return null;
-            // m_endLap = lap the set was used until (255 = still fitted)
-            const stint = h.stints.find(st => st.m_endLap >= lapNum);
+            // m_endLap is 0-based (255 = still fitted); visual compound 0 = the game's empty
+            // placeholder for the next run (garage between qualifying runs). Same rule as Driver Name.
+            const stint = h.stints.find(st => st.m_tyreVisualCompound
+                && (st.m_endLap === 255 || st.m_endLap >= lapNum - 1));
             return stint ? TYRE_COMPOUND[stint.m_tyreVisualCompound] || null : null;
         }
 
-        function setCell(cell, text, isDelta) {
+        function setCell(cell, text, isDelta, isSlower = false) {
             setText(cell, text);
             cell.classList.toggle('is-delta', isDelta);
+            cell.classList.toggle('is-slower', isSlower);
+        }
+
+        function setFasterCover(el, shown, slower) {
+            setText(el, slower ? 'SLOWER' : 'FASTER');
+            el.classList.toggle('is-slower', slower);
+            el.classList.toggle('is-shown', shown);
+        }
+
+        // [S1, S2, S3, lap] of the driver's best lap (its own sectors, not the best individual
+        // sectors - user's choice over SimHub's BestSector1..3) + that lap's number (for the compound)
+        function bestTimes(carIdx) {
+            const lapNum = bestLapNum(carIdx);
+            const entry = lapEntry(carIdx, lapNum);
+            return { times: entry ? entryTimes(entry) : [0, 0, 0, 0], lapNum };
+        }
+
+        // Leader/Target Delta: top row = target's plain best times; bottom row = deltas to the target
+        // ("+0.000;-0.000", gold when slower, lime otherwise), or its plain time if the target has none.
+        function renderTargetData() {
+            setText(lapLabel, 'BEST LAP');
+            const top = bestTimes(pair.left);
+            const bottom = bestTimes(pair.right);
+            const fasterActive = Date.now() < fasterUntil;
+
+            for (let c = 0; c < LAP_COLUMNS.length; c++) {
+                const a = top.times[c];
+                const b = bottom.times[c];
+                setCell(rows.left.cells[c], a > 0 ? formatTime(a) : '', false);
+                setFasterCover(rows.left.faster[c], false, false);
+
+                if (a > 0 && b > 0) {
+                    const d = b - a;
+                    setCell(rows.right.cells[c], `${d < 0 ? '-' : '+'}${formatTime(Math.abs(d))}`, true, d > 0);
+                    setFasterCover(rows.right.faster[c], fasterActive && d !== 0, d > 0);
+                } else {
+                    setCell(rows.right.cells[c], b > 0 ? formatTime(b) : '', false);
+                    setFasterCover(rows.right.faster[c], false, false);
+                }
+            }
+
+            for (const [s, best] of [['left', top], ['right', bottom]]) {
+                const compound = best.lapNum > 0 ? compoundOnLap(pair[s], best.lapNum) : null;
+                const el = rows[s].compound;
+                setText(el, compound ? compound.letter : '');
+                if (compound) el.style.color = compound.color;
+            }
         }
 
         // Per column the faster driver's cell shows the (negative) delta in lime, the slower
         // driver's cell their own time. Ties / a missing time: plain times only.
         function renderLapsData() {
             if (!pair) return;
+            if (mode === 'target') {
+                renderTargetData();
+                return;
+            }
             const lapNums = comparedLaps();
             setText(lapLabel, lapsCompare === 'best' ? 'BEST LAP' : `LAP ${lapNums.top}`);
 
@@ -687,8 +794,8 @@
                 if (bottomFaster) setCell(rows.right.cells[c], `-${formatTime(a - b)}`, true);
                 else setCell(rows.right.cells[c], b > 0 ? formatTime(b) : '', false);
 
-                rows.left.faster[c].classList.toggle('is-shown', fasterActive && topFaster);
-                rows.right.faster[c].classList.toggle('is-shown', fasterActive && bottomFaster);
+                setFasterCover(rows.left.faster[c], fasterActive && topFaster, false);
+                setFasterCover(rows.right.faster[c], fasterActive && bottomFaster, false);
             }
 
             for (const [s, lapNum] of [['left', lapNums.top], ['right', lapNums.bottom]]) {
@@ -740,31 +847,51 @@
         }
 
         // ── Config ─────────────────────────────────────────────────────────
-        function applyMode(newMode) {
-            mode = newMode === 'speed' || newMode === 'laps' ? newMode : 'gap';
-            container.dataset.mode = mode;
+        // What's on screen: gap <-> speed share the duel and animate in place (same key); anything
+        // else on the same layer (other side, Laps <-> Target, other target rule) is a different
+        // SimHub widget, so that layer fades/collapses out first, swaps, and comes back in.
+        // Switching between the duel and the laps layer just crossfades the two layers.
+        function viewKey(m, s, t) {
+            if (m === 'target') return `target:${t}`;
+            return `${usesLapsLayout(m) ? 'laps' : 'duel'}:${s}`;
         }
 
-        // Side changes swap which cars the cards show, so fade out first, then swap and fade in
-        function applySide(newSide) {
-            newSide = newSide === 'behind' ? 'behind' : 'ahead';
-            if (newSide === side && !swapping) return;
-            clearTimeout(swapTimer);
-            if (!duel.classList.contains('is-shown') && !lapsShown) {
-                side = newSide;
+        let pendingView = null;
+        let swapMs = FADE_MS;
+
+        function applyView(newMode, newSide, newTarget) {
+            pendingView = {
+                mode: ['gap', 'speed', 'laps', 'target'].includes(newMode) ? newMode : 'gap',
+                side: newSide === 'behind' ? 'behind' : 'ahead',
+                target: newTarget === 'alwaysLeader' ? 'alwaysLeader' : 'default'
+            };
+            const commit = () => {
+                mode = pendingView.mode;
+                side = pendingView.side;
+                targetMode = pendingView.target;
+                container.dataset.mode = mode;
                 container.dataset.side = side;
                 swapping = false;
                 update();
+            };
+
+            clearTimeout(swapTimer);
+            if (swapping) { // mid-swap (e.g. the Controller sends mode, side, visible one by one)
+                swapTimer = setTimeout(commit, swapMs);
+                return;
+            }
+            const shownLayer = duel.classList.contains('is-shown') ? 'duel' : lapsShown ? 'laps' : null;
+            const sameLayer = shownLayer
+                && shownLayer === (usesLapsLayout(pendingView.mode) ? 'laps' : 'duel');
+            if (!sameLayer || viewKey(mode, side, targetMode)
+                    === viewKey(pendingView.mode, pendingView.side, pendingView.target)) {
+                commit();
                 return;
             }
             swapping = true;
+            swapMs = shownLayer === 'laps' ? LAPS_MOVE_MS : FADE_MS;
             updateVisibility();
-            swapTimer = setTimeout(() => {
-                side = newSide;
-                container.dataset.side = side;
-                swapping = false;
-                update();
-            }, lapsShown ? LAPS_MOVE_MS : FADE_MS);
+            swapTimer = setTimeout(commit, swapMs);
         }
 
         socket.on('overlay_config', (config) => {
@@ -772,13 +899,15 @@
             if (!cfg) return;
             configVisible = !!cfg.visible;
             showSponsors = config?.global?.showSponsors !== false;
-            if (!showSponsors) lapsRolex.classList.remove('is-shown');
-            applyMode(cfg.mode);
+            if (!showSponsors) {
+                lapsRolex.classList.remove('is-shown');
+                duelRolex.classList.remove('is-shown');
+            }
             unitsMode = cfg.unitsMode || 'automatic';
             renderUnits();
             applyLapsCompare(cfg.lapsCompare);
-            applySide(cfg.side);
-            update();
+            applyView(cfg.mode, cfg.side, cfg.targetMode);
+            if (!swapping) update();
         });
 
         socket.on('drivers_data', (drivers) => {
@@ -846,7 +975,7 @@
                     numLaps: Math.min(data.m_numLaps || 0, lapHistory.length),
                     stints: (data.m_tyreStintsHistoryData || []).slice(0, data.m_numTyreStints || 0)
                 };
-                if (mode === 'laps' && pair && (carIdx === pair.left || carIdx === pair.right)) renderLapsData();
+                if (usesLapsLayout(mode) && pair && (carIdx === pair.left || carIdx === pair.right)) renderLapsData();
             } else if (pid === 6) { // Car Telemetry
                 const telemetry = data.m_carTelemetryData;
                 if (!Array.isArray(telemetry)) return;
