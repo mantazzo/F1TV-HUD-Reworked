@@ -796,7 +796,18 @@
                     <strong>Speed</strong> (races only): both cars' speeds, and whether each one has DRS (or Overtake Mode on 2026 cars) available or open.<br>
                     <strong>Laps</strong> (any session except Time Trial): sector and lap times of both drivers side by side. The faster driver in each column shows how much faster they were.<br>
                     <strong>History</strong> (races only): the lap times of the last 4 laps both drivers completed, newest on the right. The faster driver on each lap shows how much faster they were.<br>
-                    <strong>Leader/Target Delta</strong> (practice and qualifying): the target driver's best sectors and best lap on top, and below them how far ahead or behind the driver is in each one (gold when slower). Leading drivers are compared with P2.</div>
+                    <strong>Leader/Target Delta</strong> (practice and qualifying): the target driver's best lap (its sectors and lap time) on top, and below them how far ahead or behind the driver's best lap is in each one (gold when slower). Leading drivers are compared with P2.
+                    <div class="help-gallery">
+                        <div class="help-gallery-tabs">
+                            <button type="button" class="help-gallery-tab active" aria-pressed="true" data-src="/images/help/driver-comparison-interval.png" data-alt="Interval: OCON and BEARMAN cards with +0.472S CURRENT GAP between them">Interval</button>
+                            <button type="button" class="help-gallery-tab" aria-pressed="false" data-src="/images/help/driver-comparison-speed.png" data-alt="Speed: 299 and 295 km/h with both OT labels lit in turquoise">Speed</button>
+                            <button type="button" class="help-gallery-tab" aria-pressed="false" data-src="/images/help/driver-comparison-laps-last.png" data-alt="Laps: PIASTRI and BEARMAN sector and lap times for LAP 15, faster times as green deltas">Laps</button>
+                            <button type="button" class="help-gallery-tab" aria-pressed="false" data-src="/images/help/driver-comparison-history.png" data-alt="History: lap times for laps 12 to 15, the faster driver on each lap shown as a green delta">History</button>
+                            <button type="button" class="help-gallery-tab" aria-pressed="false" data-src="/images/help/driver-comparison-target.png" data-alt="Leader/Target Delta: NORRIS's best lap on top, TAZZOMAN in P6 below with -0.150, -0.215, +0.815 and +0.449">Leader/Target Delta</button>
+                        </div>
+                        <img src="/images/help/driver-comparison-interval.png" alt="Interval: OCON and BEARMAN cards with +0.472S CURRENT GAP between them" width="629" height="140" loading="lazy">
+                    </div>
+                </div>
             </div>
             <div class="option-row">
                 <span class="select-text">Driver Ahead:</span>
@@ -825,7 +836,12 @@
                 <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Laps Compare (Driver Comparison)">?</button>
                 <div class="help-card" hidden>Only for the Driver Ahead / Driver Behind Laps layouts (Leader/Target Delta always uses best laps, History always the latest laps).<br>
                     <strong>Last Lap</strong> (races; practice and qualifying always use Best Lap): the last lap both drivers have completed (the same lap number for both).<br>
-                    <strong>Best Lap:</strong> each driver's best lap, whichever lap it was set on.</div>
+                    <strong>Best Lap:</strong> each driver's best lap, whichever lap it was set on.
+                    <div class="help-images help-images--stacked">
+                        <figure><img src="/images/help/driver-comparison-laps-last.png" alt="Last Lap: both drivers' LAP 15 times" width="629" height="140" loading="lazy"><figcaption>Last Lap</figcaption></figure>
+                        <figure><img src="/images/help/driver-comparison-laps-best.png" alt="Best Lap: the same moment, comparing each driver's best lap" width="629" height="140" loading="lazy"><figcaption>Best Lap</figcaption></figure>
+                    </div>
+                </div>
             </div>
             <div class="option-row">
                 <label class="select-label">
@@ -838,7 +854,12 @@
                 <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Delta Target (Driver Comparison)">?</button>
                 <div class="help-card" hidden>Leader/Target Delta only: who the driver is compared against. Same rule as the Lap Timer's Knockout Qualifying Comparison.<br>
                     <strong>Default:</strong> the leader. In Q1/Q2 and Sprint Qualifying SQ1/SQ2, a driver in the knockout zone is compared to the driver in the last safe position instead (or to the leader if that driver has no time yet).<br>
-                    <strong>Always Leader:</strong> always the leader.</div>
+                    <strong>Always Leader:</strong> always the leader.
+                    <div class="help-images help-images--stacked">
+                        <figure><img src="/images/help/driver-comparison-target-default.png" alt="Q1, driver in P24: compared to GASLY in P17, the last safe position" width="629" height="140" loading="lazy"><figcaption>Default (P24 in Q1: compared to P17)</figcaption></figure>
+                        <figure><img src="/images/help/driver-comparison-target-leader.png" alt="Same moment with Always Leader: compared to NORRIS in P1" width="629" height="140" loading="lazy"><figcaption>Always Leader</figcaption></figure>
+                    </div>
+                </div>
             </div>
             <div class="option-row">
                 <label class="select-label">
@@ -850,7 +871,12 @@
                     </select>
                 </label>
                 <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Speed Units (Driver Comparison)">?</button>
-                <div class="help-card" hidden>The Speed mode shows both units. This picks which one is the big number next to the middle: Automatic uses the speed unit set in the game.</div>
+                <div class="help-card" hidden>The Speed mode shows both units. This picks which one is the big number next to the middle: Automatic uses the speed unit set in the game.
+                    <div class="help-images help-images--stacked">
+                        <figure><img src="/images/help/driver-comparison-speed.png" alt="KMH First: 299 and 295 KM/H as the big numbers, MPH smaller on the outside" width="629" height="140" loading="lazy"><figcaption>KMH First</figcaption></figure>
+                        <figure><img src="/images/help/driver-comparison-units-mph.png" alt="MPH First: 186 and 183 MPH as the big numbers, KM/H smaller on the outside" width="629" height="140" loading="lazy"><figcaption>MPH First</figcaption></figure>
+                    </div>
+                </div>
             </div>
         </section>
 

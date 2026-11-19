@@ -1,17 +1,20 @@
 /*
  * Driver Comparison overlay (SimHub original: "F1TV - Driver Ahead & Behind").
  *
- * Native size 629x140 (SimHub dash size). Three display modes share one container:
- *   data-mode="gap"     - SimHub layer "(1)": current interval between the two cars
- *   data-mode="speed"   - SimHub layer "(2)": both cars' speeds + DRS labels
- *   data-mode="laps"    - SimHub widgets "DriverAhead3"/"DriverBehind3": last lap sector table
- * and two comparison directions:
+ * Native size 629x140 (SimHub dash size). Two layers share one container:
+ *   duel (cards):  data-mode="gap"     - V1 Interval, SimHub layer "(1)": current gap between the cars
+ *                  data-mode="speed"   - V2 Speed, SimHub layer "(2)": both cars' speeds + DRS/OT labels
+ *   laps table:    data-mode="laps"    - V3 Laps, SimHub "DriverAhead3"/"DriverBehind3": sectors + lap
+ *                  data-mode="history" - V4 History (ours): last 4 laps both drivers completed
+ *                  data-mode="target"  - Leader/Target Delta, SimHub "FastestLapSectorDelta":
+ *                                        best lap vs P1 / the knockout cut-off (.is-slower = gold)
+ * and two comparison directions (all modes but target):
  *   data-side="ahead"   - observed driver vs the car ahead
  *   data-side="behind"  - observed driver vs the car behind
  *
  * Layout rule taken from the source: the car that is AHEAD on track is always on the LEFT
- * (modes gap/speed) / TOP row (mode laps). So with side=ahead the opponent is left/top and
- * the observed driver right/bottom; with side=behind it's the other way around.
+ * (duel) / TOP row (laps table). So with side=ahead the opponent is left/top and the observed
+ * driver right/bottom; with side=behind it's the other way around. Target: target on top.
  *
  * SimHub drew the driver cards, stroke and lap table as widgets at 2x size scaled down
  * by 0.5. Those widgets are kept here as an inner box with transform: scale(0.5) so every
@@ -600,7 +603,7 @@
 }
 
 /* ===================================================================================
-   LAPS LAYOUT (mode laps) - "DriverAhead3" / "DriverBehind3" widgets (item_37).
+   LAPS TABLE (modes laps / history / target) - "DriverAhead3" / "DriverBehind3" widgets (item_37).
    1135x248 screen. SimHub widget: left 60.25 -> 30.25, width 400 -> 567.5, opacity 0 -> 100,
    all inertia(...,5). The width change is drawn as a scale change (400/1135 -> 0.5); the
    collapsed table is centred vertically in the 124px widget box (assumed SimHub widget scaling).

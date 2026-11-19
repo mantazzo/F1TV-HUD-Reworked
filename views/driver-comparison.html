@@ -114,7 +114,8 @@
             </div>
         </div>
 
-        <!-- ===== Mode laps (SimHub widgets "DriverAhead3" / "DriverBehind3") ===== -->
+        <!-- ===== Laps table: modes laps (V3), history (V4), target (SimHub widgets "DriverAhead3" /
+             "DriverBehind3" / "FastestLapSectorDelta") ===== -->
         <div class="dc-mode dc-laps" id="dc-laps">
             <div class="dc-laps__inner">
                 <div class="dc-abs dc-laps__bg"></div>
@@ -126,7 +127,8 @@
                 <div class="dc-text dc-laps__label dc-col--s3">SECTOR 3</div>
                 <div class="dc-text dc-laps__label dc-col--lap" id="dc-lap-label">LAP 0</div>
 
-                <!-- Rows: top = car ahead, bottom = car behind. Row type (time/delta) set by side. -->
+                <!-- Rows: top = car ahead (target mode: the target), bottom = car behind (target mode:
+                     the observed driver). Each cell is a time or a delta (.is-delta), set per column. -->
                 <div class="dc-row dc-row--top" id="dc-row-top">
                     <div class="dc-abs dc-row__knockout"></div>
                     <div class="dc-text dc-row__position"></div>
@@ -193,13 +195,13 @@
 
         const NUM_CARS = 24;                       // UDP capacity (2026 format); older formats send 22
         const RACE_TYPES = new Set([15, 16, 17]);  // SimHub: m_sessionType > 12 - meant for races only
-        const TIME_TRIAL = 18;                     // laps mode: no real opponents, only ghost slots
+        const TIME_TRIAL = 18;                     // laps table never shown: no real opponents, only ghost slots
         const KMH_TO_MPH = 0.621371;
         const FADE_MS = 150;                       // .dc-duel opacity transition (1/7 s)
-        const LAPS_MOVE_MS = 200;                  // laps widget collapse/expand (--dc-move)
+        const LAPS_MOVE_MS = 200;                  // laps table collapse/expand (--dc-move)
         const LAPS_DATA_FADE_MS = 167;             // Last/Best Lap data crossfade (1/6 s)
-        const FASTER_MS = 900;                     // "FASTER" covers after the laps view appears
-        const ROLEX_MS = 4000;                     // Rolex box after the laps view appears
+        const FASTER_MS = 900;                     // FASTER/SLOWER covers after the laps table appears
+        const ROLEX_MS = 4000;                     // Rolex box after the laps table / Interval layout appears
 
         // Visual compound -> letter + colour (Leaderboard palette)
         const TYRE_COMPOUND = {
@@ -258,7 +260,8 @@
             alt: document.querySelectorAll('.dc-speed__unit--alt')
         };
 
-        // Laps mode: top row = car ahead on track (pair.left), bottom row = car behind (pair.right)
+        // Laps table (laps / target / history): top row = pair.left, bottom row = pair.right
+        // (laps / history: car ahead on track on top; target: the target driver on top)
         const laps = document.getElementById('dc-laps');
         const lapLabel = document.getElementById('dc-lap-label');
         // Column headers S1, S2, S3, LAP (History mode relabels all four as laps)
@@ -284,13 +287,15 @@
 
         // ── Config ─────────────────────────────────────────────────────────
         let configVisible = false;
-        let mode = 'gap';        // 'gap' (V1) | 'speed' (V2) | 'laps' (V3)
-        let side = 'ahead';      // compare with the car 'ahead' | 'behind'
+        // 'gap' (V1 Interval) | 'speed' (V2 Speed) | 'laps' (V3 Laps) | 'history' (V4 History)
+        // | 'target' (Leader/Target Delta, SimHub "FastestLapSectorDelta")
+        let mode = 'gap';
+        let side = 'ahead';      // compare with the car 'ahead' | 'behind' (all modes but target)
         let unitsMode = 'automatic';
-        let lapsCompare = 'last'; // laps mode: 'last' lap both completed | each driver's 'best' lap
+        let lapsCompare = 'last'; // laps mode in races: 'last' lap both completed | each driver's 'best' lap
         let targetMode = 'default'; // target mode: 'default' (P1 / knockout cut-off) | 'alwaysLeader'
         let showSponsors = true;
-        let swapping = false;    // fading out before a side change
+        let swapping = false;    // shown layer fading/collapsing out before a view change (applyView)
         let swapTimer = null;
         let lapsCompareTimer = null;
         let lapsShown = false;
@@ -321,11 +326,8 @@
             regs2026: false, otActive: 0, otAvailable: 0
         }));
 
-        // Session History per car index: { laps, numLaps, stints } (laps mode)
+        // Session History per car index: { laps, numLaps, stints } (laps table modes)
         let history = {};
-
-        // Car indices currently shown on each side (-1 = none)
-        const shown = { left: -1, right: -1 };
 
         function setText(el, text) {
             if (el.textContent !== text) el.textContent = text;
@@ -368,9 +370,9 @@
             return -1;
         }
 
-        // Observed driver + opponent, mapped to screen sides (car ahead on track is always left).
-        // Null when there's nobody to compare with: leading in "ahead", last in "behind", or the
-        // car behind is out of the race (retired/DSQ cars are ranked at the back).
+        // Observed driver + opponent, mapped to screen sides (car ahead on track is always left/top).
+        // Null when there's nobody to compare with: leading in "ahead", last in "behind", or (gap/speed
+        // only) the car behind is out of the race (retired/DSQ cars are ranked at the back).
         function resolvePair() {
             const observed = activeIndex();
             if (observed < 0 || observed >= NUM_CARS) return null;
@@ -489,10 +491,20 @@
 
         function renderCards() {
             if (!pair) return;
-            for (const s of ['left', 'right']) {
-                const carIdx = pair[s];
-                shown[s] = carIdx;
-                renderCard(sides[s], carIdx);
+            for (const s of ['left', 'right']) renderCard(sides[s], pair[s]);
+        }
+
+        // Team logo, hidden until it has actually loaded (Team Logo standard)
+        function setLogo(img, teamData) {
+            const logoUrl = teamData?.Logo ? `/images/team-logos/${teamData.Logo}` : '';
+            if (img.dataset.src === logoUrl) return;
+            img.dataset.src = logoUrl;
+            img.classList.remove('is-loaded');
+            if (logoUrl) {
+                img.onload = () => img.classList.add('is-loaded');
+                img.src = logoUrl;
+            } else {
+                img.removeAttribute('src');
             }
         }
 
@@ -518,21 +530,11 @@
             const teamData = teamNames?.[p.m_teamId];
             setText(el.team, (teamData?.ShortName || '').toUpperCase());
 
-            // Knockout image: never in a race, kept for comparisons in timed sessions later
+            // Knockout card image (from the SimHub design): never shows while the duel is race-only
             el.card.classList.toggle('is-knockout',
-                DriverUtils.isInKnockoutZone(cars[carIdx].position, sessionType, NUM_CARS));
+                DriverUtils.isInKnockoutZone(cars[carIdx].position, sessionType, numActiveCars()));
 
-            const logoUrl = teamData?.Logo ? `/images/team-logos/${teamData.Logo}` : '';
-            if (el.logo.dataset.src !== logoUrl) {
-                el.logo.dataset.src = logoUrl;
-                el.logo.classList.remove('is-loaded');
-                if (logoUrl) {
-                    el.logo.onload = () => el.logo.classList.add('is-loaded');
-                    el.logo.src = logoUrl;
-                } else {
-                    el.logo.removeAttribute('src');
-                }
-            }
+            setLogo(el.logo, teamData);
         }
 
         // ── Mode gap (V1) ──────────────────────────────────────────────────
@@ -604,7 +606,7 @@
             }
         }
 
-        // ── Mode laps (V3) ─────────────────────────────────────────────────
+        // ── Laps table: laps (V3), history (V4), target (Leader/Target Delta) ──
         // m_numActiveCars drops when a driver retires - max-merge with the highest position
         function numActiveCars() {
             let maxPos = 0;
@@ -634,18 +636,7 @@
                 const last = DriverUtils.getDriverLastName(p, driversData, customDrivers, teamNames);
                 setFittedText(el.name, last.toUpperCase(), 24);
 
-                const teamData = teamNames?.[p.m_teamId];
-                const logoUrl = teamData?.Logo ? `/images/team-logos/${teamData.Logo}` : '';
-                if (el.logo.dataset.src !== logoUrl) {
-                    el.logo.dataset.src = logoUrl;
-                    el.logo.classList.remove('is-loaded');
-                    if (logoUrl) {
-                        el.logo.onload = () => el.logo.classList.add('is-loaded');
-                        el.logo.src = logoUrl;
-                    } else {
-                        el.logo.removeAttribute('src');
-                    }
-                }
+                setLogo(el.logo, teamNames?.[p.m_teamId]);
             }
         }
 
@@ -746,6 +737,23 @@
             el.classList.toggle('is-shown', shown);
         }
 
+        // Laps / History column c with top time a and bottom time b (0 = none): the faster driver's
+        // cell shows the (negative) delta in lime, the slower driver's cell their own time.
+        // Ties / a missing time: plain times only, no FASTER cover.
+        function renderVersusColumn(c, a, b, fasterActive) {
+            const topFaster = a > 0 && b > 0 && a < b;
+            const bottomFaster = a > 0 && b > 0 && b < a;
+
+            if (topFaster) setCell(rows.left.cells[c], `-${formatTime(b - a)}`, true);
+            else setCell(rows.left.cells[c], a > 0 ? formatTime(a) : '', false);
+
+            if (bottomFaster) setCell(rows.right.cells[c], `-${formatTime(a - b)}`, true);
+            else setCell(rows.right.cells[c], b > 0 ? formatTime(b) : '', false);
+
+            setFasterCover(rows.left.faster[c], fasterActive && topFaster, false);
+            setFasterCover(rows.right.faster[c], fasterActive && bottomFaster, false);
+        }
+
         // [S1, S2, S3, lap] of the driver's best lap (its own sectors, not the best individual
         // sectors - user's choice over SimHub's BestSector1..3) + that lap's number (for the compound)
         function bestTimes(carIdx) {
@@ -786,8 +794,8 @@
             }
         }
 
-        // Per column the faster driver's cell shows the (negative) delta in lime, the slower
-        // driver's cell their own time. Ties / a missing time: plain times only.
+        // Fills the laps table for the current mode. Laps (V3): sectors + lap of one lap per driver
+        // (the last lap both completed, or each one's best lap).
         function renderLapsData() {
             if (!pair) return;
             if (mode === 'history') {
@@ -807,22 +815,7 @@
             const top = topEntry ? entryTimes(topEntry) : [0, 0, 0, 0];
             const bottom = bottomEntry ? entryTimes(bottomEntry) : [0, 0, 0, 0];
             const fasterActive = Date.now() < fasterUntil;
-
-            for (let c = 0; c < LAP_COLUMNS.length; c++) {
-                const a = top[c];
-                const b = bottom[c];
-                const topFaster = a > 0 && b > 0 && a < b;
-                const bottomFaster = a > 0 && b > 0 && b < a;
-
-                if (topFaster) setCell(rows.left.cells[c], `-${formatTime(b - a)}`, true);
-                else setCell(rows.left.cells[c], a > 0 ? formatTime(a) : '', false);
-
-                if (bottomFaster) setCell(rows.right.cells[c], `-${formatTime(a - b)}`, true);
-                else setCell(rows.right.cells[c], b > 0 ? formatTime(b) : '', false);
-
-                setFasterCover(rows.left.faster[c], fasterActive && topFaster, false);
-                setFasterCover(rows.right.faster[c], fasterActive && bottomFaster, false);
-            }
+            for (let c = 0; c < LAP_COLUMNS.length; c++) renderVersusColumn(c, top[c], bottom[c], fasterActive);
 
             for (const [s, lapNum] of [['left', lapNums.top], ['right', lapNums.bottom]]) {
                 const compound = (s === 'left' ? topEntry : bottomEntry) ? compoundOnLap(pair[s], lapNum) : null;
@@ -832,39 +825,26 @@
             }
         }
 
-        // History: the last (up to) 4 laps both drivers completed, newest in the rightmost column,
-        // older ones filling leftwards (columns stay empty until there are enough laps). Per lap
-        // the faster driver shows the delta, the slower one their lap time - same rule as Laps.
+        // History (V4): the last (up to) 4 laps both drivers completed, newest in the rightmost
+        // column, older ones filling leftwards (columns stay empty until there are enough laps).
+        // Lap times only, same faster/slower rule as Laps.
         function renderHistoryData() {
             const newest = lastCommonLap();
             const fasterActive = Date.now() < fasterUntil;
 
             for (let c = 0; c < LAP_COLUMNS.length; c++) {
                 const lapNum = newest - (LAP_COLUMNS.length - 1 - c);
-                const topEntry = lapNum >= 1 ? lapEntry(pair.left, lapNum) : null;
-                const bottomEntry = lapNum >= 1 ? lapEntry(pair.right, lapNum) : null;
                 setText(colLabels[c], lapNum >= 1 ? `LAP ${lapNum}` : '');
-
-                const a = topEntry?.m_lapTimeInMS ?? 0;
-                const b = bottomEntry?.m_lapTimeInMS ?? 0;
-                const topFaster = a > 0 && b > 0 && a < b;
-                const bottomFaster = a > 0 && b > 0 && b < a;
-
-                if (topFaster) setCell(rows.left.cells[c], `-${formatTime(b - a)}`, true);
-                else setCell(rows.left.cells[c], a > 0 ? formatTime(a) : '', false);
-
-                if (bottomFaster) setCell(rows.right.cells[c], `-${formatTime(a - b)}`, true);
-                else setCell(rows.right.cells[c], b > 0 ? formatTime(b) : '', false);
-
-                setFasterCover(rows.left.faster[c], fasterActive && topFaster, false);
-                setFasterCover(rows.right.faster[c], fasterActive && bottomFaster, false);
+                const a = lapNum >= 1 ? lapEntry(pair.left, lapNum)?.m_lapTimeInMS ?? 0 : 0;
+                const b = lapNum >= 1 ? lapEntry(pair.right, lapNum)?.m_lapTimeInMS ?? 0 : 0;
+                renderVersusColumn(c, a, b, fasterActive);
             }
 
             // No tyre column: four laps can be on different sets
             for (const s of ['left', 'right']) setText(rows[s].compound, '');
         }
 
-        // SimHub isincreasing(...) on the mode toggle: "FASTER" for 900ms, Rolex for 4s
+        // SimHub isincreasing(...) on the mode toggle: FASTER/SLOWER covers for 900ms, Rolex for 4s
         function onLapsShown() {
             fasterUntil = Date.now() + FASTER_MS;
             clearTimeout(fasterTimer);
@@ -892,7 +872,8 @@
                 laps.classList.remove('is-data-hidden');
                 return;
             }
-            if (!lapsShown) {
+            // Only the Laps table in a race actually changes - elsewhere just store the setting
+            if (!lapsShown || mode !== 'laps' || !RACE_TYPES.has(sessionType)) {
                 lapsCompare = newCompare;
                 return;
             }
