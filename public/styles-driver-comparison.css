@@ -713,6 +713,13 @@
     color: rgb(255, 0, 0);
 }
 
+/* History mode: every column is a lap, all headers in the red "LAP n" style */
+.dc-laps.is-history .dc-laps__label {
+    font-family: 'F1TV-2022';
+    font-weight: 700;
+    color: rgb(255, 0, 0);
+}
+
 /* Column x positions: S1 / S2 / S3 / LAP */
 .dc-col--s1  { left: 370.5px; }
 .dc-col--s2  { left: 560.5px; }

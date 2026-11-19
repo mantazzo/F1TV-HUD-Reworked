@@ -795,6 +795,7 @@
                     <strong>Interval</strong> (races only): the current gap between the two cars.<br>
                     <strong>Speed</strong> (races only): both cars' speeds, and whether each one has DRS (or Overtake Mode on 2026 cars) available or open.<br>
                     <strong>Laps</strong> (any session except Time Trial): sector and lap times of both drivers side by side. The faster driver in each column shows how much faster they were.<br>
+                    <strong>History</strong> (races only): the lap times of the last 4 laps both drivers completed, newest on the right. The faster driver on each lap shows how much faster they were.<br>
                     <strong>Leader/Target Delta</strong> (practice and qualifying): the target driver's best sectors and best lap on top, and below them how far ahead or behind the driver is in each one (gold when slower). Leading drivers are compared with P2.</div>
             </div>
             <div class="option-row">
@@ -803,6 +804,7 @@
                     <button class="mfd-button" data-dc-display="ahead:gap">Interval</button>
                     <button class="mfd-button" data-dc-display="ahead:speed">Speed</button>
                     <button class="mfd-button" data-dc-display="ahead:laps">Laps</button>
+                    <button class="mfd-button" data-dc-display="ahead:history">History</button>
                 </div>
             </div>
             <div class="option-row">
@@ -811,6 +813,7 @@
                     <button class="mfd-button" data-dc-display="behind:gap">Interval</button>
                     <button class="mfd-button" data-dc-display="behind:speed">Speed</button>
                     <button class="mfd-button" data-dc-display="behind:laps">Laps</button>
+                    <button class="mfd-button" data-dc-display="behind:history">History</button>
                 </div>
             </div>
             <div class="option-row">
@@ -820,8 +823,8 @@
                     <button class="mfd-button" data-dc-laps="best">Best Lap</button>
                 </div>
                 <button type="button" class="help-btn" aria-expanded="false" aria-label="Help: Laps Compare (Driver Comparison)">?</button>
-                <div class="help-card" hidden>Only for the Driver Ahead / Driver Behind Laps layouts (Leader/Target Delta always uses best laps).<br>
-                    <strong>Last Lap:</strong> the last lap both drivers have completed (the same lap number for both).<br>
+                <div class="help-card" hidden>Only for the Driver Ahead / Driver Behind Laps layouts (Leader/Target Delta always uses best laps, History always the latest laps).<br>
+                    <strong>Last Lap</strong> (races; practice and qualifying always use Best Lap): the last lap both drivers have completed (the same lap number for both).<br>
                     <strong>Best Lap:</strong> each driver's best lap, whichever lap it was set on.</div>
             </div>
             <div class="option-row">
@@ -1643,7 +1646,7 @@
         function updateDriverComparisonOptions() {
             const dc = currentConfig?.overlays?.['driver-comparison'];
             if (!dc) return;
-            const mode = ['speed', 'laps', 'target'].includes(dc.mode) ? dc.mode : 'gap';
+            const mode = ['speed', 'laps', 'history', 'target'].includes(dc.mode) ? dc.mode : 'gap';
             const side = dc.side === 'behind' ? 'behind' : 'ahead';
             driverComparisonTargetMode.value = dc.targetMode === 'alwaysLeader' ? 'alwaysLeader' : 'default';
             const lapsCompare = dc.lapsCompare === 'best' ? 'best' : 'last';

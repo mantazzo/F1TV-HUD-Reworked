@@ -16,7 +16,9 @@
     <!--
         Driver Comparison (SimHub original: "F1TV - Driver Ahead & Behind").
         Modes (Controller): gap = "V1" interval, speed = "V2" speeds + DRS/OT (races only),
-        laps = "V3" sector/lap table, last lap both completed or best laps (any session but TT).
+        laps = "V3" sector/lap table, last lap both completed or best laps (any session but TT),
+        target = "Leader/Target Delta" (best laps vs P1 / knockout cut-off, non-race sessions),
+        history = last 4 laps both completed, lap times only (races only).
     -->
     <div class="overlay-container" data-mode="gap" data-side="ahead">
 
@@ -259,6 +261,9 @@
         // Laps mode: top row = car ahead on track (pair.left), bottom row = car behind (pair.right)
         const laps = document.getElementById('dc-laps');
         const lapLabel = document.getElementById('dc-lap-label');
+        // Column headers S1, S2, S3, LAP (History mode relabels all four as laps)
+        const colLabels = ['s1', 's2', 's3', 'lap'].map(c => document.querySelector(`.dc-laps__label.dc-col--${c}`));
+        const SECTOR_LABELS = ['SECTOR 1', 'SECTOR 2', 'SECTOR 3'];
         const lapsRolex = document.getElementById('dc-rolex');
         const duelRolex = document.querySelector('#dc-duel-rolex .dc-rolex');
         const LAP_COLUMNS = ['s1', 's2', 's3', 'lap'];
@@ -376,7 +381,7 @@
             const opponent = carAtPosition(side === 'ahead' ? position - 1 : position + 1);
             if (opponent < 0) return null;
             const status = cars[opponent].resultStatus;
-            if (mode === 'laps') {
+            if (mode === 'laps' || mode === 'history') {
                 // Laps still compare against a retired/DSQ car (its row is dimmed instead)
                 if (status < 2) return null;
             } else if (status !== 2 && status !== 3) {
@@ -423,7 +428,7 @@
         let pair = null;
 
         function usesLapsLayout(m) {
-            return m === 'laps' || m === 'target';
+            return m === 'laps' || m === 'target' || m === 'history';
         }
 
         function update() {
@@ -460,7 +465,9 @@
 
             // Laps: any session (SimHub has no session limit here) except Time Trial.
             // Leader/Target Delta: non-race sessions only (SimHub "FastestLapSectorDelta").
+            // History (last laps side by side): races only.
             const showLaps = ready && sessionType !== TIME_TRIAL && (mode === 'laps'
+                || (mode === 'history' && RACE_TYPES.has(sessionType))
                 || (mode === 'target' && sessionType > 0 && !RACE_TYPES.has(sessionType)));
             laps.classList.toggle('is-shown', showLaps);
             if (showLaps && !lapsShown) onLapsShown();
@@ -682,15 +689,29 @@
             return best;
         }
 
+        // Last Lap only means something in races: practice/qualifying lap numbers don't line up between
+        // drivers (out-laps, cool-downs, run timing), so outside races Laps always compares best laps
+        function effectiveLapsCompare() {
+            return RACE_TYPES.has(sessionType) ? lapsCompare : 'best';
+        }
+
         // Lap number per row: last mode = the last lap BOTH drivers completed (same number),
         // best mode = each driver's own best lap
         function comparedLaps() {
             const top = pair.left;
             const bottom = pair.right;
-            if (lapsCompare === 'best') return { top: bestLapNum(top), bottom: bestLapNum(bottom) };
+            if (effectiveLapsCompare() === 'best') return { top: bestLapNum(top), bottom: bestLapNum(bottom) };
+            const n = lastCommonLap();
+            return { top: n, bottom: n };
+        }
+
+        // Highest lap number both drivers have completed (0 = none yet)
+        function lastCommonLap() {
+            const top = pair.left;
+            const bottom = pair.right;
             let n = Math.min(lastCompletedLap(top), lastCompletedLap(bottom));
             while (n > 0 && !(lapEntry(top, n) && lapEntry(bottom, n))) n--;
-            return { top: n, bottom: n };
+            return n;
         }
 
         // Under a minute "23.456", otherwise "1:23.456"
@@ -769,12 +790,17 @@
         // driver's cell their own time. Ties / a missing time: plain times only.
         function renderLapsData() {
             if (!pair) return;
+            if (mode === 'history') {
+                renderHistoryData();
+                return;
+            }
+            SECTOR_LABELS.forEach((text, c) => setText(colLabels[c], text));
             if (mode === 'target') {
                 renderTargetData();
                 return;
             }
             const lapNums = comparedLaps();
-            setText(lapLabel, lapsCompare === 'best' ? 'BEST LAP' : `LAP ${lapNums.top}`);
+            setText(lapLabel, effectiveLapsCompare() === 'best' ? 'BEST LAP' : `LAP ${lapNums.top}`);
 
             const topEntry = lapEntry(pair.left, lapNums.top);
             const bottomEntry = lapEntry(pair.right, lapNums.bottom);
@@ -804,6 +830,38 @@
                 setText(el, compound ? compound.letter : '');
                 if (compound && el.style.color !== compound.color) el.style.color = compound.color;
             }
+        }
+
+        // History: the last (up to) 4 laps both drivers completed, newest in the rightmost column,
+        // older ones filling leftwards (columns stay empty until there are enough laps). Per lap
+        // the faster driver shows the delta, the slower one their lap time - same rule as Laps.
+        function renderHistoryData() {
+            const newest = lastCommonLap();
+            const fasterActive = Date.now() < fasterUntil;
+
+            for (let c = 0; c < LAP_COLUMNS.length; c++) {
+                const lapNum = newest - (LAP_COLUMNS.length - 1 - c);
+                const topEntry = lapNum >= 1 ? lapEntry(pair.left, lapNum) : null;
+                const bottomEntry = lapNum >= 1 ? lapEntry(pair.right, lapNum) : null;
+                setText(colLabels[c], lapNum >= 1 ? `LAP ${lapNum}` : '');
+
+                const a = topEntry?.m_lapTimeInMS ?? 0;
+                const b = bottomEntry?.m_lapTimeInMS ?? 0;
+                const topFaster = a > 0 && b > 0 && a < b;
+                const bottomFaster = a > 0 && b > 0 && b < a;
+
+                if (topFaster) setCell(rows.left.cells[c], `-${formatTime(b - a)}`, true);
+                else setCell(rows.left.cells[c], a > 0 ? formatTime(a) : '', false);
+
+                if (bottomFaster) setCell(rows.right.cells[c], `-${formatTime(a - b)}`, true);
+                else setCell(rows.right.cells[c], b > 0 ? formatTime(b) : '', false);
+
+                setFasterCover(rows.left.faster[c], fasterActive && topFaster, false);
+                setFasterCover(rows.right.faster[c], fasterActive && bottomFaster, false);
+            }
+
+            // No tyre column: four laps can be on different sets
+            for (const s of ['left', 'right']) setText(rows[s].compound, '');
         }
 
         // SimHub isincreasing(...) on the mode toggle: "FASTER" for 900ms, Rolex for 4s
@@ -853,7 +911,7 @@
         // Switching between the duel and the laps layer just crossfades the two layers.
         function viewKey(m, s, t) {
             if (m === 'target') return `target:${t}`;
-            return `${usesLapsLayout(m) ? 'laps' : 'duel'}:${s}`;
+            return `${usesLapsLayout(m) ? m : 'duel'}:${s}`; // laps / history / duel (gap+speed)
         }
 
         let pendingView = null;
@@ -861,7 +919,7 @@
 
         function applyView(newMode, newSide, newTarget) {
             pendingView = {
-                mode: ['gap', 'speed', 'laps', 'target'].includes(newMode) ? newMode : 'gap',
+                mode: ['gap', 'speed', 'laps', 'target', 'history'].includes(newMode) ? newMode : 'gap',
                 side: newSide === 'behind' ? 'behind' : 'ahead',
                 target: newTarget === 'alwaysLeader' ? 'alwaysLeader' : 'default'
             };
@@ -871,6 +929,7 @@
                 targetMode = pendingView.target;
                 container.dataset.mode = mode;
                 container.dataset.side = side;
+                laps.classList.toggle('is-history', mode === 'history');
                 swapping = false;
                 update();
             };
