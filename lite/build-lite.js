@@ -28,7 +28,8 @@ const EXE_PATH = path.join(ROOT, 'src-tauri', 'target', 'release', EXE_NAME);
 const OVERLAY_IMAGES = {
     'leaderboard': ['leaderboard', 'team-logos', 'common', 'driver-numbers'],
     'lap-timer': ['lap-timer', 'team-logos', 'other-logos', 'common'],
-    'speedometer': ['speedometer']
+    'speedometer': ['speedometer'],
+    'driver-comparison': ['driver-comparison', 'team-logos', 'other-logos', 'common']
 };
 // Data files an overlay needs on top of the shared ones (public/data/)
 const OVERLAY_DATA = {
@@ -39,7 +40,8 @@ const OVERLAY_DATA = {
 const OVERLAY_HELP_IMAGES = {
     'leaderboard': ['leaderboard-'],
     'lap-timer': ['lap-timer-'],
-    'speedometer': ['speedometer-']
+    'speedometer': ['speedometer-'],
+    'driver-comparison': ['driver-comparison-']
 };
 
 // Everything the Lite package needs: files, folders (copied with all their tracked files),

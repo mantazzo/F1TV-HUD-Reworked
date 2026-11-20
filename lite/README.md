@@ -9,6 +9,7 @@ This Lite version includes:
 - **Leaderboard** (Initials version)
 - **Lap Timer**
 - **Speedometer**
+- **Driver Comparison**: you against the car ahead or behind: gap, speeds, sector and lap times, or the last laps side by side, plus a Leader/Target Delta for practice and qualifying
 - **Extended Controller**: change overlay options live while you play
 - **Desktop Mode**: show the overlays directly on screen, on top of the game
 - **Custom Overlays** support (see `views/custom/README.md`)
@@ -36,6 +37,7 @@ If the overlays don't show any data, check the server window for error messages 
   - http://localhost:3000/leaderboard
   - http://localhost:3000/lap-timer
   - http://localhost:3000/speedometer
+  - http://localhost:3000/driver-comparison
 - **Controller:** http://localhost:3000/controller/controller-extended (also works from a phone or tablet on the same network).
 
 ## License
