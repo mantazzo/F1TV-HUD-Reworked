@@ -43,10 +43,10 @@ Use these overlays in recording software (e.g. OBS). Size is described in (Width
     - Size: 280 x 600
 - Leaderboard (Initials version)
     - http://localhost:3000/leaderboard
-    - Size: 482 x 1390
+    - Size: 560 x 1390 (UPDATED: fix for battery and penalty display together)
 - Leaderboard (Last Name version)
     - http://localhost:3000/leaderboard-lastname
-    - Size: 650 x 1390
+    - Size: 745 x 1390 (UPDATED: same as Initials version above)
 - Driver Name
     - http://localhost:3000/driver-name
     - Size: 910 x 117

@@ -16,7 +16,7 @@
 </head>
 <body data-tauri-drag-region>
     <!--
-    Overlay canvas: 650x1390 px
+    Overlay canvas: 745x1390 px
     -->
     <div class="overlay-container" id="lb-overlay">
         <div id="lb-container">
@@ -648,6 +648,8 @@
         let isSprintSession = false; // true when session is a sprint race (sessionType 15 with Race 2 in forecast)
 
         // ── Battery rows — pre-generate one row per car slot ─────────────────────
+        const BATTERY_ROW_LEFT = 5;     // .lb-battery-row default left
+        const PENALTY_BOX_WIDTH = 103;  // .lb-penalty-bg width - battery moves this far right when a penalty shows
         const batteryRows = Array.from({ length: NUM_CARS }, (_, i) => {
             const row = document.createElement('div');
             row.className = 'lb-battery-row';
@@ -1957,7 +1959,7 @@
             // three near-duplicates that would otherwise cause a visible jump between them.
             const statusLeft = narrow ? '391px' : '512px';
             elBattery.style.left   = dataLeft;
-            elPenalty.style.left   = dataLeft; // same formula as Battery — currently overlaps it, see conversation
+            elPenalty.style.left   = dataLeft; // same slot as Battery; the battery row slides right of a shown penalty
             elFlLogo.style.left    = statusLeft;
             elFinish.style.left    = statusLeft;
             elInPit.style.left     = statusLeft;
@@ -3863,6 +3865,10 @@
                     const rs = carResultStatus[carIdx] ?? 0;
                     const hideBattery = rs === 3 || rs === 4 || rs === 6;
                     bRow.row.style.display = (showBattery && ersJ > 0 && !hideBattery) ? 'block' : 'none';
+                    // Battery and Penalties share one slot (same position in the SimHub original):
+                    // while this row shows a penalty box, slide the battery out to its right
+                    const penaltyShown = penaltyRows[pos - 1].value.parentElement.style.display === 'block';
+                    bRow.row.style.left = `${penaltyShown ? BATTERY_ROW_LEFT + PENALTY_BOX_WIDTH : BATTERY_ROW_LEFT}px`;
 
                     // Tyre compound
                     const compoundId = car.m_visualTyreCompound;

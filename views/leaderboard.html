@@ -595,6 +595,8 @@
         let isSprintSession = false; // true when session is a sprint race (sessionType 15 with Race 2 in forecast)
 
         // ── Battery rows — pre-generate one row per car slot ─────────────────────
+        const BATTERY_ROW_LEFT = 5;     // .lb-battery-row default left
+        const PENALTY_BOX_WIDTH = 100;  // .lb-penalty-bg width - battery moves this far right when a penalty shows
         const batteryRows = Array.from({ length: NUM_CARS }, (_, i) => {
             const row = document.createElement('div');
             row.className = 'lb-battery-row';
@@ -3533,6 +3535,10 @@
                     const rs = carResultStatus[carIdx] ?? 0;
                     const hideBattery = rs === 3 || rs === 4 || rs === 6;
                     bRow.row.style.display = (showBattery && ersJ > 0 && !hideBattery) ? 'block' : 'none';
+                    // Battery and Penalties share one slot (same position in the SimHub original):
+                    // while this row shows a penalty box, slide the battery out to its right
+                    const penaltyShown = penaltyRows[pos - 1].value.parentElement.style.display === 'block';
+                    bRow.row.style.left = `${penaltyShown ? BATTERY_ROW_LEFT + PENALTY_BOX_WIDTH : BATTERY_ROW_LEFT}px`;
 
                     // Tyre compound
                     const compoundId = car.m_visualTyreCompound;

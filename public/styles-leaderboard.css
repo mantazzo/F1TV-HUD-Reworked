@@ -8,11 +8,11 @@ body { background: transparent; overflow: hidden; }
 /* Note for myself: Use "background: black;" when debugging/working on overlay and use "background: transparent;" when testing/shipping final versions */
 
 /* ════════════════════════════════════════════════════════════════
-   OVERLAY CONTAINER — 482x1292 px
+   OVERLAY CONTAINER — 560x1292 px (482 + room for Battery next to a Penalty box)
    ════════════════════════════════════════════════════════════════ */
 .overlay-container {
     position: relative;
-    width: 482px;
+    width: 560px;
     height: 1292px;
     overflow: hidden;
     opacity: 0;
@@ -21,11 +21,11 @@ body { background: transparent; overflow: hidden; }
 .overlay-container.visible { opacity: 1; }
 
 /* ════════════════════════════════════════════════════════════════
-   INNER CONTAINER — native 482×1291 px
+   INNER CONTAINER — native 560×1291 px
    ════════════════════════════════════════════════════════════════ */
 #lb-container {
     position: absolute;
-    width: 482px;
+    width: 560px;
     height: 1291px;
     transition: opacity 200ms ease;
 }
@@ -1307,7 +1307,7 @@ body { background: transparent; overflow: hidden; }
     left: 5px;
     width: 80px;
     height: 40px;
-    transition: top 333ms ease;
+    transition: top 333ms ease, left 300ms ease; /* left: slides right of a shown penalty box */
 }
 .lb-battery-row > * { position: absolute; }
 
