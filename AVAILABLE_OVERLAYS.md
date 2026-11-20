@@ -50,6 +50,9 @@ Use these overlays in recording software (e.g. OBS). Size is described in (Width
 - Driver Name
     - http://localhost:3000/driver-name
     - Size: 910 x 117
+- Driver Comparison (Driver Ahead & Behind)
+    - http://localhost:3000/driver-comparison
+    - Size: 629 x 140
 - Position Debug **(DEBUG OVERLAY ONLY)**
     - http://localhost:3000/debug/position-debug
     - Debug only, useful for turn position setup

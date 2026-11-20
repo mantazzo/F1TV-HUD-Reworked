@@ -142,6 +142,29 @@
         - More variants may be added in the future, I'm open to ideas what could be shown here...
     - Somewhat unified, compared to the original version (original had 5 separate overlay versions, this is one base with 5 different information variants displayed)
     - Also has "automatic hiding" option (hides the overlay after 15 seconds, shows up again once another variant is toggled in the Extended Controller; feature can be enabled in Extended Controller as well)
+- Driver Comparison (Driver Ahead & Behind)
+    - Fully Remade and renamed, with some added new ideas as well, fitting the overlay
+    - Same as in Original version, you can select between Interval display, Speed display and Lap Time Comparison display against either Car Ahead or Car Behind for the current active driver
+    - "Driver Ahead" doesn't show if you're leading (P1), "Driver Behind" doesn't show if you're the last Active Driver
+    - Interval (V1) only works in Race sessions and uses game's delta output to display the gap between two cars (Car Ahead and Active Driver, or Active Driver and Car Behind) 
+    - Speed (V2) also only works in Race sessions and displays current speeds for both drivers in both KM/H and MPH (with priority selection in the Extended Controller)
+        - DRS states are also displayed for non-F1 2026 cars (Grey - unavailable, White - available, Green - active)
+        - For F1 2026 cars, Overtake Mode (OT) is displayed instead of DRS and should follow similar states (Blue/Cyan tint when OT is active for that car)
+    - Lap Time Comparison (V3) works in any session and displays detailed lap time comparison against Driver Ahead or Driver Behind
+        - Non-race session always compares Best Lap Times
+        - You can toggle between comparing Best Lap Time and Last Lap Time during Race sessions
+        - Last Lap Time only compares the laps that both drivers have completed - for example, if Driver Ahead has started Lap 14 and Current Active Driver is yet to complete Lap 13, Comparison will display Lap 12's comparison since both drivers have completed that lap. Once Current Active Driver completes Lap 13 and starts Lap 14, the comparison will switch to displaying Lap 13's comparison
+    - New in Reworked project: Lap Time History (V4). It works only in races. This version compares up to 4 Last Lap Times with Driver Ahead or Driver Behind.
+        - Similar to Last Lap Time comparison, it only counts laps completed by both drivers
+        - Latest lap is always on the right side
+        - Deltas are also shown to display which driver was faster
+    - Leader/Target Delta was also ported back to this version (old Fastest Sector Delta)
+        - Non-race only
+        - Separate button in the Extended Controller, displays Best Lap Time detailed comparison between Leader (P1) and Active Driver
+        - In Knockout Sessions (Q1/Q2/SQ1/SQ2), if Active Driver is in the Knockout Zone, displays comparison against the last non-knockout position instead (behavior can be changed in the Extended Controller from Default to "Always Leader")
+        - If Active Driver is in P1, then the comparison is displayed against P2 driver (same as in Original version)
+    - Likely feature complete at the moment, but will update with bugfixes and potential improvements in due time
+    - Still debating size, might change it with later updates
 
 ## Overlay Controllers
 
@@ -149,9 +172,9 @@
     - Not available currently, will probably be done once I get most overlays working
 - Extended Controller
     - Self-made Controller, with the primary aim of introducing more functions or controls while keeping the setup relatively easy
-    - Maybe somewhat limited functionality at the moment, but hey, it works, and it's pretty easy to expand!
+    - Design probably isn't the best, but hey, it works, and it's pretty easy to expand!
     - Expanded with various functionality from F1TV plugin settings (and personal ideas)
-    - NEW: Has Help buttons for every option, explaining what each option does (with some visual aids as well)
+    - Has Help buttons for every option, explaining what each option does (with some visual aids as well)
     - Also offers a simple "Shutdown" button
 
 ## Debug overlays (for non-public use)
@@ -168,7 +191,7 @@ Driver Comparison (remade Driver Ahead and Behind (the three versions of the ove
 
 ## Next Planned Overlay
 
-...
+Control Dashboard (the OG version)
 
 ## Not started
 
@@ -185,4 +208,4 @@ In no particular order:
 ## Future / Low Priority Ideas
 
 - **MCP Server** - A locally running Model Context Protocol server that exposes live telemetry state (session, drivers, lap data, etc.) as queryable tools for AI-assisted debugging. Would allow direct inspection of live data during a session without having to manually relay debug page output. Suggested approach: add lightweight HTTP endpoints to `index.js` exposing in-memory state, then build a thin `mcp-server.js` wrapping those as MCP tools, registered via `.vscode/mcp.json`. (AI-written note - *editing note*)
-- Low priority: Once completed to a satisfactory level, try to backport the overlays to older games (F1 22-F1 23-F1-24)
+- Low priority: Once completed to a satisfactory level, try to backport the overlays to older games with necessary fixes for them (F1 22-F1 23-F1-24)
