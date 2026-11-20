@@ -16,7 +16,7 @@ This project is worked on with Windows systems in mind - it may work on other sy
 
 1. **Install Node.js on Windows.**  
    I would recommend using tools like [Nodist](https://github.com/nodists/nodist) or [NVM for Windows](https://github.com/coreybutler/nvm-windows) (currently used personally) or [Volta](https://volta.sh/) for easier installation and version management, however, you can choose to proceed any way you want. Any option works, as long as you can run commands like `node` or `npm`.  
-   I used the latest LTS version (v24.21.0 at the time of writing) when setting up, but most recent versions should work.
+   I used the latest v24 LTS version (v24.22.3 at the time of writing) when setting up, but most recent versions should work.
 
 2. **Clone the repository or download the latest version.**  
    You can clone with `git clone https://github.com/mantazzo/F1TV-HUD-Reworked.git` or download the ZIP file [by clicking on the text here](https://github.com/mantazzo/F1TV-HUD-Reworked/archive/refs/heads/main.zip). 
@@ -33,7 +33,8 @@ This project is worked on with Windows systems in mind - it may work on other sy
 
 6. **Start the server.**  
    Run `node index.js` or `npm start`. This will start the Overlay system.
-   Enter a port when prompted and press `Enter`. By default, if you don't enter anything, it will use port 20777. Then select if you want to use the UDP Forwarding feature (sending data to other applications on different ports) - if you don't enter anything, it will default to "No Forwarding" option. Wait for a message confirming the server is running (e.g., "Overlays at http://localhost:3000/").
+   Enter a port when prompted and press `Enter`. By default, if you don't enter anything, it will use port 20777. Then select if you want to use the UDP Forwarding feature (sending data to other applications on different ports) (yes/No, y/N) and press `Enter` - if you don't enter anything, it will default to "No Forwarding" option. Wait for a message confirming the server is running (e.g., "Overlays at http://localhost:3000/").
+   If you receive an Error message, check the context -  if it's something like `ADDRINUSE`, that means the port is taken and you should try using another for both the game and this setup.
 
 7. **Access the overlays.**  
    You can access the overlays in multiple ways.
@@ -49,7 +50,7 @@ This project is worked on with Windows systems in mind - it may work on other sy
 If you're not feeling comfortable with all the extensive setup, I have now provided an alternative quicker approach:
 
 1. **Run the "install.bat" script.** 
-This will execute the *"install.ps1"* Powershell script, which will download the standalone binary of Node.js (latest LTS version, currently it's v24.22.2) and set it up in a "runtime/" folder, and also will set up the project's dependencies. 
+This will execute the *"install.ps1"* Powershell script, which will download the standalone binary of Node.js (latest LTS version, currently it's v24.22.3) and set it up in a "runtime/" folder, and also will set up the project's dependencies. 
 If you ever need to do a module update, just rerun the script - it will update the modules as well (including the bundled UDP parser, if it was updated). 
 
 2. **Run the "run.bat" script.** 
@@ -69,7 +70,7 @@ Afterwards, just access the links in appropriate software, or use the overlays o
 ## License & Contributions
 This project is licensed under GNU GPLv3. Check the [LICENSE](https://github.com/mantazzo/F1TV-HUD-Reworked/blob/main/LICENSE) for more info.
 
-Assets used are licensed under a Custom license, check out [ASSETS_LICENSE.md](https://github.com/mantazzo/F1TV-HUD-Reworked/blob/main/ASSETS_LICENSE.md) for further information.
+Assets used are licensed under a Custom license, check out [ASSETS_LICENSE.md](https://github.com/mantazzo/F1TV-HUD-Reworked/blob/main/ASSETS_LICENSE.md) for further information. NOTE: Certain assets might be allowed to be reused with permission.
 
 Any contribution is greatly appreciated - they will be reviewed, and if deemed fit for the project, will be added.
 
