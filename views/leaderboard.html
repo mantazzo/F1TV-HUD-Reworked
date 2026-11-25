@@ -1176,6 +1176,7 @@
         let sessionType = 0;
         let totalLaps   = 0;
         let currentLap  = 0;
+        let mfdPage          = 'off'; // config: 'off' | 'mfd1' | 'mfd2' | 'mfd3' | 'mfd4'
         let mfdActive        = false;
         let isMfd4           = false;
         let showLastNames    = false;
@@ -1427,6 +1428,42 @@
                 if (flRaceAnimTimer) { clearTimeout(flRaceAnimTimer); flRaceAnimTimer = null; }
                 elFlRaceAnim.style.width   = '0px';
                 elFlRaceAnim.style.display = 'none';
+            }
+
+            // MFD pages depend on session type (MFD4 is race-only) and Formation Lap too
+            updateMfdPageVisibility();
+        }
+
+        // ── MFD page visibility — single source of truth ───────────────────────────
+        // Shows the selected page's header + data and hides the others. Re-run whenever one
+        // of its inputs changes - the selected page (overlay_config), Formation Lap and the
+        // session type (via updateHeaderDisplay) - not only on overlay_config, which is sent
+        // only on connect / Controller changes:
+        //   - Formation Lap forces MFD1 data on (no header) in wide panes; after it ends, the
+        //     selected page must come back and the forced MFD1 data must go, or it overlapped
+        //     an MFD2/3/4 page in the same column for the rest of the race.
+        //   - MFD4 is race-only; on a mid-race page load overlay_config arrives before the first
+        //     Session packet (isRace still false), so MFD4 stayed hidden until the next change.
+        // The time/laps banner is allowed to paint over the MFD header here (user decision,
+        // unlike leaderboard-lastname.html).
+        function updateMfdPageVisibility() {
+            mfdActive = mfdPage !== 'off';
+            isMfd4    = mfdPage === 'mfd4' && isRace;
+            const mfdPages = {
+                mfd1: [elMfd1Header, elMfd1],
+                mfd2: [elMfd2Header, elMfd2],
+                mfd3: [elMfd3Header, elMfd3],
+                mfd4: [elMfd4Header, elMfd4],
+            };
+            for (const [key, [header, data]] of Object.entries(mfdPages)) {
+                const show = key === mfdPage && !formationLap && (key !== 'mfd4' || isRace);
+                header.style.opacity = show ? '1' : '0';
+                data.style.opacity   = show ? '1' : '0';
+            }
+            // Formation Lap: show MFD1 data (no header) in wide modes; hidden in narrow pane (1/3)
+            if (formationLap && paneMode !== 1 && paneMode !== 3) {
+                elMfd1Header.style.opacity = '0';
+                elMfd1.style.opacity       = '1';
             }
         }
 
@@ -2928,13 +2965,8 @@
                     updateMainPanels(); updateRaceLaps(); updateDataContainerLeft(); updateFormationBanner();
                     updateHeaderDisplay(); updateStandingsVisibility();
                     updateAllRowPositions(); updateBatteryLayout(); updatePenaltyLayout(); updateFlLogoLayout();
-                    // Formation Lap start: auto-show MFD1 data without header (wide mode only); end: hide if no MFD page active
-                    if (formationLap && paneMode !== 1 && paneMode !== 3) {
-                        elMfd1Header.style.opacity = '0';
-                        elMfd1.style.opacity       = '1';
-                    } else if (!mfdActive) {
-                        elMfd1.style.opacity = '0';
-                    }
+                    // MFD pages (Formation Lap MFD1 auto-show on start, selected page back on end)
+                    // are re-applied by updateHeaderDisplay() above -> updateMfdPageVisibility()
                     // Tyre column: hide during formation lap (overlay_config may not re-fire in time)
                     const flTyreHidden = showLastNames || formulaType === 2 || formationLap || paneMode === 1 || paneMode === 3;
                     elTyre.style.display = flTyreHidden ? 'none' : '';
@@ -3649,6 +3681,7 @@
 
             // MFD page visibility — show the active page's header+data, hide all others
             const page = cfg.mfdPage || 'off';
+            mfdPage   = page;
             mfdActive = page !== 'off';
             isMfd4    = page === 'mfd4' && isRace;
             paneMode = cfg.pane ?? 0;
@@ -3669,22 +3702,8 @@
             updateScEndingBanner();
             updateFormationBanner();
             updateDataContainerLeft();
-            const mfdPages = {
-                mfd1: [elMfd1Header, elMfd1],
-                mfd2: [elMfd2Header, elMfd2],
-                mfd3: [elMfd3Header, elMfd3],
-                mfd4: [elMfd4Header, elMfd4],
-            };
-            for (const [key, [header, data]] of Object.entries(mfdPages)) {
-                const show = key === page && !formationLap && (key !== 'mfd4' || isRace);
-                header.style.opacity = show ? '1' : '0';
-                data.style.opacity   = show ? '1' : '0';
-            }
-            // Formation Lap: show MFD1 data (no header) in wide modes; hidden in narrow pane (1/3)
-            if (formationLap && paneMode !== 1 && paneMode !== 3) {
-                elMfd1Header.style.opacity = '0';
-                elMfd1.style.opacity       = '1';
-            }
+            // MFD pages: already applied by updateHeaderDisplay() above (mfdPage + paneMode are set
+            // before it runs) -> updateMfdPageVisibility()
 
             // OUT rows: race sessions only (elsewhere the timing column already shows the driver's
             // time / NO TIME, and OUT overlapped it); hide when MFD4 is active or narrow pane
