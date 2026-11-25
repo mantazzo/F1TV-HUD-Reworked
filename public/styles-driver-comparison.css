@@ -1,7 +1,13 @@
 /*
  * Driver Comparison overlay (SimHub original: "F1TV - Driver Ahead & Behind").
  *
- * Native size 629x140 (SimHub dash size). Two layers share one container:
+ * Native size 1258x280 (v0.9.1): the SimHub dash (629x140) drawn at 2x. .overlay-container keeps
+ * the SimHub 629x140 coordinate system and is scaled by 2 inside .dc-frame, so the 2x widgets
+ * below (scale(0.5)) end up 1:1 - the laps table shows at the original V3 widget's 1135x248.
+ * Transform (not zoom) keeps layout sizes unchanged, so textFit measurements are unaffected;
+ * Desktop Mode's body scale composes on top. Backup plan if this ever causes trouble: double
+ * the 1x coordinates directly and set the inner scale(0.5) widgets to scale(1).
+ * Two layers share one container:
  *   duel (cards):  data-mode="gap"     - V1 Interval, SimHub layer "(1)": current gap between the cars
  *                  data-mode="speed"   - V2 Speed, SimHub layer "(2)": both cars' speeds + DRS/OT labels
  *   laps table:    data-mode="laps"    - V3 Laps, SimHub "DriverAhead3"/"DriverBehind3": sectors + lap
@@ -21,12 +27,22 @@
  * coordinate below matches the SimHub source 1:1 (item ids noted where useful).
  */
 
+/* Native footprint (2x the SimHub dash) */
+.dc-frame {
+    position: relative;
+    width: 1258px;
+    height: 280px;
+    overflow: hidden;
+}
+
 .overlay-container {
     position: relative;
     width: 629px;
     height: 140px;
     overflow: hidden;
     background: transparent;
+    transform: scale(2);
+    transform-origin: left top;
 }
 
 /* Modes gap + speed share the duel layout ("[✓] 1&2" layer); laps has its own.
