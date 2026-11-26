@@ -3706,16 +3706,22 @@
                 if (data.m_eventStringCode === 'SCAR') {
                     const scType  = data.m_eventDetails?.safetyCarType ?? -1;
                     const evtType = data.m_eventDetails?.eventType     ?? -1;
+                    // The SC/VSC banner itself follows the Session packet's m_safetyCarStatus only (pid 1
+                    // above). Setting it from these events too made the two sources fight: the Session
+                    // packet lags the event by up to ~1s, so deploying here was undone by the next
+                    // "status 0" packet, and clearing it here on Returning (1) / Returned (2) / Resume
+                    // Race (3) was re-deployed by the next "status 1" packet - the banner "flashed" and
+                    // re-animated up to three times at the end of every SC (verified on the 2026 SC race
+                    // recording: status only drops to 0 ~0.8s after the Resume Race event).
                     if (evtType === 3) {
-                        setFlagsBanner(null);  // Resume Race clears any flag banner (incl. red flag)
+                        // Resume Race: ends a red flag (RDFL only exists as an event) and the ENDING banner
+                        if (flagsBannerMode === 'rf') setFlagsBanner(null);
                         scEnding = false;
                         updateScEndingBanner();
-                    } else if (scType === 1) {
-                        setFlagsBanner(evtType === 0 ? 'sc' : null);
-                        if (evtType === 1 && isRace) { scEnding = true; updateScEndingBanner(); }
-                    } else if (scType === 2) {
-                        setFlagsBanner(evtType === 0 ? 'vsc' : null);
-                        if (evtType === 1 && isRace) { scEnding = true; updateScEndingBanner(); }
+                    } else if ((scType === 1 || scType === 2) && evtType === 1 && isRace) {
+                        // Returning: SC/VSC comes in at the end of this lap - show the ENDING banner
+                        scEnding = true;
+                        updateScEndingBanner();
                     }
                 }
                 // RDFL: red flag deployed — cleared by SCAR eventType 3 (Resume Race) or SSTA
