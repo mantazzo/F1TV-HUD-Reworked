@@ -1513,6 +1513,43 @@
             return timeLapsBannerActive ? '105px' : '';
         }
 
+        // ── Yellow flag sector number fit ─────────────────────────────────────────
+        // One sector keeps the original Formula1 Display Wide. Several ("1 & 2", "1 & 2 & 3") do not
+        // fit in Wide, so they switch to Formula1 Display Black and shrink only as far as needed to
+        // fit the space between the number's left edge and the banner's right edge. Measured with a
+        // canvas (independent of the 200ms left/font-size transitions on the element).
+        const yfMeasureCtx = document.createElement('canvas').getContext('2d');
+        function fitYellowSectorNum(maxSize, space) {
+            const digits = elYfSectorNum.textContent.match(/[0-9]/g) || [];
+            if (digits.length < 2) {
+                elYfSectorNum.style.fontFamily = '';
+                elYfSectorNum.style.fontWeight = '';
+                elYfSectorNum.style.fontSize   = `${maxSize}px`;
+                return;
+            }
+            const fit = (t) => {
+                yfMeasureCtx.font = `900 ${maxSize}px "Formula1 Display"`;
+                const width = yfMeasureCtx.measureText(t).width;
+                return width > space ? Math.floor(maxSize * space / width) : maxSize;
+            };
+            // "1 & 2" first; if it would have to shrink, drop the spaces ("1&2&3") when that fits bigger
+            let text = digits.join(' & ');
+            let size = fit(text);
+            if (size < maxSize) {
+                const compact = digits.join('&');
+                const compactSize = fit(compact);
+                if (compactSize > size) { text = compact; size = compactSize; }
+            }
+            setText(elYfSectorNum, text);
+            elYfSectorNum.style.fontFamily = "'Formula1 Display'";
+            elYfSectorNum.style.fontWeight = '900';
+            elYfSectorNum.style.fontSize   = `${size}px`;
+        }
+        // The canvas only measures with the real font once it is loaded - re-fit then
+        document.fonts?.load('900 40px "Formula1 Display"').then(() => {
+            if (flagsBannerMode === 'yellow') updateYellowFlagBanner();
+        });
+
         // ── Yellow flag banner pane adjustments ───────────────────────────────────
         // Called on pane change, when yellow mode activates, and whenever the Time/Laps Remaining
         // banner shows/hides (see getFlagLayerTop()).
@@ -1522,6 +1559,7 @@
             elYfTopText.style.left     = narrow ? '25px'  : '';
             elYfSectorLabel.style.left = narrow ? '40px'  : '';
             elYfSectorNum.style.left   = narrow ? '220px' : '';
+            fitYellowSectorNum(40, narrow ? 365 - 220 - 8 : 485 - 280 - 8);  // space = banner width - number left - margin
         }
 
         // ── Green flag banner pane adjustments ────────────────────────────────────
