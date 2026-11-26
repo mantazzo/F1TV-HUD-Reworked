@@ -1308,7 +1308,7 @@
         const carLapNum      = new Array(NUM_CARS).fill(0);  // carIdx → m_currentLapNum from pid 2
         const carLapDist     = new Array(NUM_CARS).fill(0);  // carIdx → m_lapDistance from pid 2 (metres)
         const carBestLapMs   = new Array(NUM_CARS).fill(0);  // carIdx → best lap time in ms (from pid 11)
-        const carResultStatus = new Array(NUM_CARS).fill(0); // carIdx → m_resultStatus from pid 2 (0=invalid, 3=finished, 4=DSQ, 6=retired)
+        const carResultStatus = new Array(NUM_CARS).fill(0); // carIdx → m_resultStatus from pid 2 (0=invalid, 1=inactive, 2=active, 3=finished, 4=DNF, 5=DSQ, 6=not classified, 7=retired)
         const carDriverStatus = new Array(NUM_CARS).fill(-1); // carIdx → m_driverStatus from pid 2 (-1=unknown, 0=in garage, 1=flying lap, 2=in lap, 3=out lap, 4=on track)
         const carPitStatus    = new Array(NUM_CARS).fill(0);  // carIdx → m_pitStatus from pid 2 (0=none, 1=pitting, 2=pit lane)
         const carNumPitStops  = new Array(NUM_CARS).fill(0);  // carIdx → m_numPitStops from pid 2
@@ -1692,6 +1692,14 @@
             // (getRowTop()'s `flagsBannerMode || timeLapsBannerActive` doesn't stack), so one bump covers it.
             const hasBanner = hasFlag || hasTrigger;
 
+            // Height that fits n driver rows exactly as getRowTop() currently places them: 160px
+            // row-start top + the last row's (pushed) top + the 50px row + a 30px trailing margin.
+            // No push = 50n + 190. While a banner (or MFD header) pushes the rows down, the push
+            // shrinks by 5px per row (rows "compress"), so the extra height is only what the LAST
+            // row was pushed - the original fixed banner tiers (Q3 790, Q2 1040/1080) left ~80-105px
+            // of empty space below the last row, while fields of 13 or fewer were cut off instead.
+            const fieldHeight = (n) => 160 + getRowTop(n - 1) + 50 + 30;
+
             // Pane 2 on Lap 1: force Short-pane (header-only) height during the race's first lap,
             // regardless of the selected pane mode. "Lap 1" is detected the same way as the original
             // SimHub plugin — leader has no recorded best lap yet. Mirrors original Pane2onLap1 setting.
@@ -1710,29 +1718,34 @@
 
             // Q3 (sessionType 7): always 10 drivers; grows for any active banner (rows get pushed down)
             if (sessionType === 7) {
-                return hasBanner ? 790 : 690;  // 395 × 2 : 345 × 2
+                return fieldHeight(10);  // 690; 740 with a banner
             }
 
-            // Q2 (sessionType 6) with an active banner: specific heights for 15/16 drivers
+            // Q2 / Sprint Q2 field size: 15 (20-car grid), 16 (22-car grid) or 17 (24-car grid, 2026
+            // MyTeam / Custom Team) - the original only had 15/16, which cut P17 off a 24-car weekend.
+            // Verified 2026-11-26 on a 24-car Q2 recording: numActiveCars = 17 there (the eliminated
+            // cars report position 0 / result status 0).
+            const q2Cars = Math.min(numActiveCars, 17);
+
+            // Q2 (sessionType 6) with an active banner: specific heights for 15/16/17 drivers
             if (sessionType === 6 && hasBanner && numActiveCars >= 15) {
-                return numActiveCars >= 16 ? 1080 : 1040;  // 540 × 2 : 520 × 2
+                return fieldHeight(q2Cars);
             }
 
             // Pane 4 (Logo only): header area only
             if (paneMode === 4) return 147;  // 73.5 × 2
 
             // Sprint Q3 (sessionType 12, 10 drivers): same height as regular Q3, same banner growth
-            if (sessionType === 12 && numActiveCars === 10) return hasBanner ? 790 : 690;
+            if (sessionType === 12 && numActiveCars === 10) return fieldHeight(10);
 
-            // Sprint Q2 (sessionType 11): same heights/banner growth as regular Q2, for 15/16 drivers
+            // Sprint Q2 (sessionType 11): same heights/banner growth as regular Q2, for 15/16/17 drivers
             if (sessionType === 11 && numActiveCars >= 15) {
-                if (hasBanner) return numActiveCars >= 16 ? 1080 : 1040;  // 540 × 2 : 520 × 2
-                return numActiveCars >= 16 ? 990 : 940;                   // 495 × 2 : 470 × 2
+                return fieldHeight(q2Cars);  // 940 / 990 / 1040 without a banner
             }
 
-            // Q2 (sessionType 6, no banner): specific heights for 15/16 drivers
+            // Q2 (sessionType 6, no banner): specific heights for 15/16/17 drivers
             if (sessionType === 6 && numActiveCars >= 15) {
-                return numActiveCars >= 16 ? 990 : 940;  // 495 × 2 : 470 × 2
+                return fieldHeight(q2Cars);  // 940 / 990 / 1040
             }
 
             // Generic: height based on active cars, fitted to this theme's actual row layout
@@ -1741,7 +1754,7 @@
             // same 50n+190 formula exactly). Valid for n = 2..18; larger counts use the flat
             // fallbacks below since growth is deliberately capped once a grid is "basically full".
             if (numActiveCars >= 2 && numActiveCars <= 18) {
-                return 50 * numActiveCars + 190;
+                return fieldHeight(numActiveCars);  // 50n + 190 without a banner / MFD push
             }
             if (numActiveCars > 22) return 1390;  // 23-24 car grid (2026 season) — 50×24+190
             return 1290;  // full-height fallback for 19-22 cars (standard F1 race, F2, etc.) — 50×22+190
@@ -3505,7 +3518,7 @@
                     setText(dRow.lastNamePI, lastNameStr.toUpperCase());
                     setText(dRow.lastName, lastNameStr);
                     const rsA = carResultStatus[carIdx];
-                    const dimA = rsA === 5 || rsA === 7;
+                    const dimA = rsA > 3; // Any DNF/DSQ/NotClassified/Retired status (same rule as the pid 4 / config paths)
                     const showLNA = showLastNames && paneMode !== 1;
                     dRow.lastName.style.opacity = showLNA ? (dimA ? '0.65' : '1') : '0';
                     dRow.abbrev.style.opacity   = showLNA ? '0' : '1';
@@ -3861,9 +3874,9 @@
                         : "url('/images/leaderboard-lastname/Battery_Yellow.png')";
                     bRow.text.textContent            = `${Math.round(ersPct)}%`;
                     if (ersJ > 0) hasERS = true;
-                    // Hide battery for DSQ (4), Retired (6), or Finished (3) drivers
+                    // Hide battery for Finished (3), DNF (4), DSQ (5), Not Classified (6) and Retired (7) drivers
                     const rs = carResultStatus[carIdx] ?? 0;
-                    const hideBattery = rs === 3 || rs === 4 || rs === 6;
+                    const hideBattery = rs >= 3;
                     bRow.row.style.display = (showBattery && ersJ > 0 && !hideBattery) ? 'block' : 'none';
                     // Battery and Penalties share one slot (same position in the SimHub original):
                     // while this row shows a penalty box, slide the battery out to its right

@@ -1246,7 +1246,7 @@
         const carLapNum      = new Array(NUM_CARS).fill(0);  // carIdx → m_currentLapNum from pid 2
         const carLapDist     = new Array(NUM_CARS).fill(0);  // carIdx → m_lapDistance from pid 2 (metres)
         const carBestLapMs   = new Array(NUM_CARS).fill(0);  // carIdx → best lap time in ms (from pid 11)
-        const carResultStatus = new Array(NUM_CARS).fill(0); // carIdx → m_resultStatus from pid 2 (0=invalid, 3=finished, 4=DSQ, 6=retired)
+        const carResultStatus = new Array(NUM_CARS).fill(0); // carIdx → m_resultStatus from pid 2 (0=invalid, 1=inactive, 2=active, 3=finished, 4=DNF, 5=DSQ, 6=not classified, 7=retired)
         const carDriverStatus = new Array(NUM_CARS).fill(-1); // carIdx → m_driverStatus from pid 2 (-1=unknown, 0=in garage, 1=flying lap, 2=in lap, 3=out lap, 4=on track)
         const carPitStatus    = new Array(NUM_CARS).fill(0);  // carIdx → m_pitStatus from pid 2 (0=none, 1=pitting, 2=pit lane)
         const carNumPitStops  = new Array(NUM_CARS).fill(0);  // carIdx → m_numPitStops from pid 2
@@ -1255,15 +1255,15 @@
         let fastestLapCarIdx = -1; // carIdx with the fastest lap (updated from pid 11)
         let prevFastestLapMs = Infinity; // previous session fastest lap time (for change detection)
         let fastestLapDisplayMs = 0;     // fastest lap time to display (0 = not showing)
-        let fastestLapDisplayPos = 0;    // position of driver who set the fastest lap (1-based)
+        let fastestLapDisplayCarIdx = -1; // carIdx of the driver whose fastest lap is showing (-1 = none). Keyed by car, not position: the time follows the driver if positions change within the 6s
         let fastestLapTimer = null;        // 6-second timeout for fastest lap display
         let flAnimTimer     = null;        // 6-second timeout for fastest lap animation (non-race)
         let flRaceAnimTimer = null;        // 3-second timeout for fastest lap animation (race)
 
         // Personal best display state (quali/practice gaps mode)
         const prevPersonalBestMs = new Array(NUM_CARS).fill(0); // previous personal best per car (for change detection)
-        const personalBestDisplayMs = new Map(); // pos → ms, 6-second personal best highlight per driver
-        const personalBestTimers    = new Map(); // pos → timeoutId
+        const personalBestDisplayMs = new Map(); // carIdx → ms, 6-second personal best highlight per driver (keyed by car, not position: in quali positions shift as others set laps, and the lime time must stay on the driver who set it)
+        const personalBestTimers    = new Map(); // carIdx → timeoutId
 
         async function loadDriverData() {
             try {
@@ -1673,6 +1673,14 @@
             // flag and time/laps banners stack vertically in the header and need the bigger tier.
             const hasBanner = hasFlag || hasTrigger;
 
+            // Height that fits n driver rows exactly as getRowTop() currently places them: 160px
+            // row-start top + the last row's (pushed) top + the 50px row + a 30px trailing margin.
+            // No push = 50n + 190. While a banner (or MFD header) pushes the rows down, the push
+            // shrinks by 5px per row (rows "compress"), so the extra height is only what the LAST
+            // row was pushed - the original fixed banner tiers (Q3 790, Q2 1040/1080) left ~80-105px
+            // of empty space below the last row, while fields of 13 or fewer were cut off instead.
+            const fieldHeight = (n) => 160 + getRowTop(n - 1) + 50 + 30;
+
             // Pane 2 on Lap 1: force Short-pane (header-only) height during the race's first lap,
             // regardless of the selected pane mode. "Lap 1" is detected the same way as the original
             // SimHub plugin — leader has no recorded best lap yet. Mirrors original Pane2onLap1 setting.
@@ -1691,29 +1699,34 @@
 
             // Q3 (sessionType 7): always 10 drivers; grows for any active banner (rows get pushed down)
             if (sessionType === 7) {
-                return hasBanner ? 790 : 690;  // 395 × 2 : 345 × 2
+                return fieldHeight(10);  // 690; 740 with a banner
             }
 
-            // Q2 (sessionType 6) with an active banner: specific heights for 15/16 drivers
+            // Q2 / Sprint Q2 field size: 15 (20-car grid), 16 (22-car grid) or 17 (24-car grid, 2026
+            // MyTeam / Custom Team) - the original only had 15/16, which cut P17 off a 24-car weekend.
+            // Verified 2026-11-26 on a 24-car Q2 recording: numActiveCars = 17 there (the eliminated
+            // cars report position 0 / result status 0).
+            const q2Cars = Math.min(numActiveCars, 17);
+
+            // Q2 (sessionType 6) with an active banner: specific heights for 15/16/17 drivers
             if (sessionType === 6 && hasBanner && numActiveCars >= 15) {
-                return numActiveCars >= 16 ? 1080 : 1040;  // 540 × 2 : 520 × 2
+                return fieldHeight(q2Cars);
             }
 
             // Pane 4 (Logo only): header area only
             if (paneMode === 4) return 147;  // 73.5 × 2
 
             // Sprint Q3 (sessionType 12, 10 drivers): same height as regular Q3, same banner growth
-            if (sessionType === 12 && numActiveCars === 10) return hasBanner ? 790 : 690;
+            if (sessionType === 12 && numActiveCars === 10) return fieldHeight(10);
 
-            // Sprint Q2 (sessionType 11): same heights/banner growth as regular Q2, for 15/16 drivers
+            // Sprint Q2 (sessionType 11): same heights/banner growth as regular Q2, for 15/16/17 drivers
             if (sessionType === 11 && numActiveCars >= 15) {
-                if (hasBanner) return numActiveCars >= 16 ? 1080 : 1040;  // 540 × 2 : 520 × 2
-                return numActiveCars >= 16 ? 990 : 940;                   // 495 × 2 : 470 × 2
+                return fieldHeight(q2Cars);  // 940 / 990 / 1040 without a banner
             }
 
-            // Q2 (sessionType 6, no banner): specific heights for 15/16 drivers
+            // Q2 (sessionType 6, no banner): specific heights for 15/16/17 drivers
             if (sessionType === 6 && numActiveCars >= 15) {
-                return numActiveCars >= 16 ? 990 : 940;  // 495 × 2 : 470 × 2
+                return fieldHeight(q2Cars);  // 940 / 990 / 1040
             }
 
             // Generic: height based on active cars — 160px row-start top + 50px/row + 30px trailing
@@ -1721,7 +1734,7 @@
             // small lobbies 90px too tall). The fixed tiers above/below all satisfy this same
             // formula. Valid for n = 2..18; larger counts use the flat fallbacks below.
             if (numActiveCars >= 2 && numActiveCars <= 18) {
-                return 50 * numActiveCars + 190;
+                return fieldHeight(numActiveCars);  // 50n + 190 without a banner / MFD push
             }
             if (numActiveCars > 22) return 1390;  // 23-24 car grid (2026 season) — 50×24+190
             return 1290;  // full-height fallback for 19-22 cars (standard F1 race, F2, etc.) — 50×22+190
@@ -1858,24 +1871,24 @@
 
         // ── Fastest lap display trigger ───────────────────────────────────────────
         // Shows the driver's best lap time for 6 seconds when they set a new fastest lap.
-        function triggerFastestLapDisplay(ms, pos) {
+        function triggerFastestLapDisplay(ms, carIdx) {
             fastestLapDisplayMs = ms;
-            fastestLapDisplayPos = pos;
+            fastestLapDisplayCarIdx = carIdx;
             if (fastestLapTimer) clearTimeout(fastestLapTimer);
             fastestLapTimer = setTimeout(() => {
                 fastestLapDisplayMs = 0;
-                fastestLapDisplayPos = 0;
+                fastestLapDisplayCarIdx = -1;
             }, 6000);
         }
 
         // ── Personal best display trigger ─────────────────────────────────────────
         // Shows the driver's personal best lap time for 6 seconds when they improve it.
-        function triggerPersonalBestDisplay(ms, pos) {
-            personalBestDisplayMs.set(pos, ms);
-            if (personalBestTimers.has(pos)) clearTimeout(personalBestTimers.get(pos));
-            personalBestTimers.set(pos, setTimeout(() => {
-                personalBestDisplayMs.delete(pos);
-                personalBestTimers.delete(pos);
+        function triggerPersonalBestDisplay(ms, carIdx) {
+            personalBestDisplayMs.set(carIdx, ms);
+            if (personalBestTimers.has(carIdx)) clearTimeout(personalBestTimers.get(carIdx));
+            personalBestTimers.set(carIdx, setTimeout(() => {
+                personalBestDisplayMs.delete(carIdx);
+                personalBestTimers.delete(carIdx);
                 updateQualiTimingDisplay();
             }, 6000));
         }
@@ -1991,7 +2004,7 @@
 
                 // Determine what text to show in the Times column
                 // Priority: Out Lap (after leaving the pit lane) → NO TIME (in pits, no best lap) → Personal Best (lime, 6s) → best lap time / NO TIME
-                const pbMs = personalBestDisplayMs.get(pos) ?? 0;
+                const pbMs = personalBestDisplayMs.get(carIdx) ?? 0;
                 const showPersonalBest = pbMs > 0;
                 let timeText;
                 if (dStatus === 3 && pStatus === 0) {
@@ -2053,7 +2066,7 @@
             fastestLapCarIdx = -1;
             prevFastestLapMs = Infinity;
             fastestLapDisplayMs = 0;
-            fastestLapDisplayPos = 0;
+            fastestLapDisplayCarIdx = -1;
             if (fastestLapTimer)   { clearTimeout(fastestLapTimer);   fastestLapTimer   = null; }
             if (flAnimTimer)       { clearTimeout(flAnimTimer);       flAnimTimer       = null; }
             if (flRaceAnimTimer)   { clearTimeout(flRaceAnimTimer);   flRaceAnimTimer   = null; }
@@ -3226,7 +3239,7 @@
                     setText(dRow.lastNamePI, lastNameStr.toUpperCase());
                     setText(dRow.lastName, lastNameStr);
                     const rsA = carResultStatus[carIdx];
-                    const dimA = rsA === 5 || rsA === 7;
+                    const dimA = rsA > 3; // Any DNF/DSQ/NotClassified/Retired status (same rule as the pid 4 / config paths)
                     const showLNA = showLastNames && paneMode !== 1;
                     dRow.lastName.style.opacity = showLNA ? (dimA ? '0.65' : '1') : '0';
                     dRow.abbrev.style.opacity   = showLNA ? '0' : '1';
@@ -3264,7 +3277,7 @@
                     }
 
                     // Fastest lap display: show lap time for 6 seconds when driver sets new fastest lap
-                    const showFastestLap = fastestLapDisplayMs > 0 && pos === fastestLapDisplayPos;
+                    const showFastestLap = fastestLapDisplayMs > 0 && carIdx === fastestLapDisplayCarIdx;
 
                     // Helper: compute lapped text using hybrid lapNum + lapDistance approach
                     function getLappedText(deltaMs, refLapNum, refLapDist) {
@@ -3563,9 +3576,9 @@
                         : "url('/images/leaderboard/Battery_Yellow.png')";
                     bRow.text.textContent            = `${Math.round(ersPct)}%`;
                     if (ersJ > 0) hasERS = true;
-                    // Hide battery for DSQ (4), Retired (6), or Finished (3) drivers
+                    // Hide battery for Finished (3), DNF (4), DSQ (5), Not Classified (6) and Retired (7) drivers
                     const rs = carResultStatus[carIdx] ?? 0;
-                    const hideBattery = rs === 3 || rs === 4 || rs === 6;
+                    const hideBattery = rs >= 3;
                     bRow.row.style.display = (showBattery && ersJ > 0 && !hideBattery) ? 'block' : 'none';
                     // Battery and Penalties share one slot (same position in the SimHub original):
                     // while this row shows a penalty box, slide the battery out to its right
@@ -3636,14 +3649,14 @@
                             // Detect new fastest lap and trigger 6-second display
                             if (bestMs < prevFastestLapMs && fastestLapCarIdx >= 0) {
                                 const pos = carPositions[fastestLapCarIdx];
-                                if (pos >= 1 && currentLap > 2) triggerFastestLapDisplay(bestMs, pos);
+                                if (pos >= 1 && currentLap > 2) triggerFastestLapDisplay(bestMs, fastestLapCarIdx);
                                 prevFastestLapMs = bestMs;
                             }
                             // Detect personal best improvement (for quali gaps display)
                             // Only trigger if this car improved their own best AND is not the session fastest
                             if (prevBest > 0 && lapMs < prevBest && carIdx !== fastestLapCarIdx) {
                                 const pos = carPositions[carIdx];
-                                if (pos >= 1) triggerPersonalBestDisplay(lapMs, pos);
+                                if (pos >= 1) triggerPersonalBestDisplay(lapMs, carIdx);
                             }
                             prevPersonalBestMs[carIdx] = lapMs;
                             updateQualiTimingDisplay();
