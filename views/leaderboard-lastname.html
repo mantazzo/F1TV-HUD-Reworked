@@ -2149,6 +2149,7 @@
             numActiveCars = 0;
             extendedGrid = false;
             extendedGrid2026 = false;
+            gridSizeApplied = false;
 
             // Reset chequered flag banner
             elFinishedImg.style.opacity = '';
@@ -2428,6 +2429,37 @@
             elGradientVerticalFmn.style.display        = formationLap ? 'block' : 'none';
 
             updateDecoBorders();
+        }
+
+        // ── Grid-size background variants (BG / _22 / _24) ─────────────────────────────
+        // Driven by the same numActiveCars the rows use (highest Lap Data position, MP placeholder
+        // slots skipped - recomputed on every pid 2 packet), so the backgrounds switch in the same
+        // tick the extra rows appear. They used to follow pid 4's m_numActiveCars, which only
+        // arrives every ~5s - rows 21+ could sit without a background until then.
+        // <= 20 cars = base images, 21-22 = _22, 23-24 = _24.
+        let gridSizeApplied = false; // false = DOM not yet synced to extendedGrid/extendedGrid2026 (load / SSTA)
+        function updateGridSize() {
+            const ext   = numActiveCars > 20;
+            const ext26 = numActiveCars > 22;
+            if (gridSizeApplied && ext === extendedGrid && ext26 === extendedGrid2026) return;
+            extendedGrid     = ext;
+            extendedGrid2026 = ext26;
+            gridSizeApplied  = true;
+            updateFlagsBorder();
+            updateFlagsImg();
+            updateThickStrokeBg();
+            updateBorderRect();
+            updateMainPanels();
+            elThickStrokeBg.style.backgroundImage = extendedGrid2026
+                ? "url('/images/leaderboard-lastname/BG_24.png')"
+                : extendedGrid
+                ? "url('/images/leaderboard-lastname/BG_22.png')"
+                : "url('/images/leaderboard-lastname/BG.png')";
+            // SC/VSC banner image has grid-size variants too
+            if (flagsBannerMode === 'sc' || flagsBannerMode === 'vsc') {
+                const scImg = extendedGrid2026 ? 'SC_VSC_24.png' : extendedGrid ? 'SC_VSC_22.png' : 'SC_VSC.png';
+                elFlagsImg.style.backgroundImage = `url('/images/leaderboard-lastname/${scImg}')`;
+            }
         }
 
         // ── Flags banner helper ────────────────────────────────────────────
@@ -3474,6 +3506,7 @@
                     if (carPositions[i] > maxPos) maxPos = carPositions[i];
                 }
                 numActiveCars = maxPos;
+                updateGridSize();
                 updateSlotVisibility();
                 if (formationLap) updateStandingsVisibility(); // before updateOverlayHeight(): height depends on its output
                 updateOverlayHeight();
@@ -3728,20 +3761,9 @@
             if (pid === 4) {
                 const activeFromPacket = data.m_numActiveCars ?? 0;
                 if (activeFromPacket > numActiveCars) numActiveCars = activeFromPacket;
-                extendedGrid = numActiveCars > 20;
-                extendedGrid2026 = numActiveCars > 22;
+                // Grid-size background variants follow the pid 2 count instead - see updateGridSize()
                 updateOverlayHeight();
-                updateFlagsBorder();
-                updateFlagsImg();
-                updateThickStrokeBg();
-                updateBorderRect();
-                updateMainPanels();
                 updateDataContainerLeft();
-                elThickStrokeBg.style.backgroundImage = extendedGrid2026
-                    ? "url('/images/leaderboard-lastname/BG_24.png')"
-                    : extendedGrid
-                    ? "url('/images/leaderboard-lastname/BG_22.png')"
-                    : "url('/images/leaderboard-lastname/BG.png')";
 
                 const participants = data.m_participants;
                 if (Array.isArray(participants)) {
