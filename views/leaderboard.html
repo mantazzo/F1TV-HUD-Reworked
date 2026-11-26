@@ -1303,6 +1303,12 @@
 
         function textFitIfChanged(el, text, opts) {
             if (el._lastFitText === text && el.firstElementChild?.classList.contains('textFitted')) return;
+            // Hidden (display:none somewhere up the tree) = no width to fit against. textFit does not
+            // throw then - it settles on minFontSize - and memoizing that result left text that never
+            // changes stuck small once shown (P1 "Interval": the first Lap Data packet arrives before
+            // the first Session packet, while the race timing column is still hidden). Skip without
+            // memoizing, so the first tick where the element is visible does the real fit.
+            if (!el.clientWidth) return;
             try {
                 textFit(el, opts);
                 el._lastFitText = text;
