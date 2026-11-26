@@ -1234,6 +1234,7 @@
         let sessionType = 0;
         let totalLaps   = 0;
         let currentLap  = 0;
+        let mfdPage          = 'off'; // config: 'off' | 'mfd1' | 'mfd2' | 'mfd3' | 'mfd4'
         let mfdActive        = false;
         let isMfd1           = false;
         let isMfd2           = false;
@@ -1321,15 +1322,15 @@
         let fastestLapCarIdx = -1; // carIdx with the fastest lap (updated from pid 11)
         let prevFastestLapMs = Infinity; // previous session fastest lap time (for change detection)
         let fastestLapDisplayMs = 0;     // fastest lap time to display (0 = not showing)
-        let fastestLapDisplayPos = 0;    // position of driver who set the fastest lap (1-based)
+        let fastestLapDisplayCarIdx = -1; // carIdx of the driver whose fastest lap is showing (-1 = none). Keyed by car, not position: the time follows the driver if positions change within the 6s
         let fastestLapTimer = null;        // 6-second timeout for fastest lap display
         let flAnimTimer     = null;        // 6-second timeout for fastest lap animation (non-race)
         let flRaceAnimTimer = null;        // 3-second timeout for fastest lap animation (race)
 
         // Personal best display state (quali/practice gaps mode)
         const prevPersonalBestMs = new Array(NUM_CARS).fill(0); // previous personal best per car (for change detection)
-        const personalBestDisplayMs = new Map(); // pos → ms, 6-second personal best highlight per driver
-        const personalBestTimers    = new Map(); // pos → timeoutId
+        const personalBestDisplayMs = new Map(); // carIdx → ms, 6-second personal best highlight per driver (keyed by car, not position: in quali positions shift as others set laps, and the lime time must stay on the driver who set it)
+        const personalBestTimers    = new Map(); // carIdx → timeoutId
 
         async function loadDriverData() {
             try {
@@ -1400,6 +1401,17 @@
             isTimed = TIMED_TYPES.has(sessionType);  // Timed Session (any non-race session except for Time Trial)
             isTT    = TT_TYPE.has(sessionType);      // Time Trial Session
             isSQ    = SQ_TYPES.has(sessionType);     // Sprint Qualifying
+
+            // MFD4 is race-only (isMfd4 gates on isRace). overlay_config is only sent on connect /
+            // Controller changes, and on a mid-race page load it arrives before the first Session
+            // packet (isRace still false) - so re-evaluate here once the session type is known,
+            // or MFD4 stayed hidden until the next settings change.
+            const nowMfd4 = mfdPage === 'mfd4' && isRace;
+            if (nowMfd4 !== isMfd4) {
+                isMfd4 = nowMfd4;
+                updateMfdHeaderVisibility();
+                updateMfd4DataVisibility();
+            }
 
             // Timer wrapper: shown for timed sessions — one session-time box covers F1 and F2/SQ alike
             elTimerWrap.style.display   = isTimed ? 'block' : 'none';
@@ -1885,24 +1897,24 @@
 
         // ── Fastest lap display trigger ───────────────────────────────────────────
         // Shows the driver's best lap time for 6 seconds when they set a new fastest lap.
-        function triggerFastestLapDisplay(ms, pos) {
+        function triggerFastestLapDisplay(ms, carIdx) {
             fastestLapDisplayMs = ms;
-            fastestLapDisplayPos = pos;
+            fastestLapDisplayCarIdx = carIdx;
             if (fastestLapTimer) clearTimeout(fastestLapTimer);
             fastestLapTimer = setTimeout(() => {
                 fastestLapDisplayMs = 0;
-                fastestLapDisplayPos = 0;
+                fastestLapDisplayCarIdx = -1;
             }, 6000);
         }
 
         // ── Personal best display trigger ─────────────────────────────────────────
         // Shows the driver's personal best lap time for 6 seconds when they improve it.
-        function triggerPersonalBestDisplay(ms, pos) {
-            personalBestDisplayMs.set(pos, ms);
-            if (personalBestTimers.has(pos)) clearTimeout(personalBestTimers.get(pos));
-            personalBestTimers.set(pos, setTimeout(() => {
-                personalBestDisplayMs.delete(pos);
-                personalBestTimers.delete(pos);
+        function triggerPersonalBestDisplay(ms, carIdx) {
+            personalBestDisplayMs.set(carIdx, ms);
+            if (personalBestTimers.has(carIdx)) clearTimeout(personalBestTimers.get(carIdx));
+            personalBestTimers.set(carIdx, setTimeout(() => {
+                personalBestDisplayMs.delete(carIdx);
+                personalBestTimers.delete(carIdx);
                 updateQualiTimingDisplay();
             }, 6000));
         }
@@ -2032,7 +2044,7 @@
 
                 // Determine what text to show in the Times column
                 // Priority: Out Lap (after leaving the pit lane) → NO TIME (in pits, no best lap) → Personal Best (lime, 6s) → best lap time / NO TIME
-                const pbMs = personalBestDisplayMs.get(pos) ?? 0;
+                const pbMs = personalBestDisplayMs.get(carIdx) ?? 0;
                 const showPersonalBest = pbMs > 0;
                 let timeText;
                 if (dStatus === 3 && pStatus === 0) {
@@ -2099,7 +2111,7 @@
             fastestLapCarIdx = -1;
             prevFastestLapMs = Infinity;
             fastestLapDisplayMs = 0;
-            fastestLapDisplayPos = 0;
+            fastestLapDisplayCarIdx = -1;
             if (fastestLapTimer)   { clearTimeout(fastestLapTimer);   fastestLapTimer   = null; }
             if (flAnimTimer)       { clearTimeout(flAnimTimer);       flAnimTimer       = null; }
             if (flRaceAnimTimer)   { clearTimeout(flRaceAnimTimer);   flRaceAnimTimer   = null; }
@@ -3559,7 +3571,7 @@
                     }
 
                     // Fastest lap display: show lap time for 6 seconds when driver sets new fastest lap
-                    const showFastestLap = fastestLapDisplayMs > 0 && pos === fastestLapDisplayPos;
+                    const showFastestLap = fastestLapDisplayMs > 0 && carIdx === fastestLapDisplayCarIdx;
 
                     // Helper: compute lapped text using hybrid lapNum + lapDistance approach
                     function getLappedText(deltaMs, refLapNum, refLapDist) {
@@ -3930,14 +3942,14 @@
                             // Detect new fastest lap and trigger 6-second display
                             if (bestMs < prevFastestLapMs && fastestLapCarIdx >= 0) {
                                 const pos = carPositions[fastestLapCarIdx];
-                                if (pos >= 1 && currentLap > 2) triggerFastestLapDisplay(bestMs, pos);
+                                if (pos >= 1 && currentLap > 2) triggerFastestLapDisplay(bestMs, fastestLapCarIdx);
                                 prevFastestLapMs = bestMs;
                             }
                             // Detect personal best improvement (for quali gaps display)
                             // Only trigger if this car improved their own best AND is not the session fastest
                             if (prevBest > 0 && lapMs < prevBest && carIdx !== fastestLapCarIdx) {
                                 const pos = carPositions[carIdx];
-                                if (pos >= 1) triggerPersonalBestDisplay(lapMs, pos);
+                                if (pos >= 1) triggerPersonalBestDisplay(lapMs, carIdx);
                             }
                             prevPersonalBestMs[carIdx] = lapMs;
                             updateQualiTimingDisplay();
@@ -3980,6 +3992,7 @@
             isMfd2    = page === 'mfd2';
             isMfd3    = page === 'mfd3';
             isMfd4    = page === 'mfd4' && isRace;
+            mfdPage   = page;
             paneMode = cfg.pane ?? 0;
             pane2OnLap1 = !!cfg.pane2OnLap1;
             positionBg  = !!cfg.positionBg;
