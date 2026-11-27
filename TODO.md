@@ -164,7 +164,7 @@
         - In Knockout Sessions (Q1/Q2/SQ1/SQ2), if Active Driver is in the Knockout Zone, displays comparison against the last non-knockout position instead (behavior can be changed in the Extended Controller from Default to "Always Leader")
         - If Active Driver is in P1, then the comparison is displayed against P2 driver (same as in Original version)
     - Likely feature complete at the moment, but will update with bugfixes and potential improvements in due time
-    - Still debating size, might change it with later updates
+    - Size increased to likely fix/fit the original vision
 
 ## Overlay Controllers
 
@@ -187,7 +187,7 @@
 
 ## Currently Working On
 
-Driver Comparison (remade Driver Ahead and Behind (the three versions of the overlay))
+...
 
 ## Next Planned Overlay
 
