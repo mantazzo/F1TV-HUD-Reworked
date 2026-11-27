@@ -1441,6 +1441,21 @@
             elSeriesLogo.style.display   = isF2 ? 'none' : '';
             elSeriesLogoF2.style.display = isF2 ? 'block' : 'none';
 
+            // Era-correct F2 logo: 2026 Season Pack cars get the new (mid-2026) design, older cars
+            // the previous one. Era comes from the active driver's team ID; if that's unknown
+            // (no participants yet, or an ID without an era), fall back to the first car that has one.
+            if (isF2) {
+                let eraYear = playerCarIdx >= 0 ? DriverUtils.getCarEraYear(carTeamIds[playerCarIdx]) : null;
+                if (eraYear === null) {
+                    for (const teamId of carTeamIds) {
+                        if (teamId < 0) continue;
+                        eraYear = DriverUtils.getCarEraYear(teamId);
+                        if (eraYear !== null) break;
+                    }
+                }
+                elSeriesLogoF2.classList.toggle('era-2026', eraYear === 2026);
+            }
+
             // Standings series logo (item_1_41r0r0): hidden entirely for F2 sessions (no F2 variant
             // here, unlike the main header logo — matches original, which also hid it for Custom Logo,
             // not yet implemented). AutoSizeScale: 0.88 during Sprint Race sessions, 0.98 otherwise.

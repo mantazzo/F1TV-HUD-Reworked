@@ -1159,7 +1159,7 @@ body { background: transparent; overflow: hidden; }
     top: 46px;
     width: 140.8px;
     height: 36.08px;
-    background-image: url('/images/other-logos/F1.png');
+    background-image: url('/images/other-logos/F1_icon_white.svg');
     background-size: 140.8px 36.08px;
 }
 
@@ -1170,8 +1170,16 @@ body { background: transparent; overflow: hidden; }
     top: 24px;
     width: 172.15px;
     height: 77.275px;
-    background-image: url('/images/other-logos/F2.png');
-    background-size: 172.15px 77.275px;
+    /* Pre-2026 design (used until mid-2026) - the default */
+    background-image: url('/images/other-logos/F2_icon_white.svg');
+    background-size: 126.29px 56.7px;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+/* 2026 Season Pack cars: new F2 design (class set in leaderboard-lastname.html, updateHeaderDisplay) */
+#lb-series-logo-f2.era-2026 {
+    background-image: url('/images/other-logos/F2_icon_white_2026.svg');
+    background-size: 98.87px 56.7px;
 }
 
 /* ════════════════════════════════════════════════════════════════
