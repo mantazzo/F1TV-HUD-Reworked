@@ -99,14 +99,14 @@
   "41": {
     "ShortName": "F1 Generic",
     "FullName": "F1 World Car",
-    "Logo": "fia.svg",
-    "Note": "This is the generic entry for the F1 World Car '25 (a.k.a. Generic 2025 Team)."
+    "Logo": "FIA_white.svg",
+    "Note": "This is the generic entry for the F1 World Car '25 (a.k.a. Generic 2025 Team). For 2026 entry, look at ID 488."
   },
   "104": {
     "ShortName": "F1 Custom Team",
     "FullName": "My Team Custom Team",
-    "Logo": "fia.svg",
-    "Note": "This it the team that is used in MyTeam '25 career mode. If you want to set up your team, edit this entry."
+    "Logo": "FIA_white.svg",
+    "Note": "This is the team that is used in MyTeam '25 career mode. If you want to set up your team, edit this entry. For 2026 entry, look at ID 65535."
   },
   "129": {
     "ShortName": "Konnersport",
@@ -337,8 +337,7 @@
   "226": {
     "ShortName": "RB ‘26",
     "FullName": "Visa Cash App Racing Bulls F1 Team",
-    "Logo": "2026racingbullslogo.svg",
-    "Logo_Alt": "2026racingbullslogowhite.svg",
+    "Logo": "2026racingbullslogowhite.svg",
     "NumberDesign_30": "2026racingbullslialaw01number.svg",
     "NumberDesign_41": "2026racingbullsarvlin01number.svg"
   },
@@ -539,8 +538,7 @@
   "482": {
     "ShortName": "RB ‘26",
     "FullName": "Visa Cash App Racing Bulls F1 Team",
-    "Logo": "2026racingbullslogo.svg",
-    "Logo_Alt": "2026racingbullslogowhite.svg",
+    "Logo": "2026racingbullslogowhite.svg",
     "NumberDesign_30": "2026racingbullslialaw01number.svg",
     "NumberDesign_41": "2026racingbullsarvlin01number.svg"
   },
@@ -580,7 +578,8 @@
   "488": {
     "ShortName": "F1 Generic ‘26",
     "FullName": "F1 World Car '26",
-    "Logo": "fia.svg"
+    "Logo": "FIA_white.svg",
+    "Note": "This is the generic entry for the F1 World Car '26 (a.k.a. Generic 2026 Team)."
   },
   "489": {
     "ShortName": "Art GP ‘26",
