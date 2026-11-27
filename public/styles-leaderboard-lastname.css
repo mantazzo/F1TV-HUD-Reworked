@@ -2366,7 +2366,7 @@ body { background: transparent; overflow: hidden; }
 }
 #lb-standings-bg > * { position: absolute; }
 
-/* Series logo (item_1_41r0r0): F1.png 156.8×40.18 at left:35, top:46
+/* Series logo (item_1_41r0r0): F1_icon_white.svg 156.8×40.18 at left:35, top:46
    AutoSizeScale (0.88 Sprint / 0.98 otherwise) applied via JS transform; anchored top-left
    so the logo scales in place rather than around its center. */
 #lb-standings-logo {
@@ -2374,7 +2374,7 @@ body { background: transparent; overflow: hidden; }
     top: 46px;
     width: 156.8px;
     height: 40.18px;
-    background-image: url('/images/other-logos/F1.png');
+    background-image: url('/images/other-logos/F1_icon_white.svg');
     background-size: 156.8px 40.18px;
     transform-origin: top left;
 }
